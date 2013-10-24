@@ -1,0 +1,428 @@
+/*
+ * INTEL CONFIDENTIAL
+ * Copyright © 2013 Intel
+ * Corporation All Rights Reserved.
+ *
+ * The source code contained or described herein and all documents related to
+ * the source code ("Material") are owned by Intel Corporation or its suppliers
+ * or licensors. Title to the Material remains with Intel Corporation or its
+ * suppliers and licensors. The Material contains trade secrets and proprietary
+ * and confidential information of Intel or its suppliers and licensors. The
+ * Material is protected by worldwide copyright and trade secret laws and
+ * treaty provisions. No part of the Material may be used, copied, reproduced,
+ * modified, published, uploaded, posted, transmitted, distributed, or
+ * disclosed in any way without Intel’s prior express written permission.
+ *
+ * No license under any patent, copyright, trade secret or other intellectual
+ * property right is granted to or conferred upon you by disclosure or delivery
+ * of the Materials, either expressly, by implication, inducement, estoppel or
+ * otherwise. Any license under such intellectual property rights must be
+ * express and approved by Intel in writing.
+ *
+ */
+#pragma once
+
+#include "AudioIntelHAL.h"
+#include "AudioStream.h"
+#include <media/AudioBufferProvider.h>
+
+
+namespace android_audio_legacy
+{
+
+class AudioStreamInImpl : public AudioStreamIn, public AudioStream,
+                          public android::AudioBufferProvider
+{
+private:
+    typedef std::list<effect_handle_t>::iterator AudioEffectsListIterator;
+public:
+    AudioStreamInImpl(AudioIntelHAL *parent,
+                      AudioSystem::audio_in_acoustics audio_acoustics);
+
+    /**
+     * Destructor.
+     * Might be called while another thread of Audio Flinger tries not remove audio effect in the
+     * meanwhile. Must garantee thread safe access.
+     * Note that memory allocated will be freed upon doClose callback from route manager.
+     */
+    virtual ~AudioStreamInImpl();
+
+    virtual uint32_t sampleRate() const
+    {
+        return AudioStream::sampleRate();
+    }
+
+    virtual size_t bufferSize() const;
+
+    virtual uint32_t channels() const
+    {
+        return AudioStream::channels();
+    }
+
+    virtual int format() const
+    {
+        return AudioStream::format();
+    }
+
+    virtual ssize_t read(void *buffer, ssize_t bytes);
+    virtual android::status_t dump(int fd, const android::Vector<String16> &args);
+
+    virtual android::status_t setGain(float gain);
+
+    virtual android::status_t standby();
+
+    virtual android::status_t setParameters(const android::String8 &keyValuePairs);
+
+    virtual android::String8 getParameters(const android::String8 &keys)
+    {
+        return AudioStream::getParameters(keys);
+    }
+
+    /**
+     * Return the amount of input frames lost in the audio driver since the last call
+     * of this function.
+     * Audio driver is expected to reset the value to 0 and restart counting upon returning
+     * the current value by this function call.
+     * Such loss typically occurs when the user space process is blocked longer than the
+     * capacity of audio driver buffers.
+     * Unit: the number of input audio frames.
+     */
+    virtual unsigned int getInputFramesLost() const;
+
+    /**
+     * Called by an input stream in to add an effect.
+     * When calling this function, the stream must be already attached to an audio route.
+     *
+     * @param[in] pStream input stream pointer.
+     * @param[in] effect structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    virtual android::status_t addAudioEffect(effect_handle_t effect);
+
+    /**
+     * Called by an input stream in to remove an effect.
+     * When calling this function, the stream must be still attached to an audio route.
+     *
+     * @param[in] pStream input stream pointer.
+     * @param[in] effect structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    virtual android::status_t removeAudioEffect(effect_handle_t effect);
+
+    // From AudioBufferProvider
+    virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer,
+                                            int64_t pts = kInvalidPTS);
+    virtual void releaseBuffer(android::AudioBufferProvider::Buffer *buffer);
+
+    /**
+     * Get stream direction.
+     * From Stream class.
+     * @return always false (for input).
+     */
+    virtual bool isOut() const
+    {
+        return false;
+    }
+protected:
+    /**
+     * Callback of route attachement called by the stream lib. (and so route manager).
+     * Inherited from Stream class.
+     *
+     * @return OK if streams attached successfully to the route, error code otherwise.
+     */
+    virtual android::status_t attachRouteL();
+
+    /**
+     * Callback of route detachement called by the stream lib. (and so route manager).
+     * Inherited from Stream class.
+     *
+     * @return OK if streams detached successfully from the route, error code otherwise.
+     */
+    virtual android::status_t detachRouteL();
+private:
+    bool isEffectSupportedByRoute(effect_handle_t effect) const;
+
+    ssize_t readHwFrames(void *buffer, size_t frames);
+
+    /**
+     * Request to add an effect.
+     * It appends the effect to the stream list of requested effects
+     * and add the effect only if the stream is already attached to the route.
+     *
+     * @param[in] pStream input stream pointer.
+     * @param[in] effect structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    status_t addAudioEffectRequest_l(effect_handle_t effect);
+
+    /**
+     * Request to remove an effect.
+     * It removes the effect from the stream list of requested effects
+     * and add the effect only if the stream is still attached to the route.
+     *
+     * @param[in] pStream input stream pointer.
+     * @param[in] effect structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    status_t removeAudioEffectRequest(effect_handle_t effect);
+
+    /**
+     * Add an effect.
+     * When calling this function, the stream must be already attached to an audio route.
+     * If audio route supports this effect in HW, it bails out with NO_ERROR.
+     *
+     * @param[in] pStream input stream pointer.
+     * @param[in] effect structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    status_t addAudioEffect_l(effect_handle_t effect);
+
+    /**
+     * Performs the removal of an effect.
+     * It removes the effect from the stream list of requested effects
+     * and add the effect only if the stream is still attached to the route.
+     *
+     * @param[in] effect structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    status_t removeAudioEffect_l(effect_handle_t effect);
+
+    /**
+     * Add effect on the stream in routing locked context.
+     * It adds an audio effect on the input stream.
+     *
+     * @param[in] structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    status_t doAddAudioEffect_l(effect_handle_t effect,
+                                struct echo_reference_itfe *reference = NULL);
+
+    /**
+     * Removes an effect from the stream in routing locked context.
+     * It removes an audio effect from the input stream chain.
+     *
+     * @param[in] structure of the effect to add.
+     *
+     * @return status_t OK upon succes, error code otherwise.
+     */
+    status_t doRemoveAudioEffect_l(effect_handle_t effect);
+
+    /**
+     * Retrieve audio effect name from effect handle.
+     *
+     * @param[in] effect: handle in the effect.
+     * @param[out] name: effect name.
+     *
+     * @return OK if name retrieved, error code otherwise.
+     */
+    status_t getAudioEffectNameFromHandle(effect_handle_t effect, std::string &name) const;
+
+    /**
+     * Checks if effect is AEC.
+     * AEC is a specific effect as it involves not only input stream but also output stream
+     * to provide an echo reference.
+     *
+     * @param[in] effect: handle in the effect.
+     *
+     * @return true if effect is identified as AEC, false otherwise.
+     */
+    bool isAecEffect(effect_handle_t effect);
+
+    class AudioEffectHandle
+    {
+    public:
+        effect_handle_t _preprocessor;
+        struct echo_reference_itfe *_echoReference;
+        AudioEffectHandle()
+            : _preprocessor(NULL), _echoReference(NULL) {}
+        AudioEffectHandle(effect_handle_t effect, struct echo_reference_itfe *reference)
+            : _preprocessor(effect), _echoReference(reference) {}
+        ~AudioEffectHandle() {}
+    };
+
+    /**
+     * Function to be used as the predicate in find_if call.
+     */
+    struct MatchEffect : public std::binary_function<AudioEffectHandle, effect_handle_t, bool>
+    {
+
+        bool operator()(const AudioEffectHandle &effectHandle,
+                        const effect_handle_t &effect) const
+        {
+
+            return effectHandle._preprocessor == effect;
+        }
+    };
+    std::list<effect_handle_t> requestedEffects; /**< list of effects requested by upper layer. */
+
+    /**
+     * Reset the amount of input frames lost in the audio driver since the last call of
+     * getInputFramesLost.
+     */
+    void resetFramesLost();
+
+    /**
+     * Read audio frames into the buffer.
+     *
+     * @param[out] buffer memory in which it will copy the frames.
+     * @param[in] frames requested frames to read.
+     *
+     * @return number of frames read if successfull operation, negative error code otherwise.
+     */
+    ssize_t readFrames(void *buffer, size_t frames);
+
+    /**
+     * Free internal buffers allocated for read / processing operations.
+     */
+    void freeAllocatedBuffers();
+
+    /**
+     * Allocate memory to process a certain amount of frames.
+     *
+     * @param[in] frames number of frame that we may process.
+     *
+     * @return OK if successfull allocation, error code otherwise.
+     */
+    android::status_t allocateProcessingMemory(ssize_t frames);
+
+    /**
+     * Allocate the buffer in which it reads the samples from the audio device.
+     *
+     * @return OK if successfull allocation, error code otherwise.
+     */
+    inline android::status_t allocateHwBuffer();
+
+    /**
+     * Process audio frames into the buffer.
+     *
+     * @param[out] buffer memory in which it will copy the processed frames.
+     * @param[in] frames requested frames to read.
+     *
+     * @return number of frames processed if successfull operation, negative error code otherwise.
+     */
+    ssize_t processFrames(void *buffer, ssize_t frames);
+
+    /**
+     * Process audio frames into the buffer.
+     *
+     * @param[out] buffer memory in which it will copy the processed frames.
+     * @param[in] frames requested frames to read.
+     * @param[out] processed_frames number of frames processed.
+     * @param[out] processing_frames_in remaining frames to process.
+     *
+     * @return 0 if success, negative error code otherwise.
+     */
+    int doProcessFrames(const void *buffer, ssize_t frames,
+                        ssize_t *processed_frames,
+                        ssize_t *processing_frames_in);
+
+    /**
+     * Read frames from echo reference buffer and update echo delay.
+     *
+     * @param[in] frames to read from echo reference.
+     * @param[in] preprocessor handle on AEC preprocessor.
+     * @param[in] reference echo reference structure.
+     *
+     * @return OK if successfull operation, error code otherwise.
+     */
+    status_t pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
+                               struct echo_reference_itfe *reference);
+
+    /**
+     * Update the echo reference with the frames read from the audio device.
+     *
+     * @param[in] frames number of frames ready to process by AEC.
+     * @param[in] reference echo reference handle.
+     *
+     * @return 0 if successfull operation, error code otherwise.
+     */
+    int32_t updateEchoReference(ssize_t frames, struct echo_reference_itfe *reference);
+
+    /**
+     * Set preprocessor echo delay.
+     *
+     * @param[out] handle preprocessor handle.
+     * @param[out] delay_us delay of the echo in micro seconds.
+     *
+     * @return OK if successfull operation, error code otherwise.
+     */
+    status_t setPreprocessorEchoDelay(effect_handle_t handle, int32_t delay_us);
+
+    /**
+     * Set preprocessor parameters.
+     *
+     * @param[out] handle preprocessor handle
+     * @param[out] param parameters to send to the preprocessor.
+     *
+     * @return OK if successfull operation, error code otherwise.
+     */
+    status_t setPreprocessorParam(effect_handle_t handle, effect_param_t *param);
+
+    /**
+     * Get the capture delay.
+     * It computes the time between the data were read and retrieved and sets the value in the
+     * echo reference structure.
+     *
+     * @param[in|out] buffer echo reference structure.
+     */
+    void getCaptureDelay(struct echo_reference_buffer *buffer);
+
+    status_t checkAndAddAudioEffectsL();
+    status_t checkAndRemoveAudioEffectsL();
+
+    /**
+     * amount of input frames lost in the audio driver (i.e. not provided on time to client).
+     */
+    unsigned int _framesLost;
+    AudioSystem::audio_in_acoustics _acoustics; /**< acoustic effects status. */
+
+    ssize_t _framesIn; /**< frames available in stream input buffer. */
+
+    /**
+     * This variable represents the number of frames of in mProcessingBuffer.
+     */
+    ssize_t _processingFramesIn;
+
+    /**
+     * This variable is a dynamic buffer and contains raw data read from input device.
+     * It is used as input buffer before application of SW accoustics effects.
+     */
+    int16_t *_processingBuffer;
+
+    /**
+     * This variable represents the size in frames of in mProcessingBuffer.
+     */
+    ssize_t _processingBufferSizeInFrames;
+
+    /**
+     * This variable represents the number of frames of in mReferenceBuffer.
+     */
+    ssize_t _referenceFramesIn;
+
+    /**
+     * This variable is a dynamic buffer and contains the data used as reference for AEC and
+     * which are read from AudioEffectHandle::mEchoReference.
+     */
+    int16_t *_referenceBuffer;
+
+    /**
+     * This variable represents the size in frames of in mReferenceBuffer.
+     */
+    ssize_t _referenceBufferSizeInFrames;
+
+    /**
+     * It is vector which contains the handlers to accoustics effects.
+     */
+    Vector<AudioEffectHandle> _preprocessorsHandlerList;
+
+    char *_hwBuffer; /**< buffer in which samples are read from audio device. */
+    ssize_t _hwBufferSize; /**< Size of the buffer in which samples are read from audio device. */
+};
+}         // namespace android
