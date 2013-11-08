@@ -52,17 +52,6 @@ public:
     }
 
     /**
-     * Checks whether an effect is supported by this route.
-     * From IStreamRoute, intended to be called by the stream to checks if an effect
-     * is supported by the route itself.
-     *
-     * @param[in] effect Audio Effect Name supported by this route.
-     *
-     * @return true is effect is supported, false otherwise.
-     */
-    virtual bool isEffectSupported(const std::string &effect) const;
-
-    /**
      * Get Audio Device.
      * From IStreamRoute, intended to be called by the stream.
      *
@@ -139,17 +128,17 @@ public:
      * It overrides the applicability of Route Parameter Manager to apply the port strategy
      * and to match the mask of the stream requesting to be routed.
      *
-     * @param mask Mask of the stream candidate for using this route.
+     * @param stream candidate for using this route.
      *
      * @return true if the route is applicable, false otherwise.
      */
-    virtual bool isApplicable(uint32_t mask = 0) const;
+    virtual bool isApplicable(const Stream *stream = NULL) const;
 
     /**
      * Returns the applicable mask of the route
      * Note that applicable mask has a different meaning according to the direction:
      * -inputSource for input route
-     * -outputflags for output route
+     * -outputflags for output route.
      */
     uint32_t getApplicableMask() const
     {
@@ -229,9 +218,20 @@ protected:
     Stream *_newStream; /**< New stream that will be attached to this route after rerouting. */
 
     std::list<std::string> _effectSupported; /**< list of name of supported effects. */
+    uint32_t _effectSupportedMask; /**< Mask of supported effects. */
 private:
     /**
-     * Get the id of current pcm device
+     * Checks if route implements all effects in the mask.
+     *
+     * @param[in] effectsMask mask of the effects to check.
+     *
+     * @return true if all effects in the mask are supported by the stream route,
+     *          false otherwise
+     */
+    bool implementsEffects(uint32_t effectsMask) const;
+
+    /**
+     * Get the id of current pcm device.
      *
      * @return the id of pcm device.
      */
@@ -241,7 +241,7 @@ private:
     }
 
     /**
-     * Get the audio card name
+     * Get the audio card name.
      *
      * @return the name of audio card.
      */
@@ -252,14 +252,14 @@ private:
     }
 
     /**
-     * Attach a new stream to current audio route
+     * Attach a new stream to current audio route.
      *
      * @return status. OK if successful, error code otherwise.
      */
     android::status_t attachNewStream();
 
     /**
-     * Dettach a stream from current audio route
+     * Dettach a stream from current audio route.
      *
      * @return status. OK if successful, error code otherwise.
      */

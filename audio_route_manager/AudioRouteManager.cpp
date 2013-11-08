@@ -389,7 +389,7 @@ bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
         Stream *stream = *it;
         if (stream->isStarted() && !stream->isNewRouteAvailable()) {
 
-            if (route->isApplicable(stream->getApplicabilityMask())) {
+            if (route->isApplicable(stream)) {
 
                 ALOGV("%s: stream route %s is applicable", __FUNCTION__, route->getName().c_str());
                 route->setStream(stream);

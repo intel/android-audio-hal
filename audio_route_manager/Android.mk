@@ -64,7 +64,8 @@ audio_route_manager_static_lib += \
     libstream_static \
     libsamplespec_static \
     libparametermgr_static \
-    libaudio_comms_utilities
+    libaudio_comms_utilities \
+    liblpepreprocessinghelper
 
 audio_route_manager_static_lib_host += \
     $(foreach lib, $(audio_route_manager_static_lib), $(lib)_host)

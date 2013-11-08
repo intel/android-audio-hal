@@ -39,16 +39,6 @@ public:
     virtual const android_audio_legacy::SampleSpec getSampleSpec() const = 0;
 
     /**
-     * Checks if effect is supported by the stream route.
-     * The route manager will always prefer using HW effect rather than SW effects.
-     *
-     * @param[in] name: name of the effect.
-     *
-     * @return true if the effect supported by the stream route, false otherwise.
-     */
-    virtual bool isEffectSupported(const std::string &effect) const = 0;
-
-    /**
      * Get output silence to be appended before playing.
      * Some route may require to append silence in the ring buffer as powering on of components
      * involved in this route may take a while, and audio sample might be lost. It will result in

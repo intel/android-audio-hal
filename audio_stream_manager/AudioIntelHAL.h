@@ -401,6 +401,12 @@ private:
     status_t stopStream(AudioStream *stream);
 
     /**
+     * Handle a change of requested effect.
+     * It results in a routing reconsideration.
+     */
+    void updateRequestedEffect();
+
+    /**
      * Update devices attribute of the stream.
      *
      * @param[in] stream: stream from which the new device[s] is[are] requested.

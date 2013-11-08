@@ -248,7 +248,7 @@ public:
      * Update Input Sources.
      * It computes the input sources criteria as a mask of input source of all active input streams.
      */
-    void updateActiveInputSources();
+    void updateActiveInputSources() { updateApplicabilityMask(false); }
     /**
      * Get Input Sources.
      *
@@ -263,7 +263,7 @@ public:
      * Update Output flags.
      * It computes the output flags criteria as a mask of output flags of all active output streams.
      */
-    void updateActiveOutputFlags();
+    void updateActiveOutputFlags() { updateApplicabilityMask(true); }
     /**
      * Get Output flags.
      * return computed output flags maks ie mask of output flags of all active output streams.
@@ -312,6 +312,16 @@ public:
     void stopStream(const AudioStream *stoppedStream);
 
     /**
+     * Update the requested preproc criterion.
+     * Only one input stream may be active at one time.
+     * However, it does not mean that both are not started, but only one has a valid
+     * device given by the policy so that the other may not be routed.
+     * Find this active stream with valid device and set the requested preprocessor
+     * according to what was requested from this input.
+     */
+    void updatePreprocessorRequestedByActiveInput();
+
+    /**
      * Set the BT headset negociated Band Type.
      * Band Type results of the negociation between device and the BT HFP headset.
      *
@@ -319,6 +329,15 @@ public:
      */
     bool hasPlatformStateChanged(int iEvents = -1) const;
 private:
+    /**
+     * Update the applicability mask.
+     * This function parses all active streams and concatenate their mask into a bit field.
+     *
+     * @param[in] isOut direction of streams.
+     *
+     */
+    void updateApplicabilityMask(bool isOut);
+
     /**
      * Load the criterion configuration file.
      *
@@ -490,6 +509,7 @@ private:
     static const char *const CSV_BAND; /**< CSV Band criterion name. */
     static const char *const VOIP_BAND; /**< VoIP band criterion name. */
     static const char *const MIC_MUTE; /**< Mic Mute criterion name. */
+    static const char *const _preProcessorRequestedByActiveInput; /**< requested preproc. */
 
     /**
      * provide a compile time error if no specialization is provided for a given type.

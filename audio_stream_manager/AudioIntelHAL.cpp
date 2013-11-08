@@ -441,6 +441,20 @@ status_t AudioIntelHAL::stopStream(AudioStream *stream)
     return OK;
 }
 
+void AudioIntelHAL::updateRequestedEffect()
+{
+    _pfwLock.writeLock();
+
+    _platformState->updatePreprocessorRequestedByActiveInput();
+
+    // Set Criteria to meta PFW
+    _platformState->applyPlatformConfiguration();
+
+    _pfwLock.unlock();
+
+    getStreamInterface()->reconsiderRouting();
+}
+
 
 void AudioIntelHAL::checkAndSetRoutingStreamParameter(AudioStream *stream, AudioParameter &param)
 {

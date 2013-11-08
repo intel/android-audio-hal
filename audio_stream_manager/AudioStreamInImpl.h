@@ -142,45 +142,7 @@ protected:
      */
     virtual android::status_t detachRouteL();
 private:
-    bool isEffectSupportedByRoute(effect_handle_t effect) const;
-
     ssize_t readHwFrames(void *buffer, size_t frames);
-
-    /**
-     * Request to add an effect.
-     * It appends the effect to the stream list of requested effects
-     * and add the effect only if the stream is already attached to the route.
-     *
-     * @param[in] pStream input stream pointer.
-     * @param[in] effect structure of the effect to add.
-     *
-     * @return status_t OK upon succes, error code otherwise.
-     */
-    status_t addAudioEffectRequest_l(effect_handle_t effect);
-
-    /**
-     * Request to remove an effect.
-     * It removes the effect from the stream list of requested effects
-     * and add the effect only if the stream is still attached to the route.
-     *
-     * @param[in] pStream input stream pointer.
-     * @param[in] effect structure of the effect to add.
-     *
-     * @return status_t OK upon succes, error code otherwise.
-     */
-    status_t removeAudioEffectRequest(effect_handle_t effect);
-
-    /**
-     * Add an effect.
-     * When calling this function, the stream must be already attached to an audio route.
-     * If audio route supports this effect in HW, it bails out with NO_ERROR.
-     *
-     * @param[in] pStream input stream pointer.
-     * @param[in] effect structure of the effect to add.
-     *
-     * @return status_t OK upon succes, error code otherwise.
-     */
-    status_t addAudioEffect_l(effect_handle_t effect);
 
     /**
      * Performs the removal of an effect.
@@ -191,7 +153,7 @@ private:
      *
      * @return status_t OK upon succes, error code otherwise.
      */
-    status_t removeAudioEffect_l(effect_handle_t effect);
+    status_t removeSwAudioEffectL(effect_handle_t effect);
 
     /**
      * Add effect on the stream in routing locked context.
@@ -201,28 +163,39 @@ private:
      *
      * @return status_t OK upon succes, error code otherwise.
      */
-    status_t doAddAudioEffect_l(effect_handle_t effect,
-                                struct echo_reference_itfe *reference = NULL);
-
-    /**
-     * Removes an effect from the stream in routing locked context.
-     * It removes an audio effect from the input stream chain.
-     *
-     * @param[in] structure of the effect to add.
-     *
-     * @return status_t OK upon succes, error code otherwise.
-     */
-    status_t doRemoveAudioEffect_l(effect_handle_t effect);
+    status_t addSwAudioEffectL(effect_handle_t effect,
+                               struct echo_reference_itfe *reference = NULL);
 
     /**
      * Retrieve audio effect name from effect handle.
      *
-     * @param[in] effect: handle in the effect.
+     * @param[in] effect: handle in the effect
      * @param[out] name: effect name.
      *
      * @return OK if name retrieved, error code otherwise.
      */
     status_t getAudioEffectNameFromHandle(effect_handle_t effect, std::string &name) const;
+
+    /**
+     * Retrieve audio effect implementor name from effect handle.
+     *
+     * @param[in] effect: handle in the effect.
+     * @param[out] implementor: effect implementor.
+     *
+     * @return OK if implementor retrieved, error code otherwise.
+     */
+    status_t getAudioEffectImplementorFromHandle(effect_handle_t effect,
+                                                 std::string &implementor) const;
+
+    /**
+     * Checks if the requested effect is a HW supported effect.
+     * Note that this function uses the implementor field to detect LPE Hw effect.
+     *
+     * @param[in] effect: handle in the effect
+     *
+     * @return true if HW effect, false if SW.
+     */
+    bool isHwEffectL(effect_handle_t effect);
 
     /**
      * Checks if effect is AEC.
@@ -260,7 +233,6 @@ private:
             return effectHandle._preprocessor == effect;
         }
     };
-    std::list<effect_handle_t> requestedEffects; /**< list of effects requested by upper layer. */
 
     /**
      * Reset the amount of input frames lost in the audio driver since the last call of
@@ -348,22 +320,22 @@ private:
     /**
      * Set preprocessor echo delay.
      *
-     * @param[out] handle preprocessor handle.
+     * @param[out] effect preprocessor handle.
      * @param[out] delay_us delay of the echo in micro seconds.
      *
      * @return OK if successfull operation, error code otherwise.
      */
-    status_t setPreprocessorEchoDelay(effect_handle_t handle, int32_t delay_us);
+    status_t setPreprocessorEchoDelay(effect_handle_t effect, int32_t delay_us);
 
     /**
      * Set preprocessor parameters.
      *
-     * @param[out] handle preprocessor handle
+     * @param[out] effect preprocessor handle
      * @param[out] param parameters to send to the preprocessor.
      *
      * @return OK if successfull operation, error code otherwise.
      */
-    status_t setPreprocessorParam(effect_handle_t handle, effect_param_t *param);
+    status_t setPreprocessorParam(effect_handle_t effect, effect_param_t *param);
 
     /**
      * Get the capture delay.
@@ -373,9 +345,6 @@ private:
      * @param[in|out] buffer echo reference structure.
      */
     void getCaptureDelay(struct echo_reference_buffer *buffer);
-
-    status_t checkAndAddAudioEffectsL();
-    status_t checkAndRemoveAudioEffectsL();
 
     /**
      * amount of input frames lost in the audio driver (i.e. not provided on time to client).
@@ -418,11 +387,13 @@ private:
     ssize_t _referenceBufferSizeInFrames;
 
     /**
-     * It is vector which contains the handlers to accoustics effects.
+     * It is vector which contains the handlers to accoustics SW effects.
      */
     Vector<AudioEffectHandle> _preprocessorsHandlerList;
 
     char *_hwBuffer; /**< buffer in which samples are read from audio device. */
     ssize_t _hwBufferSize; /**< Size of the buffer in which samples are read from audio device. */
+
+    static const std::string _hwEffectImplementor; /**< Implementor name for HW effects. */
 };
 }         // namespace android

@@ -39,6 +39,7 @@ public:
     Stream()
         : _currentStreamRoute(NULL),
           _newStreamRoute(NULL),
+          _effectsRequestedMask(0),
           _isRouted(false)
     {}
 
@@ -99,14 +100,26 @@ public:
     uint32_t getOutputSilencePrologMs() const;
 
     /**
-     * Checks if effect is supported by the stream.
-     * The route manager will always prefer using HW effect rather than SW effects.
+     * Adds an effect to the mask of requested effect.
      *
-     * @param[in] name: name of the effect.
-     *
-     * @return true if the effect supported by the stream, false otherwise.
+     * @param[in] effectId Id of the requested effect.
      */
-    virtual bool isEffectSupported(const std::string &effect) const;
+    void addRequestedEffect(uint32_t effectId);
+
+    /**
+     * Removes an effect from the mask of requested effect.
+     *
+     * @param[in] effectId Id of the requested effect.
+     */
+    void removeRequestedEffect(uint32_t effectId);
+
+    /**
+     * Get effects requested for this stream.
+     * The route manager will select the route that supports all requested effects.
+     *
+     * @return mask with Id of requested effects
+     */
+    uint32_t getEffectRequested() const { return _effectsRequestedMask; }
 
     /**
      * Get the sample specifications of the stream route.
@@ -229,6 +242,8 @@ private:
      * Sample specifications of the route assigned to the stream.
      */
     android_audio_legacy::SampleSpec _routeSampleSpec;
+
+    uint32_t _effectsRequestedMask; /**< Mask of requested effects. */
 
     bool _isRouted; /**< flag indicating the stream is routed and device is ready to use. */
 };

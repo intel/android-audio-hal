@@ -91,6 +91,8 @@ const char *const AudioPlatformState::STATE_CHANGED = "StatesChanged";
 const char *const AudioPlatformState::CSV_BAND = "CsvBandType";
 const char *const AudioPlatformState::VOIP_BAND = "VoIPBandType";
 const char *const AudioPlatformState::MIC_MUTE = "MicMute";
+const char *const AudioPlatformState::_preProcessorRequestedByActiveInput =
+    "PreProcessorRequestedByActiveInput";
 
 template <>
 struct AudioPlatformState::parameterManagerElementSupported<Criterion> {};
@@ -465,16 +467,22 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
     it->second->setValue(platformEventChanged);
 }
 
-void AudioPlatformState::updateActiveInputSources()
+void AudioPlatformState::updatePreprocessorRequestedByActiveInput()
 {
-    uint32_t inputSources = updateStreamsMask(false);
-    setValue(inputSources, INPUT_SOURCES);
-}
+    StreamListConstIterator it;
 
-void AudioPlatformState::updateActiveOutputFlags()
-{
-    uint32_t outputFlags = updateStreamsMask(true);
-    setValue(outputFlags, OUTPUT_FLAGS);
+    for (it = _activeStreamsList[false].begin(); it != _activeStreamsList[false].end(); ++it) {
+
+        const AudioStream *stream = *it;
+        if (stream->getDevices() != 0) {
+
+            ALOGD("%s: found valid input stream, effectResMask=0x%X", __FUNCTION__,
+                  stream->getEffectRequested());
+            setValue(stream->getEffectRequested(), _preProcessorRequestedByActiveInput);
+            return;
+        }
+    }
+    setValue(0, _preProcessorRequestedByActiveInput);
 }
 
 uint32_t AudioPlatformState::updateStreamsMask(bool isOut)
@@ -490,12 +498,21 @@ uint32_t AudioPlatformState::updateStreamsMask(bool isOut)
     return streamsMask;
 }
 
+void AudioPlatformState::updateApplicabilityMask(bool isOut)
+{
+    uint32_t applicabilityMask = updateStreamsMask(isOut);
+    setValue(applicabilityMask, isOut ? OUTPUT_FLAGS : INPUT_SOURCES);
+}
+
 void AudioPlatformState::startStream(const AudioStream *startedStream)
 {
     AUDIOCOMMS_ASSERT(startedStream != NULL, "NULL stream");
     bool isOut = startedStream->isOut();
     _activeStreamsList[isOut].push_back(startedStream);
-    isOut ? updateActiveOutputFlags() : updateActiveInputSources();
+    updateApplicabilityMask(isOut);
+    if (!isOut) {
+        updatePreprocessorRequestedByActiveInput();
+    }
 }
 
 void AudioPlatformState::stopStream(const AudioStream *stoppedStream)
@@ -503,7 +520,10 @@ void AudioPlatformState::stopStream(const AudioStream *stoppedStream)
     AUDIOCOMMS_ASSERT(stoppedStream != NULL, "NULL stream");
     bool isOut = stoppedStream->isOut();
     _activeStreamsList[isOut].remove(stoppedStream);
-    isOut ? updateActiveOutputFlags() : updateActiveInputSources();
+    updateApplicabilityMask(isOut);
+    if (!isOut) {
+        updatePreprocessorRequestedByActiveInput();
+    }
 }
 
 void AudioPlatformState::clearPlatformStateEvents()

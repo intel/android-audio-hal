@@ -24,6 +24,7 @@
 
 #include "AudioStreamInImpl.h"
 #include <AudioCommsAssert.hpp>
+#include <EffectHelper.hpp>
 #include <algorithm>
 #include <cutils/properties.h>
 #include <dlfcn.h>
@@ -42,6 +43,8 @@ using namespace std;
 
 namespace android_audio_legacy
 {
+
+const std::string AudioStreamInImpl::_hwEffectImplementor = "IntelLPE";
 
 AudioStreamInImpl::AudioStreamInImpl(AudioIntelHAL *parent,
                                      AudioSystem::audio_in_acoustics audio_acoustics)
@@ -355,18 +358,12 @@ status_t AudioStreamInImpl::attachRouteL()
 
         return status;
     }
-    // Checks if any effect requested to add them
-    checkAndAddAudioEffectsL();
-
     return allocateHwBuffer();
 }
 
 status_t AudioStreamInImpl::detachRouteL()
 {
     freeAllocatedBuffers();
-
-    // Checks if any effect requested to remove them
-    checkAndRemoveAudioEffectsL();
     return AudioStream::detachRouteL();
 }
 
@@ -375,71 +372,67 @@ size_t AudioStreamInImpl::bufferSize() const
     return getBufferSize();
 }
 
+bool AudioStreamInImpl::isHwEffectL(effect_handle_t effect)
+{
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+
+    string implementor;
+    status_t err = getAudioEffectImplementorFromHandle(effect, implementor);
+    if (err != NO_ERROR) {
+
+        return false;
+    }
+    return implementor == _hwEffectImplementor;
+}
+
 status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
 {
     ALOGD("%s (effect=%p)", __FUNCTION__, effect);
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     // Called from different context than the stream,
-    // so Device Lock must be held
-    // take the device lock here to protect the members of the stream.
+    // so stream Lock must be held
     AutoW lock(_streamLock);
 
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
+    if (isHwEffectL(effect)) {
 
-    ALOGD("%s (effect=%p)", __FUNCTION__, effect);
-    status_t err = addAudioEffectRequest_l(effect);
-    if (err != NO_ERROR) {
+        ALOGD("%s HW Effect requested(effect=%p)", __FUNCTION__, effect);
+        /**
+         * HW Effects management
+         */
+        string name;
+        status_t err = getAudioEffectNameFromHandle(effect, name);
+        if (err != NO_ERROR) {
 
-        return err;
+            return BAD_VALUE;
+        }
+        addRequestedEffect(EffectHelper::convertEffectNameToProcId(name));
+        if (isStarted()) {
+
+            ALOGD("%s stream running, reconsider routing", __FUNCTION__);
+            // If the stream is routed, force a reconsider routing to take effect into account
+            _streamLock.unlock();
+            _parent->updateRequestedEffect();
+            _streamLock.writeLock();
+        }
+    } else {
+
+        ALOGD("%s SW Effect requested(effect=%p)", __FUNCTION__, effect);
+        /**
+         * SW Effects management
+         */
+        if (isAecEffect(effect)) {
+
+            struct echo_reference_itfe *stReference = NULL;
+            stReference = _parent->getEchoReference(streamSampleSpec());
+            return addSwAudioEffectL(effect, stReference);
+        }
+        addSwAudioEffectL(effect);
     }
 
-    // First check of the stream is already started
-    // (ie already attached to an Audio Stream Route)
-    if (!isRoutedL()) {
-
-        // Stream is not started, do not add the effect, it will be done
-        // when the stream will be attached to the stream route
-        // Bailing out
-        ALOGD("%s (effect=%p), stream not started, bailing out", __FUNCTION__, effect);
-        return NO_ERROR;
-    }
-    return addAudioEffect_l(effect);
-}
-
-bool AudioStreamInImpl::isEffectSupportedByRoute(effect_handle_t effect) const
-{
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
-
-    ALOGD("%s (effect=%p)", __FUNCTION__, effect);
-    string name;
-    status_t err = getAudioEffectNameFromHandle(effect, name);
-    AUDIOCOMMS_ASSERT(err == NO_ERROR, "Could not retrieve name from handle");
-
-    if (isEffectSupported(name)) {
-
-        // Handled by the route itself...
-        // @todo: set the right parameter to inform effect is requested
-        ALOGD("%s: route attached to the stream embedds effect", __FUNCTION__);
-        return true;
-    }
-    return false;
-}
-
-status_t AudioStreamInImpl::addAudioEffect_l(effect_handle_t effect)
-{
-    if (isEffectSupportedByRoute(effect)) {
-
-        return NO_ERROR;
-    }
-
-    // Route does not provide any effect, use SW effects
-    if (isAecEffect(effect)) {
-
-        struct echo_reference_itfe *stReference = NULL;
-        stReference = _parent->getEchoReference(streamSampleSpec());
-        return doAddAudioEffect_l(effect, stReference);
-    }
-    return doAddAudioEffect_l(effect);
+    return NO_ERROR;
 }
 
 status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
@@ -450,77 +443,47 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
     // so device Lock must be held.
     AutoW lock(_streamLock);
 
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
-    ALOGD("%s (effect=%p)", __FUNCTION__, effect);
-    status_t err = removeAudioEffectRequest(effect);
-    if (err != NO_ERROR) {
+    if (isHwEffectL(effect)) {
 
-        return err;
+        ALOGD("%s HW Effect requested(effect=%p)", __FUNCTION__, effect);
+        /**
+         * HW Effects management
+         */
+        string name;
+        status_t err = getAudioEffectNameFromHandle(effect, name);
+        if (err != NO_ERROR) {
+
+            return BAD_VALUE;
+        }
+        removeRequestedEffect(EffectHelper::convertEffectNameToProcId(name));
+        if (isStarted()) {
+
+            ALOGD("%s stream running, reconsider routing", __FUNCTION__);
+            // If the stream is routed,
+            // force a reconsider routing to take effect removal into account
+            _streamLock.unlock();
+            _parent->updateRequestedEffect();
+            _streamLock.writeLock();
+        }
+    } else {
+
+        ALOGD("%s SW Effect requested(effect=%p)", __FUNCTION__, effect);
+        /**
+         * SW Effects management
+         */
+        removeSwAudioEffectL(effect);
     }
-
-    // Stream is not started, do not remove the effect, it has been already done
-    // when the stream was detached from the stream route
-    if (!isRoutedL()) {
-
-        ALOGD("%s (effect=%p) stream not attached to any stream route, effect already removed",
-              __FUNCTION__, effect);
-        return NO_ERROR;
-    }
-    return removeAudioEffect_l(effect);
-}
-
-status_t AudioStreamInImpl::removeAudioEffect_l(effect_handle_t effect)
-{
-    if (isEffectSupportedByRoute(effect)) {
-
-        return NO_ERROR;
-    }
-    // Remove SW effects through the stream
-    return doRemoveAudioEffect_l(effect);
-}
-
-
-status_t AudioStreamInImpl::addAudioEffectRequest_l(effect_handle_t effect)
-{
-    AudioEffectsListIterator it;
-    it = std::find(requestedEffects.begin(), requestedEffects.end(), effect);
-    if (it != requestedEffects.end()) {
-
-        ALOGW("%s: effets already requested", __FUNCTION__);
-        return NO_ERROR;
-    }
-
-    ALOGD("%s list contains %d effects", __FUNCTION__, requestedEffects.size());
-    ALOGD("%s (effect=%p)", __FUNCTION__, effect);
-    requestedEffects.push_back(effect);
-    ALOGD("%s list contains %d effects", __FUNCTION__, requestedEffects.size());
     return NO_ERROR;
 }
 
-status_t AudioStreamInImpl::removeAudioEffectRequest(effect_handle_t effect)
-{
-
-    AudioEffectsListIterator it;
-    it = std::find(requestedEffects.begin(), requestedEffects.end(), effect);
-    if (it != requestedEffects.end()) {
-
-        // Remove element
-        ALOGD("%s (effect=%p)", __FUNCTION__, effect);
-        requestedEffects.erase(it);
-
-        // Done
-        return NO_ERROR;
-    }
-
-    ALOGD("%s (effect=%p) not found", __FUNCTION__, effect);
-    return BAD_VALUE;
-}
-
-status_t AudioStreamInImpl::doAddAudioEffect_l(effect_handle_t effect,
+status_t AudioStreamInImpl::addSwAudioEffectL(effect_handle_t effect,
                                                echo_reference_itfe *reference)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     // audio effects processing is very costy in term of CPU,
     // so useless to add the same effect more than one time
@@ -545,9 +508,10 @@ status_t AudioStreamInImpl::doAddAudioEffect_l(effect_handle_t effect,
     return NO_ERROR;
 }
 
-status_t AudioStreamInImpl::doRemoveAudioEffect_l(effect_handle_t effect)
+status_t AudioStreamInImpl::removeSwAudioEffectL(effect_handle_t effect)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     Vector<AudioEffectHandle>::iterator it;
     it = std::find_if(_preprocessorsHandlerList.begin(), _preprocessorsHandlerList.end(),
@@ -575,7 +539,8 @@ status_t AudioStreamInImpl::doRemoveAudioEffect_l(effect_handle_t effect)
 status_t AudioStreamInImpl::getAudioEffectNameFromHandle(effect_handle_t effect,
                                                          string &name) const
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
 
@@ -587,9 +552,26 @@ status_t AudioStreamInImpl::getAudioEffectNameFromHandle(effect_handle_t effect,
     return NO_ERROR;
 }
 
+status_t AudioStreamInImpl::getAudioEffectImplementorFromHandle(effect_handle_t effect,
+                                                                string &implementor) const
+{
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    effect_descriptor_t desc;
+    if ((*effect)->get_descriptor(effect, &desc) != 0) {
+
+        ALOGE("%s: could not get effect descriptor", __FUNCTION__);
+        return BAD_VALUE;
+    }
+    ALOGE("%s: Name=%s", __FUNCTION__, desc.implementor);
+    implementor = string(desc.implementor);
+    return NO_ERROR;
+}
+
 bool AudioStreamInImpl::isAecEffect(effect_handle_t effect)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "Null effect handle");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
 
@@ -689,8 +671,9 @@ status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t pr
      * mReferenceFramesIn is updated with frames available in mReferenceBuffer */
     int32_t delay_us = updateEchoReference(frames, reference) / 1000;
 
-    AUDIOCOMMS_ASSERT(preprocessor != NULL && *preprocessor != NULL && reference != NULL,
-                      "Null preproc or reference");
+    AUDIOCOMMS_ASSERT(preprocessor != NULL, "Null preproc pointer");
+    AUDIOCOMMS_ASSERT(*preprocessor != NULL, "Null preproc");
+    AUDIOCOMMS_ASSERT(reference != NULL, "Null eference");
 
     if (_referenceFramesIn < frames) {
 
@@ -725,16 +708,18 @@ status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t pr
     return processingReturn;
 }
 
-status_t AudioStreamInImpl::setPreprocessorParam(effect_handle_t handle, effect_param_t *param)
+status_t AudioStreamInImpl::setPreprocessorParam(effect_handle_t effect, effect_param_t *param)
 {
-    AUDIOCOMMS_ASSERT(handle != NULL && param != NULL, "Null handle or param");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    AUDIOCOMMS_ASSERT(param != NULL, "Null param");
 
     status_t ret;
     uint32_t size = sizeof(int);
     AUDIOCOMMS_ASSERT(param->psize >= 1, "Invalid parameter size");
     uint32_t psize = ((param->psize - 1) / sizeof(int) + 1) * sizeof(int) + param->vsize;
 
-    ret = (*handle)->command(handle,
+    ret = (*effect)->command(effect,
                              EFFECT_CMD_SET_PARAM,
                              sizeof(effect_param_t) + psize,
                              param,
@@ -744,9 +729,10 @@ status_t AudioStreamInImpl::setPreprocessorParam(effect_handle_t handle, effect_
     return ret == 0 ? param->status : ret;
 }
 
-status_t AudioStreamInImpl::setPreprocessorEchoDelay(effect_handle_t handle, int32_t delayInUs)
+status_t AudioStreamInImpl::setPreprocessorEchoDelay(effect_handle_t effect, int32_t delayInUs)
 {
-    AUDIOCOMMS_ASSERT(handle != NULL, "Null effect handle");
+    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
+    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
     /** effect_param_t contains extensible field "data"
      * in our case, it is necessary to "allocate" memory to store
      * AEC_PARAM_ECHO_DELAY and delay_us as uint32_t
@@ -769,7 +755,7 @@ status_t AudioStreamInImpl::setPreprocessorEchoDelay(effect_handle_t handle, int
     data->aecEchoDelay = AEC_PARAM_ECHO_DELAY;
     data->delayUs = delayInUs;
 
-    return setPreprocessorParam(handle, param);
+    return setPreprocessorParam(effect, param);
 }
 
 status_t AudioStreamInImpl::allocateProcessingMemory(ssize_t frames)
@@ -796,28 +782,4 @@ status_t AudioStreamInImpl::allocateProcessingMemory(ssize_t frames)
     return NO_ERROR;
 }
 
-status_t AudioStreamInImpl::checkAndAddAudioEffectsL()
-{
-    ALOGD("%s list contains %d effects", __FUNCTION__, requestedEffects.size());
-
-    AudioEffectsListIterator it;
-
-    for (it = requestedEffects.begin(); it != requestedEffects.end(); ++it) {
-
-        addAudioEffect_l(*it);
-    }
-    return NO_ERROR;
-}
-
-status_t AudioStreamInImpl::checkAndRemoveAudioEffectsL()
-{
-    ALOGD("%s list contains %d effects", __FUNCTION__, requestedEffects.size());
-    AudioEffectsListIterator it;
-
-    for (it = requestedEffects.begin(); it != requestedEffects.end(); ++it) {
-
-        removeAudioEffect_l(*it);
-    }
-    return NO_ERROR;
-}
 }       // namespace android

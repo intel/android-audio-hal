@@ -75,7 +75,8 @@ audio_stream_manager_static_lib += \
     libparametermgr_static \
     libaudio_comms_utilities \
     libaudio_comms_convert \
-    libhalaudiodump
+    libhalaudiodump \
+    liblpepreprocessinghelper
 
 
 audio_stream_manager_static_lib_host += \
@@ -128,6 +129,7 @@ LOCAL_REQUIRED_MODULES := \
     audio.primary.$(TARGET_DEVICE) \
     audio_policy.$(TARGET_DEVICE) \
     audio.routemanager \
+    liblpepreprocessing \
     audio_criteria.conf
 
 include $(BUILD_PHONY_PACKAGE)

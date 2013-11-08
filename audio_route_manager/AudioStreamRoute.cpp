@@ -27,6 +27,7 @@
 #include <AudioUtils.h>
 #include <Stream.h>
 #include <StreamLib.h>
+#include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utils/Log.h>
 
@@ -169,8 +170,10 @@ void AudioStreamRoute::setStream(Stream *stream)
     _newStream->setNewStreamRoute(this);
 }
 
-bool AudioStreamRoute::isApplicable(uint32_t mask) const
+bool AudioStreamRoute::isApplicable(const Stream *stream) const
 {
+    AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
+    uint32_t mask = stream->getApplicabilityMask();
     ALOGV("%s: is Route %s applicable? ", __FUNCTION__, getName().c_str());
     ALOGV("%s: \t\t\t isOut=%s && uiMask=0x%X & _uiApplicableMask[%s]=0x%X", __FUNCTION__,
           isOut() ? "output" : "input",
@@ -178,7 +181,13 @@ bool AudioStreamRoute::isApplicable(uint32_t mask) const
           isOut() ? "output" : "input",
           _config.applicabilityMask);
 
-    return AudioRoute::isApplicable() && !isUsed() && (mask & _config.applicabilityMask);
+    return AudioRoute::isApplicable() && !isUsed() && (mask & _config.applicabilityMask) &&
+           implementsEffects(stream->getEffectRequested());
+}
+
+bool AudioStreamRoute::implementsEffects(uint32_t effectsMask) const
+{
+    return (_effectSupportedMask & effectsMask) == effectsMask;
 }
 
 status_t AudioStreamRoute::attachNewStream()
@@ -205,19 +214,9 @@ void AudioStreamRoute::detachCurrentStream()
     _currentStream = NULL;
 }
 
-bool AudioStreamRoute::isEffectSupported(const std::string &effect) const
-{
-    std::list<string>::const_iterator it;
-    it = std::find(_effectSupported.begin(), _effectSupported.end(), effect);
-    return it != _effectSupported.end();
-}
-
 void AudioStreamRoute::addEffectSupported(const std::string &effect)
 {
-    if (!isEffectSupported(effect)) {
-
-        _effectSupported.push_back(effect);
-    }
+    _effectSupportedMask |= EffectHelper::convertEffectNameToProcId(effect);
 }
 
 uint32_t AudioStreamRoute::getLatencyInUs() const

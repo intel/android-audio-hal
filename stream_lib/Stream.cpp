@@ -77,18 +77,21 @@ android::status_t Stream::detachRouteL()
     return android::OK;
 }
 
+void Stream::addRequestedEffect(uint32_t effectId)
+{
+    _effectsRequestedMask |= effectId;
+}
+
+void Stream::removeRequestedEffect(uint32_t effectId)
+{
+    _effectsRequestedMask &= ~effectId;
+}
+
 uint32_t Stream::getOutputSilencePrologMs() const
 {
     AUDIOCOMMS_ASSERT(_currentStreamRoute != NULL, "NULL route pointer");
     return _currentStreamRoute->getOutputSilencePrologMs();
 }
-
-bool Stream::isEffectSupported(const string &effect) const
-{
-    AUDIOCOMMS_ASSERT(_currentStreamRoute != NULL, "NULL route pointer");
-    return _currentStreamRoute->isEffectSupported(effect);
-}
-
 
 void Stream::resetNewStreamRoute()
 {
