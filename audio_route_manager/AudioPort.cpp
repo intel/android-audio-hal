@@ -48,7 +48,6 @@ AudioPort::~AudioPort()
 void AudioPort::resetAvailability()
 {
     _isUsed = false;
-    _isBlocked = false;
     _routeAttached[Direction::Output] = NULL;
     _routeAttached[Direction::Input] = NULL;
 }

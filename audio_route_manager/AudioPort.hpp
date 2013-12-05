@@ -67,8 +67,10 @@ public:
     /**
      * Resets the availability of the port.
      *
-     * It not only resets the availability of the port (i.e. blocking and in use attribute)
+     * It not only resets the used attribute of the port
      * but also the pointers on the routes using this port.
+     * It does not reset exclusive access variable of the route parameter manager (as blocked
+     * variable).
      */
     virtual void resetAvailability();
 
@@ -104,6 +106,6 @@ private:
 
     std::list<AudioRoute *> _routeList; /**< list of routes using potentially this port. */
 
-    bool _isBlocked; /**< blocked attribute. */
+    bool _isBlocked; /**< blocked attribute, exclusive access to route parameter manager plugin. */
     bool _isUsed; /**< used attribute. */
 };
