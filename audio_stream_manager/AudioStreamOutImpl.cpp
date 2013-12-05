@@ -26,7 +26,7 @@
 #endif
 #define LOG_TAG "AudioStreamOutImplAlsa"
 
-#include "AudioStreamOutImpl.h"
+#include "AudioStreamOutImpl.hpp"
 
 #include <AudioCommsAssert.hpp>
 #include <cutils/properties.h>
@@ -37,9 +37,9 @@
 namespace android_audio_legacy
 {
 
-const uint32_t AudioStreamOutImpl::MAX_AGAIN_RETRY = 2;
-const uint32_t AudioStreamOutImpl::WAIT_BEFORE_RETRY_US = 10000; // 10ms
-const uint32_t AudioStreamOutImpl::USEC_PER_MSEC = 1000;
+const uint32_t AudioStreamOutImpl::_maxAgainRetry = 2;
+const uint32_t AudioStreamOutImpl::_waitBeforeRetryUs = 10000; // 10ms
+const uint32_t AudioStreamOutImpl::_usecPerMsec = 1000;
 
 AudioStreamOutImpl::AudioStreamOutImpl(AudioIntelHAL *parent)
     : AudioStream(parent),
@@ -153,7 +153,7 @@ status_t AudioStreamOutImpl::attachRouteL()
     if (silenceMs) {
 
         // Allocate a 1Ms buffer in stack
-        uint32_t bufferSizeInFrames = routeSampleSpec().convertUsecToframes(1 * USEC_PER_MSEC);
+        uint32_t bufferSizeInFrames = routeSampleSpec().convertUsecToframes(1 * _usecPerMsec);
         void *silenceBuffer = alloca(routeSampleSpec().convertFramesToBytes(bufferSizeInFrames));
         memset(silenceBuffer, 0, routeSampleSpec().convertFramesToBytes(bufferSizeInFrames));
 

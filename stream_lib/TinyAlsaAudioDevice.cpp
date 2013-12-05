@@ -22,10 +22,10 @@
  */
 #define LOG_TAG "TinyAlsaAudioDevice"
 
-#include "TinyAlsaAudioDevice.h"
-#include <StreamRouteConfig.h>
-#include <AudioUtils.h>
-#include <SampleSpec.h>
+#include "TinyAlsaAudioDevice.hpp"
+#include <StreamRouteConfig.hpp>
+#include <AudioUtils.hpp>
+#include <SampleSpec.hpp>
 #include <AudioCommsAssert.hpp>
 #include <hardware_legacy/power.h>
 #include <cutils/log.h>
@@ -33,7 +33,7 @@
 using android_audio_legacy::SampleSpec;
 using android_audio_legacy::AudioUtils;
 
-const char *const TinyAlsaAudioDevice::POWER_LOCK_TAG = "AudioDevice";
+const char *const TinyAlsaAudioDevice::_powerLockTag = "AudioDevice";
 
 pcm *TinyAlsaAudioDevice::getPcmDevice()
 {
@@ -125,10 +125,10 @@ android::status_t TinyAlsaAudioDevice::close()
 
 void TinyAlsaAudioDevice::acquirePowerLock()
 {
-    acquire_wake_lock(PARTIAL_WAKE_LOCK, POWER_LOCK_TAG);
+    acquire_wake_lock(PARTIAL_WAKE_LOCK, _powerLockTag);
 }
 
 void TinyAlsaAudioDevice::releasePowerLock()
 {
-    release_wake_lock(POWER_LOCK_TAG);
+    release_wake_lock(_powerLockTag);
 }

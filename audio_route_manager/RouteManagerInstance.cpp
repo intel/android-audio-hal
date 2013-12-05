@@ -20,7 +20,7 @@
  * express and approved by Intel in writing.
  *
  */
-#include "RouteManagerInstance.h"
+#include "RouteManagerInstance.hpp"
 
 using namespace std;
 using namespace NInterfaceProvider;

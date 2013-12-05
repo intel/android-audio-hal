@@ -22,9 +22,9 @@
  */
 #define LOG_TAG "RouteManager/Port"
 
-#include "AudioPort.h"
-#include "AudioPortGroup.h"
-#include "AudioRoute.h"
+#include "AudioPort.hpp"
+#include "AudioPortGroup.hpp"
+#include "AudioRoute.hpp"
 #include <AudioCommsAssert.hpp>
 #include <utils/Log.h>
 

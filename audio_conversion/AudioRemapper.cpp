@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "AudioRemapper"
 
-#include "AudioRemapper.h"
+#include "AudioRemapper.hpp"
 #include <cutils/log.h>
 
 using namespace android;

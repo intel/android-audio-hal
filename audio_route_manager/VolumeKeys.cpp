@@ -22,20 +22,20 @@
  */
 #define LOG_TAG "RouteManager/VolumeKeys"
 
-#include "VolumeKeys.h"
+#include "VolumeKeys.hpp"
 #include <utils/Log.h>
 #include <fcntl.h>
 
 namespace android_audio_legacy
 {
 
-const char *const VolumeKeys::GPIO_KEYS_WAKEUP_ENABLE =
+const char *const VolumeKeys::_gpioKeysWakeupEnable =
     "/sys/devices/platform/gpio-keys/enabled_wakeup";
-const char *const VolumeKeys::GPIO_KEYS_WAKEUP_DISABLE =
+const char *const VolumeKeys::_gpioKeysWakeupDisable =
     "/sys/devices/platform/gpio-keys/disabled_wakeup";
 
-const char *const VolumeKeys::KEY_VOLUMEDOWN = "114";
-const char *const VolumeKeys::KEY_VOLUMEUP = "115";
+const char *const VolumeKeys::_keyVolumeDown = "114";
+const char *const VolumeKeys::_keyVolumeUp = "115";
 
 bool VolumeKeys::_wakeupEnabled = false;
 
@@ -52,16 +52,16 @@ int VolumeKeys::wakeup(bool isEnabled)
     int rc;
 
     const char *const gpioKeysWakeup =
-        isEnabled ? GPIO_KEYS_WAKEUP_ENABLE : GPIO_KEYS_WAKEUP_DISABLE;
+        isEnabled ? _gpioKeysWakeupEnable : _gpioKeysWakeupDisable;
     fd = open(gpioKeysWakeup, O_RDWR);
     if (fd < 0) {
         ALOGE("Cannot open sysfs gpio-keys interface (%d)", fd);
         goto return_error;
     }
-    rc = write(fd, KEY_VOLUMEDOWN, sizeof(KEY_VOLUMEDOWN));
-    rc += write(fd, KEY_VOLUMEUP, sizeof(KEY_VOLUMEUP));
+    rc = write(fd, _keyVolumeDown, sizeof(_keyVolumeDown));
+    rc += write(fd, _keyVolumeUp, sizeof(_keyVolumeUp));
     close(fd);
-    if (rc != (sizeof(KEY_VOLUMEDOWN) + sizeof(KEY_VOLUMEUP))) {
+    if (rc != (sizeof(_keyVolumeDown) + sizeof(_keyVolumeUp))) {
         ALOGE("sysfs gpio-keys write error");
         goto return_error;
     }

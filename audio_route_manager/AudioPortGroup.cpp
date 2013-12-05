@@ -23,8 +23,8 @@
 #define LOG_TAG "AudioPortGroup"
 #include <utils/Log.h>
 
-#include "AudioPort.h"
-#include "AudioPortGroup.h"
+#include "AudioPort.hpp"
+#include "AudioPortGroup.hpp"
 #include <AudioCommsAssert.hpp>
 
 using std::string;

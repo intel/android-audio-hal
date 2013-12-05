@@ -22,13 +22,13 @@
  */
 #define LOG_TAG "AudioIntelHAL/AudioPlatformState"
 
-#include "AudioPlatformState.h"
-#include "AudioStream.h"
-#include "ParameterCriterion.h"
+#include "AudioPlatformState.hpp"
+#include "AudioStream.hpp"
+#include "ParameterCriterion.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "SelectionCriterionInterface.h"
-#include <Criterion.h>
-#include <CriterionType.h>
+#include <Criterion.hpp>
+#include <CriterionType.hpp>
 #include <AudioCommsAssert.hpp>
 #include <Property.h>
 #include <algorithm>
@@ -48,10 +48,10 @@ using audio_comms::utilities::convertTo;
 namespace android_audio_legacy
 {
 
-const char *const AudioPlatformState::ROUTE_PFW_CONF_FILE_NAME_PROP_NAME =
+const char *const AudioPlatformState::_routePfwConfFileNamePropName =
     "AudioComms.RoutePFW.ConfPath";
 
-const char *const AudioPlatformState::ROUTE_PFW_DEFAULT_CONF_FILE_NAME =
+const char *const AudioPlatformState::_routePfwDefaultConfFileName =
     "/etc/parameter-framework/ParameterFrameworkConfigurationRoute.xml";
 
 /// PFW related definitions
@@ -75,22 +75,22 @@ public:
     }
 };
 
-const char *const AudioPlatformState::AUDIO_CRITERION_CONF_FILE_PATH =  "/etc/audio_criteria.conf";
-const char *const AudioPlatformState::INCLUSIVE_CRITERION_TYPE_TAG = "InclusiveCriterionType";
-const char *const AudioPlatformState::EXCLUSIVE_CRITERION_TYPE_TAG = "ExclusiveCriterionType";
-const char *const AudioPlatformState::CRITERION_TAG = "Criterion";
-const char *const AudioPlatformState::OUTPUT_DEVICE = "OutputDevices";
-const char *const AudioPlatformState::INPUT_DEVICE = "InputDevices";
-const char *const AudioPlatformState::INPUT_SOURCES = "InputSources";
-const char *const AudioPlatformState::OUTPUT_FLAGS = "OutputFlags";
-const char *const AudioPlatformState::MODEM_AUDIO_STATUS = "ModemAudioStatus";
-const char *const AudioPlatformState::ANDROID_MODE = "AndroidMode";
-const char *const AudioPlatformState::HAS_MODEM = "HasModem";
-const char *const AudioPlatformState::MODEM_STATE = "ModemState";
-const char *const AudioPlatformState::STATE_CHANGED = "StatesChanged";
-const char *const AudioPlatformState::CSV_BAND = "CsvBandType";
-const char *const AudioPlatformState::VOIP_BAND = "VoIPBandType";
-const char *const AudioPlatformState::MIC_MUTE = "MicMute";
+const char *const AudioPlatformState::_audioCriterionConfFilePath =  "/etc/audio_criteria.conf";
+const char *const AudioPlatformState::_inclusiveCriterionTypeTag = "InclusiveCriterionType";
+const char *const AudioPlatformState::_exclusiveCriterionTypeTag = "ExclusiveCriterionType";
+const char *const AudioPlatformState::_criterionTag = "Criterion";
+const char *const AudioPlatformState::_outputDevice = "OutputDevices";
+const char *const AudioPlatformState::_inputDevice = "InputDevices";
+const char *const AudioPlatformState::_inputSources = "InputSources";
+const char *const AudioPlatformState::_outputFlags = "OutputFlags";
+const char *const AudioPlatformState::_modemAudioStatus = "ModemAudioStatus";
+const char *const AudioPlatformState::_androidMode = "AndroidMode";
+const char *const AudioPlatformState::_hasModem = "HasModem";
+const char *const AudioPlatformState::_modemState = "ModemState";
+const char *const AudioPlatformState::_stateChanged = "StatesChanged";
+const char *const AudioPlatformState::_csvBand = "CsvBandType";
+const char *const AudioPlatformState::_voipBand = "VoIPBandType";
+const char *const AudioPlatformState::_micMute = "MicMute";
 const char *const AudioPlatformState::_preProcessorRequestedByActiveInput =
     "PreProcessorRequestedByActiveInput";
 
@@ -106,8 +106,8 @@ AudioPlatformState::AudioPlatformState()
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string routePfwConfFilePath = TProperty<string>(ROUTE_PFW_CONF_FILE_NAME_PROP_NAME,
-                                                    ROUTE_PFW_DEFAULT_CONF_FILE_NAME);
+    string routePfwConfFilePath = TProperty<string>(_routePfwConfFileNamePropName,
+                                                    _routePfwDefaultConfFileName);
     ALOGI("Route-PFW: using configuration file: %s", routePfwConfFilePath.c_str());
 
     _routePfwConnector = new CParameterMgrPlatformConnector(routePfwConfFilePath);
@@ -115,7 +115,7 @@ AudioPlatformState::AudioPlatformState()
     // Logger
     _routePfwConnector->setLogger(_routePfwConnectorLogger);
 
-    loadAudioCriterionConfig(AUDIO_CRITERION_CONF_FILE_PATH);
+    loadAudioCriterionConfig(_audioCriterionConfFilePath);
 
     /// Start PFW
     std::string strError;
@@ -207,7 +207,7 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
 void AudioPlatformState::loadInclusiveCriterionType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, INCLUSIVE_CRITERION_TYPE_TAG);
+    cnode *node = config_find(root, _inclusiveCriterionTypeTag);
     if (node == NULL) {
         return;
     }
@@ -217,7 +217,7 @@ void AudioPlatformState::loadInclusiveCriterionType(cnode *root)
 void AudioPlatformState::loadExclusiveCriterionType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, EXCLUSIVE_CRITERION_TYPE_TAG);
+    cnode *node = config_find(root, _exclusiveCriterionTypeTag);
     if (node == NULL) {
         return;
     }
@@ -246,7 +246,7 @@ const T *AudioPlatformState::getElement(const string &name,
 void AudioPlatformState::loadCriteria(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, CRITERION_TAG);
+    cnode *node = config_find(root, _criterionTag);
     if (node != NULL) {
 
         node = node->first_child;
@@ -443,17 +443,17 @@ status_t AudioPlatformState::setParameters(const android::String8 &keyValuePairs
 
 bool AudioPlatformState::hasPlatformStateChanged(int iEvents) const
 {
-    CriterionMapConstIterator it = _criterionMap.find(STATE_CHANGED);
-    AUDIOCOMMS_ASSERT(it != _criterionMap.end(), "state " << STATE_CHANGED << " not found");
+    CriterionMapConstIterator it = _criterionMap.find(_stateChanged);
+    AUDIOCOMMS_ASSERT(it != _criterionMap.end(), "state " << _stateChanged << " not found");
 
-    ALOGV("%s 0x%X 0x%X", __FUNCTION__, _criterionMap[STATE_CHANGED]->getValue(), iEvents);
+    ALOGV("%s 0x%X 0x%X", __FUNCTION__, _criterionMap[_stateChanged]->getValue(), iEvents);
     return (it->second->getValue() & iEvents) != 0;
 }
 
 void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
 {
-    CriterionMapIterator it = _criterionMap.find(STATE_CHANGED);
-    AUDIOCOMMS_ASSERT(it != _criterionMap.end(), "state " << STATE_CHANGED << " not found");
+    CriterionMapIterator it = _criterionMap.find(_stateChanged);
+    AUDIOCOMMS_ASSERT(it != _criterionMap.end(), "state " << _stateChanged << " not found");
 
     // Checks if eventState name is a possible value of HasChanged criteria
     int eventId = 0;
@@ -501,7 +501,7 @@ uint32_t AudioPlatformState::updateStreamsMask(bool isOut)
 void AudioPlatformState::updateApplicabilityMask(bool isOut)
 {
     uint32_t applicabilityMask = updateStreamsMask(isOut);
-    setValue(applicabilityMask, isOut ? OUTPUT_FLAGS : INPUT_SOURCES);
+    setValue(applicabilityMask, isOut ? _outputFlags : _inputSources);
 }
 
 void AudioPlatformState::startStream(const AudioStream *startedStream)
@@ -528,7 +528,7 @@ void AudioPlatformState::stopStream(const AudioStream *stoppedStream)
 
 void AudioPlatformState::clearPlatformStateEvents()
 {
-    _criterionMap[STATE_CHANGED]->setValue(0);
+    _criterionMap[_stateChanged]->setValue(0);
 }
 
 bool AudioPlatformState::isStarted()
@@ -540,7 +540,7 @@ bool AudioPlatformState::isStarted()
 
 void AudioPlatformState::applyPlatformConfiguration()
 {
-    _criterionMap[STATE_CHANGED]->setCriterionState();
+    _criterionMap[_stateChanged]->setCriterionState();
     _routePfwConnector->applyConfigurations();
     clearPlatformStateEvents();
 }

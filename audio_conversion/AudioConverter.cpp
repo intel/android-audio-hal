@@ -22,8 +22,8 @@
  */
 #define LOG_TAG "AudioConverter"
 
-#include "AudioConverter.h"
-#include "AudioUtils.h"
+#include "AudioConverter.hpp"
+#include "AudioUtils.hpp"
 #include <cutils/log.h>
 
 using namespace android;

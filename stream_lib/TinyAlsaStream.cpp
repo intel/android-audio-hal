@@ -22,9 +22,9 @@
  */
 #define LOG_TAG "TinyAlsaStream"
 
-#include "TinyAlsaAudioDevice.h"
-#include "TinyAlsaStream.h"
-#include <IStreamRoute.h>
+#include "TinyAlsaAudioDevice.hpp"
+#include "TinyAlsaStream.hpp"
+#include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
 
@@ -55,12 +55,12 @@ bool TinyAlsaStream::safeSleep(uint32_t sleepTimeUs)
 {
     struct timespec tim, tim2;
 
-    if (sleepTimeUs > MAX_SLEEP_TIME) {
-        sleepTimeUs = MAX_SLEEP_TIME;
+    if (sleepTimeUs > _maxSleepTime) {
+        sleepTimeUs = _maxSleepTime;
     }
 
     tim.tv_sec = 0;
-    tim.tv_nsec = sleepTimeUs * NSEC_PER_USEC;
+    tim.tv_nsec = sleepTimeUs * _nsecPerUsec;
 
     return nanosleep(&tim, &tim2) > 0;
 }
@@ -83,7 +83,7 @@ ssize_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames)
                   frames,
                   routeSampleSpec().convertFramesToBytes(frames),
                   pcm_get_error(getPcmDevice()));
-            AUDIOCOMMS_ASSERT(++retryCount < MAX_READ_WRITE_RETRIES,
+            AUDIOCOMMS_ASSERT(++retryCount < _maxReadWriteRetried,
                               "Hardware not responding, restarting media server");
 
             // Get the number of microseconds to sleep, inferred from the number of
@@ -116,7 +116,7 @@ ssize_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames)
 
         if (ret) {
             ALOGE("%s: write error: %d %s", __FUNCTION__, ret, pcm_get_error(getPcmDevice()));
-            AUDIOCOMMS_ASSERT(++retryCount < MAX_READ_WRITE_RETRIES,
+            AUDIOCOMMS_ASSERT(++retryCount < _maxReadWriteRetried,
                               "Hardware not responding, restarting media server");
 
             // Get the number of microseconds to sleep, inferred from the number of

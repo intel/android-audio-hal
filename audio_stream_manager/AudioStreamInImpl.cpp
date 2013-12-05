@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "AudioStreamInImpl"
 
-#include "AudioStreamInImpl.h"
+#include "AudioStreamInImpl.hpp"
 #include <AudioCommsAssert.hpp>
 #include <EffectHelper.hpp>
 #include <algorithm>
@@ -480,7 +480,7 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
 }
 
 status_t AudioStreamInImpl::addSwAudioEffectL(effect_handle_t effect,
-                                               echo_reference_itfe *reference)
+                                              echo_reference_itfe *reference)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");

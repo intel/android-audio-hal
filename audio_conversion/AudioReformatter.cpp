@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "AudioReformatter"
 
-#include "AudioReformatter.h"
+#include "AudioReformatter.hpp"
 #include <cutils/log.h>
 
 using namespace android;
@@ -30,8 +30,8 @@ using namespace android;
 namespace android_audio_legacy
 {
 
-const uint32_t AudioReformatter::REFORMATTER_SHIFT_LEFT_16 = 16;
-const uint32_t AudioReformatter::REFORMATTER_SHIFT_RIGHT_8 = 8;
+const uint32_t AudioReformatter::_reformatterShiftLeft16 = 16;
+const uint32_t AudioReformatter::_reformatterShiftRight8 = 8;
 
 AudioReformatter::AudioReformatter(SampleSpecItem sampleSpecItem)
     : AudioConverter(sampleSpecItem)
@@ -78,7 +78,7 @@ status_t AudioReformatter::convertS16toS24over32(const void *src,
     for (i = 0; i < n; i++) {
 
         *(dst32 + i) = (uint32_t)((int32_t)*(src16 + i) <<
-                                  REFORMATTER_SHIFT_LEFT_16) >> REFORMATTER_SHIFT_RIGHT_8;
+                                  _reformatterShiftLeft16) >> _reformatterShiftRight8;
     }
 
     // Transformation is "iso" frames
@@ -101,7 +101,7 @@ status_t AudioReformatter::convertS24over32toS16(const void *src,
     for (i = 0; i < n; i++) {
 
         *(dst16 + i) = (int16_t)(((int32_t)(*(src32 + i)) <<
-                                  REFORMATTER_SHIFT_RIGHT_8) >> REFORMATTER_SHIFT_LEFT_16);
+                                  _reformatterShiftRight8) >> _reformatterShiftLeft16);
     }
 
     // Transformation is "iso" frames

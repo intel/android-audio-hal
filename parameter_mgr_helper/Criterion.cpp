@@ -20,8 +20,8 @@
  * express and approved by Intel in writing.
  *
  */
-#include "Criterion.h"
-#include "CriterionType.h"
+#include "Criterion.hpp"
+#include "CriterionType.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include <AudioCommsAssert.hpp>
 

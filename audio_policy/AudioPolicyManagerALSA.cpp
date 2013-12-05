@@ -24,7 +24,7 @@
 #define LOG_TAG "AudioPolicyManagerALSA"
 
 #include <utils/Log.h>
-#include "AudioPolicyManagerALSA.h"
+#include "AudioPolicyManagerALSA.hpp"
 #include <media/mediarecorder.h>
 #include <Property.h>
 #include <AudioCommsAssert.hpp>

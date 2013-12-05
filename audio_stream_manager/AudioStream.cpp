@@ -25,12 +25,12 @@
 #endif
 #define LOG_TAG "AudioStream"
 
-#include "AudioIntelHAL.h"
-#include "AudioStream.h"
+#include "AudioIntelHAL.hpp"
+#include "AudioStream.hpp"
 
 #include <AudioCommsAssert.hpp>
 #include "Property.h"
-#include <AudioConversion.h>
+#include <AudioConversion.hpp>
 #include <cutils/bitops.h>
 #include <cutils/properties.h>
 #include <dlfcn.h>
@@ -141,7 +141,7 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
             // No rate information was provided by the client
             // or set rate error
             // Use default HAL rate
-            *rate = AudioStream::DEFAULT_SAMPLE_RATE;
+            *rate = AudioStream::_defaultSampleRate;
             _sampleSpec.setSampleRate(*rate);
         }
         ALOGD("%s: set rate to %d", __FUNCTION__, *rate);
@@ -166,7 +166,7 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
 
             // No format provided or set format error
             // Use default HAL format
-            *format = AudioStream::DEFAULT_FORMAT;
+            *format = AudioStream::_defaultFormat;
             _sampleSpec.setFormat(*format);
         }
         ALOGD("%s : set format to %d (%d)", __FUNCTION__, *format, this->format());

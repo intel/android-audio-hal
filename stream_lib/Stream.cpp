@@ -20,11 +20,11 @@
  * express and approved by Intel in writing.
  *
  */
-#include "Stream.h"
-#include "AudioDevice.h"
-#include <IStreamRoute.h>
+#include "Stream.hpp"
+#include "AudioDevice.hpp"
+#include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
-#include <SampleSpec.h>
+#include <SampleSpec.hpp>
 #include <utils/RWLock.h>
 #include <cutils/log.h>
 

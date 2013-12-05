@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "RouteManager/Route"
 
-#include "AudioRouteManagerObserver.h"
+#include "AudioRouteManagerObserver.hpp"
 #include <AudioCommsAssert.hpp>
 #include <utils/Log.h>
 

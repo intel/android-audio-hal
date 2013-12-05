@@ -22,13 +22,13 @@
  */
 #define LOG_TAG "AudioIntelHAL"
 
-#include "AudioConversion.h"
-#include "AudioIntelHAL.h"
-#include "AudioParameterHandler.h"
-#include "AudioStream.h"
-#include "AudioStreamInImpl.h"
-#include "AudioStreamOutImpl.h"
-#include "AudioPlatformState.h"
+#include "AudioIntelHAL.hpp"
+#include "AudioConversion.hpp"
+#include "AudioParameterHandler.hpp"
+#include "AudioStream.hpp"
+#include "AudioStreamInImpl.hpp"
+#include "AudioStreamOutImpl.hpp"
+#include "AudioPlatformState.hpp"
 #include <AudioCommsAssert.hpp>
 #include <BitField.hpp>
 #include "ModemAudioManagerInterface.h"
@@ -80,26 +80,26 @@ AudioHardwareInterface *AudioIntelHAL::create()
     return new AudioIntelHAL();
 }
 
-const char *const AudioIntelHAL::MODEM_LIB_PROP_NAME = "audiocomms.modemLib";
-const char *const AudioIntelHAL::BLUETOOTH_HFP_SUPPORTED_PROP_NAME = "Audiocomms.BT.HFP.Supported";
-const bool AudioIntelHAL::BLUETOOTH_HFP_SUPPORTED_DEFAULT_VALUE = true;
-const char *const AudioIntelHAL::ROUTE_LIB_PROP_NAME = "audiocomms.routeLib";
-const char *const AudioIntelHAL::ROUTE_LIB_PROP_DEFAULT_VALUE = "audio.routemanager.so";
-const char *const AudioIntelHAL::RESTARTING_KEY = "restarting";
-const char *const AudioIntelHAL::RESTARTING_REQUESTED = "true";
+const char *const AudioIntelHAL::_modemLibPropName = "audiocomms.modemLib";
+const char *const AudioIntelHAL::_bluetoothHfpSupportedPropName = "Audiocomms.BT.HFP.Supported";
+const bool AudioIntelHAL::_bluetoothHfpSupportedDefaultValue = true;
+const char *const AudioIntelHAL::_routeLibPropName = "audiocomms.routeLib";
+const char *const AudioIntelHAL::_routeLibPropDefaultValue = "audio.routemanager.so";
+const char *const AudioIntelHAL::_restartingKey = "restarting";
+const char *const AudioIntelHAL::_restartingRequested = "true";
 
 AudioIntelHAL::AudioIntelHAL()
     : _platformState(new AudioPlatformState()),
       _audioParameterHandler(new AudioParameterHandler()),
       _eventThread(new CEventThread(this)),
       _modemAudioManagerInterface(NULL),
-      _bluetoothHFPSupported(TProperty<bool>(BLUETOOTH_HFP_SUPPORTED_PROP_NAME,
-                                             BLUETOOTH_HFP_SUPPORTED_DEFAULT_VALUE))
+      _bluetoothHFPSupported(TProperty<bool>(_bluetoothHfpSupportedPropName,
+                                             _bluetoothHfpSupportedDefaultValue))
 {
     /// MAMGR Interface
     // Try to connect a ModemAudioManager Interface
     NInterfaceProvider::IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<string>(MODEM_LIB_PROP_NAME).getValue().c_str());
+        getInterfaceProvider(TProperty<string>(_modemLibPropName).getValue().c_str());
     if (interfaceProvider == NULL) {
 
         ALOGI("No MAMGR library.");
@@ -132,8 +132,8 @@ AudioIntelHAL::AudioIntelHAL()
 
     /// Get the Stream Interface of the Route manager
     interfaceProvider =
-        getInterfaceProvider(TProperty<string>(ROUTE_LIB_PROP_NAME,
-                                               ROUTE_LIB_PROP_DEFAULT_VALUE).getValue().c_str());
+        getInterfaceProvider(TProperty<string>(_routeLibPropName,
+                                               _routeLibPropDefaultValue).getValue().c_str());
     if (interfaceProvider) {
 
         NInterfaceProvider::IInterface *interface;
@@ -342,11 +342,11 @@ status_t AudioIntelHAL::setParameters(const String8 &keyValuePairs)
     status_t status;
     String8 restart;
 
-    String8 key = String8(RESTARTING_KEY);
+    String8 key = String8(_restartingKey);
     status = param.get(key, restart);
     if (status == NO_ERROR) {
 
-        if (restart == RESTARTING_REQUESTED) {
+        if (restart == _restartingRequested) {
 
             // Restore the audio parameters when mediaserver is restarted in case of crash.
             ALOGI("Restore audio parameters as mediaserver is restarted param=%s",
@@ -392,7 +392,7 @@ void AudioIntelHAL::setInputSourceMask(AudioStream *streamIn, uint32_t inputSour
     if (inputSource == (BitField::indexToMask(AUDIO_SOURCE_VOICE_COMMUNICATION))) {
 
         CAudioBand::Type band = CAudioBand::EWide;
-        if (streamIn->sampleRate() == VOIP_RATE_FOR_NARROW_BAND_PROCESSING) {
+        if (streamIn->sampleRate() == _voipRateForNarrowBandProcessing) {
 
             band = CAudioBand::ENarrow;
         }

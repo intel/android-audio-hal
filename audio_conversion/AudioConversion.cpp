@@ -22,12 +22,12 @@
  */
 #define LOG_TAG "AudioConversion"
 
-#include "AudioConversion.h"
-#include "AudioConverter.h"
-#include "AudioReformatter.h"
-#include "AudioRemapper.h"
-#include "AudioResampler.h"
-#include "AudioUtils.h"
+#include "AudioConversion.hpp"
+#include "AudioConverter.hpp"
+#include "AudioReformatter.hpp"
+#include "AudioRemapper.hpp"
+#include "AudioResampler.hpp"
+#include "AudioUtils.hpp"
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
 #include <media/AudioBufferProvider.h>
@@ -39,11 +39,11 @@ using namespace std;
 namespace android_audio_legacy
 {
 
-const uint32_t AudioConversion::MAX_RATE = 92000;
+const uint32_t AudioConversion::_maxRate = 92000;
 
-const uint32_t AudioConversion::MIN_RATE = 8000;
+const uint32_t AudioConversion::_minRate = 8000;
 
-const uint32_t AudioConversion::ALLOC_BUFFER_MULT_FACTOR = 2;
+const uint32_t AudioConversion::_allocBufferMultFactor = 2;
 
 AudioConversion::AudioConversion()
     : _convOutBufferIndex(0),
@@ -127,7 +127,7 @@ status_t AudioConversion::getConvertedBuffer(void *dst,
     if (_convOutBufferSizeInFrames < outFrames) {
 
         _convOutBufferSizeInFrames = outFrames +
-                                     (MAX_RATE / MIN_RATE) * ALLOC_BUFFER_MULT_FACTOR;
+                                     (_maxRate / _minRate) * _allocBufferMultFactor;
         int16_t *reallocBuffer =
             static_cast<int16_t *>(realloc(_convOutBuffer,
                                            _ssDst.convertFramesToBytes(

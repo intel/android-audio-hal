@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "SampleSpec"
 
-#include "SampleSpec.h"
+#include "SampleSpec.hpp"
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
 #include <stdint.h>
@@ -72,7 +72,7 @@ void SampleSpec::setSampleSpecItem(SampleSpecItem sampleSpecItem, uint32_t value
 
     if (sampleSpecItem == ChannelCountSampleSpecItem) {
 
-        AUDIOCOMMS_ASSERT(value < MAX_CHANNELS, "Max channel number reached");
+        AUDIOCOMMS_ASSERT(value < _maxChannels, "Max channel number reached");
 
         _channelsPolicy.clear();
         // Reset all the channels policy to copy by default
@@ -127,14 +127,14 @@ size_t SampleSpec::convertFramesToUsec(uint32_t frames) const
 {
     AUDIOCOMMS_ASSERT(getFrameSize() != 0, "Null frame size");
     AUDIOCOMMS_ASSERT((frames / getSampleRate()) <=
-                      (numeric_limits<size_t>::max() / USEC_PER_SEC),
+                      (numeric_limits<size_t>::max() / _usecPerSec),
                       "conversion exceeds limit");
-    return (USEC_PER_SEC * static_cast<uint64_t>(frames)) / getSampleRate();
+    return (_usecPerSec * static_cast<uint64_t>(frames)) / getSampleRate();
 }
 
 size_t SampleSpec::convertUsecToframes(uint32_t intervalUsec) const
 {
-    return static_cast<uint64_t>(intervalUsec) * getSampleRate() / USEC_PER_SEC;
+    return static_cast<uint64_t>(intervalUsec) * getSampleRate() / _usecPerSec;
 }
 
 bool SampleSpec::isSampleSpecItemEqual(SampleSpecItem sampleSpecItem,

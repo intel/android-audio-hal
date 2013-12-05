@@ -22,21 +22,20 @@
  */
 #define LOG_TAG "RouteManager"
 
-#include "AudioRouteManagerObserver.h"
-#include "AudioPort.h"
-#include "AudioPortGroup.h"
-#include "AudioRoute.h"
-#include "AudioRouteManager.h"
-#include "AudioStreamRoute.h"
+#include "AudioRouteManagerObserver.hpp"
+#include "AudioPort.hpp"
+#include "AudioPortGroup.hpp"
+#include "AudioRouteManager.hpp"
+#include "AudioStreamRoute.hpp"
 #include "EventThread.h"
 #include "InterfaceProviderLib.h"
 #include "ParameterMgrPlatformConnector.h"
 #include "Property.h"
 #include <Observer.hpp>
-#include <AudioParameterHelper.h>
-#include <Criterion.h>
-#include <CriterionType.h>
-#include <Stream.h>
+#include <AudioParameterHelper.hpp>
+#include <Criterion.hpp>
+#include <CriterionType.hpp>
+#include <Stream.hpp>
 #include <AudioCommsAssert.hpp>
 #include <BitField.hpp>
 #include <cutils/bitops.h>
@@ -54,23 +53,21 @@ using audio_comms::utilities::Direction;
 typedef RWLock::AutoRLock AutoR;
 typedef RWLock::AutoWLock AutoW;
 
-const char *const AudioRouteManager::VOICE_VOLUME =
+const char *const AudioRouteManager::_voiceVolume =
     "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
 
-const char *const AudioRouteManager::CLOSING_ROUTE_CRITERION[Direction::_nbDirections] = {
+const char *const AudioRouteManager::_closingRouteCriterion[Direction::_nbDirections] = {
     "ClosingCaptureRoutes", "ClosingPlaybackRoutes"
 };
-const char *const AudioRouteManager::OPENED_ROUTE_CRITERION[Direction::_nbDirections] = {
+const char *const AudioRouteManager::_openedRouteCriterion[Direction::_nbDirections] = {
     "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
 };
-const char *const AudioRouteManager::ROUTE_CRITERION_TYPE = "RouteType";
-const char *const AudioRouteManager::ROUTING_STAGE = "RoutageState";
+const char *const AudioRouteManager::_routeCriterionType = "RouteType";
+const char *const AudioRouteManager::_routingStage = "RoutageState";
 
-const char *const AudioRouteManager::ROUTING_LOCKED_PROP_NAME = "AudioComms.HAL.isLocked";
+const char *const AudioRouteManager::_audioPfwConfFilePropName = "AudioComms.PFW.ConfPath";
 
-const char *const AudioRouteManager::AUDIO_PFW_CONF_FILE_PROP_NAME = "AudioComms.PFW.ConfPath";
-
-const char *const AudioRouteManager::AUDIO_PFW_DEFAULT_CONF_FILE_NAME =
+const char *const AudioRouteManager::_audioPfwDefaultConfFileName =
     "/etc/parameter-framework/ParameterFrameworkConfiguration.xml";
 
 class CParameterMgrPlatformConnectorLogger : public CParameterMgrPlatformConnector::ILogger
@@ -102,7 +99,7 @@ public:
  * A Configure stage on ClosingRoutes leads to resetting the configuration.
  * A Configure stage on OpenedRoute lead to setting the configuration.
  */
-const pair<int, const char *> AudioRouteManager::ROUTING_STAGE_VALUE_PAIRS[] = {
+const pair<int, const char *> AudioRouteManager::_routingStageValuePairs[] = {
     make_pair(Flow,       "Flow"),
     make_pair(Path,       "Path"),
     make_pair(Configure,  "Configure")
@@ -129,8 +126,8 @@ AudioRouteManager::AudioRouteManager()
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string audioPfwConfigurationFilePath = TProperty<string>(AUDIO_PFW_CONF_FILE_PROP_NAME,
-                                                             AUDIO_PFW_DEFAULT_CONF_FILE_NAME);
+    string audioPfwConfigurationFilePath = TProperty<string>(_audioPfwConfFilePropName,
+                                                             _audioPfwDefaultConfFileName);
     ALOGI("%s: audio PFW using configuration file: %s", __FUNCTION__,
           audioPfwConfigurationFilePath.c_str());
 
@@ -185,29 +182,29 @@ status_t AudioRouteManager::startService()
     AUDIOCOMMS_ASSERT(_isStarted != true, "Route Manager service already started!");
 
     // Routes Criterion Type
-    AUDIOCOMMS_ASSERT(_criterionTypesMap.find(ROUTE_CRITERION_TYPE) != _criterionTypesMap.end(),
+    AUDIOCOMMS_ASSERT(_criterionTypesMap.find(_routeCriterionType) != _criterionTypesMap.end(),
                       "Route CriterionType not found");
 
-    CriterionType *routeCriterionType = _criterionTypesMap[ROUTE_CRITERION_TYPE];
+    CriterionType *routeCriterionType = _criterionTypesMap[_routeCriterionType];
 
     // Route Criteria
     for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
 
-        _selectedOpenedRoutes[i] = new Criterion(OPENED_ROUTE_CRITERION[i],
+        _selectedOpenedRoutes[i] = new Criterion(_openedRouteCriterion[i],
                                                  routeCriterionType,
                                                  _audioPfwConnector);
-        _selectedClosingRoutes[i] = new Criterion(CLOSING_ROUTE_CRITERION[i],
+        _selectedClosingRoutes[i] = new Criterion(_closingRouteCriterion[i],
                                                   routeCriterionType,
                                                   _audioPfwConnector);
     }
 
-    CriterionType *routageStageCriterionType = new CriterionType(ROUTING_STAGE, true,
+    CriterionType *routageStageCriterionType = new CriterionType(_routingStage, true,
                                                                  _audioPfwConnector);
-    _criterionTypesMap[ROUTING_STAGE] = routageStageCriterionType;
-    routageStageCriterionType->addValuePairs(ROUTING_STAGE_VALUE_PAIRS,
-                                             sizeof(ROUTING_STAGE_VALUE_PAIRS) /
-                                             sizeof(ROUTING_STAGE_VALUE_PAIRS[0]));
-    _routingStageCriterion = new Criterion(ROUTING_STAGE, routageStageCriterionType,
+    _criterionTypesMap[_routingStage] = routageStageCriterionType;
+    routageStageCriterionType->addValuePairs(_routingStageValuePairs,
+                                             sizeof(_routingStageValuePairs) /
+                                             sizeof(_routingStageValuePairs[0]));
+    _routingStageCriterion = new Criterion(_routingStage, routageStageCriterionType,
                                            _audioPfwConnector);
     // Start Event thread
     bool started = _eventThread->start();
@@ -623,7 +620,7 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
     }
 
     ALOGD("%s gain=%f", __FUNCTION__, gain);
-    CParameterHandle *voiceVolumeHandle = _parameterHelper->getDynamicParameterHandle(VOICE_VOLUME);
+    CParameterHandle *voiceVolumeHandle = _parameterHelper->getDynamicParameterHandle(_voiceVolume);
 
     if (!voiceVolumeHandle) {
 

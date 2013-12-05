@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "ParameterHelper"
 
-#include "AudioParameterHelper.h"
+#include "AudioParameterHelper.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "SelectionCriterionInterface.h"
 #include <string>

@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "StreamManager/ParameterHandler"
 
-#include "AudioParameterHandler.h"
+#include "AudioParameterHandler.hpp"
 #include <media/AudioParameter.h>
 #include <utils/Log.h>
 #include <utils/String8.h>
@@ -33,8 +33,8 @@ using namespace android;
 namespace android_audio_legacy
 {
 
-const char AudioParameterHandler::FILE_PATH[] = "/mnt/asec/media/audio_param.dat";
-const int AudioParameterHandler::READ_BUF_SIZE = 500;
+const char AudioParameterHandler::_filePath[] = "/mnt/asec/media/audio_param.dat";
+const int AudioParameterHandler::_readBufSize = 500;
 
 AudioParameterHandler::AudioParameterHandler()
 {
@@ -67,7 +67,7 @@ void AudioParameterHandler::add(const String8 &keyValuePairs)
 
 status_t AudioParameterHandler::save()
 {
-    FILE *fp = fopen(FILE_PATH, "w+");
+    FILE *fp = fopen(_filePath, "w+");
     if (!fp) {
 
         ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
@@ -84,14 +84,14 @@ status_t AudioParameterHandler::save()
 
 status_t AudioParameterHandler::restore()
 {
-    FILE *fp = fopen(FILE_PATH, "r");
+    FILE *fp = fopen(_filePath, "r");
     if (!fp) {
 
         ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
         return UNKNOWN_ERROR;
     }
-    char str[READ_BUF_SIZE];
-    size_t readSize = fread(str, sizeof(char), READ_BUF_SIZE - 1, fp);
+    char str[_readBufSize];
+    size_t readSize = fread(str, sizeof(char), _readBufSize - 1, fp);
     fclose(fp);
     if (readSize == 0) {
 

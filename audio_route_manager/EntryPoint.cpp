@@ -21,7 +21,7 @@
  *
  */
 #include "InterfaceProvider.h"
-#include "RouteManagerInstance.h"
+#include "RouteManagerInstance.hpp"
 
 extern "C" {
 NInterfaceProvider::IInterfaceProvider *getInterfaceProvider()

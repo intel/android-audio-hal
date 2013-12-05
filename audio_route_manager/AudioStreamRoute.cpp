@@ -22,11 +22,11 @@
  */
 #define LOG_TAG "RouteManager/StreamRoute"
 
-#include "AudioStreamRoute.h"
-#include <AudioDevice.h>
-#include <AudioUtils.h>
-#include <Stream.h>
-#include <StreamLib.h>
+#include "AudioStreamRoute.hpp"
+#include <AudioDevice.hpp>
+#include <AudioUtils.hpp>
+#include <Stream.hpp>
+#include <StreamLib.hpp>
 #include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utils/Log.h>

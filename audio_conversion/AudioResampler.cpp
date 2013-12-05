@@ -24,8 +24,8 @@
 
 #include <cutils/log.h>
 
-#include "AudioResampler.h"
-#include "Resampler.h"
+#include "AudioResampler.hpp"
+#include "Resampler.hpp"
 #include <AudioCommsAssert.hpp>
 
 using namespace android;
@@ -67,13 +67,13 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         //
         LOGD("%s: trying to use working sample rate @ 48kHz", __FUNCTION__);
         SampleSpec pivotSs = ssDst;
-        pivotSs.setSampleRate(PIVOT_SAMPLE_RATE);
+        pivotSs.setSampleRate(_pivotSampleRate);
 
         status = _pivotResampler->configure(ssSrc, pivotSs);
         if (status != NO_ERROR) {
 
             LOGD("%s: trying to use pivot sample rate @ %dkHz: FAILED",
-                 __FUNCTION__, PIVOT_SAMPLE_RATE);
+                 __FUNCTION__, _pivotSampleRate);
             return status;
         }
 

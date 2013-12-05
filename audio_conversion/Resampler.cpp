@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "Resampler"
 
-#include "Resampler.h"
+#include "Resampler.hpp"
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
 #include <iasrc_resampler.h>
@@ -54,7 +54,7 @@ Resampler::~Resampler()
 status_t Resampler::allocateBuffer()
 {
     if (_maxFrameCnt == 0) {
-        _maxFrameCnt = BUF_SIZE;
+        _maxFrameCnt = _bufSize;
     } else {
         _maxFrameCnt *= 2; // simply double the buf size
     }

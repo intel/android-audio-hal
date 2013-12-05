@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "HALAudioDump.h"
+#include "HALAudioDump.hpp"
 
 #define LOG_TAG "HALAudioDump"
 
@@ -32,7 +32,7 @@ const char *HALAudioDump::_streamDirections[] = {
     "in", "out"
 };
 const char *HALAudioDump::_dumpDirPath = "/logs/audio_dumps";
-const uint32_t HALAudioDump::MAX_NUMBER_OF_FILES = 4;
+const uint32_t HALAudioDump::_maxNumberOfFiles = 4;
 
 HALAudioDump::HALAudioDump()
     : _dumpFile(0), _fileCount(0)
@@ -151,12 +151,12 @@ status_t HALAudioDump::checkDumpFile(ssize_t bytes)
 {
     struct stat stDump;
     if (_dumpFile && fstat(fileno(_dumpFile), &stDump) == 0
-        && (stDump.st_size + bytes) < MAX_DUMP_FILE_SIZE) {
+        && (stDump.st_size + bytes) < _maxDumpFileSize) {
 
         ALOGE("%s: Max size reached", __FUNCTION__);
         return BAD_VALUE;
     }
-    if (_fileCount >= MAX_NUMBER_OF_FILES) {
+    if (_fileCount >= _maxNumberOfFiles) {
 
         ALOGE("%s: Max number of allowed files reached", __FUNCTION__);
         return INVALID_OPERATION;

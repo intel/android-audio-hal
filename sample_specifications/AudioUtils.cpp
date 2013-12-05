@@ -22,10 +22,8 @@
  */
 #define LOG_TAG "AudioUtils"
 
-#include "AudioUtils.h"
-#include "AudioUtils.h"
-#include "SampleSpec.h"
-#include "SampleSpec.h"
+#include "AudioUtils.hpp"
+#include "SampleSpec.hpp"
 #include <AudioCommsAssert.hpp>
 #include <cerrno>
 #include <convert.hpp>
@@ -47,10 +45,10 @@ namespace android_audio_legacy
 
 uint32_t AudioUtils::alignOn16(uint32_t u)
 {
-    AUDIOCOMMS_ASSERT((u / FRAME_ALIGNEMENT_ON_16) <=
-                      (numeric_limits<uint32_t>::max() / FRAME_ALIGNEMENT_ON_16),
+    AUDIOCOMMS_ASSERT((u / _frameAlignementOn16) <=
+                      (numeric_limits<uint32_t>::max() / _frameAlignementOn16),
                       "value to align exceeding limit");
-    return (u + (FRAME_ALIGNEMENT_ON_16 - 1)) & ~(FRAME_ALIGNEMENT_ON_16 - 1);
+    return (u + (_frameAlignementOn16 - 1)) & ~(_frameAlignementOn16 - 1);
 }
 
 size_t AudioUtils::convertSrcToDstInBytes(size_t bytes,
@@ -156,7 +154,7 @@ int AudioUtils::getCardIndexByName(const char *name)
 uint32_t AudioUtils::convertUsecToMsec(uint32_t timeUsec)
 {
     // Round up to the nearest Msec
-    return (static_cast<uint64_t>(timeUsec) + USEC_PER_MSEC - 1) / USEC_PER_MSEC;
+    return (static_cast<uint64_t>(timeUsec) + _usecPerMsec - 1) / _usecPerMsec;
 }
 
 bool AudioUtils::isAudioInputDevice(uint32_t devices)

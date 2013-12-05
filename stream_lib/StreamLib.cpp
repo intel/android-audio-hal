@@ -20,9 +20,9 @@
  * express and approved by Intel in writing.
  *
  */
-#include "StreamLib.h"
-#include "AudioDevice.h"
-#include "TinyAlsaAudioDevice.h"
+#include "StreamLib.hpp"
+#include "AudioDevice.hpp"
+#include "TinyAlsaAudioDevice.hpp"
 
 
 IAudioDevice *StreamLib::createAudioDevice()

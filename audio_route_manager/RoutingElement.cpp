@@ -20,7 +20,7 @@
  * express and approved by Intel in writing.
  *
  */
-#include "RoutingElement.h"
+#include "RoutingElement.hpp"
 
 using std::string;
 
