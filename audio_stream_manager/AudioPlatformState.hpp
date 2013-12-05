@@ -23,8 +23,10 @@
 #pragma once
 
 #include "AudioBand.h"
+#include "VolumeKeys.hpp"
 #include <NonCopyable.hpp>
 #include <Direction.hpp>
+#include <hardware_legacy/AudioHardwareBase.h>
 #include <list>
 #include <map>
 #include <string>
@@ -166,6 +168,7 @@ public:
      */
     void setMode(int mode)
     {
+        VolumeKeys::wakeup(mode == AudioSystem::MODE_IN_CALL);
         setValue(mode, _androidMode);
     }
 

@@ -34,8 +34,7 @@ audio_route_manager_src_files :=  \
     AudioRouteManager.cpp \
     AudioRouteManagerObserver.cpp \
     RouteManagerInstance.cpp \
-    EntryPoint.cpp \
-    VolumeKeys.cpp
+    EntryPoint.cpp
 
 audio_route_manager_includes_common := \
     $(LOCAL_PATH)/includes \

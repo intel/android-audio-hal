@@ -20,7 +20,7 @@
  * express and approved by Intel in writing.
  *
  */
-#define LOG_TAG "RouteManager/VolumeKeys"
+#define LOG_TAG "VolumeKeys"
 
 #include "VolumeKeys.hpp"
 #include <utils/Log.h>

@@ -33,7 +33,8 @@ audio_stream_manager_src_files :=  \
     AudioStreamInImpl.cpp \
     AudioStreamOutImpl.cpp \
     AudioParameterHandler.cpp \
-    AudioPlatformState.cpp
+    AudioPlatformState.cpp \
+    VolumeKeys.cpp
 
 audio_stream_manager_includes_dir := \
     $(TARGET_OUT_HEADERS)/libaudioresample \
