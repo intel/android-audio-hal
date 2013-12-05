@@ -20,10 +20,10 @@
  * express and approved by Intel in writing.
  *
  */
-#include "AudioStreamRoute.h"
+#include "AudioStreamRoute.hpp"
 #include "Tokenizer.h"
-#include "RouteMappingKeys.h"
-#include "RouteSubsystem.h"
+#include "RouteMappingKeys.hpp"
+#include "RouteSubsystem.hpp"
 #include <AudioCommsAssert.hpp>
 
 using std::memcmp;

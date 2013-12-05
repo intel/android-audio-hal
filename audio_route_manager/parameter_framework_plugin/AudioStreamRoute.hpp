@@ -23,10 +23,9 @@
 #pragma once
 
 #include "FormattedSubsystemObject.h"
-#include "StreamRouteConfig.h"
 #include "InstanceConfigurableElement.h"
 #include "MappingContext.h"
-#include <RouteInterface.h>
+#include <RouteInterface.hpp>
 
 class RouteSubsystem;
 

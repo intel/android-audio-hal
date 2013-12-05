@@ -20,16 +20,16 @@
  * express and approved by Intel in writing.
  *
  */
-#include "RouteSubsystem.h"
+#include "RouteSubsystem.hpp"
 #include "SubsystemObjectFactory.h"
-#include "RouteMappingKeys.h"
-#include "AudioRoute.h"
-#include "AudioPort.h"
-#include "AudioStreamRoute.h"
-#include "Criterion.h"
+#include "RouteMappingKeys.hpp"
+#include "AudioRoute.hpp"
+#include "AudioPort.hpp"
+#include "AudioStreamRoute.hpp"
+#include "Criterion.hpp"
 #include "InterfaceProviderLib.h"
 #include "Property.h"
-#include <RouteInterface.h>
+#include <RouteInterface.hpp>
 
 using namespace NInterfaceProvider;
 

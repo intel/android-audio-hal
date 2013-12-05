@@ -20,17 +20,17 @@
  * express and approved by Intel in writing.
  *
  */
-#include "Criterion.h"
-#include "RouteMappingKeys.h"
+#include "Criterion.hpp"
+#include "RouteMappingKeys.hpp"
 #include "EnumValuePair.h"
 #include "BitParameterType.h"
 #include "BitParameter.h"
-#include "RouteSubsystem.h"
+#include "RouteSubsystem.hpp"
 
 const string Criterion::VALUE_PAIR_CRITERION_TYPE = "ValuePair";
 const string Criterion::BIT_PARAM_CRITERION_TYPE = "BitParameter";
 
-Criterion::Criterion(const string __attribute__((unused)) &mappingValue,
+Criterion::Criterion(const string &mappingValue,
                      CInstanceConfigurableElement *instanceConfigurableElement,
                      const CMappingContext &context)
     : CSubsystemObject(instanceConfigurableElement),
@@ -78,14 +78,14 @@ uint32_t Criterion::getIndex(const CElement *element) const
     return 0;
 }
 
-bool Criterion::receiveFromHW(string &strError)
+bool Criterion::receiveFromHW(string &error)
 {
     blackboardWrite(&_value, sizeof(_value));
 
     return true;
 }
 
-bool Criterion::sendToHW(string &strError)
+bool Criterion::sendToHW(string &error)
 {
     // Retrieve blackboard
     blackboardRead(&_value, sizeof(_value));

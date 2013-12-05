@@ -22,8 +22,10 @@
  */
 #pragma once
 
-// Mapping item types
-enum URouteItemType
+/**
+ * Mapping item types
+ */
+enum RouteItemType
 {
     MappingKeyName,
     MappingKeyId,

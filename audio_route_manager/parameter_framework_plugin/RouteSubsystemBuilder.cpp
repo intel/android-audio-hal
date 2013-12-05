@@ -22,7 +22,7 @@
  */
 #include "SubsystemLibrary.h"
 #include "NamedElementBuilderTemplate.h"
-#include "RouteSubsystem.h"
+#include "RouteSubsystem.hpp"
 
 static const char *const ROUTE_SUBSYSTEM_NAME = "ROUTEMGR";
 extern "C"

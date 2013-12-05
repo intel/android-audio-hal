@@ -22,20 +22,19 @@
  */
 #pragma once
 
-
-#include "SubsystemObject.h"
+#include "FormattedSubsystemObject.h"
 #include "InstanceConfigurableElement.h"
 #include "MappingContext.h"
-#include <RouteInterface.h>
+#include <RouteInterface.hpp>
 
 class RouteSubsystem;
 
-class Criterion : public CSubsystemObject
+class AudioPort : public CFormattedSubsystemObject
 {
 
 public:
-    Criterion(const string &mappingValue,
-              CInstanceConfigurableElement *instanceConfigurableElement,
+    AudioPort(const string &mappingValue,
+              CInstanceConfigurableElement *pInstanceConfigurableElement,
               const CMappingContext &context);
 protected:
     /**
@@ -60,28 +59,12 @@ protected:
      */
     virtual bool sendToHW(string &error);
 private:
-    /**
-     * Returns the index of an element.
-     * According to the type of the element, index has different meaning.
-     * For a value-pair, it is simply the numerical part of the pair.
-     * For a bit parameter, it is the mask of the bit position.
-     * For an element on which it has no meaning, it returns 0 and prints a warning log.
-     *
-     * @param[in] element: element from which needs to get the index
-     *
-     * @return index of the element
-     */
-    uint32_t getIndex(const CElement *element) const;
+    string _name; /**< Name of an audio port. */
+    uint32_t _id; /**< Identifier of an audio port. */
+    bool _isBlocked; /**< Blocked attribute of the port, ie, port must not be used. */
 
     const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
     IRouteInterface *_routeInterface; /**< Route Interface to communicate with Route Mgr. */
 
-    static const uint32_t DEFAULT_VALUE = 0; /**< default numerical value of the criterion. */
-    string _criterionName; /**< Name of the criterion. */
-    string _criterionType; /**< Type name of the criterion. */
-    uint32_t _value; /**< numerical value of the criterion. */
-
-    static const std::string VALUE_PAIR_CRITERION_TYPE; /**< Value pair criterion type name. */
-    static const std::string BIT_PARAM_CRITERION_TYPE; /**< Bit Parameter criterion type name. */
-
+    static const std::string DELIMITER; /**< Delimiter to parse a concatenated list of ports. */
 };

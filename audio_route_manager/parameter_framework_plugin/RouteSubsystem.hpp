@@ -25,11 +25,9 @@
 #include "Subsystem.h"
 #include <NonCopyable.hpp>
 
-using audio_comms::utilities::NonCopyable;
-
 class IRouteInterface;
 
-class RouteSubsystem : public CSubsystem, public NonCopyable
+class RouteSubsystem : public CSubsystem, private audio_comms::utilities::NonCopyable
 {
 public:
     RouteSubsystem(const string &strName);
@@ -40,6 +38,7 @@ public:
      * @return RouteManager interface for the route plugin.
      */
     IRouteInterface *getRouteInterface() const;
+
 private:
     IRouteInterface *_routeInterface; /**< Route Interface. */
 

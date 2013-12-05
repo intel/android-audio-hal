@@ -20,11 +20,11 @@
  * express and approved by Intel in writing.
  *
  */
-#include "AudioPort.h"
+#include "AudioPort.hpp"
 #include "Tokenizer.h"
-#include "RouteMappingKeys.h"
+#include "RouteMappingKeys.hpp"
 #include "InstanceConfigurableElement.h"
-#include "RouteSubsystem.h"
+#include "RouteSubsystem.hpp"
 
 const string AudioPort::DELIMITER = "-";
 
