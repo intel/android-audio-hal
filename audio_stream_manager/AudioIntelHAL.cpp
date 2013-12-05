@@ -202,6 +202,14 @@ AudioStreamOut *AudioIntelHAL::openOutputStream(uint32_t devices,
 
     AUDIOCOMMS_ASSERT(status != NULL, "invalid status pointer");
 
+    /**
+     * output flags is passed through status parameter.
+     * As changing the API of legacy hal would break backward compatibility and as
+     * caracterization of output stream is given at construction only, the flags
+     * has to be conveyed from the status.
+     */
+    audio_output_flags_t flags = static_cast<audio_output_flags_t>(*status);
+
     status_t &err = *status;
 
     if (!audio_is_output_device(devices)) {
@@ -220,6 +228,8 @@ AudioStreamOut *AudioIntelHAL::openOutputStream(uint32_t devices,
         delete out;
         return NULL;
     }
+    // Set the flags
+    out->setApplicabilityMask(flags);
 
     // Informs the route manager of stream creation
     _streamInterface->addStream(out);
