@@ -207,9 +207,9 @@ private:
             return _routeMgr->reconsiderRouting(true);
         }
 
-        virtual void reconsiderRouting()
+        virtual void reconsiderRouting(bool forceResync)
         {
-            return _routeMgr->reconsiderRouting(false);
+            return _routeMgr->reconsiderRouting(false, forceResync);
         }
 
         virtual android::status_t setVoiceVolume(float gain)
@@ -445,9 +445,13 @@ private:
     inline bool routingHasChanged();
 
     /**
-     * Must be called from WLocked context
+     * Handle a routing reconsideration.
+     *
+     * @param[in] isSynchronous synchronous routing reconsideration requested.
+     * @param[in] forceResync resynchronization of audio parameter is requested whatever the routing
+     *                        map has changed or not.
      */
-    void reconsiderRouting(bool bIsSynchronous = true);
+    void reconsiderRouting(bool isSynchronous, bool forceResync = false);
 
     /**
      * Returns the voice output stream. Used by Input stream to identify the provider of
@@ -461,8 +465,11 @@ private:
      * From worker thread context
      * This function requests to evaluate the routing for all the streams
      * after a mode change, a modem event ...
+     *
+     * @param[in] forceResync resynchronization of audio parameter is requested whatever the routing
+     *                        map has changed or not.
      */
-    void doReconsiderRouting();
+    void doReconsiderRouting(bool forceResync);
 
     /**
      *
@@ -680,6 +687,15 @@ private:
     virtual bool onHangup(int fd);
     virtual void onAlarm();
     virtual void onPollError();
+    /**
+     * Process callback of the event thread.
+     * Only FORCE_RESYNC extra event type is supported, any other event including 0 is consider as a
+     * nominal routing request.
+     *
+     * @param[in] event Id of the event to be processed.
+     *
+     * @return true if file decriptor polled list by event thread has changed, false otherwise.
+     */
     virtual bool onProcess(uint16_t event);
 
     static const std::pair<int, const char *> _routingStageValuePairs[];
@@ -803,4 +819,6 @@ private:
      */
     template <typename T>
     struct routingElementSupported;
+
+    static const uint16_t FORCE_RESYNC = 1; /**< resynchronization of audio parameters eventId. */
 };

@@ -679,6 +679,8 @@ bool AudioIntelHAL::onProcess(uint16_t event)
 {
     AutoW lock(_pfwLock);
 
+    bool forceResync = false;
+
     switch (event) {
     case UpdateModemAudioBand:
 
@@ -689,6 +691,7 @@ bool AudioIntelHAL::onProcess(uint16_t event)
     case UpdateModemState:
         ALOGD("%s: Modem State change", __FUNCTION__);
         _platformState->setModemAlive(_modemAudioManagerInterface->isModemAlive());
+        forceResync = _platformState->isModemAlive();
         break;
 
     case UpdateModemAudioStatus:
@@ -703,7 +706,7 @@ bool AudioIntelHAL::onProcess(uint16_t event)
     }
     _platformState->applyPlatformConfiguration();
 
-    getStreamInterface()->reconsiderRouting();
+    getStreamInterface()->reconsiderRouting(forceResync);
     return false;
 }
 

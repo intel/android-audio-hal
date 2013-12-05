@@ -234,7 +234,7 @@ void AudioRouteManager::initRouting()
     _audioPfwConnector->applyConfigurations();
 }
 
-void AudioRouteManager::reconsiderRouting(bool isSynchronous)
+void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
 {
     AutoW lock(_routingLock);
 
@@ -244,7 +244,7 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous)
     if (!isSynchronous) {
 
         // Trigs the processing of the list
-        _eventThread->trig();
+        _eventThread->trig(forceResync ? FORCE_RESYNC : 0);
     } else {
 
         // Create a route manager observer
@@ -254,7 +254,7 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous)
         addObserver(&obs);
 
         // Trig the processing of the list
-        _eventThread->trig();
+        _eventThread->trig(forceResync ? FORCE_RESYNC : 0);
 
         // Unlock to allow for sem wait
         _routingLock.unlock();
@@ -270,13 +270,12 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous)
     }
 }
 
-void AudioRouteManager::doReconsiderRouting()
+void AudioRouteManager::doReconsiderRouting(bool forceResync)
 {
-    if (!checkAndPrepareRouting()) {
+    if (!checkAndPrepareRouting() && !forceResync) {
 
         return;
     }
-
     ALOGD("%s: Route state:", __FUNCTION__);
     ALOGD("\t-Previously Enabled Route in Input = %s",
           routeCriterionType()->getFormattedState(prevEnabledRoutes(Direction::Input)).c_str());
@@ -600,7 +599,7 @@ void AudioRouteManager::onPollError()
 bool AudioRouteManager::onProcess(uint16_t event)
 {
     AutoW lock(_routingLock);
-    doReconsiderRouting();
+    doReconsiderRouting(event == FORCE_RESYNC);
 
     // Notify all potential observer of Route Manager Subject
     notify();
