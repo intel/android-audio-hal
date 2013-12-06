@@ -35,8 +35,16 @@
  */
 enum RoutingStage
 {
-    None = 0,
-    Flow = (1 << 0),       /**< It refers to umute/unmute steps.   */
-    Path = (1 << 1),       /**< It refers to enable/disable steps  */
-    Configure = (1 << 2)   /**< It refers to configure step        */
+    Flow = 0,   /**< It refers to umute/unmute steps.   */
+    Path,       /**< It refers to enable/disable steps  */
+    Configure   /**< It refers to configure step        */
 };
+
+enum RoutingStageMask
+{
+    FlowMask = (1 << Flow),       /**< It refers to umute/unmute steps.   */
+    PathMask = (1 << Path),       /**< It refers to enable/disable steps  */
+    ConfigureMask = (1 << Configure)   /**< It refers to configure step        */
+};
+
+static const uint32_t _nbRoutingStages = 3;

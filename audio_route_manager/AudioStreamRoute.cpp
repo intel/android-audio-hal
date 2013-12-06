@@ -76,8 +76,8 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
 bool AudioStreamRoute::needReflow() const
 {
     return _previouslyUsed && _isUsed &&
-           ((_forcedRoutingStageRequested == Flow ||
-             _forcedRoutingStageRequested == Path) || (_currentStream != _newStream));
+           (_routingStageRequested.test(Flow) || _routingStageRequested.test(Path) ||
+            _currentStream != _newStream);
 }
 
 status_t AudioStreamRoute::route(bool isPreEnable)

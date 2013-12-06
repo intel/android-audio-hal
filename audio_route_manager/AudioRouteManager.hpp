@@ -134,9 +134,14 @@ private:
             _routeMgr->setRouteApplicable(name, isApplicable);
         }
 
-        virtual void setForcedRoutingStageRequested(const std::string &name, RoutingStage stage)
+        virtual void setRouteNeedReconfigure(const std::string &name, bool needReconfigure)
         {
-            _routeMgr->setForcedRoutingStageRequested(name, stage);
+            _routeMgr->setRouteNeedReconfigure(name, needReconfigure);
+        }
+
+        virtual void setRouteNeedReroute(const std::string &name, bool needReroute)
+        {
+            _routeMgr->setRouteNeedReroute(name, needReroute);
         }
 
         virtual void setPortBlocked(const std::string &name, bool isBlocked)
@@ -405,14 +410,24 @@ private:
     void setRouteApplicable(const std::string &name, bool isApplicable);
 
     /**
-     * Sets the forced routing stage request attribute of an audio route.
+     * Sets the need reconfigure attribute of an audio route.
      * Based upon settings file of the Route Manager plugin, this function informs the route
-     * manager whether a route needs to go through a routing stage or not.
+     * manager whether a route needs to be reconfigure or not.
      *
      * @param[in] name: name of the route that needs reconfiguration.
-     * @param[in] stage: routing stage requested.
+     * @param[in] needReconfigure: reconfiguration flag.
      */
-    void setForcedRoutingStageRequested(const std::string &name, RoutingStage stage);
+    void setRouteNeedReconfigure(const std::string &name, bool needReconfigure);
+
+    /**
+     * Sets the need reroute attribute of an audio route.
+     * Based upon settings file of the Route Manager plugin, this function informs the route
+     * manager whether a route needs to be closed/reopened or not.
+     *
+     * @param[in] name: name of the route that needs rerouting.
+     * @param[in] needReroute: rerouting flag.
+     */
+    void setRouteNeedReroute(const std::string &name, bool needReroute);
 
     /**
      * Sets the blocked attribute of an audio port.
@@ -694,7 +709,7 @@ private:
      *
      * @param[in] event Id of the event to be processed.
      *
-     * @return true if file decriptor polled list by event thread has changed, false otherwise.
+     * @return true if file descriptor polled list by event thread has changed, false otherwise.
      */
     virtual bool onProcess(uint16_t event);
 

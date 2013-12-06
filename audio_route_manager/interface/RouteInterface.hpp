@@ -24,7 +24,6 @@
 
 #include "Interface.h"
 #include "StreamRouteConfig.hpp"
-#include "RoutingStage.hpp"
 #include <string>
 
 class StreamRouteConfig;
@@ -120,15 +119,26 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
     virtual void setRouteApplicable(const std::string &name, bool isApplicable) = 0;
 
     /**
-     * Sets a forced routing stage request of an audio route.
+     * Sets the need reconfigure attribute of an audio route.
      * Based upon settings file of the Route Manager plugin, this function informs the route
-     * manager whether a route requests to go through routing stages or not.
+     * manager whether a route needs to be reconfigure or not.
      *
      * @param[in] name: name of the route that needs reconfiguration.
-     * @param[in] routingStage: requested routing stage.
+     * @param[in] needReconfigure: reconfiguration flag.
      */
-    virtual void setForcedRoutingStageRequested(const std::string &name,
-                                                RoutingStage stage) = 0;
+    virtual void setRouteNeedReconfigure(const std::string &name,
+                                         bool needReconfigure) = 0;
+
+    /**
+     * Sets the need reroute attribute of an audio route.
+     * Based upon settings file of the Route Manager plugin, this function informs the route
+     * manager whether a route needs to be closed/reopened or not.
+     *
+     * @param[in] name: name of the route that needs rerouting.
+     * @param[in] needReroute: rerouting flag.
+     */
+    virtual void setRouteNeedReroute(const std::string &name,
+                                     bool needReroute) = 0;
 
     /**
      * Sets the blocked attribute of an audio port.

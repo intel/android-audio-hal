@@ -34,7 +34,7 @@ AudioRoute::AudioRoute(const string &name, uint32_t routeId)
       _isUsed(false),
       _previouslyUsed(false),
       _isApplicable(false),
-      _forcedRoutingStageRequested(None)
+      _routingStageRequested(0)
 {
     _port[EPortSource] = NULL;
     _port[EPortDest] = NULL;

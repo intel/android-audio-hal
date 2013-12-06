@@ -100,9 +100,9 @@ public:
  * A Configure stage on OpenedRoute lead to setting the configuration.
  */
 const pair<int, const char *> AudioRouteManager::_routingStageValuePairs[] = {
-    make_pair(Flow,       "Flow"),
-    make_pair(Path,       "Path"),
-    make_pair(Configure,  "Configure")
+    make_pair(FlowMask,       "Flow"),
+    make_pair(PathMask,       "Path"),
+    make_pair(ConfigureMask,  "Configure")
 };
 
 template <>
@@ -401,7 +401,7 @@ void AudioRouteManager::executeMuteRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    _routingStageCriterion->setCriterionState(Flow);
+    _routingStageCriterion->setCriterionState(FlowMask);
     setRouteCriteriaForMute();
     _audioPfwConnector->applyConfigurations();
 }
@@ -410,7 +410,7 @@ void AudioRouteManager::executeDisableRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    _routingStageCriterion->setCriterionState(Path);
+    _routingStageCriterion->setCriterionState(PathMask);
     setRouteCriteriaForDisable();
     doDisableRoutes();
     _audioPfwConnector->applyConfigurations();
@@ -421,7 +421,7 @@ void AudioRouteManager::executeConfigureRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    _routingStageCriterion->setCriterionState(Configure);
+    _routingStageCriterion->setCriterionState(ConfigureMask);
 
     StreamRouteMapIterator routeIt;
     for (routeIt = _streamRouteMap.begin(); routeIt != _streamRouteMap.end(); ++routeIt) {
@@ -448,7 +448,7 @@ void AudioRouteManager::executeEnableRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    _routingStageCriterion->setCriterionState(Path | Configure);
+    _routingStageCriterion->setCriterionState(PathMask | ConfigureMask);
     doPreEnableRoutes();
     _audioPfwConnector->applyConfigurations();
     doEnableRoutes();
@@ -458,7 +458,7 @@ void AudioRouteManager::executeUnmuteRoutingStage()
 {
     ALOGD("\t\t-%s", __FUNCTION__);
 
-    _routingStageCriterion->setCriterionState(Configure | Path | Flow);
+    _routingStageCriterion->setCriterionState(ConfigureMask | PathMask | FlowMask);
     _audioPfwConnector->applyConfigurations();
 }
 
@@ -712,11 +712,18 @@ void AudioRouteManager::setRouteApplicable(const string &name, bool isApplicable
     getElement<AudioRoute>(name, _routeMap)->setApplicable(isApplicable);
 }
 
-void AudioRouteManager::setForcedRoutingStageRequested(const string &name, RoutingStage stage)
+void AudioRouteManager::setRouteNeedReconfigure(const string &name, bool needReconfigure)
 {
     ALOGV("%s: %s", __FUNCTION__, name.c_str());
     AutoW lock(_routingLock);
-    getElement<AudioRoute>(name, _routeMap)->setForcedRoutingStageRequested(stage);
+    getElement<AudioRoute>(name, _routeMap)->setNeedReconfigure(needReconfigure);
+}
+
+void AudioRouteManager::setRouteNeedReroute(const string &name, bool needReroute)
+{
+    ALOGV("%s: %s", __FUNCTION__, name.c_str());
+    AutoW lock(_routingLock);
+    getElement<AudioRoute>(name, _routeMap)->setNeedReroute(needReroute);
 }
 
 void AudioRouteManager::updateStreamRouteConfig(const string &name,

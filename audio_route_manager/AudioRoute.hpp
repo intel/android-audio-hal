@@ -24,6 +24,7 @@
 
 #include "RoutingElement.hpp"
 #include "RoutingStage.hpp"
+#include <bitset>
 
 class AudioPort;
 
@@ -146,8 +147,8 @@ public:
      */
     virtual bool needReflow() const
     {
-        return _previouslyUsed && _isUsed &&
-               (_forcedRoutingStageRequested == Flow || _forcedRoutingStageRequested == Path);
+        return _previouslyUsed && _isUsed && (_routingStageRequested.test(Flow) ||
+                                              _routingStageRequested.test(Path));
     }
 
     /**
@@ -160,7 +161,20 @@ public:
      */
     virtual bool needRepath() const
     {
-        return _previouslyUsed && _isUsed && (_forcedRoutingStageRequested == Path);
+        return _previouslyUsed && _isUsed && _routingStageRequested.test(Path);
+    }
+
+    /**
+     * Sets need reconfigure flag.
+     *
+     * This API is intended to be called by the Route Parameter Manager to set the need reconfigure
+     * flag of this route according to the platform settings (XML configuration).
+     *
+     * @param[in] needReconfigure boolean to indicate Route needs reconfigure.
+     */
+    void setNeedReconfigure(bool needReconfigure)
+    {
+        _routingStageRequested.set(Flow, needReconfigure);
     }
 
     /**
@@ -171,9 +185,9 @@ public:
      *
      * @param[in] needReroute boolean to indicate Route needs reroute.
      */
-    void setForcedRoutingStageRequested(RoutingStage stage)
+    void setNeedReroute(bool needReroute)
     {
-        _forcedRoutingStageRequested = stage;
+        _routingStageRequested.set(Path, needReroute);
     }
 
     /**
@@ -229,5 +243,9 @@ protected:
 
     bool _isApplicable; /**< Route is applicable according to Route Parameter Mgr settings. */
 
-    RoutingStage _forcedRoutingStageRequested; /**< Route needs to go through routing stage. */
+    /**
+     * Routing stage(s) requested by Route Parameter Mgr
+     * Bitfield definition from RoutingStage enum.
+     */
+    std::bitset<_nbRoutingStages> _routingStageRequested;
 };
