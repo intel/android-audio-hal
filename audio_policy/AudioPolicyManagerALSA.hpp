@@ -55,6 +55,16 @@ public:
                                  int session);
 
     /**
+     * Selects the input device corresponding to requested audio source
+     *
+     * @param[in] inputSource input source from the io handle that has to be processed
+     *
+     * @return device chosen according to the input source
+     *                default value is AUDIO_DEVICE_NONE
+     */
+    virtual audio_devices_t getDeviceForInputSource(int inputSource);
+
+    /**
      * Gets audio input handle from current input source and parameters
      */
     virtual audio_io_handle_t getInput(int inputSource,
@@ -76,12 +86,32 @@ public:
     virtual audio_devices_t getDeviceForStrategy(routing_strategy strategy, bool fromCache = true);
 
     /**
+     * Stops the input stream
+     *
+     * @param[in] input io handle that has to be stopped
+     *
+     * @return status
+     */
+    virtual status_t stopInput(audio_io_handle_t input);
+
+    /**
      * This function delegates to parent implementation the release of input stream and then
      * it checks if it is necessary to restart a previously stopped input stream.
      *
      * @param [in] input handle of input stream to release
      */
     virtual void releaseInput(audio_io_handle_t input);
+
+protected:
+    /**
+     * Parses the parameters received from the upper layers in case some specific handling
+     * must be done
+     *
+     * @param[in] param parameters received from above
+     *
+     * @return status
+     */
+    virtual status_t doParseParameters(AudioParameter &param);
 
 private:
     /**
@@ -160,6 +190,15 @@ private:
      * @return OK on success, INVALID_OPERATION if operation not allowed
      */
     status_t applyVolumeOnStream(AudioSystem::stream_type stream, audio_devices_t device);
+
+    /**
+     * Return the handle corresponding to the source
+     *
+     * @param[in] input_source
+     *
+     * @return handle for source and 0 otherwise
+     */
+    audio_io_handle_t getHandleFromInputSource(int input_source);
 
     static const float _maxVolume = 1.0; /**< Max supported volume (range is [0..1]). */
     static const float _base10 = 10.0; /**< base 10 used for volume computation. */

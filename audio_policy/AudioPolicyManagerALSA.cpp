@@ -24,6 +24,7 @@
 #define LOG_TAG "AudioPolicyManagerALSA"
 
 #include <utils/Log.h>
+#include <hardware/audio.h>
 #include "AudioPolicyManagerALSA.hpp"
 #include <media/mediarecorder.h>
 #include <Property.h>
@@ -218,8 +219,8 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     // - A record request for a source which has already been previously requested.
     // Since the policy doesn't have enough elements to legislate this case, the input shall
     // be given for the latest request caused by user's action.
-    // - The active input uses AUDIO_SOURCE_HOTWORD. This is a special audio source that can
-    // be preempted by any other.
+    // - The active input uses AUDIO_SOURCE_HOTWORD or AUDIO_SOURCE_LPAL. This is a special
+    // audio source that can be preempted by any other.
     // One special case is when starting a VoIP call during an ongoing VCR. In this case both
     // clients are allowed to record simultaneously.
     if (!mInputs.isEmpty() && activeInput) {
@@ -248,6 +249,11 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
                 __FUNCTION__, activeInput);
             stopInput(activeInput);
             releaseInput(activeInput);
+        } else if (activeInputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
+            // The difference between LPAL and HOTWORD is that LPAL shall be resumed.
+            ALOGI("%s: Preempting Always-Listening input %d",
+                __FUNCTION__, activeInput);
+            stopInput(activeInput);
         } else {
             LOGW("%s: input %d failed: other input (%d) already started",
                  __FUNCTION__, input, activeInput);
@@ -261,12 +267,72 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     int aliasSource = (inputDesc->mInputSource == AUDIO_SOURCE_HOTWORD) ?
                                         AUDIO_SOURCE_VOICE_RECOGNITION : inputDesc->mInputSource;
 
+    if (inputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
+        // input = 0 is mandatory in case of LPAL because the parameter is vehiculated through
+        //  global setParameter and not through the dummy input.
+        //  As the dummy input will never be started, its devices / input source must be
+        //  started here.
+        input = 0;
+        param.add(String8(AUDIO_PARAMETER_KEY_ALWAYS_LISTENING_ROUTE),
+                  String8(AUDIO_PARAMETER_VALUE_ALWAYS_LISTENING_ROUTE_ON));
+        param.addInt(String8(AUDIO_PARAMETER_KEY_LPAL_DEVICE), (int)inputDesc->mDevice);
+    }
     param.addInt(String8(AudioParameter::keyInputSource), aliasSource);
     mpClientInterface->setParameters(input, param.toString());
+    ALOGV("startInput() input %d source = %d", (int)input, inputDesc->mInputSource);
 
     inputDesc->mRefCount = 1;
     inputDesc->mHasStarted = true;
     return NO_ERROR;
+}
+
+status_t AudioPolicyManagerALSA::doParseParameters(AudioParameter &param)
+{
+    String8 paramStatus;
+    status_t status = NO_ERROR;
+    String8 alwaysListeningKey = String8(AUDIO_PARAMETER_KEY_ALWAYS_LISTENING_STATUS);
+
+    if (param.get(alwaysListeningKey, paramStatus) == NO_ERROR) {
+
+        bool isAlwaysListeningOn = false;
+
+        // Remove parsed key
+        param.remove(alwaysListeningKey);
+        if (paramStatus == String8(AUDIO_PARAMETER_VALUE_ALWAYS_LISTENING_ON)) {
+            isAlwaysListeningOn = true;
+        }
+
+        ALOGD("%s: LPAL is %s", __FUNCTION__, isAlwaysListeningOn ? "on" : "off");
+        audio_io_handle_t ioHandle = getHandleFromInputSource(AUDIO_SOURCE_LPAL);
+
+        if (isAlwaysListeningOn && (ioHandle == 0)) {
+            ioHandle = getInput(AUDIO_SOURCE_LPAL,
+                                8000,
+                                AUDIO_FORMAT_PCM_16_BIT,
+                                AUDIO_CHANNEL_IN_MONO,
+                                AudioSystem::AGC_DISABLE);
+
+            ALOGD("%s: getInput done", __FUNCTION__);
+            status = startInput(ioHandle);
+            ALOGW_IF(status != NO_ERROR, "%s: Input failed to start : %d", __FUNCTION__, status);
+        } else {
+            status = stopInput(ioHandle);
+            ALOGW_IF(status != NO_ERROR, "%s: Input failed to stop : %d", __FUNCTION__, status);
+            releaseInput(ioHandle);
+        }
+    }
+    return status;
+}
+
+audio_io_handle_t AudioPolicyManagerALSA::getHandleFromInputSource(int input_source)
+{
+    for (size_t i = 0; i < mInputs.size(); i++) {
+        const AudioInputDescriptor *input_descriptor = mInputs.valueAt(i);
+        if (input_descriptor->mInputSource == input_source) {
+            return mInputs.keyAt(i);
+        }
+    }
+    return 0;
 }
 
 status_t AudioPolicyManagerALSA::setStreamVolumeIndex(AudioSystem::stream_type stream,
@@ -517,6 +583,42 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
     return (audio_devices_t)device;
 }
 
+status_t AudioPolicyManagerALSA::stopInput(audio_io_handle_t input)
+{
+    ALOGV("stopInput() input %d", input);
+    ssize_t index = mInputs.indexOfKey(input);
+    if (index < 0) {
+        ALOGW("stopInput() unknow input %d", input);
+        return BAD_VALUE;
+    }
+    AudioInputDescriptor *inputDesc = mInputs.valueAt(index);
+
+    if (inputDesc->mRefCount == 0) {
+        ALOGW("stopInput() input %d already stopped", input);
+        return INVALID_OPERATION;
+    } else {
+        // automatically disable the remote submix output when input is stopped
+        if (audio_is_remote_submix_device(inputDesc->mDevice)) {
+            setDeviceConnectionState((AudioSystem::audio_devices)AUDIO_DEVICE_OUT_REMOTE_SUBMIX,
+                                     AudioSystem::DEVICE_STATE_UNAVAILABLE,
+                                     AUDIO_REMOTE_SUBMIX_DEVICE_ADDRESS);
+        }
+
+        AudioParameter param = AudioParameter();
+
+        if (inputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
+            input = 0;
+            param.add(String8(AUDIO_PARAMETER_KEY_ALWAYS_LISTENING_ROUTE),
+                      String8(AUDIO_PARAMETER_VALUE_ALWAYS_LISTENING_ROUTE_OFF));
+        }
+        // AUDIO_DEVICE_BIT_IN value allows to stop any audio input stream
+        param.addInt(String8(AudioParameter::keyRouting), AUDIO_DEVICE_BIT_IN);
+        mpClientInterface->setParameters(input, param.toString());
+        inputDesc->mRefCount = 0;
+        return NO_ERROR;
+    }
+}
+
 void AudioPolicyManagerALSA::releaseInput(audio_io_handle_t input)
 {
     AudioPolicyManagerBase::releaseInput(input);
@@ -536,16 +638,38 @@ void AudioPolicyManagerALSA::releaseInput(audio_io_handle_t input)
             if (inputDesc->mHasStarted) {
                 inputDesc->mRefCount = 1;
                 AudioParameter param;
+                if (inputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
+                    input = 0;
+                    param.add(String8(AUDIO_PARAMETER_KEY_ALWAYS_LISTENING_ROUTE),
+                              String8(AUDIO_PARAMETER_VALUE_ALWAYS_LISTENING_ROUTE_ON));
+                    param.addInt(String8(AUDIO_PARAMETER_KEY_LPAL_DEVICE),
+                                 (int)getDeviceForInputSource(AUDIO_SOURCE_LPAL));
+                } else {
+                    input = mInputs.keyAt(iRemainingInputs - 1);
+                }
                 param.addInt(String8(AudioParameter::keyRouting), (int)inputDesc->mDevice);
                 param.addInt(String8(AudioParameter::keyInputSource), (int)inputDesc->mInputSource);
-                mpClientInterface->setParameters(mInputs.keyAt(
-                                                     iRemainingInputs - 1), param.toString());
+                mpClientInterface->setParameters(input, param.toString());
                 bValidInput = true;
                 ALOGI("%s: Rerouting to previously stopped input %d", __FUNCTION__, getActiveInput());
             }
             iRemainingInputs--;
         }
     }
+}
+
+audio_devices_t AudioPolicyManagerALSA::getDeviceForInputSource(int inputSource)
+{
+    uint32_t device;
+    if (inputSource == AUDIO_SOURCE_LPAL) {
+        // In case the wired headset in disconnected then the DMIC shall be used.
+        // Even when the BT SCO is connected.
+        device = (mAvailableInputDevices & AUDIO_DEVICE_IN_WIRED_HEADSET)
+                 ? AUDIO_DEVICE_IN_WIRED_HEADSET : AUDIO_DEVICE_IN_BUILTIN_MIC;
+    } else {
+        device = AudioPolicyManagerBase::getDeviceForInputSource(inputSource);
+    }
+    return device;
 }
 
 AudioPolicyManagerALSA::AudioPolicyManagerALSA(AudioPolicyClientInterface *clientInterface)
