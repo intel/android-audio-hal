@@ -33,7 +33,8 @@ const string AudioRoute::ROUTE_CRITERION_TYPE = "RouteType";
 
 const AudioRoute::Status AudioRoute::DEFAULT_STATUS = {
     isApplicable    : false,
-    forcedRoutingStage : 0
+    needReconfigure : false,
+    needReroute     : false
 };
 
 AudioRoute::AudioRoute(const string &mappingValue,
@@ -100,19 +101,19 @@ bool AudioRoute::sendToHW(string &error)
         _routeInterface->setRouteApplicable(_routeName, status.isApplicable);
     }
 
-    // Updates forced routing stage if changed
-    if (status.forcedRoutingStage != _status.forcedRoutingStage) {
+    // Updates reconfigure flag if changed
+    if (status.needReconfigure != _status.needReconfigure) {
 
-        _routeInterface->setForcedRoutingStageRequested(_routeName,
-                                                        toRoutingStage(status.forcedRoutingStage));
+        _routeInterface->setRouteNeedReconfigure(_routeName, status.needReconfigure);
+    }
+
+    // Updates reroute flag if changed
+    if (status.needReroute != _status.needReroute) {
+
+        _routeInterface->setRouteNeedReroute(_routeName, status.needReroute);
     }
 
     _status = status;
 
     return true;
-}
-
-RoutingStage AudioRoute::toRoutingStage(uint8_t stage)
-{
-    return stage == Path ? Path : (stage == Flow ? Flow : None);
 }

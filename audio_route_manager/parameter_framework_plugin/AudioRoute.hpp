@@ -39,7 +39,8 @@ private:
     struct Status
     {
         bool isApplicable; /**< applicable attribute of a route, ie route can be enabled. */
-        uint8_t forcedRoutingStage; /**< allow to force a routing stage. */
+        bool needReconfigure; /**< route needs to be reconfigured in a glitch free way. */
+        bool needReroute; /**< route needs to be closed/reopened. */
     } __attribute__((packed));
 public:
     AudioRoute(const string &mappingValue,
@@ -68,15 +69,6 @@ protected:
      */
     virtual bool sendToHW(string &error);
 private:
-    /**
-     * Converts stage (coming from EnumParameter) to Route Manager routing stage
-     *
-     * @param[in] stage routing stage read from XML
-     *
-     * @return routing stage in Route Manager format
-     */
-    RoutingStage toRoutingStage(uint8_t stage);
-
     const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
     IRouteInterface *_routeInterface; /**< Route Interface to communicate with Route Mgr. */
 
