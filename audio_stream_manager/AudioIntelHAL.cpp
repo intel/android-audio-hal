@@ -92,6 +92,7 @@ AudioIntelHAL::AudioIntelHAL()
     : _platformState(new AudioPlatformState()),
       _audioParameterHandler(new AudioParameterHandler()),
       _eventThread(new CEventThread(this)),
+      _modemAudioManagerInterface(NULL),
       _bluetoothHFPSupported(TProperty<bool>(BLUETOOTH_HFP_SUPPORTED_PROP_NAME,
                                              BLUETOOTH_HFP_SUPPORTED_DEFAULT_VALUE))
 {
