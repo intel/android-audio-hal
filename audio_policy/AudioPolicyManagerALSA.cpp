@@ -127,64 +127,8 @@ audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
                                                    AudioSystem::audio_in_acoustics acoustics)
 {
     audio_devices_t device = getDeviceForInputSource(inputSource);
-
-    audio_io_handle_t activeInput = getActiveInput();
     audio_io_handle_t input = 0;
 
-    // Stop the current active input to enable requested input start in the following cases :
-    // - An application already uses an input and the requested input is from a VoIP call or a CSV
-    // call record
-    // - An application requests an input for a source which has already been previously requested.
-    // Since the policy doesn't have enough elements to legislate this use case, the input shall
-    // be given for the latest request caused by user's action.
-    // Log the remaining usecases for info purpose.
-    if (!mInputs.isEmpty() && activeInput) {
-        AudioInputDescriptor *inputDesc = mInputs.valueFor(activeInput);
-
-        uint32_t deviceMediaRecMic = (AUDIO_DEVICE_IN_BUILTIN_MIC | AUDIO_DEVICE_IN_BACK_MIC |
-                                      AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET |
-                                      AUDIO_DEVICE_IN_WIRED_HEADSET);
-
-        // If an application uses already an input and the requested input is from a VoIP call
-        // or a CSV call record, stop the current active input to enable requested input start.
-        if (((REMOVE_DEVICE_DIR(inputDesc->mDevice) & deviceMediaRecMic) &&
-             (inputDesc->mInputSource != AUDIO_SOURCE_VOICE_COMMUNICATION)) &&
-            ((REMOVE_DEVICE_DIR(device) & AUDIO_DEVICE_IN_VOICE_CALL) ||
-             (inputSource == AUDIO_SOURCE_VOICE_COMMUNICATION))) {
-            LOGI("Stop current active input %d because of higher priority input %d !",
-                 inputDesc->mInputSource, inputSource);
-            stopInput(activeInput);
-        } else if (inputSource == inputDesc->mInputSource) {
-            LOGI("getInput() mPhoneState : %d, device 0x%x, two requests for the same source,"
-                 "return the audio input handle to the latest requester!", mPhoneState, device);
-            stopInput(activeInput);
-        } else if ((AUDIO_SOURCE_CAMCORDER == inputDesc->mInputSource) &&
-                   (AUDIO_SOURCE_MIC == inputSource)) {
-            // Create a concurrent input and let upper layers close the active camcorder input
-            LOGI("Grant request for input %d creation while current camcorder input", inputSource);
-        } else if ((REMOVE_DEVICE_DIR(inputDesc->mDevice) & AUDIO_DEVICE_IN_VOICE_CALL) &&
-                   (inputSource == AUDIO_SOURCE_VOICE_COMMUNICATION)) {
-            LOGI("Incoming VoIP call during VCR or VCR -> VoIP swap");
-        } else if ((inputDesc->mInputSource == AUDIO_SOURCE_VOICE_COMMUNICATION) &&
-                   (inputSource == AUDIO_SOURCE_VOICE_RECOGNITION)) {
-            LOGI("Voice recognition requested during VoIP call");
-        } else if ((inputDesc->mInputSource == AUDIO_SOURCE_MIC) &&
-                   (inputSource == AUDIO_SOURCE_VOICE_RECOGNITION)) {
-            LOGI("Voice recognition requested while current MIC input source");
-        }
-        // Force use of built-in mic in case of force use of the speaker in VoIP and wsHS connected
-        else if ((inputSource == AUDIO_SOURCE_VOICE_COMMUNICATION) &&
-                 (REMOVE_DEVICE_DIR(inputDesc->mDevice) & AUDIO_DEVICE_IN_WIRED_HEADSET) &&
-                 (getForceUse(AudioSystem::FOR_COMMUNICATION) == AudioSystem::FORCE_SPEAKER)) {
-            device = AUDIO_DEVICE_IN_BUILTIN_MIC;
-            LOGI(
-                "Changing input device to built-in mic as force use to speaker requested with wsHS connected");
-        } else {
-            LOGW("getInput() mPhoneState : %d, device 0x%x, unhandled input source concurrency,"
-                 "return invalid audio input handle!", mPhoneState, device);
-            return 0;
-        }
-    }
 
     ALOGV("getInput() inputSource %d, samplingRate %d, format %d, channelMask %x, acoustics %x",
           inputSource, samplingRate, format, channelMask, acoustics);
@@ -246,10 +190,10 @@ audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
 
 status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
 {
-    ALOGV("startInput() input %d", input);
+    ALOGI("%s: input %d", __FUNCTION__, input);
     ssize_t index = mInputs.indexOfKey(input);
     if (index < 0) {
-        ALOGW("startInput() unknow input %d", input);
+        ALOGW("%s: unknown input %d", __FUNCTION__, input);
         return BAD_VALUE;
     }
     AudioInputDescriptor *inputDesc = mInputs.valueAt(index);
@@ -265,22 +209,42 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
 #ifdef AUDIO_POLICY_TEST
     if (mTestInput == 0)
 #endif // AUDIO_POLICY_TEST
-    {
-        // refuse 2 active AudioRecord clients at the same time
-        // except in the case of incoming VOIP call during voice call recording
-        audio_io_handle_t activeInput = getActiveInput();
-        if (activeInput != 0) {
-            AudioInputDescriptor *activeInputDesc = mInputs.valueFor(activeInput);
-            if ((inputDesc->mInputSource & AUDIO_SOURCE_VOICE_COMMUNICATION) &&
-                (REMOVE_DEVICE_DIR(activeInputDesc->mDevice) & AUDIO_DEVICE_IN_VOICE_CALL) &&
-                ((activeInputDesc->mInputSource == AUDIO_SOURCE_VOICE_UPLINK) ||
-                 (activeInputDesc->mInputSource == AUDIO_SOURCE_VOICE_DOWNLINK) ||
-                 (activeInputDesc->mInputSource == AUDIO_SOURCE_VOICE_CALL))) {
-                ALOGI("startInput() input %d: VCR input %d already started", input, activeInput);
-            } else {
-                ALOGI("startInput() input %d failed: other input already started", input);
-                return INVALID_OPERATION;
-            }
+
+    audio_io_handle_t activeInput = getActiveInput();
+    AudioInputDescriptor *activeInputDesc = mInputs.valueFor(activeInput);
+
+    // Stop the current active input to enable requested input start in the following situations:
+    // - VoIP/CSV call input request over non-voice record
+    // - A record request for a source which has already been previously requested.
+    // Since the policy doesn't have enough elements to legislate this case, the input shall
+    // be given for the latest request caused by user's action.
+    // One special case is when starting a VoIP call during an ongoing VCR. In this case both
+    // clients are allowed to record simultaneously.
+    if (!mInputs.isEmpty() && activeInput) {
+        uint32_t deviceMediaRecMic = (AUDIO_DEVICE_IN_BUILTIN_MIC | AUDIO_DEVICE_IN_BACK_MIC |
+                                      AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET |
+                                      AUDIO_DEVICE_IN_WIRED_HEADSET);
+
+        if (((REMOVE_DEVICE_DIR(activeInputDesc->mDevice) & deviceMediaRecMic) &&
+             (activeInputDesc->mInputSource != AUDIO_SOURCE_VOICE_COMMUNICATION)) &&
+            ((REMOVE_DEVICE_DIR(inputDesc->mDevice) & AUDIO_DEVICE_IN_VOICE_CALL) ||
+             (inputDesc->mInputSource == AUDIO_SOURCE_VOICE_COMMUNICATION))) {
+            ALOGI("%s: Stop current active input %d because of higher priority input %d !",
+                  __FUNCTION__, activeInput, input);
+            stopInput(activeInput);
+        } else if ((REMOVE_DEVICE_DIR(activeInputDesc->mDevice) & AUDIO_DEVICE_IN_VOICE_CALL) &&
+                   (inputDesc->mInputSource == AUDIO_SOURCE_VOICE_COMMUNICATION)) {
+            ALOGI("%s: Granting input %d for VoIP although VCR input %d already started",
+                  __FUNCTION__, input, activeInput);
+        } else if (inputDesc->mInputSource == activeInputDesc->mInputSource) {
+            ALOGI("%s: Two requests for the same source 0x%x (device 0x%x),"
+                  "return the audio input handle to the latest requester!",
+                  __FUNCTION__, inputDesc->mInputSource, inputDesc->mDevice);
+            stopInput(activeInput);
+        } else {
+            LOGW("%s: input %d failed: other input (%d) already started",
+                 __FUNCTION__, input, activeInput);
+            return INVALID_OPERATION;
         }
     }
 
@@ -569,6 +533,7 @@ void AudioPolicyManagerALSA::releaseInput(audio_io_handle_t input)
                 mpClientInterface->setParameters(mInputs.keyAt(
                                                      iRemainingInputs - 1), param.toString());
                 bValidInput = true;
+                ALOGI("%s: Rerouting to previously stopped input %d", __FUNCTION__, getActiveInput());
             }
             iRemainingInputs--;
         }
