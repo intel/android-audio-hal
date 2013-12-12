@@ -198,7 +198,7 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     }
     AudioInputDescriptor *inputDesc = mInputs.valueAt(index);
 
-    if (inputDesc->mInputSource & AUDIO_SOURCE_REMOTE_SUBMIX) {
+    if (inputDesc->mInputSource == AUDIO_SOURCE_REMOTE_SUBMIX) {
         ALOGV("startInput() input %d remote submix initiated", input);
         status_t errCode = AudioPolicyManagerBase::startInput(input);
         if (errCode != OK) {
