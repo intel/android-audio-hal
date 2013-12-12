@@ -378,7 +378,7 @@ status_t AudioPlatformState::loadAudioCriterionConfig(const char *path)
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
     cnode *root;
     char *data;
-    ALOGD("loadAudioCriterionConfig() ");
+    ALOGD("%s", __FUNCTION__);
     data = (char *)load_file(path, NULL);
     if (data == NULL) {
         return -ENODEV;
@@ -394,7 +394,7 @@ status_t AudioPlatformState::loadAudioCriterionConfig(const char *path)
     free(root);
     free(data);
 
-    ALOGI("loadAudioPolicyConfig() loaded %s\n", path);
+    ALOGD("%s: loaded %s", __FUNCTION__, path);
 
     return NO_ERROR;
 }
