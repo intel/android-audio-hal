@@ -218,6 +218,8 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     // - A record request for a source which has already been previously requested.
     // Since the policy doesn't have enough elements to legislate this case, the input shall
     // be given for the latest request caused by user's action.
+    // - The active input uses AUDIO_SOURCE_HOTWORD. This is a special audio source that can
+    // be preempted by any other.
     // One special case is when starting a VoIP call during an ongoing VCR. In this case both
     // clients are allowed to record simultaneously.
     if (!mInputs.isEmpty() && activeInput) {
@@ -241,6 +243,11 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
                   "return the audio input handle to the latest requester!",
                   __FUNCTION__, inputDesc->mInputSource, inputDesc->mDevice);
             stopInput(activeInput);
+        } else if (activeInputDesc->mInputSource == AUDIO_SOURCE_HOTWORD) {
+            ALOGI("%s: Preempting already started low-priority input %d",
+                __FUNCTION__, activeInput);
+            stopInput(activeInput);
+            releaseInput(activeInput);
         } else {
             LOGW("%s: input %d failed: other input (%d) already started",
                  __FUNCTION__, input, activeInput);
@@ -251,9 +258,10 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     AudioParameter param = AudioParameter();
     param.addInt(String8(AudioParameter::keyRouting), (int)inputDesc->mDevice);
 
-    param.addInt(String8(AudioParameter::keyInputSource), (int)inputDesc->mInputSource);
-    ALOGV("startInput() input source = %d", inputDesc->mInputSource);
+    int aliasSource = (inputDesc->mInputSource == AUDIO_SOURCE_HOTWORD) ?
+                                        AUDIO_SOURCE_VOICE_RECOGNITION : inputDesc->mInputSource;
 
+    param.addInt(String8(AudioParameter::keyInputSource), aliasSource);
     mpClientInterface->setParameters(input, param.toString());
 
     inputDesc->mRefCount = 1;
