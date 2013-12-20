@@ -36,6 +36,7 @@ using android_audio_legacy::SampleSpec;
 using android::status_t;
 using android::NO_ERROR;
 using android::NO_MEMORY;
+using android::NO_INIT;
 using android::OK;
 using std::string;
 
@@ -95,6 +96,11 @@ status_t AudioStreamRoute::route(bool isPreEnable)
 
     if (!isPreEnable) {
 
+        if (!_audioDevice->isOpened()) {
+
+            ALOGE("%s: audio device not found, cannot route the stream", __FUNCTION__);
+            return NO_INIT;
+        }
         /**
          * Attach the stream to its route only once routing stage is completed
          * to let the audio-parameter-manager performing the required configuration of the

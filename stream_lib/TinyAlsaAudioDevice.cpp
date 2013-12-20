@@ -108,6 +108,11 @@ close_device:
     return android::NO_MEMORY;
 }
 
+bool TinyAlsaAudioDevice::isOpened()
+{
+    return _pcmDevice != NULL;
+}
+
 android::status_t TinyAlsaAudioDevice::close()
 {
     if (_pcmDevice == NULL) {

@@ -45,6 +45,8 @@ public:
     virtual android::status_t open(const char *cardName, uint32_t deviceId,
                                    const StreamRouteConfig &config, bool isOut);
 
+    virtual bool isOpened();
+
     virtual android::status_t close();
 
 private:

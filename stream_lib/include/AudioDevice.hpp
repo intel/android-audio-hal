@@ -35,5 +35,12 @@ public:
 
     virtual android::status_t close() = 0;
 
+    /**
+     * Checks the state of the audio device.
+     *
+     * @return true if the device is opened and ready to be used, false otherwise.
+     */
+    virtual bool isOpened() = 0;
+
     virtual ~IAudioDevice() {}
 };
