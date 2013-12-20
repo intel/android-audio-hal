@@ -50,17 +50,5 @@ public:
     virtual android::status_t close();
 
 private:
-    /**
-     * Take the power lock associated to the tiny alsa device.
-     */
-    void acquirePowerLock();
-
-    /**
-     * Release the power lock associated to the tiny alsa device.
-     */
-    void releasePowerLock();
-
     pcm *_pcmDevice; /**< Handle on tiny alsa PCM device. */
-
-    static const char *const _powerLockTag; /**< Name of the power lock held. */
 };

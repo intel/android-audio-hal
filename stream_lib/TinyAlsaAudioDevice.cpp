@@ -27,13 +27,10 @@
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <AudioCommsAssert.hpp>
-#include <hardware_legacy/power.h>
 #include <cutils/log.h>
 
 using android_audio_legacy::SampleSpec;
 using android_audio_legacy::AudioUtils;
-
-const char *const TinyAlsaAudioDevice::_powerLockTag = "AudioDevice";
 
 pcm *TinyAlsaAudioDevice::getPcmDevice()
 {
@@ -49,8 +46,6 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
 {
     AUDIOCOMMS_ASSERT(_pcmDevice == NULL, "Tiny alsa device already opened");
     AUDIOCOMMS_ASSERT(cardName != NULL, "Null card name");
-
-    acquirePowerLock();
 
     pcm_config config;
     config.rate = routeConfig.rate;
@@ -119,21 +114,9 @@ android::status_t TinyAlsaAudioDevice::close()
 
         return android::DEAD_OBJECT;
     }
-
     ALOGD("%s", __FUNCTION__);
     pcm_close(_pcmDevice);
     _pcmDevice = NULL;
 
-    releasePowerLock();
     return android::OK;
-}
-
-void TinyAlsaAudioDevice::acquirePowerLock()
-{
-    acquire_wake_lock(PARTIAL_WAKE_LOCK, _powerLockTag);
-}
-
-void TinyAlsaAudioDevice::releasePowerLock()
-{
-    release_wake_lock(_powerLockTag);
 }
