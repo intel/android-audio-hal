@@ -25,6 +25,7 @@
 #include "AudioConverter.hpp"
 #include "AudioUtils.hpp"
 #include <cutils/log.h>
+#include <stdlib.h>
 
 using namespace android;
 
