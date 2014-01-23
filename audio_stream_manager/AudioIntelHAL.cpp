@@ -89,7 +89,8 @@ const char *const AudioIntelHAL::_restartingKey = "restarting";
 const char *const AudioIntelHAL::_restartingRequested = "true";
 
 AudioIntelHAL::AudioIntelHAL()
-    : _platformState(new AudioPlatformState()),
+    : _echoReference(NULL),
+      _platformState(new AudioPlatformState()),
       _audioParameterHandler(new AudioParameterHandler()),
       _eventThread(new CEventThread(this)),
       _modemAudioManagerInterface(NULL),
@@ -582,7 +583,11 @@ status_t AudioIntelHAL::doSetParameters(const String8 &keyValuePairs)
 void AudioIntelHAL::resetEchoReference(struct echo_reference_itfe *reference)
 {
     ALOGD(" %s(reference=%p)", __FUNCTION__, reference);
-    if ((reference == NULL) || (_echoReference != reference)) {
+    // Check that the reset is possible:
+    //  - reference and _echoReference shall both point to the same struct (consistency check)
+    //  - they should not be NULL because the reset process will remove the reference from
+    //    the output voice stream and then free the local echo reference.
+    if ((reference == NULL) || (_echoReference == NULL) || (_echoReference != reference)) {
 
         /* Nothing to do */
         return;
