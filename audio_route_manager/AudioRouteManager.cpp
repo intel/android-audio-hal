@@ -641,18 +641,10 @@ Stream *AudioRouteManager::getVoiceOutputStream()
     AutoW lock(_routingLock);
 
     StreamListIterator it;
-    for (it = _streamsList[Direction::Output].begin();
-         it != _streamsList[Direction::Output].end();
-         ++it) {
-
-        Stream *stream = *it;
-        if (stream->isRouted()) {
-
-            return stream;
-        }
-    }
-    ALOGD("%s current stream NOT FOUND for echo ref", __FUNCTION__);
-    return NULL;
+    // We take the first stream that corresponds to the primary output.
+    it = _streamsList[Direction::Output].begin();
+    ALOGE_IF(*it == NULL, "%s current stream NOT FOUND for echo ref", __FUNCTION__);
+    return *it;
 }
 
 const AudioStreamRoute *AudioRouteManager::findMatchingRoute(bool isOut, uint32_t flags) const
