@@ -317,8 +317,13 @@ status_t AudioPolicyManagerALSA::doParseParameters(AudioParameter &param)
             ALOGW_IF(status != NO_ERROR, "%s: Input failed to start : %d", __FUNCTION__, status);
         } else {
             status = stopInput(ioHandle);
-            ALOGW_IF(status != NO_ERROR, "%s: Input failed to stop : %d", __FUNCTION__, status);
-            releaseInput(ioHandle);
+            if (status == OK) {
+                releaseInput(ioHandle);
+            } else {
+                // do not release input : maybe the input was already stopped through
+                //   input concurrency. So it shall be resumed later
+                ALOGW("%s: Input failed to stop : %d", __FUNCTION__, status);
+            }
         }
     }
     return status;
@@ -607,6 +612,8 @@ status_t AudioPolicyManagerALSA::stopInput(audio_io_handle_t input)
         AudioParameter param = AudioParameter();
 
         if (inputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
+            // input = 0 is mandatory in case of LPAL because the parameter is vehiculated through
+            // global setParameter and not through any dummy input.
             input = 0;
             param.add(String8(AUDIO_PARAMETER_KEY_ALWAYS_LISTENING_ROUTE),
                       String8(AUDIO_PARAMETER_VALUE_ALWAYS_LISTENING_ROUTE_OFF));
