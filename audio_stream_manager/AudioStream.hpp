@@ -29,6 +29,8 @@
 #include <TinyAlsaStream.hpp>
 #include <media/AudioBufferProvider.h>
 #include <utils/String8.h>
+#include <utils/RWLock.h>
+
 /**
  * For debug purposes only, property-driven (dynamic)
  */
@@ -297,6 +299,15 @@ protected:
     }
 
     AudioIntelHAL *_parent; /**< Audio HAL singleton handler. */
+
+    /**
+     * Lock to protect preprocessing effects accessed from multiple contexts.
+     * For output streams, variable protected by the lock is the echo reference, populated by the
+     * output stream and accessed by the input stream.
+     * For input streams, variable protected by the lock is the list of pre processing effects
+     * pushed by Audio Flinger and hooked by the stream in the context of the record thread.
+     */
+    android::RWLock _preProcEffectLock;
 
 private:
     /**

@@ -169,7 +169,7 @@ status_t AudioStreamOutImpl::attachRouteL()
 
 status_t AudioStreamOutImpl::detachRouteL()
 {
-    removeEchoReferenceL(_echoReference);
+    removeEchoReference(_echoReference);
     return AudioStream::detachRouteL();
 }
 
@@ -215,7 +215,7 @@ status_t  AudioStreamOutImpl::setParameters(const String8 &keyValuePairs)
 void AudioStreamOutImpl::addEchoReference(struct echo_reference_itfe *reference)
 {
     AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
-    AutoW lock(_streamLock);
+    AutoW lock(_preProcEffectLock);
     ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, _echoReference);
 
     // Called from a WLocked context
@@ -224,23 +224,20 @@ void AudioStreamOutImpl::addEchoReference(struct echo_reference_itfe *reference)
 
 void AudioStreamOutImpl::removeEchoReference(struct echo_reference_itfe *reference)
 {
-    AutoW lock(_streamLock);
-    removeEchoReferenceL(reference);
-}
-
-void AudioStreamOutImpl::removeEchoReferenceL(struct echo_reference_itfe *reference)
-{
-    if (reference == NULL) {
+    AutoW lock(_preProcEffectLock);
+    if (reference == NULL || _echoReference == NULL) {
 
         return;
     }
-    AUDIOCOMMS_ASSERT(_echoReference != NULL, "Null echo reference pointer");
+
     ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, _echoReference);
-    // Called from a WLocked context
     if (_echoReference == reference) {
 
         _echoReference->write(_echoReference, NULL);
         _echoReference = NULL;
+    } else {
+
+        ALOGE("%s: reference requested was not attached to this stream...", __FUNCTION__);
     }
 }
 
@@ -279,6 +276,7 @@ int AudioStreamOutImpl::getPlaybackDelay(ssize_t frames, struct echo_reference_b
 
 void AudioStreamOutImpl::pushEchoReference(const void *buffer, ssize_t frames)
 {
+    AutoR lock(_preProcEffectLock);
     if (_echoReference != NULL) {
         struct echo_reference_buffer b;
         b.raw = (void *)buffer;

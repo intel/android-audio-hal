@@ -94,26 +94,11 @@ public:
 
     /**
      * Cancel the request to provide Echo Reference.
-     * Called from locked context.
      *
      * @param[in] echo reference structure pointer.
-     */
-    void removeEchoReferenceL(struct echo_reference_itfe *reference);
-
-    /**
-     * Cancel the request to provide Echo Reference.
      *
-     * @param[in] echo reference structure pointer.
      */
     void removeEchoReference(struct echo_reference_itfe *reference);
-
-    /**
-     * Get the echo reference for AEC effect.
-     * Called by an input stream on which SW echo cancellation is performed.
-     *
-     * @return valid echo reference is found, NULL otherwise.
-     */
-    struct echo_reference_itfe *getEchoReference() { return _echoReference; }
 
     /**
      * flush the data down the flow. It is similar to drop.

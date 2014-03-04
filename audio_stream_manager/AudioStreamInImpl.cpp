@@ -65,11 +65,6 @@ AudioStreamInImpl::AudioStreamInImpl(AudioIntelHAL *parent,
 
 AudioStreamInImpl::~AudioStreamInImpl()
 {
-    /**
-     * Prevent from deleting while any concurrent access to the stream.
-     * This case is met while adding / removing effects.
-     */
-    AutoW lock(_streamLock);
     freeAllocatedBuffers();
 }
 
@@ -276,6 +271,8 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
     ssize_t received_frames = -1;
     ssize_t frames = streamSampleSpec().convertBytesToFrames(bytes);
 
+    // Take the effect lock while processing
+    _preProcEffectLock.readLock();
     if (!_preprocessorsHandlerList.empty()) {
 
         received_frames = processFrames(buffer, frames);
@@ -283,6 +280,8 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
 
         received_frames = readFrames(buffer, frames);
     }
+    _preProcEffectLock.unlock();
+
 
     if (received_frames < 0) {
 
@@ -393,8 +392,8 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     // Called from different context than the stream,
-    // so stream Lock must be held
-    AutoW lock(_streamLock);
+    // so effect Lock must be held
+    AutoW lock(_preProcEffectLock);
 
     if (isHwEffectL(effect)) {
 
@@ -413,9 +412,7 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
 
             ALOGD("%s stream running, reconsider routing", __FUNCTION__);
             // If the stream is routed, force a reconsider routing to take effect into account
-            _streamLock.unlock();
             _parent->updateRequestedEffect();
-            _streamLock.writeLock();
         }
     } else {
 
@@ -440,8 +437,8 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
     ALOGD("%s (effect=%p)", __FUNCTION__, effect);
 
     // Called from different context than the stream,
-    // so device Lock must be held.
-    AutoW lock(_streamLock);
+    // so effect Lock must be held.
+    AutoW lock(_preProcEffectLock);
 
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -464,9 +461,7 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
             ALOGD("%s stream running, reconsider routing", __FUNCTION__);
             // If the stream is routed,
             // force a reconsider routing to take effect removal into account
-            _streamLock.unlock();
             _parent->updateRequestedEffect();
-            _streamLock.writeLock();
         }
     } else {
 

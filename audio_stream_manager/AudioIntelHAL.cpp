@@ -602,16 +602,7 @@ void AudioIntelHAL::resetEchoReference(struct echo_reference_itfe *reference)
         return;
     }
     AudioStreamOutImpl *out = static_cast<AudioStreamOutImpl *>(stream);
-    struct echo_reference_itfe *pReference = out->getEchoReference();
-    if ((pReference != NULL) && (pReference == reference)) {
-
-        out->removeEchoReference(reference);
-        release_echo_reference(_echoReference);
-        _echoReference = NULL;
-        // Only one output is expected to provide the reference
-        return;
-    }
-    ALOGE("%s: nothing to do, reference not found!", __FUNCTION__);
+    out->removeEchoReference(_echoReference);
     release_echo_reference(_echoReference);
     _echoReference = NULL;
 }
