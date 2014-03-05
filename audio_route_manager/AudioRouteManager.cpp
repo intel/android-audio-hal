@@ -611,6 +611,7 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
 {
     AutoR lock(_routingLock);
     string error;
+    bool ret;
 
     if ((gain < 0.0) || (gain > 1.0)) {
 
@@ -627,8 +628,18 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
         return INVALID_OPERATION;
     }
 
-    if (!voiceVolumeHandle->setAsDouble(gain, error)) {
+    if (voiceVolumeHandle->isArray()) {
+        vector<double> gains;
 
+        gains.push_back(gain);
+        gains.push_back(gain);
+
+        ret = voiceVolumeHandle->setAsDoubleArray(gains, error);
+    } else {
+        ret = voiceVolumeHandle->setAsDouble(gain, error);
+    }
+
+    if (!ret) {
         ALOGE("%s: Unable to set value %f, from parameter path: %s, error=%s",
               __FUNCTION__, gain, voiceVolumeHandle->getPath().c_str(), error.c_str());
         return INVALID_OPERATION;
