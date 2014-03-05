@@ -675,6 +675,18 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForInputSource(int inputSource)
                  ? AUDIO_DEVICE_IN_WIRED_HEADSET : AUDIO_DEVICE_IN_BUILTIN_MIC;
     } else {
         device = AudioPolicyManagerBase::getDeviceForInputSource(inputSource);
+        // Specific case to handle the force usage to speaker during a VoIP call for some
+        // VoIP apps using AUDIO_SOURCE_MIC as input source
+        if ((inputSource == AUDIO_SOURCE_MIC) &&
+            mPhoneState == AudioSystem::MODE_IN_COMMUNICATION &&
+            (getForceUse(AudioSystem::FOR_COMMUNICATION) == AudioSystem::FORCE_SPEAKER)) {
+            ALOGI("Force speaker in VoIP call : set input device to back mic "
+                  "with input source AUDIO_SOURCE_MIC");
+            if ((mAvailableInputDevices & AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
+                (mAvailableInputDevices & AUDIO_DEVICE_IN_WIRED_HEADSET)) {
+                device =  AUDIO_DEVICE_IN_BUILTIN_MIC;
+            }
+        }
     }
     return device;
 }
