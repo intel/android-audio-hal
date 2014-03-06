@@ -30,7 +30,9 @@
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <AudioCommsAssert.hpp>
+#include <AudioParameterHelper.hpp>
 #include <Property.h>
+#include "NaiveTokenizer.h"
 #include <algorithm>
 #include <convert.hpp>
 #include <cutils/bitops.h>
@@ -39,6 +41,7 @@
 #include <hardware_legacy/AudioHardwareBase.h>
 #include <media/AudioParameter.h>
 #include <utils/Log.h>
+#include <fstream>
 
 #define DIRECT_STREAM_FLAGS (AUDIO_OUTPUT_FLAG_DIRECT | AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)
 
@@ -53,6 +56,12 @@ const char *const AudioPlatformState::_routePfwConfFileNamePropName =
 
 const char *const AudioPlatformState::_routePfwDefaultConfFileName =
     "/etc/parameter-framework/ParameterFrameworkConfigurationRoute.xml";
+
+const std::string AudioPlatformState::mHwDebugFilesPathList =
+    "/Route/route_debug_fs/debug_files/path_list/";
+
+// For debug purposes. This size is enough for dumping relevant informations
+const uint32_t AudioPlatformState::mMaxDebugStreamSize = 998;
 
 /// PFW related definitions
 // Logger
@@ -557,4 +566,63 @@ int AudioPlatformState::getValue(const char *stateName) const
 {
     return getElement<Criterion>(stateName, _criterionMap)->getValue();
 }
+
+
+void AudioPlatformState::printPlatformFwErrorInfo() {
+
+    ALOGE("^^^^  Print platform Audio firmware error info  ^^^^");
+
+    AudioParameterHelper routeParamHelper(_routePfwConnector);
+
+    string paramValue;
+    status_t getStringError;
+
+    /**
+     * Get the list of files path we wish to print. This list is represented as a
+     * string defined in the route manager RouteDebugFs plugin.
+     */
+    getStringError = routeParamHelper.getStringParameterValue(mHwDebugFilesPathList, paramValue);
+
+    if (getStringError != NO_ERROR) {
+        ALOGE("Could not get path list from XML configuration");
+        return;
+    }
+
+    vector<std::string> debugFiles;
+    char *debugFile;
+    string debugFileString;
+    char *tokenString = static_cast<char *>(alloca(paramValue.length()+1));
+    vector<std::string>::const_iterator it;
+
+    strncpy(tokenString, paramValue.c_str(), paramValue.length()+1);
+
+    while ((debugFile = NaiveTokenizer::getNextToken(&tokenString)) != NULL) {
+        debugFileString = string(debugFile);
+        debugFileString = debugFile;
+        debugFiles.push_back(debugFileString);
+    }
+
+    for (it = debugFiles.begin(); it != debugFiles.end(); ++it) {
+        ifstream debugStream;
+
+        ALOGE("Opening file %s and reading it.", it->c_str());
+        debugStream.open(it->c_str(), ifstream::in);
+
+        if (debugStream.fail()) {
+            ALOGE("Could not open Hw debug file, error : %s", strerror(errno));
+            debugStream.close();
+            continue;
+        }
+
+        while (debugStream.good()) {
+            char dataToRead[mMaxDebugStreamSize];
+
+            debugStream.read(dataToRead, mMaxDebugStreamSize);
+            ALOGE("%s", dataToRead);
+        }
+
+        debugStream.close();
+    }
+}
+
 }       // namespace android

@@ -729,4 +729,17 @@ bool AudioIntelHAL::startModemAudioManager()
     _platformState->setCsvBandType(_modemAudioManagerInterface->getAudioBand());
     return true;
 }
+
+void AudioIntelHAL::printPlatformFwErrorInfo()
+{
+    ALOGD("%s", __FUNCTION__);
+
+    _pfwLock.writeLock();
+
+    // Dump on console platform hw debug files
+    _platformState->printPlatformFwErrorInfo();
+
+    _pfwLock.unlock();
+}
+
 }       // namespace android

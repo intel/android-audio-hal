@@ -1,6 +1,6 @@
 ﻿/*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -34,7 +34,7 @@ using std::vector;
 using namespace android;
 
 AudioParameterHelper::AudioParameterHelper(CParameterMgrPlatformConnector *audioPFWConnector)
-    : _audioPfwConnector(audioPFWConnector)
+    : mPfwConnector(audioPFWConnector)
 {
 }
 
@@ -54,14 +54,14 @@ uint32_t AudioParameterHelper::getIntegerParameterValue(const string &paramPath,
 {
     ALOGV("%s in", __FUNCTION__);
 
-    if (!_audioPfwConnector->isStarted()) {
+    if (!mPfwConnector->isStarted()) {
 
         return defaultValue;
     }
 
     string error;
     // Get handle
-    CParameterHandle *parameterHandle = _audioPfwConnector->createParameterHandle(paramPath,
+    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath,
                                                                                   error);
     if (!parameterHandle) {
 
@@ -92,14 +92,14 @@ uint32_t AudioParameterHelper::getIntegerParameterValue(const string &paramPath,
 status_t AudioParameterHelper::getStringParameterValue(const string &paramPath,
                                                        string &value) const
 {
-    if (!_audioPfwConnector->isStarted()) {
+    if (!mPfwConnector->isStarted()) {
 
         return DEAD_OBJECT;
     }
 
     string error;
     // Get handle
-    CParameterHandle *parameterHandle = _audioPfwConnector->createParameterHandle(paramPath, error);
+    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath, error);
 
     if (!parameterHandle) {
 
@@ -127,14 +127,14 @@ status_t AudioParameterHelper::getStringParameterValue(const string &paramPath,
 
 status_t AudioParameterHelper::setIntegerParameterValue(const string &paramPath, uint32_t value)
 {
-    if (!_audioPfwConnector->isStarted()) {
+    if (!mPfwConnector->isStarted()) {
 
         return INVALID_OPERATION;
     }
 
     string error;
     // Get handle
-    CParameterHandle *parameterHandle = _audioPfwConnector->createParameterHandle(paramPath, error);
+    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath, error);
 
     if (!parameterHandle) {
 
@@ -163,14 +163,14 @@ status_t AudioParameterHelper::setIntegerParameterValue(const string &paramPath,
 status_t AudioParameterHelper::setIntegerArrayParameterValue(const string &paramPath,
                                                              vector<uint32_t> &array) const
 {
-    if (!_audioPfwConnector->isStarted()) {
+    if (!mPfwConnector->isStarted()) {
 
         return INVALID_OPERATION;
     }
 
     string error;
     // Get handle
-    CParameterHandle *parameterHandle = _audioPfwConnector->createParameterHandle(paramPath, error);
+    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath, error);
 
     if (!parameterHandle) {
 
@@ -202,13 +202,13 @@ CParameterHandle *AudioParameterHelper::getParameterHandle(const string &paramPa
     status_t ret = getStringParameterValue(paramPath, parameter);
     if (ret != NO_ERROR) {
 
-        ALOGE("Could not retrieve volume path handler err=%d", ret);
+        ALOGE("Could not retrieve parameter path handler err=%d", ret);
         return NULL;
     }
     ALOGD("%s  Platform specific parameter path=%s", __FUNCTION__, parameter.c_str());
 
     string error;
-    CParameterHandle *handle = _audioPfwConnector->createParameterHandle(parameter, error);
+    CParameterHandle *handle = mPfwConnector->createParameterHandle(parameter, error);
     if (!handle) {
 
         ALOGE("%s: Unable to get parameter handle: '%s' '%s'", __FUNCTION__,
@@ -220,7 +220,6 @@ CParameterHandle *AudioParameterHelper::getParameterHandle(const string &paramPa
 CParameterHandle *AudioParameterHelper::getDynamicParameterHandle(const string &dynamicParamPath)
 {
     if (_parameterHandleMap.find(dynamicParamPath) != _parameterHandleMap.end()) {
-
         _parameterHandleMap[dynamicParamPath] = getParameterHandle(dynamicParamPath);
     }
     return _parameterHandleMap[dynamicParamPath];

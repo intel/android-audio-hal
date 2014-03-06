@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -333,6 +333,11 @@ public:
      */
     bool hasPlatformStateChanged(int iEvents = -1) const;
 
+    /**
+     * Print debug information from target debug files
+     */
+    void printPlatformFwErrorInfo();
+
 private:
     /**
      * Update the applicability mask.
@@ -515,6 +520,17 @@ private:
     static const char *const _voipBand; /**< VoIP band criterion name. */
     static const char *const _micMute; /**< Mic Mute criterion name. */
     static const char *const _preProcessorRequestedByActiveInput; /**< requested preproc. */
+
+    /**
+     * String containing a list of paths to the hardware debug files on target
+     * to debug the audio firmware/driver in case of EIO error. Defined in pfw.
+     */
+    static const std::string mHwDebugFilesPathList;
+
+    /**
+     * Max size of the output debug stream in characters
+     */
+    static const uint32_t mMaxDebugStreamSize;
 
     /**
      * provide a compile time error if no specialization is provided for a given type.

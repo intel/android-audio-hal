@@ -231,6 +231,11 @@ protected:
     friend class AudioStreamInImpl;
     friend class AudioStream;
 
+    /**
+     * Print debug information from hw registers files
+     */
+    void printPlatformFwErrorInfo();
+
 private:
     /**
      * Get the android telephony mode.

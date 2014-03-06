@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -107,7 +107,7 @@ private:
      */
     CParameterHandle *getParameterHandle(const std::string &paramPath);
 
-    CParameterMgrPlatformConnector *_audioPfwConnector; /** < PFW Connector */
+    CParameterMgrPlatformConnector *mPfwConnector; /** < PFW Connector */
 
     std::map<std::string, CParameterHandle *> _parameterHandleMap; /**< Parameter handle Map */
 };

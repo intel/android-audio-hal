@@ -64,8 +64,8 @@ audio_stream_manager_static_lib += \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libhalaudiodump \
-    liblpepreprocessinghelper
-
+    liblpepreprocessinghelper \
+    libaudiocomms_naive_tokenizer
 
 audio_stream_manager_static_lib_host += \
     $(foreach lib, $(audio_stream_manager_static_lib), $(lib)_host)
