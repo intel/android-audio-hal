@@ -29,20 +29,32 @@
 AUDIOCOMMS_TEST_GIT_PRJ="a/bsp/hardware/intel/PRIVATE/audiocomms_tests"
 AUDIOCOMMS_CHECKFILE="code_quality/checkfiles"
 CUR_PATH="."
+REDIRECTION_FOUND=0
 
 # Get quality scripts git project path
-AUDIOCOMMS_TEST_GIT_PATH=$(repo list $AUDIOCOMMS_TEST_GIT_PRJ | cut --delimiter ' ' --field 1)
+AUDIOCOMMS_TEST_GIT_PATH=$(repo list $AUDIOCOMMS_TEST_GIT_PRJ 2>/dev/null |
+                           cut --delimiter ' ' --field 1)
 
-# Search for the .repo directory
-while [ "$(readlink --canonicalize "$CUR_PATH")" != "/" ]
-do
-    REPO_PATH=$(find -L "$CUR_PATH" -maxdepth 1 -mindepth 1 -type d -name .repo)
-    if [ "$REPO_PATH" ]
-    then
-        # Execute AudioComms FT generic checkfiles script
-        $REPO_PATH/../$AUDIOCOMMS_TEST_GIT_PATH/$AUDIOCOMMS_CHECKFILE
-        break
-    fi
+if [ "$AUDIOCOMMS_TEST_GIT_PATH" ]
+then
+    # Search for the .repo directory
+    while [ "$(readlink --canonicalize "$CUR_PATH")" != "/" ]
+    do
+        REPO_PATH=$(find -L "$CUR_PATH" -maxdepth 1 -mindepth 1 -type d -name .repo)
+        if [ "$REPO_PATH" ]
+        then
+            REDIRECTION_FOUND=1
+            # Execute AudioComms FT generic checkfiles script
+            $REPO_PATH/../$AUDIOCOMMS_TEST_GIT_PATH/$AUDIOCOMMS_CHECKFILE
+            break
+        fi
 
-    CUR_PATH="$CUR_PATH/.."
-done
+        CUR_PATH="$CUR_PATH/.."
+    done
+fi
+
+if [ $REDIRECTION_FOUND -eq 0 ]
+then
+    echo "Info: checkfiles redirection failed"
+fi
+
