@@ -151,7 +151,7 @@ status_t HALAudioDump::checkDumpFile(ssize_t bytes)
 {
     struct stat stDump;
     if (_dumpFile && fstat(fileno(_dumpFile), &stDump) == 0
-        && (stDump.st_size + bytes) < _maxDumpFileSize) {
+        && (stDump.st_size + bytes) > _maxDumpFileSize) {
 
         ALOGE("%s: Max size reached", __FUNCTION__);
         return BAD_VALUE;
