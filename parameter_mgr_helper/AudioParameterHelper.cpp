@@ -219,7 +219,9 @@ CParameterHandle *AudioParameterHelper::getParameterHandle(const string &paramPa
 
 CParameterHandle *AudioParameterHelper::getDynamicParameterHandle(const string &dynamicParamPath)
 {
-    if (_parameterHandleMap.find(dynamicParamPath) != _parameterHandleMap.end()) {
+    if (_parameterHandleMap.find(dynamicParamPath) == _parameterHandleMap.end()) {
+        ALOGD("Dynamic parameter %s not found in map, get a handle and push it in the map",
+              dynamicParamPath.c_str());
         _parameterHandleMap[dynamicParamPath] = getParameterHandle(dynamicParamPath);
     }
     return _parameterHandleMap[dynamicParamPath];
