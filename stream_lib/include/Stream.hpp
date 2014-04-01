@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -151,20 +151,24 @@ public:
      *
      * @param[in] buffer: audio samples buffer to fill from audio device.
      * @param[out] frames: number of frames to read.
+     * @param[out] error: string containing readable error, if any is set
      *
-     * @return number of frames read from audio device.
+     * @return status_t error code of the pcm read operation.
      */
-    virtual ssize_t pcmReadFrames(void *buffer, size_t frames) = 0;
+    virtual android::status_t pcmReadFrames(void *buffer, size_t frames,
+                                            std::string &error) = 0;
 
     /**
      * Write frames to audio device.
      *
      * @param[in] buffer: audio samples buffer to render on audio device.
      * @param[out] frames: number of frames to render.
+     * @param[out] error: string containing readable error, if any is set
      *
-     * @return number of frames rendered to audio device.
+     * @return status_t error code of the pcm write operation.
      */
-    virtual ssize_t pcmWriteFrames(void *buffer, ssize_t frames) = 0;
+    virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames,
+                                             std::string &error) = 0;
 
     virtual android::status_t pcmStop() = 0;
 

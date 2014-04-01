@@ -355,4 +355,19 @@ void AudioStream::initAudioDump()
         _dumpAfterConv = NULL;
     }
 }
+
+bool AudioStream::safeSleep(uint32_t sleepTimeUs)
+{
+    struct timespec tim;
+
+    if (sleepTimeUs > mMaxSleepTime) {
+        sleepTimeUs = mMaxSleepTime;
+    }
+
+    tim.tv_sec = 0;
+    tim.tv_nsec = sleepTimeUs * mNsecPerUsec;
+
+    return nanosleep(&tim, NULL) > 0;
+}
+
 }       // namespace android

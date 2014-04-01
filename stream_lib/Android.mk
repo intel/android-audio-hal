@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright © 2013 Intel
+# Copyright © 2013-14 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -84,7 +84,7 @@ stream_lib_include_dirs_from_static_libraries_target := \
 stream_lib_include_dirs_from_static_libraries_host := \
     $(foreach lib, $(stream_lib_include_dirs_from_static_libraries), $(lib)_host)
 
-stream_lib_cflags := -Wall -Werror
+stream_lib_cflags := -Wall -Werror -Wno-unused-parameter
 
 
 #######################################################################

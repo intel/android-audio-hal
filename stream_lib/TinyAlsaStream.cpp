@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -28,6 +28,7 @@
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
 
+using std::string;
 using android::status_t;
 using android::OK;
 
@@ -51,88 +52,40 @@ android::status_t TinyAlsaStream::detachRouteL()
     return OK;
 }
 
-bool TinyAlsaStream::safeSleep(uint32_t sleepTimeUs)
+status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &error)
 {
-    struct timespec tim, tim2;
+    status_t ret;
 
-    if (sleepTimeUs > _maxSleepTime) {
-        sleepTimeUs = _maxSleepTime;
+    ret = pcm_read(getPcmDevice(),
+                   (char *)buffer,
+                   routeSampleSpec().convertFramesToBytes(frames));
+
+    ALOGV("%s %d %d", __FUNCTION__, ret, pcm_frames_to_bytes(routeSampleSpec(), frames));
+
+    if (ret < 0) {
+        error = pcm_get_error(getPcmDevice());
+        return ret;
     }
 
-    tim.tv_sec = 0;
-    tim.tv_nsec = sleepTimeUs * _nsecPerUsec;
-
-    return nanosleep(&tim, &tim2) > 0;
+    return OK;
 }
 
-ssize_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames)
+status_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames, string &error)
 {
-    int ret;
-    uint32_t retryCount = 0;
+    status_t ret;
 
-    do {
-        ret = pcm_read(getPcmDevice(),
-                       (char *)buffer,
-                       routeSampleSpec().convertFramesToBytes(frames));
+    ret = pcm_write(getPcmDevice(),
+                    (char *)buffer,
+                    pcm_frames_to_bytes(getPcmDevice(), frames));
 
-        ALOGV("%s %d %d", __FUNCTION__, ret, pcm_frames_to_bytes(routeSampleSpec(), frames));
+    ALOGV("%s %d %d", __FUNCTION__, ret, pcm_frames_to_bytes(mHandle, frames));
 
-        if (ret) {
-            ALOGE("%s: read error: requested %d (bytes=%d) frames %s",
-                  __FUNCTION__,
-                  frames,
-                  routeSampleSpec().convertFramesToBytes(frames),
-                  pcm_get_error(getPcmDevice()));
-            AUDIOCOMMS_ASSERT(++retryCount < _maxReadWriteRetried,
-                              "Hardware not responding, restarting media server");
+    if (ret < 0) {
+        error = pcm_get_error(getPcmDevice());
+        return ret;
+    }
 
-            // Get the number of microseconds to sleep, inferred from the number of
-            // frames to write.
-            size_t sleepUSecs = routeSampleSpec().convertFramesToUsec(frames);
-
-            // Go sleeping before trying I/O operation again.
-            if (safeSleep(sleepUSecs)) {
-                // If some error arises when trying to sleep, try I/O operation anyway.
-                // Error counter will provoke the restart of mediaserver.
-                ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
-            }
-        }
-    } while (ret);
-
-    return frames;
-}
-
-ssize_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames)
-{
-    int ret;
-    uint32_t retryCount = 0;
-
-    do {
-        ret = pcm_write(getPcmDevice(),
-                        (char *)buffer,
-                        pcm_frames_to_bytes(getPcmDevice(), frames));
-
-        ALOGV("%s %d %d", __FUNCTION__, ret, pcm_frames_to_bytes(mHandle, frames));
-
-        if (ret) {
-            ALOGE("%s: write error: %d %s", __FUNCTION__, ret, pcm_get_error(getPcmDevice()));
-            AUDIOCOMMS_ASSERT(++retryCount < _maxReadWriteRetried,
-                              "Hardware not responding, restarting media server");
-
-            // Get the number of microseconds to sleep, inferred from the number of
-            // frames to write.
-            size_t sleepUsecs = routeSampleSpec().convertFramesToUsec(frames);
-
-            // Go sleeping before trying I/O operation again.
-            if (safeSleep(sleepUsecs)) {
-                // If some error arises when trying to sleep, try I/O operation anyway.
-                // Error counter will provoke the restart of mediaserver.
-                ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
-            }
-        }
-    } while (ret);
-
-    return frames;
+    return OK;
 }
 
 uint32_t TinyAlsaStream::getBufferSizeInBytes() const

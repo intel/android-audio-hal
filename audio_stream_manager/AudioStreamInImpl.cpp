@@ -102,10 +102,42 @@ void AudioStreamInImpl::releaseBuffer(AudioBufferProvider::Buffer *buffer)
 
 ssize_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
 {
-    size_t readFrames = pcmReadFrames(buffer, frames);
+    uint32_t retryCount = 0;
+    status_t ret = OK;
+
+    do {
+        std::string error;
+
+        ret = pcmReadFrames(buffer, frames, error);
+
+        if (ret < 0) {
+
+           ALOGE("%s: read error: %s - requested %d (bytes=%d) frames",
+                  __FUNCTION__,
+                  error.c_str(),
+                  frames,
+                  streamSampleSpec().convertFramesToBytes(frames));
+
+            AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
+                              "Hardware not responding, restarting media server");
+
+            // Get the number of microseconds to sleep, inferred from the number of
+            // frames to write.
+            size_t sleepUSecs = routeSampleSpec().convertFramesToUsec(frames);
+
+            // Go sleeping before trying I/O operation again.
+            if (safeSleep(sleepUSecs)) {
+                // If some error arises when trying to sleep, try I/O operation anyway.
+                // Error counter will provoke the restart of mediaserver.
+                ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
+            }
+        }
+
+    } while (ret < 0);
+
     // Dump audio input before eventual conversions
     // FOR DEBUG PURPOSE ONLY
-    if ((readFrames > 0) && (getDumpObjectBeforeConv() != NULL)) {
+    if (getDumpObjectBeforeConv() != NULL) {
         getDumpObjectBeforeConv()->dumpAudioSamples(buffer,
                                                     routeSampleSpec().convertFramesToBytes(frames),
                                                     isOut(),
@@ -113,7 +145,8 @@ ssize_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
                                                     routeSampleSpec().getChannelCount(),
                                                     "before_conversion");
     }
-    return readFrames;
+
+    return frames;
 }
 
 ssize_t AudioStreamInImpl::readFrames(void *buffer, size_t frames)

@@ -80,6 +80,8 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
     ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
     size_t dstFrames = 0;
     char *dstBuf = NULL;
+    status_t ret = OK;
+    uint32_t retryCount = 0;
     status_t status;
 
     pushEchoReference(buffer, srcFrames);
@@ -103,20 +105,39 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
     }
     ALOGV("%s: srcFrames=%lu, bytes=%d dstFrames=%d", __FUNCTION__, srcFrames, bytes, dstFrames);
 
-    ssize_t ret = pcmWriteFrames(dstBuf, dstFrames);
+    do {
+        std::string error;
 
-    if (ret < 0) {
+        ret = pcmWriteFrames(dstBuf, dstFrames, error);
 
-        if (ret != -EPIPE) {
+        if (ret < 0) {
+            ALOGE("%s: write error: %s - requested %d (bytes=%d) frames",
+                  __FUNCTION__,
+                  error.c_str(),
+                  srcFrames,
+                  streamSampleSpec().convertFramesToBytes(srcFrames));
 
-            // Returns asap to catch up the returned error else, trash the audio data
-            // and sleep the time the driver may use to consume it.
-            ALOGD("%s(buffer=%p, bytes=%d) Trashing samples for stream %p.",
-                  __FUNCTION__, buffer, bytes, this);
-            generateSilence(bytes);
+            if (error.find(strerror(EIO)) !=  std::string::npos) {
+                // Dump hw registers debug file info in console
+                _parent->printPlatformFwErrorInfo();
+            }
+
+            AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
+                              "Hardware not responding, restarting media server");
+
+           // Get the number of microseconds to sleep, inferred from the number of
+            // frames to write.
+            size_t sleepUsecs = routeSampleSpec().convertFramesToUsec(dstFrames);
+
+            // Go sleeping before trying I/O operation again.
+            if (safeSleep(sleepUsecs)) {
+                // If some error arises when trying to sleep, try I/O operation anyway.
+                // Error counter will provoke the restart of mediaserver.
+                ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
+            }
         }
-        return ret;
-    }
+    } while (ret < 0);
+
     ALOGV("%s: returns %u", __FUNCTION__, streamSampleSpec().convertFramesToBytes(
               AudioUtils::convertSrcToDstInFrames(ret, routeSampleSpec(), streamSampleSpec())));
 
@@ -132,7 +153,7 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
                                                    "after_conversion");
     }
 
-    return streamSampleSpec().convertFramesToBytes(AudioUtils::convertSrcToDstInFrames(ret,
+    return streamSampleSpec().convertFramesToBytes(AudioUtils::convertSrcToDstInFrames(dstFrames,
                                                                                        routeSampleSpec(),
                                                                                        streamSampleSpec()));
 }
@@ -160,8 +181,11 @@ status_t AudioStreamOutImpl::attachRouteL()
 
         uint32_t msCount;
         for (msCount = 0; msCount < silenceMs; msCount++) {
-
-            pcmWriteFrames(silenceBuffer, bufferSizeInFrames);
+            std::string writeError;
+            status = pcmWriteFrames(silenceBuffer, bufferSizeInFrames, writeError);
+            if (status < 0) {
+                ALOGE("Write error when writing silence : %s", writeError.c_str());
+            }
         }
     }
 

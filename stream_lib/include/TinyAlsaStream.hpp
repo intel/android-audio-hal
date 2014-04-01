@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -34,24 +34,16 @@ class TinyAlsaStream : public Stream
 public:
     TinyAlsaStream()
         : Stream::Stream(),
-                              _device(NULL)
+         _device(NULL)
     {}
 
     virtual uint32_t getBufferSizeInBytes() const;
 
     virtual size_t getBufferSizeInFrames() const;
 
-    virtual ssize_t pcmReadFrames(void *buffer, size_t frames);
+    virtual android::status_t pcmReadFrames(void *buffer, size_t frames, std::string &error);
 
-    /**
-     * Write frames to audio device.
-     *
-     * @param[in] buffer: audio samples buffer to render on audio device.
-     * @param[out] frames: number of frames to render.
-     *
-     * @return number of frames rendered to audio device.
-     */
-    virtual ssize_t pcmWriteFrames(void *buffer, ssize_t frames);
+    virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames, std::string &error);
 
     virtual android::status_t pcmStop();
 
@@ -84,25 +76,6 @@ protected:
 
 private:
     /**
-     * Used to sleep on the current thread.
-     *
-     * This function is used to get a POSIX-compliant way
-     * to accurately sleep the current thread.
-     *
-     * If function is successful, zero is returned
-     * and request has been honored, if function fails,
-     * EINTR has been raised by the system and -1 is returned.
-     *
-     * The other two errors considered by standard
-     * are not applicable in our context (EINVAL, ENOSYS)
-     *
-     * @param[in] sleepTimeUs: desired to sleep, in microseconds.
-     *
-     * @return on success true is returned, false otherwise.
-     */
-    bool safeSleep(uint32_t sleepTimeUs);
-
-    /**
      * Get the pcm device handle.
      * Must only be called if isRouteAvailable returns true.
      * and any access to the device must be called with Lock held.
@@ -113,21 +86,6 @@ private:
 
     TinyAlsaAudioDevice *_device;
 
-    /**
-     * maximum number of read/write retries.
-     *
-     * This constant is used to set maximum number of retries to do
-     * on write/read operations before stating that error is not
-     * recoverable and reset media server.
-     */
-    static const uint32_t _maxReadWriteRetried = 50;
-
     /** Ratio between microseconds and milliseconds */
     static const uint32_t _usecPerMsec = 1000;
-
-    /** Ratio between nanoseconds and microseconds */
-    static const uint32_t _nsecPerUsec = 1000;
-
-    /** maximum sleep time to be allowed by HAL, in microseconds. */
-    static const uint32_t _maxSleepTime = 1000000UL;
 };
