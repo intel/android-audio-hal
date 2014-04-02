@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -129,7 +129,10 @@ AudioIntelHAL::AudioIntelHAL()
     _eventThread->start();
 
     // Start Modem Audio Manager
-    startModemAudioManager();
+    if (!startModemAudioManager()) {
+
+        ALOGI("%s: Note that this platform is MODEM-LESS", __FUNCTION__);
+    }
 
     /// Get the Stream Interface of the Route manager
     interfaceProvider =
@@ -149,6 +152,10 @@ AudioIntelHAL::AudioIntelHAL()
         if (_streamInterface->startService() != OK) {
 
             ALOGE("Could not start Route Manager stream service");
+            // Reset interface pointer to give a chance for initCheck to catch any issue
+            // with the RouteMgr.
+            _streamInterface = NULL;
+            return;
         }
         ALOGD("%s Route Manager Service successfully started", __FUNCTION__);
     }
@@ -717,16 +724,18 @@ bool AudioIntelHAL::onProcess(uint16_t event)
 }
 
 
-void AudioIntelHAL::startModemAudioManager()
+bool AudioIntelHAL::startModemAudioManager()
 {
     if (_modemAudioManagerInterface == NULL) {
 
-        ALOGI("%s: No ModemAudioManager interface.", __FUNCTION__);
-        return;
+        return false;
     }
     if (!_modemAudioManagerInterface->start()) {
 
-        ALOGE("%s: could not start ModemAudioManager", __FUNCTION__);
+        ALOGW("%s: could not start ModemAudioManager", __FUNCTION__);
+        _modemAudioManagerInterface->setModemAudioManagerObserver(NULL);
+        _modemAudioManagerInterface = NULL;
+        return false;
     }
     /// Initialize current modem status
     // Modem status
@@ -735,5 +744,6 @@ void AudioIntelHAL::startModemAudioManager()
     _platformState->setModemAudioAvailable(_modemAudioManagerInterface->isModemAudioAvailable());
     // Modem band
     _platformState->setCsvBandType(_modemAudioManagerInterface->getAudioBand());
+    return true;
 }
 }       // namespace android
