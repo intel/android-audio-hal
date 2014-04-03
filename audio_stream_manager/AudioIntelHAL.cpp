@@ -145,6 +145,11 @@ AudioIntelHAL::AudioIntelHAL()
         // Retrieve the Stream Interface
         interface = interfaceProvider->queryInterface(IStreamInterface::getInterfaceName());
         _streamInterface = static_cast<IStreamInterface *>(interface);
+        if (_streamInterface == NULL) {
+
+            ALOGE("Failed to get Stream Interface on RouteMgr");
+            return;
+        }
 
         ALOGD("Stream Interface on RouteMgr successfully loaded");
 
