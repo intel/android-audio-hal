@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -243,17 +243,17 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
             stopInput(activeInput);
         } else if (activeInputDesc->mInputSource == AUDIO_SOURCE_HOTWORD) {
             ALOGI("%s: Preempting already started low-priority input %d",
-                __FUNCTION__, activeInput);
+                  __FUNCTION__, activeInput);
             stopInput(activeInput);
             releaseInput(activeInput);
         } else if (activeInputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
             // The difference between LPAL and HOTWORD is that LPAL shall be resumed.
             ALOGI("%s: Preempting Always-Listening input %d",
-                __FUNCTION__, activeInput);
+                  __FUNCTION__, activeInput);
             stopInput(activeInput);
         } else {
-            LOGW("%s: input %d failed: other input (%d) already started",
-                 __FUNCTION__, input, activeInput);
+            ALOGW("%s: input %d failed: other input (%d) already started",
+                  __FUNCTION__, input, activeInput);
             return INVALID_OPERATION;
         }
     }
@@ -530,7 +530,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
                     ALOGD("%s- Unsupported device in STRATEGY_PHONE: set Speaker as ouput",
                           __FUNCTION__);
                 } else {
-                    LOGE("%s- Earpiece device not found", __FUNCTION__);
+                    ALOGE("%s- Earpiece device not found", __FUNCTION__);
                 }
                 break;
 
@@ -540,7 +540,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
                     ALOGD("%s- Unsupported device in STRATEGY_PHONE: set Earpiece as ouput",
                           __FUNCTION__);
                 } else {
-                    LOGE("%s- Earpiece device not found: set speaker as output", __FUNCTION__);
+                    ALOGE("%s- Earpiece device not found: set speaker as output", __FUNCTION__);
                     device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
                 }
                 break;
@@ -586,7 +586,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
         break;
     }
 
-    LOGV("getDeviceForStrategy() strategy %d, device 0x%x", strategy, device);
+    ALOGV("getDeviceForStrategy() strategy %d, device 0x%x", strategy, device);
 
     return (audio_devices_t)device;
 }
@@ -661,7 +661,8 @@ void AudioPolicyManagerALSA::releaseInput(audio_io_handle_t input)
                 param.addInt(String8(AudioParameter::keyInputSource), (int)inputDesc->mInputSource);
                 mpClientInterface->setParameters(input, param.toString());
                 bValidInput = true;
-                ALOGI("%s: Rerouting to previously stopped input %d", __FUNCTION__, getActiveInput());
+                ALOGI("%s: Rerouting to previously stopped input %d", __FUNCTION__,
+                      getActiveInput());
             }
             iRemainingInputs--;
         }

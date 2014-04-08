@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -65,15 +65,15 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         // Our resampling lib does not support all conversions
         // using 2 resamplers
         //
-        LOGD("%s: trying to use working sample rate @ 48kHz", __FUNCTION__);
+        ALOGD("%s: trying to use working sample rate @ 48kHz", __FUNCTION__);
         SampleSpec pivotSs = ssDst;
         pivotSs.setSampleRate(_pivotSampleRate);
 
         status = _pivotResampler->configure(ssSrc, pivotSs);
         if (status != NO_ERROR) {
 
-            LOGD("%s: trying to use pivot sample rate @ %dkHz: FAILED",
-                 __FUNCTION__, _pivotSampleRate);
+            ALOGD("%s: trying to use pivot sample rate @ %dkHz: FAILED",
+                  __FUNCTION__, _pivotSampleRate);
             return status;
         }
 
@@ -82,7 +82,7 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         status = _resampler->configure(pivotSs, ssDst);
         if (status != NO_ERROR) {
 
-            LOGD("%s: trying to use pivot sample rate @ 48kHz: FAILED", __FUNCTION__);
+            ALOGD("%s: trying to use pivot sample rate @ 48kHz: FAILED", __FUNCTION__);
             return status;
         }
     }

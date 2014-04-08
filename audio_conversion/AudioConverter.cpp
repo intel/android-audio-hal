@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -61,7 +61,7 @@ void *AudioConverter::getOutputBuffer(ssize_t inFrames)
         ret = allocateConvertBuffer(outBufSizeInBytes);
         if (ret != NO_ERROR) {
 
-            LOGE("%s: could not allocate memory for operation", __FUNCTION__);
+            ALOGE("%s: could not allocate memory for operation", __FUNCTION__);
             return NULL;
         }
     }
@@ -84,7 +84,7 @@ status_t AudioConverter::allocateConvertBuffer(ssize_t bytes)
 
     if (!_convertBuf) {
 
-        LOGE("cannot allocate resampler tmp buffers.\n");
+        ALOGE("cannot allocate resampler tmp buffers.\n");
         _convertBufSize = 0;
         ret = NO_MEMORY;
     }
@@ -113,7 +113,7 @@ status_t AudioConverter::configure(const SampleSpec &ssSrc, const SampleSpec &ss
 
             // The Sample spec items on which the converter is NOT working
             // MUST BE the same...
-            LOGE("%s: not supported", __FUNCTION__);
+            ALOGE("%s: not supported", __FUNCTION__);
             return INVALID_OPERATION;
         }
     }

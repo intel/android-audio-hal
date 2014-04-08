@@ -193,7 +193,7 @@ String8 AudioStream::getParameters(const String8 &keys)
         param.addInt(key, static_cast<int>(getDevices()));
     }
 
-    LOGV("getParameters() %s", param.toString().string());
+    ALOGV("getParameters() %s", param.toString().string());
     return param.toString();
 }
 
@@ -338,7 +338,7 @@ void AudioStream::initAudioDump()
      */
     if (TProperty<bool>(dumpBeforeConvProps[isOut()], false)) {
         if (!_dumpBeforeConv) {
-            LOGI("Debug: create dump object for audio before conversion");
+            ALOGI("Debug: create dump object for audio before conversion");
             _dumpBeforeConv = new HALAudioDump();
         }
     } else if (_dumpBeforeConv) {
@@ -347,7 +347,7 @@ void AudioStream::initAudioDump()
     }
     if (TProperty<bool>(dumpAfterConvProps[isOut()], false)) {
         if (!_dumpAfterConv) {
-            LOGI("Debug: create dump object for audio after conversion");
+            ALOGI("Debug: create dump object for audio after conversion");
             _dumpAfterConv = new HALAudioDump();
         }
     } else if (_dumpAfterConv) {
