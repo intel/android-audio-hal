@@ -44,8 +44,6 @@ LOCAL_C_INCLUDES += \
 LOCAL_SHARED_LIBRARIES := \
     libcutils \
     libutils \
-
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_SHARED_LIBRARIES := \
     libproperty
 
 LOCAL_STATIC_LIBRARIES := \

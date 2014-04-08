@@ -54,7 +54,8 @@ stream_lib_header_copy_folder_unit_test := \
 
 stream_lib_static_lib += \
     libsamplespec_static \
-    libaudio_comms_utilities
+    libaudio_comms_utilities \
+    audio.routemanager.includes
 
 stream_lib_static_lib_host += \
     $(foreach lib, $(stream_lib_static_lib), $(lib)_host)

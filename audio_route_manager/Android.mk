@@ -199,3 +199,8 @@ include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
+
+include $(CLEAR_VARS)
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(audio_route_manager_includes_common)
+LOCAL_MODULE := audio.routemanager.includes
+include $(BUILD_STATIC_LIBRARY)

@@ -71,7 +71,8 @@ audio_stream_manager_static_lib_host += \
 
 audio_stream_manager_static_lib_target += \
     $(audio_stream_manager_static_lib) \
-    libmedia_helper
+    libmedia_helper \
+    audio.routemanager.includes
 
 audio_stream_manager_shared_lib_target += \
     libtinyalsa \
