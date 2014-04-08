@@ -41,7 +41,7 @@ audio_conversion_includes_dir := \
 audio_conversion_includes_common := \
     $(LOCAL_PATH)/include \
     $(call include-path-for, frameworks-av) \
-    $(call include-path-for, tinyalsa)
+    external/tinyalsa/include
 
 audio_conversion_includes_dir_host := \
     $(foreach inc, $(audio_conversion_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \

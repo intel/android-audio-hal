@@ -34,7 +34,7 @@ sample_specifications_src_files :=  \
 sample_specifications_common_includes_dir := \
     $(LOCAL_PATH)/include \
     $(call include-path-for, frameworks-av) \
-    $(call include-path-for, tinyalsa)
+    external/tinyalsa/include
 
 sample_specifications_includes_dir := \
 

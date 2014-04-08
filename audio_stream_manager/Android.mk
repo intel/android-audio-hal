@@ -44,7 +44,7 @@ audio_stream_manager_includes_dir := \
     $(TARGET_OUT_HEADERS)/hw \
     $(TARGET_OUT_HEADERS)/parameter \
     $(call include-path-for, frameworks-av) \
-    $(call include-path-for, tinyalsa) \
+    external/tinyalsa/include \
     $(call include-path-for, audio-utils) \
     $(call include-path-for, audio-effects)
 
