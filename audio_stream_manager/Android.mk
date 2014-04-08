@@ -20,8 +20,6 @@
 # express and approved by Intel in writing.
 #
 
-ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)
-
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
 
@@ -206,5 +204,3 @@ include $(BUILD_NATIVE_TEST)
 
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
-
-endif #ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)
