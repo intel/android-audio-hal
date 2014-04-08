@@ -103,7 +103,7 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
 
         return status;
     }
-    ALOGV("%s: srcFrames=%lu, bytes=%d dstFrames=%d", __FUNCTION__, srcFrames, bytes, dstFrames);
+    ALOGV("%s: srcFrames=%zd, bytes=%d dstFrames=%d", __FUNCTION__, srcFrames, bytes, dstFrames);
 
     do {
         std::string error;
