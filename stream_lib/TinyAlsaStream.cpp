@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -60,8 +60,6 @@ status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &erro
                    (char *)buffer,
                    routeSampleSpec().convertFramesToBytes(frames));
 
-    ALOGV("%s %d %d", __FUNCTION__, ret, pcm_frames_to_bytes(routeSampleSpec(), frames));
-
     if (ret < 0) {
         error = pcm_get_error(getPcmDevice());
         return ret;
@@ -77,8 +75,6 @@ status_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames, string &er
     ret = pcm_write(getPcmDevice(),
                     (char *)buffer,
                     pcm_frames_to_bytes(getPcmDevice(), frames));
-
-    ALOGV("%s %d %d", __FUNCTION__, ret, pcm_frames_to_bytes(mHandle, frames));
 
     if (ret < 0) {
         error = pcm_get_error(getPcmDevice());
