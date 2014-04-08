@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright © 2013 Intel
+# Copyright (c) 2013-2014 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
 # Material is protected by worldwide copyright and trade secret laws and
 # treaty provisions. No part of the Material may be used, copied, reproduced,
 # modified, published, uploaded, posted, transmitted, distributed, or
-# disclosed in any way without Intel’s prior express written permission.
+# disclosed in any way without Intel's prior express written permission.
 #
 # No license under any patent, copyright, trade secret or other intellectual
 # property right is granted to or conferred upon you by disclosure or delivery
@@ -46,7 +46,6 @@ effect_pre_proc_includes_dir_host := \
 
 effect_pre_proc_includes_dir_target := \
     $(foreach inc, $(effect_pre_proc_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
-    $(call include-path-for, stlport) \
     $(call include-path-for, bionic)
 
 effect_pre_proc_static_lib += \
@@ -63,7 +62,6 @@ effect_pre_proc_shared_lib_target += \
     libutils  \
     liblog \
     libcutils \
-    libstlport
 
 effect_pre_proc_cflags := -Wall -Werror -Wno-unused-parameter
 
@@ -94,6 +92,8 @@ ifeq ($($(LOCAL_MODULE).gcov),true)
   LOCAL_STATIC_LIBRARIES += gcov_flush_with_prop
 endif
 
+include external/stlport/libstlport.mk
+
 include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
@@ -106,12 +106,13 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \
-    external/stlport/stlport \
     bionic
 LOCAL_SRC_FILES := EffectHelper.cpp
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := liblpepreprocessinghelper
+
+include external/stlport/libstlport.mk
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -170,6 +171,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := liblpepreprocessing_static_gcov
 $(call make_effect_pre_proc_lib,target)
 $(call add_gcov)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
@@ -188,4 +190,5 @@ endif
 include $(CLEAR_VARS)
 LOCAL_MODULE := liblpepreprocessing_static
 $(call make_effect_pre_proc_lib,target)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)

@@ -53,7 +53,6 @@ audio_stream_manager_includes_dir_host := \
 
 audio_stream_manager_includes_dir_target := \
     $(audio_stream_manager_includes_dir) \
-    $(call include-path-for, stlport) \
     $(call include-path-for, bionic)
 
 audio_stream_manager_static_lib += \
@@ -82,7 +81,6 @@ audio_stream_manager_shared_lib_target += \
     libhardware \
     libhardware_legacy \
     libparameter \
-    libstlport \
     libicuuc \
     libevent-listener \
     libaudioresample \
@@ -166,6 +164,8 @@ ifeq ($($(LOCAL_MODULE).gcov),true)
   LOCAL_STATIC_LIBRARIES += gcov_flush_with_prop
 endif
 
+include external/stlport/libstlport.mk
+
 include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
@@ -209,6 +209,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaudio_stream_manager_static_gcov
 $(call make_audio_stream_manager_test_lib,target)
 $(call add_gcov)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
@@ -229,6 +230,7 @@ ifeq ($(audiocomms_test_target),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libaudio_stream_manager_static
 $(call make_audio_stream_manager_test_lib,target)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif

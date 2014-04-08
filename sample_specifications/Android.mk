@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright © 2013 Intel
+# Copyright (c) 2013-2014 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
 # Material is protected by worldwide copyright and trade secret laws and
 # treaty provisions. No part of the Material may be used, copied, reproduced,
 # modified, published, uploaded, posted, transmitted, distributed, or
-# disclosed in any way without Intel’s prior express written permission.
+# disclosed in any way without Intel's prior express written permission.
 #
 # No license under any patent, copyright, trade secret or other intellectual
 # property right is granted to or conferred upon you by disclosure or delivery
@@ -44,7 +44,6 @@ sample_specifications_includes_dir_host := \
 
 sample_specifications_includes_dir_target := \
     $(foreach inc, $(sample_specifications_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
-    $(call include-path-for, stlport) \
     $(call include-path-for, bionic)
 
 sample_specifications_static_lib += \
@@ -100,6 +99,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_gcov
 $(call make_sample_specifications_lib,target)
 $(call add_gcov)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
@@ -119,6 +119,7 @@ endif
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static
 $(call make_sample_specifications_lib,target)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 

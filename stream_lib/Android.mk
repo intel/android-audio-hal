@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright © 2013-14 Intel
+# Copyright (c) 2013-2014 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
 # Material is protected by worldwide copyright and trade secret laws and
 # treaty provisions. No part of the Material may be used, copied, reproduced,
 # modified, published, uploaded, posted, transmitted, distributed, or
-# disclosed in any way without Intel’s prior express written permission.
+# disclosed in any way without Intel's prior express written permission.
 #
 # No license under any patent, copyright, trade secret or other intellectual
 # property right is granted to or conferred upon you by disclosure or delivery
@@ -47,7 +47,6 @@ stream_lib_includes_dir_host := \
 
 stream_lib_includes_dir_target := \
     $(stream_lib_includes_dir) \
-    $(call include-path-for, stlport) \
     $(call include-path-for, bionic)
 
 stream_lib_header_copy_folder_unit_test := \
@@ -70,7 +69,6 @@ stream_lib_shared_lib_target += \
     libutils \
     libparameter \
     libhardware_legacy \
-    libstlport \
     libicuuc \
     libaudioutils \
     libproperty
@@ -130,6 +128,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libstream_static_gcov
 $(call make_stream_lib_test_lib,target)
 $(call add_gcov)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
@@ -149,4 +148,5 @@ endif
 include $(CLEAR_VARS)
 LOCAL_MODULE := libstream_static
 $(call make_stream_lib_test_lib,target)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)

@@ -1,6 +1,6 @@
 # Android.mk
 #
-# Copyright 2013 Intel Corporation
+# Copyright 2013-2014 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ hal_dump_includes_dir_host := \
     $(call include-path-for, libc-kernel)
 
 hal_dump_includes_dir_target := \
-    $(call include-path-for, stlport) \
     $(call include-path-for, bionic)
 
 #######################################################################
@@ -54,6 +53,7 @@ endef
 include $(CLEAR_VARS)
 LOCAL_MODULE := libhalaudiodump
 $(call make_hal_dump_lib,target)
+include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 
