@@ -199,12 +199,9 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     }
     AudioInputDescriptor *inputDesc = mInputs.valueAt(index);
 
-    if (inputDesc->mInputSource == AUDIO_SOURCE_REMOTE_SUBMIX) {
+    if (isVirtualInputDevice(inputDesc->mDevice)) {
         ALOGV("startInput() input %d remote submix initiated", input);
-        status_t errCode = AudioPolicyManagerBase::startInput(input);
-        if (errCode != OK) {
-            ALOGE("%s :remote submix initialization failed with error=%d", __func__, errCode);
-        }
+        return AudioPolicyManagerBase::startInput(input);
     }
 
 #ifdef AUDIO_POLICY_TEST
@@ -260,7 +257,13 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
             return INVALID_OPERATION;
         }
     }
-
+    // Check again input device selection when capture starts in case
+    // conditions have changed since the input stream was opened gromanche.
+    // It makes the selection of BT SCO device consistent.
+    audio_devices_t newDevice = getDeviceForInputSource(inputDesc->mInputSource);
+    if ((newDevice != AUDIO_DEVICE_NONE) && (newDevice != inputDesc->mDevice)) {
+        inputDesc->mDevice = newDevice;
+    }
     AudioParameter param = AudioParameter();
     param.addInt(String8(AudioParameter::keyRouting), (int)inputDesc->mDevice);
 
