@@ -177,14 +177,6 @@ public:
     }
 
     /**
-     * Set the Applicability mask.
-     * This function is non-reetrant.
-     *
-     * @param[in] applicabilityMask: ID of input source if input, stream flags if output.
-     */
-    void setApplicabilityMask(uint32_t applicabilityMask);
-
-    /**
      * Get the stream sample specification.
      * Stream Sample specification is the sample spec in which the client gives/receives samples
      *
@@ -197,6 +189,14 @@ public:
 
 protected:
     AudioStream(AudioIntelHAL *parent);
+
+    /**
+     * Set the Applicability mask.
+     * This function is non-reetrant.
+     *
+     * @param[in] applicabilityMask: ID of input source if input, stream flags if output.
+     */
+    void setApplicabilityMask(uint32_t applicabilityMask);
 
     /**
      * Callback of route attachement called by the stream lib. (and so route manager)
@@ -350,6 +350,8 @@ private:
     /**
      * Applicability mask is either:
      *  -for output streams: stream flags, from audio_output_flags_t in audio.h file.
+     *                       Note that the stream flags are given at output creation and will not
+     *                       changed until output is destroyed.
      *  -for input streams: input source (bitfield done from audio_source_t in audio.h file.
      *          Note that 0 will be taken as none.
      */

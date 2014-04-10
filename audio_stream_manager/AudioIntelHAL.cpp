@@ -30,7 +30,6 @@
 #include "AudioStreamOutImpl.hpp"
 #include "AudioPlatformState.hpp"
 #include <AudioCommsAssert.hpp>
-#include <BitField.hpp>
 #include "ModemAudioManagerInterface.h"
 #include "Property.h"
 #include <InterfaceProviderLib.h>
@@ -53,7 +52,6 @@
 
 using namespace std;
 using namespace android;
-using audio_comms::utilities::BitField;
 
 typedef RWLock::AutoRLock AutoR;
 typedef RWLock::AutoWLock AutoW;
@@ -232,7 +230,7 @@ AudioStreamOut *AudioIntelHAL::openOutputStream(uint32_t devices,
         return NULL;
     }
 
-    AudioStreamOutImpl *out = new AudioStreamOutImpl(this);
+    AudioStreamOutImpl *out = new AudioStreamOutImpl(this, flags);
 
     err = out->set(format, channels, sampleRate);
     if (err != NO_ERROR) {
@@ -241,8 +239,6 @@ AudioStreamOut *AudioIntelHAL::openOutputStream(uint32_t devices,
         delete out;
         return NULL;
     }
-    // Set the flags
-    out->setApplicabilityMask(flags);
 
     // Informs the route manager of stream creation
     _streamInterface->addStream(out);
@@ -404,15 +400,19 @@ void AudioIntelHAL::setDevices(AudioStream *stream, uint32_t devices)
     stream->setDevices(devices);
 }
 
-void AudioIntelHAL::setInputSourceMask(AudioStream *streamIn, uint32_t inputSource)
+void AudioIntelHAL::setInputSource(AudioStream *streamIn, uint32_t inputSource)
 {
     AUDIOCOMMS_ASSERT(streamIn != NULL, "Null stream");
-    ALOGV("%s: inputSource=0x%X", __FUNCTION__, inputSource);
-    streamIn->setApplicabilityMask(inputSource);
+    AUDIOCOMMS_ASSERT(!streamIn->isOut(), "Input stream only");
+
+    ALOGV("%s: inputSource=%d", __FUNCTION__, inputSource);
+
+    AudioStreamInImpl *inputStream = static_cast<AudioStreamInImpl *>(streamIn);
+    inputStream->setInputSource(inputSource);
 
     _platformState->updateActiveInputSources();
 
-    if (inputSource == (BitField::indexToMask(AUDIO_SOURCE_VOICE_COMMUNICATION))) {
+    if (inputSource == AUDIO_SOURCE_VOICE_COMMUNICATION) {
 
         CAudioBand::Type band = CAudioBand::EWide;
         if (streamIn->sampleRate() == _voipRateForNarrowBandProcessing) {
@@ -421,13 +421,6 @@ void AudioIntelHAL::setInputSourceMask(AudioStream *streamIn, uint32_t inputSour
         }
         _platformState->setVoIPBandType(band);
     }
-}
-
-void AudioIntelHAL::setOutputFlags(AudioStream *streamOut, uint32_t flags)
-{
-    AUDIOCOMMS_ASSERT(streamOut != NULL, "Null stream");
-    streamOut->setApplicabilityMask(flags);
-    _platformState->updateActiveOutputFlags();
 }
 
 status_t AudioIntelHAL::startStream(AudioStream *stream)
@@ -490,21 +483,7 @@ void AudioIntelHAL::checkAndSetRoutingStreamParameter(AudioStream *stream, Audio
         setDevices(stream, routingDevice);
         param.remove(key);
     }
-}
-
-void AudioIntelHAL::checkAndSetFlagsStreamParameter(AudioStream *stream, AudioParameter &param)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
     if (stream->isOut()) {
-
-        int streamFlags;
-        String8 key = String8(AudioParameter::keyStreamFlags);
-
-        if (param.getInt(key, streamFlags) == NO_ERROR) {
-
-            setOutputFlags(stream, streamFlags);
-            param.remove(key);
-        }
 
         // For output streams, latch Android Mode
         _platformState->setMode(mode());
@@ -522,7 +501,7 @@ void AudioIntelHAL::checkAndSetInputSourceStreamParameter(AudioStream *stream,
 
         if (param.getInt(key, inputSource) == NO_ERROR) {
 
-            setInputSourceMask(stream, BitField::indexToMask(inputSource));
+            setInputSource(stream, inputSource);
             param.remove(key);
         }
     }
@@ -539,8 +518,6 @@ status_t AudioIntelHAL::setStreamParameters(AudioStream *stream,
     checkAndSetRoutingStreamParameter(stream, param);
 
     checkAndSetInputSourceStreamParameter(stream, param);
-
-    checkAndSetFlagsStreamParameter(stream, param);
 
     if (_platformState->hasPlatformStateChanged()) {
 

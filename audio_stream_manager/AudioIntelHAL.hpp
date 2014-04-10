@@ -359,21 +359,14 @@ private:
      * Check and set the routing stream parameter (ie the devices).
      * It checks if routing key is found in the parameters, read the value and set the platform
      * state accordingly and removes the value pair from the parameter.
+     * It takes a chance to catch any change of android mode from the policy during any routing
+     * request of output stream. Audio Policy will always force a rerouting of the output upon mode
+     * change.
      *
      * @param[in] stream Stream from which the setParameters is originated.
      * @param[in|out] param: contains all the key value pairs to check.
      */
     void checkAndSetRoutingStreamParameter(AudioStream *stream, AudioParameter &param);
-
-    /**
-     * Check and set the flags stream parameters.
-     * It checks if flags key is found in the parameters, read the value and set the platform
-     * state accordingly and removes the value pair from the parameter.
-     *
-     * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in|out] param: contains all the key value pairs to check.
-     */
-    void checkAndSetFlagsStreamParameter(AudioStream *stream, AudioParameter &param);
 
     /**
      * Check and set the input source stream parameters.
@@ -420,20 +413,12 @@ private:
     void setDevices(AudioStream *stream, uint32_t devices);
 
     /**
-     * Update input source attribute of an input stream.
+     * Set input source attribute of an input stream.
      *
-     * @param[in] streamIn: input stream on which the attribute has to be changed.
-     * @param[in] inputSource: audio input source to be set.
+     * @param[in] streamIn: input stream on which the input source has to be set.
+     * @param[in] inputSource: input source to set.
      */
-    void setInputSourceMask(AudioStream *streamIn, uint32_t inputSource);
-
-    /**
-     * Update flags attribute of an output stream.
-     *
-     * @param[in] streamOut: output stream on which the attribute has to be changed.
-     * @param[in] flags: audio output flags to be set.
-     */
-    void setOutputFlags(AudioStream *streamOut, uint32_t flags);
+    void setInputSource(AudioStream *streamIn, uint32_t inputSource);
 
     /**
      * Resets an echo reference.
