@@ -465,7 +465,6 @@ bool AudioPlatformState::hasPlatformStateChanged(int iEvents) const
     CriterionMapConstIterator it = _criterionMap.find(_stateChanged);
     AUDIOCOMMS_ASSERT(it != _criterionMap.end(), "state " << _stateChanged << " not found");
 
-    ALOGV("%s 0x%X 0x%X", __FUNCTION__, _criterionMap[_stateChanged]->getValue(), iEvents);
     return (it->second->getValue() & iEvents) != 0;
 }
 
