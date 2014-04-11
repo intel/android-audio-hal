@@ -45,6 +45,7 @@ include external/stlport/libstlport.mk
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libactive_value_set
+LOCAL_MODULE_OWNER := intel
 include $(BUILD_STATIC_LIBRARY)
 
 # Host build
@@ -67,6 +68,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := active_value_set_host
+LOCAL_MODULE_OWNER := intel
 LOCAL_LDFLAGS += -pthread
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
@@ -99,6 +101,7 @@ LOCAL_LDFLAGS += -pthread -lrt
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := active_value_set_fct_test
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files

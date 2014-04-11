@@ -107,6 +107,7 @@ include $(CLEAR_VARS)
 $(call make_stream_lib_test_lib,host)
 $(call add_gcov)
 LOCAL_MODULE := libstream_static_gcov_host
+LOCAL_MODULE_OWNER := intel
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 endif
@@ -116,6 +117,7 @@ ifeq ($(audiocomms_test_gcov_target),true)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libstream_static_gcov
+LOCAL_MODULE_OWNER := intel
 $(call make_stream_lib_test_lib,target)
 $(call add_gcov)
 include external/stlport/libstlport.mk
@@ -129,6 +131,7 @@ ifeq ($(audiocomms_test_host),true)
 include $(CLEAR_VARS)
 $(call make_stream_lib_test_lib,host)
 LOCAL_MODULE := libstream_static_host
+LOCAL_MODULE_OWNER := intel
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 endif
@@ -137,6 +140,7 @@ endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libstream_static
+LOCAL_MODULE_OWNER := intel
 $(call make_stream_lib_test_lib,target)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)

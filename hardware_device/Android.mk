@@ -38,6 +38,7 @@ LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudiohw_intel
+LOCAL_MODULE_OWNER := intel
 
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
@@ -57,6 +58,7 @@ LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities_host
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudiohw_intel_host
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -82,6 +84,7 @@ LOCAL_STATIC_LIBRARIES += \
 LOCAL_LDFLAGS := -pthread    # Workaround needed for gmock
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := audiohw_intel_test
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files

@@ -28,6 +28,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libaudioplatformstate
+LOCAL_MODULE_OWNER := intel
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \
@@ -74,6 +75,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := route_criteria.conf
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)

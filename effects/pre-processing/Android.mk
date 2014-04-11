@@ -83,6 +83,7 @@ LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
 
 LOCAL_MODULE := liblpepreprocessing
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := \
     $(effect_pre_proc_static_lib_target)
@@ -100,6 +101,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := liblpepreprocessing_static_gcov_host
+LOCAL_MODULE_OWNER := intel
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := $(effect_pre_proc_includes_common)
 LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_host)
@@ -124,6 +126,7 @@ LOCAL_SRC_FILES := src/EffectHelper.cpp
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := liblpepreprocessinghelper
+LOCAL_MODULE_OWNER := intel
 
 include external/stlport/libstlport.mk
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
@@ -141,6 +144,7 @@ LOCAL_SRC_FILES := src/EffectHelper.cpp
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE := liblpepreprocessinghelper_host
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -176,6 +180,7 @@ audio_effects_functional_test_defines += -Wall -Werror -ggdb -O0
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := audio_effects_functional_test
+LOCAL_MODULE_OWNER := intel
 LOCAL_SRC_FILES := $(audio_effects_functional_test_src_files)
 LOCAL_C_INCLUDES := $(audio_effects_functional_test_c_includes)
 LOCAL_CFLAGS := $(audio_effects_functional_test_defines)

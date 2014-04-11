@@ -84,6 +84,7 @@ ifeq ($(audiocomms_test_gcov_host),true)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libparametermgr_static_gcov_host
+LOCAL_MODULE_OWNER := intel
 $(call make_param_mgr_helper_lib,host)
 $(call add_gcov)
 include $(BUILD_HOST_STATIC_LIBRARY)
@@ -95,6 +96,7 @@ ifeq ($(audiocomms_test_gcov_target),true)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libparametermgr_static_gcov
+LOCAL_MODULE_OWNER := intel
 $(call make_param_mgr_helper_lib,target)
 $(call add_gcov)
 include external/stlport/libstlport.mk
@@ -107,6 +109,7 @@ ifeq ($(audiocomms_test_host),true)
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libparametermgr_static_host
+LOCAL_MODULE_OWNER := intel
 $(call make_param_mgr_helper_lib,host)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -116,6 +119,7 @@ endif
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := libparametermgr_static
+LOCAL_MODULE_OWNER := intel
 $(call make_param_mgr_helper_lib,target)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)

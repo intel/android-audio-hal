@@ -110,6 +110,7 @@ audio_stream_manager_cflags := -Wall -Werror -Wextra
 
 include $(CLEAR_VARS)
 LOCAL_MODULE := audio_hal_configurable
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_REQUIRED_MODULES := \
@@ -136,6 +137,7 @@ ifeq ($(BOARD_HAVE_BLUETOOTH),true)
 endif
 
 LOCAL_MODULE := audio.primary.$(TARGET_DEVICE)
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := \
@@ -165,6 +167,7 @@ LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
     $(audio_stream_manager_include_dirs_from_static_libraries_host)
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := libaudio_stream_manager_static_host
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -194,6 +197,7 @@ LOCAL_SHARED_LIBRARIES := \
         liblog \
 
 LOCAL_MODULE := audio-hal-functional_test
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := tests
 
 LOCAL_CFLAGS := -Wall -Werror -Wextra

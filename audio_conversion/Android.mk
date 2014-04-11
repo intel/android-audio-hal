@@ -81,6 +81,7 @@ endef
 # Build for host test
 include $(CLEAR_VARS)
 LOCAL_MODULE := libaudioconversion_static_host
+LOCAL_MODULE_OWNER := intel
 $(call make_audio_conversion_lib,host)
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
@@ -89,6 +90,7 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 # Build for target
 include $(CLEAR_VARS)
 LOCAL_MODULE := libaudioconversion_static
+LOCAL_MODULE_OWNER := intel
 $(call make_audio_conversion_lib,target)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
@@ -149,6 +151,7 @@ endef
 # Functional test target
 include $(CLEAR_VARS)
 LOCAL_MODULE := audio_conversion_functional_test
+LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libaudioconversion_static
 $(call make_audio_conversion_functional_test,_target)
 
@@ -166,6 +169,7 @@ include $(BUILD_NATIVE_TEST)
 # Functional test host
 include $(CLEAR_VARS)
 LOCAL_MODULE := audio_conversion_fcttest_host
+LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libaudioconversion_static_host
 $(call make_audio_conversion_functional_test,_host)
 LOCAL_LDFLAGS += -pthread

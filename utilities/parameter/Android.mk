@@ -40,6 +40,7 @@ LOCAL_CFLAGS := -Wall -Werror -Wextra
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libkeyvaluepairs
+LOCAL_MODULE_OWNER := intel
 
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
@@ -61,6 +62,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := libkeyvaluepairs_host
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -82,6 +84,7 @@ LOCAL_CFLAGS := -Wall -Werror -Wextra
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := key_value_pairs_test
+LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_NATIVE_TEST)
 

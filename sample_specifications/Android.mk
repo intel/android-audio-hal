@@ -72,6 +72,7 @@ endef
 # Build for host test
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_host
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := tests
 $(call make_sample_specifications_lib,host)
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
@@ -80,6 +81,7 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 # Build for target
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 $(call make_sample_specifications_lib,target)
 include external/stlport/libstlport.mk
@@ -148,6 +150,7 @@ endef
 # Functional test target
 include $(CLEAR_VARS)
 LOCAL_MODULE := samplespec_functional_test
+LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libsamplespec_static
 $(call make_samplespec_functional_test,_target)
 
@@ -165,6 +168,7 @@ include $(BUILD_NATIVE_TEST)
 # Functional test host
 include $(CLEAR_VARS)
 LOCAL_MODULE := samplespec_functional_test_host
+LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libsamplespec_static_host
 $(call make_samplespec_functional_test,_host)
 LOCAL_LDFLAGS += -pthread
