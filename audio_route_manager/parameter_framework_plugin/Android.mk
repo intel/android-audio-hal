@@ -19,8 +19,7 @@
 # of the Materials, either expressly, by implication, inducement, estoppel or
 # otherwise. Any license under such intellectual property rights must be
 # express and approved by Intel in writing.
-
-ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)
+#
 
 LOCAL_PATH := $(call my-dir)
 
@@ -63,4 +62,3 @@ LOCAL_MODULE := libroute-subsystem
 include external/stlport/libstlport.mk
 include $(BUILD_SHARED_LIBRARY)
 
-endif #ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)
