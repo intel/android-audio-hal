@@ -58,6 +58,7 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/parameter-framework-plugins/Route
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libroute-subsystem
+LOCAL_MODULE_OWNER := intel
 
 include external/stlport/libstlport.mk
 include $(BUILD_SHARED_LIBRARY)
