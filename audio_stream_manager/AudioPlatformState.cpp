@@ -84,7 +84,10 @@ public:
     }
 };
 
-const char *const AudioPlatformState::_audioCriterionConfFilePath =  "/etc/audio_criteria.conf";
+const char *const AudioPlatformState::_routeCriterionConfFilePath =
+    "/system/etc/route_criteria.conf";
+const char *const AudioPlatformState::_routeCriterionVendorConfFilePath =
+    "/vendor/etc/route_criteria.conf";
 const char *const AudioPlatformState::_inclusiveCriterionTypeTag = "InclusiveCriterionType";
 const char *const AudioPlatformState::_exclusiveCriterionTypeTag = "ExclusiveCriterionType";
 const char *const AudioPlatformState::_criterionTag = "Criterion";
@@ -124,7 +127,13 @@ AudioPlatformState::AudioPlatformState()
     // Logger
     _routePfwConnector->setLogger(_routePfwConnectorLogger);
 
-    loadAudioCriterionConfig(_audioCriterionConfFilePath);
+    if (loadRouteCriterionConfig(_routeCriterionVendorConfFilePath) != OK) {
+        if (loadRouteCriterionConfig(_routeCriterionConfFilePath) != OK) {
+
+            ALOGE("Neither vendor conf file (%s) nor system conf file (%s) could be found",
+                  _routeCriterionVendorConfFilePath, _routeCriterionConfFilePath);
+        }
+    }
 
     /// Start PFW
     std::string strError;
@@ -382,7 +391,7 @@ void AudioPlatformState::loadCriterion(cnode *root)
     }
 }
 
-status_t AudioPlatformState::loadAudioCriterionConfig(const char *path)
+status_t AudioPlatformState::loadRouteCriterionConfig(const char *path)
 {
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
     cnode *root;

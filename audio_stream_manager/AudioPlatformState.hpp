@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -355,7 +355,7 @@ private:
      *
      * @return OK is parsing successfull, error code otherwise.
      */
-    android::status_t loadAudioCriterionConfig(const char *path);
+    android::status_t loadRouteCriterionConfig(const char *path);
 
     /**
      * Parse and load the inclusive criterion type from configuration file.
@@ -502,7 +502,11 @@ private:
     static const char *const _routePfwConfFileNamePropName;
     static const char *const _routePfwDefaultConfFileName; /**< default PFW conf file name. */
 
-    static const char *const _audioCriterionConfFilePath; /**< Criterion conf file path. */
+    static const char *const _routeCriterionConfFilePath; /**< Criterion conf file path. */
+    /**
+     * Criterion vendor conf file path.
+     */
+    static const char *const _routeCriterionVendorConfFilePath;
     static const char *const _inclusiveCriterionTypeTag; /**< tag for inclusive criterion. */
     static const char *const _exclusiveCriterionTypeTag; /**< tag for exclusive criterion. */
     static const char *const _criterionTag; /**< tag for criterion. */

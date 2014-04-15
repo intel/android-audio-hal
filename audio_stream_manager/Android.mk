@@ -126,7 +126,7 @@ include $(BUILD_PHONY_PACKAGE)
 # Build for target audio.primary
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := audio_criteria.conf
+LOCAL_MODULE := route_criteria.conf
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_CLASS := ETC
 LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
