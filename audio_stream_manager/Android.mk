@@ -118,7 +118,7 @@ LOCAL_REQUIRED_MODULES := \
     audio_policy.$(TARGET_DEVICE) \
     audio.routemanager \
     liblpepreprocessing \
-    audio_criteria.conf
+    route_criteria.conf
 
 include $(BUILD_PHONY_PACKAGE)
 
