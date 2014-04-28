@@ -38,6 +38,7 @@ SUBDIRS := audio_conversion \
            stream_lib \
            audio_platform_state \
            hardware_device \
+           hardware_detection \
            utilities/active_value_set \
            utilities/parameter \
 
