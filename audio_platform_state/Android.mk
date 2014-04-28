@@ -63,6 +63,9 @@ LOCAL_STATIC_LIBRARIES := \
     libkeyvaluepairs \
     libevent-listener_static \
 
+LOCAL_SHARED_LIBRARIES := \
+    libgmin_audio_hardwaredetection
+
 LOCAL_CFLAGS := -Wall -Werror -Wextra -Wno-unused-parameter
 LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)

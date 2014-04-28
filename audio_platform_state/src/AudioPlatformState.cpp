@@ -24,6 +24,7 @@
 
 #include "AudioPlatformState.hpp"
 #include "AudioHalConf.hpp"
+#include "HardwareDetection.hpp"
 #include "CriterionParameter.hpp"
 #include "RogueParameter.hpp"
 #include "ModemProxy.hpp"
@@ -117,8 +118,9 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string routePfwConfFilePath = TProperty<string>(mRoutePfwConfFileNamePropName,
-                                                    mRoutePfwDefaultConfFileName);
+    HardwareDetection::ConfigurationLocator locator;
+    string routePfwConfFilePath = locator.getRouteConfigurationFile();
+
     Log::Info() << __FUNCTION__
                 << ": Route-PFW: using configuration file: " << routePfwConfFilePath;
 
