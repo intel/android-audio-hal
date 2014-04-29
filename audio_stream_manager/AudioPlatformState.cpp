@@ -393,6 +393,7 @@ status_t AudioPlatformState::loadAudioCriterionConfig(const char *path)
         return -ENODEV;
     }
     root = config_node("", "");
+    AUDIOCOMMS_ASSERT(root != NULL, "Unable to allocate a configuration node");
     config_load(root, data);
 
     loadInclusiveCriterionType(root);
