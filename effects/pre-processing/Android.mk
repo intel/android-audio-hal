@@ -29,6 +29,7 @@ effect_pre_proc_src_files :=  \
     LpeNs.cpp \
     LpeAgc.cpp \
     LpeAec.cpp \
+    LpeBmf.cpp \
     AudioEffectStub.cpp \
     AudioEffectSessionStub.cpp \
     LpeEffectLibrary.cpp \
@@ -45,8 +46,7 @@ effect_pre_proc_includes_dir_host := \
     $(call include-path-for, libc-kernel)
 
 effect_pre_proc_includes_dir_target := \
-    $(foreach inc, $(effect_pre_proc_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
-    $(call include-path-for, bionic)
+    $(foreach inc, $(effect_pre_proc_includes_dir), $(TARGET_OUT_HEADERS)/$(inc))
 
 effect_pre_proc_static_lib += \
     libaudio_comms_utilities
@@ -104,9 +104,7 @@ include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
-LOCAL_C_INCLUDES := \
-    $(LOCAL_PATH)/include \
-    bionic
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := EffectHelper.cpp
 LOCAL_MODULE_TAGS := optional
 

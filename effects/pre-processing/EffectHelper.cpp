@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -25,17 +25,21 @@
 
 using std::string;
 
-const string EffectHelper::_effectsNameTable[] = {
+const string EffectHelper::mEffectsNameTable[] = {
     "Acoustic Echo Canceller",
     "Automatic Gain Control",
-    "Noise Suppression"
+    "Noise Suppression",
+    "Beam Forming"
 };
+
+const size_t EffectHelper::mEffectNameTableSize =
+    (sizeof(EffectHelper::mEffectsNameTable) / sizeof((EffectHelper::mEffectsNameTable)[0]));
 
 uint32_t EffectHelper::convertEffectNameToProcId(const std::string &name)
 {
     size_t effectTableSize;
-    for (effectTableSize = 0; effectTableSize < _nbEffects; effectTableSize++) {
-        if (name == _effectsNameTable[effectTableSize]) {
+    for (effectTableSize = 0; effectTableSize < mEffectNameTableSize; effectTableSize++) {
+        if (name == mEffectsNameTable[effectTableSize]) {
 
             return 1 << effectTableSize;
         }

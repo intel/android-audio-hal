@@ -21,22 +21,23 @@
  *
  */
 
-#include <string>
-#include <stdint.h>
+#include "AudioEffectStub.hpp"
 
-class EffectHelper
+class BmfAudioEffect : public AudioEffectStub
 {
 public:
     /**
-     * Convert an effect name to a pre processor Id.
+     * Instantiate a Beamforming audio effect.
      *
-     * @param[in] name of the audio effect.
-     *
-     * @return effect Id.
+     * @param[in] itfe audio effect interface
      */
-    static uint32_t convertEffectNameToProcId(const std::string &name);
+    BmfAudioEffect(const effect_interface_s *itfe);
 
 private:
-    static const std::string mEffectsNameTable[];
-    static const size_t mEffectNameTableSize;
+    /**
+     * Effect Descriptor structure.
+     * The effect descriptor contains necessary information to facilitate the enumeration of the
+     * effect.
+     */
+    static const effect_descriptor_t bmfDescriptor;
 };
