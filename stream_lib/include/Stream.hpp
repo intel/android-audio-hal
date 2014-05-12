@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -156,7 +156,7 @@ public:
      * @return status_t error code of the pcm read operation.
      */
     virtual android::status_t pcmReadFrames(void *buffer, size_t frames,
-                                            std::string &error) = 0;
+                                            std::string &error) const = 0;
 
     /**
      * Write frames to audio device.
@@ -168,9 +168,9 @@ public:
      * @return status_t error code of the pcm write operation.
      */
     virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames,
-                                             std::string &error) = 0;
+                                             std::string &error) const = 0;
 
-    virtual android::status_t pcmStop() = 0;
+    virtual android::status_t pcmStop() const = 0;
 
     /**
      * Returns available frames in pcm buffer and corresponding time stamp.
@@ -179,7 +179,8 @@ public:
      * For an output stream, frames available are the number of empty frames available
      * for the application to write.
      */
-    virtual android::status_t getFramesAvailable(uint32_t &avail, struct timespec &tStamp) = 0;
+    virtual android::status_t getFramesAvailable(uint32_t &avail,
+                                                 struct timespec &tStamp) const = 0;
 
     IStreamRoute *getCurrentStreamRoute() { return _currentStreamRoute; }
 

@@ -52,7 +52,7 @@ android::status_t TinyAlsaStream::detachRouteL()
     return OK;
 }
 
-status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &error)
+status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &error) const
 {
     status_t ret;
 
@@ -68,7 +68,7 @@ status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &erro
     return OK;
 }
 
-status_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames, string &error)
+status_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames, string &error) const
 {
     status_t ret;
 
@@ -94,12 +94,12 @@ size_t TinyAlsaStream::getBufferSizeInFrames() const
     return pcm_get_buffer_size(getPcmDevice());
 }
 
-status_t TinyAlsaStream::getFramesAvailable(uint32_t &avail, struct timespec &tStamp)
+status_t TinyAlsaStream::getFramesAvailable(uint32_t &avail, struct timespec &tStamp) const
 {
     return pcm_get_htimestamp(getPcmDevice(), &avail, &tStamp);
 }
 
-status_t TinyAlsaStream::pcmStop()
+status_t TinyAlsaStream::pcmStop() const
 {
     return pcm_stop(getPcmDevice());
 }

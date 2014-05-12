@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -33,19 +33,19 @@ class TinyAlsaStream : public Stream
 {
 public:
     TinyAlsaStream()
-        : Stream::Stream(),
-         _device(NULL)
+        : Stream::Stream(), _device(NULL)
     {}
 
     virtual uint32_t getBufferSizeInBytes() const;
 
     virtual size_t getBufferSizeInFrames() const;
 
-    virtual android::status_t pcmReadFrames(void *buffer, size_t frames, std::string &error);
+    virtual android::status_t pcmReadFrames(void *buffer, size_t frames, std::string &error) const;
 
-    virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames, std::string &error);
+    virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames,
+                                             std::string &error) const;
 
-    virtual android::status_t pcmStop();
+    virtual android::status_t pcmStop() const;
 
     /**
      * Returns available frames in pcm buffer and corresponding time stamp.
@@ -54,7 +54,7 @@ public:
      * For an output stream, frames available are the number of empty frames available
      * for the application to write.
      */
-    virtual android::status_t getFramesAvailable(uint32_t &avail, struct timespec &tStamp);
+    virtual android::status_t getFramesAvailable(uint32_t &avail, struct timespec &tStamp) const;
 
 protected:
     /**
