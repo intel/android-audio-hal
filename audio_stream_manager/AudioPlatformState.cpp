@@ -58,7 +58,7 @@ const char *const AudioPlatformState::_routePfwDefaultConfFileName =
     "/etc/parameter-framework/ParameterFrameworkConfigurationRoute.xml";
 
 const std::string AudioPlatformState::mHwDebugFilesPathList =
-    "/Route/route_debug_fs/debug_files/path_list/";
+    "/Route/debug_fs/debug_files/path_list/";
 
 // For debug purposes. This size is enough for dumping relevant informations
 const uint32_t AudioPlatformState::mMaxDebugStreamSize = 998;
