@@ -98,9 +98,10 @@ status_t AudioStreamRoute::route(bool isPreEnable)
 
         if (!_audioDevice->isOpened()) {
 
-            ALOGE("%s: audio device not found, cannot route the stream", __FUNCTION__);
+            ALOGE("%s: error opening audio device, cannot route new stream", __FUNCTION__);
             return NO_INIT;
         }
+
         /**
          * Attach the stream to its route only once routing stage is completed
          * to let the audio-parameter-manager performing the required configuration of the
@@ -119,6 +120,12 @@ status_t AudioStreamRoute::route(bool isPreEnable)
 void AudioStreamRoute::unroute(bool isPostDisable)
 {
     if (!isPostDisable) {
+
+        if (!_audioDevice->isOpened()) {
+
+            ALOGE("%s: error opening audio device, cannot unroute current stream", __FUNCTION__);
+            return;
+        }
 
         /**
          * Detach the stream from its route at the beginning of unrouting stage
@@ -141,6 +148,12 @@ void AudioStreamRoute::unroute(bool isPostDisable)
 void AudioStreamRoute::configure()
 {
     if (_currentStream != _newStream) {
+
+        if (!_audioDevice->isOpened()) {
+
+            ALOGE("%s: error opening audio device, cannot configure any stream", __FUNCTION__);
+            return;
+        }
 
         /**
          * Route is still in use, but the stream attached to this route has changed...
@@ -203,10 +216,10 @@ status_t AudioStreamRoute::attachNewStream()
     status_t err = _newStream->attachRoute();
 
     if (err != NO_ERROR) {
-
-        // Failed to open output stream -> bailing out
+        ALOGE("Failing to attach route for new stream : %d", err);
         return err;
     }
+
     _currentStream = _newStream;
 
     return NO_ERROR;
