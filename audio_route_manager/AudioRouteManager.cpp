@@ -1,6 +1,6 @@
-﻿/*
+/*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -274,6 +274,10 @@ void AudioRouteManager::doReconsiderRouting(bool forceResync)
 {
     if (!checkAndPrepareRouting() && !forceResync) {
 
+        // No need to reroute. Some criterion might have changed, update all criteria and apply
+        // the conf in order to take for example tuning configuration that are glitch free and do
+        // not need to go through the 5-steps routing.
+        commitCriteriaAndApply();
         return;
     }
     ALOGD("%s: Route state:", __FUNCTION__);
@@ -435,13 +439,7 @@ void AudioRouteManager::executeConfigureRoutingStage()
 
     setRouteCriteriaForConfigure();
 
-    CriteriaMapIterator it;
-    for (it = _criteriaMap.begin(); it != _criteriaMap.end(); ++it) {
-
-        it->second->setCriterionState();
-    }
-
-    _audioPfwConnector->applyConfigurations();
+    commitCriteriaAndApply();
 }
 
 void AudioRouteManager::executeEnableRoutingStage()
@@ -806,6 +804,17 @@ void AudioRouteManager::setCriterion(const std::string &name, uint32_t value)
     ALOGV("%s: (%s, %d)", __FUNCTION__, name.c_str(), value);
     AUDIOCOMMS_ASSERT(_criteriaMap.find(name) != _criteriaMap.end(), "Criterion does not exist");
     _criteriaMap[name]->setValue(value);
+}
+
+void AudioRouteManager::commitCriteriaAndApply()
+{
+    CriteriaMapIterator it;
+    for (it = _criteriaMap.begin(); it != _criteriaMap.end(); ++it) {
+
+        it->second->setCriterionState();
+    }
+
+    _audioPfwConnector->applyConfigurations();
 }
 
 template <typename T>
