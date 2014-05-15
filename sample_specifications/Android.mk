@@ -82,19 +82,13 @@ $( \
 endef
 
 # Build for host test with gcov
-ifeq ($(audiocomms_test_gcov_host),true)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_gcov_host
 $(call make_sample_specifications_lib,host)
 $(call add_gcov)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
-
 # Build for target test with gcov
-ifeq ($(audiocomms_test_gcov_target),true)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_gcov
 $(call make_sample_specifications_lib,target)
@@ -102,20 +96,13 @@ $(call add_gcov)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
-endif
-
 # Build for host test
-ifeq ($(audiocomms_test_host),true)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_host
 $(call make_sample_specifications_lib,host)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
-
-# Build for target (inconditionnal)
-
+# Build for target
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static
 $(call make_sample_specifications_lib,target)
