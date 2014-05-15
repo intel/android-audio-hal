@@ -226,29 +226,6 @@ public:
     }
 
     /**
-     * Set the VoIP Band Type.
-     * VoIP band type is inferred by the rate of the input stream (which is a "direct" stream, ie
-     * running at the same rate than the VoIP application).
-     *
-     * @param[in] bandType: the band type to be set for VoIP call.
-     */
-    void setVoIPBandType(CAudioBand::Type bandType)
-    {
-        setValue(bandType, _voipBand);
-    }
-    /**
-     * Get the VoIP Band Type.
-     * VoIP band type is inferred by the rate of the input stream (which is a "direct" stream, ie
-     * running at the same rate than the VoIP application).
-     *
-     * @return the band type to be set for VoIP call.
-     */
-    CAudioBand::Type getVoIPBandType() const
-    {
-        return static_cast<CAudioBand::Type>(getValue(_voipBand));
-    }
-
-    /**
      * Update Input Sources.
      * It computes the input sources criteria as a mask of input source of all active input streams.
      */
@@ -316,14 +293,15 @@ public:
     void stopStream(const AudioStream *stoppedStream);
 
     /**
-     * Update the requested preproc criterion.
+     * Update all the parameters of the active input.
+     * It not only updates the requested preproc criterion but also the band type.
      * Only one input stream may be active at one time.
      * However, it does not mean that both are not started, but only one has a valid
      * device given by the policy so that the other may not be routed.
-     * Find this active stream with valid device and set the requested preprocessor
+     * Find this active stream with valid device and set the parameters
      * according to what was requested from this input.
      */
-    void updatePreprocessorRequestedByActiveInput();
+    void updateParametersFromActiveInput();
 
     /**
      * Set the BT headset negociated Band Type.
@@ -339,6 +317,16 @@ public:
     void printPlatformFwErrorInfo();
 
 private:
+    /**
+     * Set the Voice Band Type.
+     * Voice band type is inferred by the rate of the input stream (which is a "direct" stream, ie
+     * running at the same rate than the VoIP application).
+     *
+     * @param[in] activeStream: current active input stream (i.e. input stream that has a valid
+     *                          input device as per policy implementation.
+     */
+    void setVoipBandType(const AudioStream *activeStream);
+
     /**
      * Update the applicability mask.
      * This function parses all active streams and concatenate their mask into a bit field.
@@ -524,6 +512,10 @@ private:
     static const char *const _voipBand; /**< VoIP band criterion name. */
     static const char *const _micMute; /**< Mic Mute criterion name. */
     static const char *const _preProcessorRequestedByActiveInput; /**< requested preproc. */
+    /**
+     * Stream Rate associated with narrow band in case of VoIP.
+     */
+    static const uint32_t _voiceStreamRateForNarrowBandProcessing = 8000;
 
     /**
      * String containing a list of paths to the hardware debug files on target

@@ -485,7 +485,17 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
     it->second->setValue(platformEventChanged);
 }
 
-void AudioPlatformState::updatePreprocessorRequestedByActiveInput()
+void AudioPlatformState::setVoipBandType(const AudioStream *activeStream)
+{
+    CAudioBand::Type band = CAudioBand::EWide;
+    if (activeStream->sampleRate() == _voiceStreamRateForNarrowBandProcessing) {
+
+        band = CAudioBand::ENarrow;
+    }
+    setValue(band, _voipBand);
+}
+
+void AudioPlatformState::updateParametersFromActiveInput()
 {
     StreamListConstIterator it;
 
@@ -496,7 +506,12 @@ void AudioPlatformState::updatePreprocessorRequestedByActiveInput()
 
             ALOGD("%s: found valid input stream, effectResMask=0x%X", __FUNCTION__,
                   stream->getEffectRequested());
+
+            // Set the requested effect from this active input.
             setValue(stream->getEffectRequested(), _preProcessorRequestedByActiveInput);
+
+            // Set the band type according to this active input.
+            setVoipBandType(stream);
             return;
         }
     }
@@ -529,7 +544,7 @@ void AudioPlatformState::startStream(const AudioStream *startedStream)
     _activeStreamsList[isOut].push_back(startedStream);
     updateApplicabilityMask(isOut);
     if (!isOut) {
-        updatePreprocessorRequestedByActiveInput();
+        updateParametersFromActiveInput();
     }
 }
 
@@ -540,7 +555,7 @@ void AudioPlatformState::stopStream(const AudioStream *stoppedStream)
     _activeStreamsList[isOut].remove(stoppedStream);
     updateApplicabilityMask(isOut);
     if (!isOut) {
-        updatePreprocessorRequestedByActiveInput();
+        updateParametersFromActiveInput();
     }
 }
 

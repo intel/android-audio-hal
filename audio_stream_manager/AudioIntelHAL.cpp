@@ -414,16 +414,6 @@ void AudioIntelHAL::setInputSource(AudioStream *streamIn, uint32_t inputSource)
     inputStream->setInputSource(inputSource);
 
     _platformState->updateActiveInputSources();
-
-    if (inputSource == AUDIO_SOURCE_VOICE_COMMUNICATION) {
-
-        CAudioBand::Type band = CAudioBand::EWide;
-        if (streamIn->sampleRate() == _voipRateForNarrowBandProcessing) {
-
-            band = CAudioBand::ENarrow;
-        }
-        _platformState->setVoIPBandType(band);
-    }
 }
 
 status_t AudioIntelHAL::startStream(AudioStream *stream)
@@ -464,7 +454,7 @@ void AudioIntelHAL::updateRequestedEffect()
 {
     _pfwLock.writeLock();
 
-    _platformState->updatePreprocessorRequestedByActiveInput();
+    _platformState->updateParametersFromActiveInput();
 
     // Set Criteria to meta PFW
     _platformState->applyPlatformConfiguration();

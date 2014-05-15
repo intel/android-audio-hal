@@ -461,10 +461,6 @@ private:
 
     static const char *const _defaultGainPropName; /**< Gain property name. */
     static const float _defaultGainValue; /**< Default gain value if empty property. */
-    /**
-     * Stream Rate associated with narrow band in case of VoIP.
-     */
-    static const uint32_t _voipRateForNarrowBandProcessing = 8000;
     static const char *const _bluetoothHfpSupportedPropName; /**< BT HFP property name. */
     static const bool _bluetoothHfpSupportedDefaultValue; /**< Default BT HFP value. */
 
