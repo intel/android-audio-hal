@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -116,35 +116,50 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
 int AudioUtils::getCardIndexByName(const char *name)
 {
     AUDIOCOMMS_ASSERT(name != NULL, "Null card name");
-    char id_filepath[PATH_MAX] = {
+    char cardFilePath[PATH_MAX] = {
         0
     };
-    char number_filepath[PATH_MAX] = {
+    char cardNameWithIndex[NAME_MAX] = {
         0
     };
-    const int cardLen = strlen("card");
+    const char *const card = "card";
+    const int cardLen = strlen(card);
 
-    ssize_t written;
+    if (!strncmp(name, card, sizeof(card))) {
 
-    snprintf(id_filepath, sizeof(id_filepath), "/proc/asound/%s", name);
+        /**
+         * Checks first if the card name provided as "cardX". (Must start with 'card').
+         */
+        snprintf(cardNameWithIndex, sizeof(cardNameWithIndex), "%s", name);
+    } else {
 
-    written = readlink(id_filepath, number_filepath, sizeof(number_filepath));
-    if (written < 0) {
+        /**
+         * The card name might have been provided with user friendly name.
+         * To retrieve the index, checks first if this name matches an entry in /proc/asound.
+         * This entry, if exists, must be a symbolic link on the real audio card known as "cardX".
+         */
+        ssize_t written;
 
-        ALOGE("Sound card %s does not exist", name);
-        return -errno;
-    } else if (written >= (ssize_t)sizeof(id_filepath)) {
+        snprintf(cardFilePath, sizeof(cardFilePath), "/proc/asound/%s", name);
 
-        // This will probably never happen
-        return -ENAMETOOLONG;
-    } else if (written <= cardLen) {
+        written = readlink(cardFilePath, cardNameWithIndex, sizeof(cardNameWithIndex));
+        if (written < 0) {
 
-        // Waiting at least card length + index of the card
-        return -EBADFD;
+            ALOGE("Sound card %s does not exist", name);
+            return -errno;
+        } else if (written >= (ssize_t)sizeof(cardFilePath)) {
+
+            // This will probably never happen
+            return -ENAMETOOLONG;
+        } else if (written <= cardLen) {
+
+            // Waiting at least card length + index of the card
+            return -EBADFD;
+        }
     }
 
-    int indexCard = 0;
-    if (!convertTo<int>(number_filepath + cardLen, indexCard)) {
+    uint32_t indexCard = 0;
+    if (!convertTo<uint32_t>(cardNameWithIndex + cardLen, indexCard)) {
 
         return -EINVAL;
     }
