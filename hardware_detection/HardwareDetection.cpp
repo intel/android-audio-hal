@@ -45,6 +45,10 @@ ConfigurationLocator::ConfigurationLocator()
         "/etc/parameter-framework/ParameterFrameworkConfiguration-bytrt5651.xml",
         "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytrt5651.xml");
 
+    mConfigurationFilePaths["baytrailcraudio"] = make_pair(
+        "/etc/parameter-framework/ParameterFrameworkConfiguration-baytrailcraudio.xml",
+        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-baytrailcraudio.xml");
+
     mSupportedCard = findSupportedCard();
 }
 
