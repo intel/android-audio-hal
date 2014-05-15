@@ -71,7 +71,6 @@ $( \
     $(eval LOCAL_SRC_FILES := $(sample_specifications_src_files)) \
     $(eval LOCAL_STATIC_LIBRARIES := $(sample_specifications_static_lib_$(1))) \
     $(eval LOCAL_CFLAGS := $(sample_specifications_cflags)) \
-    $(eval LOCAL_MODULE_TAGS := optional) \
 )
 endef
 define add_gcov
@@ -84,6 +83,7 @@ endef
 # Build for host test with gcov
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_gcov_host
+LOCAL_MODULE_TAGS := tests
 $(call make_sample_specifications_lib,host)
 $(call add_gcov)
 include $(BUILD_HOST_STATIC_LIBRARY)
@@ -91,6 +91,7 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 # Build for target test with gcov
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_gcov
+LOCAL_MODULE_TAGS := tests
 $(call make_sample_specifications_lib,target)
 $(call add_gcov)
 include external/stlport/libstlport.mk
@@ -99,12 +100,14 @@ include $(BUILD_STATIC_LIBRARY)
 # Build for host test
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_host
+LOCAL_MODULE_TAGS := tests
 $(call make_sample_specifications_lib,host)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # Build for target
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static
+LOCAL_MODULE_TAGS := optional
 $(call make_sample_specifications_lib,target)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
