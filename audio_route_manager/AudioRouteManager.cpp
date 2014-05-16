@@ -75,9 +75,10 @@ public:
     {
         const static string format("audio-parameter-manager: ");
 
+        string verbose = TProperty<string>("media.pfw.verbose", "false");
         if (isWarning) {
             Log::Warning() << format << log;
-        } else {
+        } else if (verbose == "true") {
             Log::Debug() << format << log;
         }
     }
