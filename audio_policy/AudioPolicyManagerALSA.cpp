@@ -329,7 +329,7 @@ status_t AudioPolicyManagerALSA::doParseParameters(AudioParameter &param)
             }
         }
     }
-    return status;
+    return AudioPolicyManagerBase::doParseParameters(param);
 }
 
 audio_io_handle_t AudioPolicyManagerALSA::getHandleFromInputSource(int input_source)
