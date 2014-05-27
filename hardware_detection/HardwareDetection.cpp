@@ -37,18 +37,13 @@ const string ConfigurationLocator::mUnknownCardName = "";
 
 ConfigurationLocator::ConfigurationLocator()
 {
-    mConfigurationFilePaths["bytrt5640"] = make_pair(
-        "/etc/parameter-framework/ParameterFrameworkConfiguration-bytrt5640.xml",
-        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytrt5640.xml");
+    mConfigurationFilePaths["bytcrrt5642t100"] = make_pair(
+        "/etc/parameter-framework/ParameterFrameworkConfiguration-bytcr-rt5642-t100.xml",
+        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5642-t100.xml");
 
-    mConfigurationFilePaths["bytrt5651"] = make_pair(
-        "/etc/parameter-framework/ParameterFrameworkConfiguration-bytrt5651.xml",
-        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytrt5651.xml");
-
-    mConfigurationFilePaths["baytrailcraudio"] = make_pair(
-        "/etc/parameter-framework/ParameterFrameworkConfiguration-baytrailcraudio.xml",
-        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-baytrailcraudio.xml");
-
+    mConfigurationFilePaths["bytcrrt5640mrd7"] = make_pair(
+        "/etc/parameter-framework/ParameterFrameworkConfiguration-bytcr-rt5640-mrd7.xml",
+        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5640-mrd7.xml");
     mSupportedCard = findSupportedCard();
 }
 
