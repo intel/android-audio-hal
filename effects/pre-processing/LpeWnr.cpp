@@ -21,29 +21,38 @@
  *
  */
 
-#include "EffectHelper.hpp"
+#define LOG_TAG "IntelPreProcessingFx"
 
-using std::string;
+#include "LpeWnr.hpp"
 
-const string EffectHelper::mEffectsNameTable[] = {
-    "Acoustic Echo Canceller",
-    "Automatic Gain Control",
-    "Noise Suppression",
-    "Beam Forming",
-    "Wind Noise Reduction"
+WnrAudioEffect::WnrAudioEffect(const effect_interface_s *itfe)
+    : AudioEffectStub(itfe, &wnrDescriptor)
+{
+}
+
+static const effect_uuid_t FX_IID_WNR_ = {
+    timeLow: 0xdab015e0,
+    timeMid: 0xbfac,
+    timeHiAndVersion: 0x11e3,
+    clockSeq: 0xbcd9,
+    node: { 0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b }
 };
 
-const size_t EffectHelper::mEffectNameTableSize =
-    (sizeof(EffectHelper::mEffectsNameTable) / sizeof((EffectHelper::mEffectsNameTable)[0]));
+const effect_uuid_t *const FX_IID_WNR = &FX_IID_WNR_;
 
-uint32_t EffectHelper::convertEffectNameToProcId(const std::string &name)
-{
-    size_t effectTableSize;
-    for (effectTableSize = 0; effectTableSize < mEffectNameTableSize; effectTableSize++) {
-        if (name == mEffectsNameTable[effectTableSize]) {
-
-            return 1 << effectTableSize;
-        }
-    }
-    return 0;
-}
+const effect_descriptor_t WnrAudioEffect::wnrDescriptor = {
+    type:         FX_IID_WNR_,
+    uuid:         {
+        timeLow: 0xe8c32c80,
+        timeMid: 0xeb21,
+        timeHiAndVersion: 0x11e3,
+        clockSeq: 0x8132,
+        node: { 0x00, 0x02, 0xa5, 0xd5, 0xc5, 0x1b }
+    },
+    apiVersion:   EFFECT_CONTROL_API_VERSION,
+    flags:        (EFFECT_FLAG_TYPE_PRE_PROC | EFFECT_FLAG_DEVICE_IND),
+    cpuLoad:      0,
+    memoryUsage:  0,
+    "Beam Forming",                 /**< name. */
+    "IntelLPE"                 /**< implementor. */
+};

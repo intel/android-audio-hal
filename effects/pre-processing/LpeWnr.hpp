@@ -21,29 +21,23 @@
  *
  */
 
-#include "EffectHelper.hpp"
+#include "AudioEffectStub.hpp"
 
-using std::string;
-
-const string EffectHelper::mEffectsNameTable[] = {
-    "Acoustic Echo Canceller",
-    "Automatic Gain Control",
-    "Noise Suppression",
-    "Beam Forming",
-    "Wind Noise Reduction"
-};
-
-const size_t EffectHelper::mEffectNameTableSize =
-    (sizeof(EffectHelper::mEffectsNameTable) / sizeof((EffectHelper::mEffectsNameTable)[0]));
-
-uint32_t EffectHelper::convertEffectNameToProcId(const std::string &name)
+class WnrAudioEffect : public AudioEffectStub
 {
-    size_t effectTableSize;
-    for (effectTableSize = 0; effectTableSize < mEffectNameTableSize; effectTableSize++) {
-        if (name == mEffectsNameTable[effectTableSize]) {
+public:
+    /**
+     * Instantiate an Wind Noise Reduction audio effect.
+     *
+     * @param[in] itfe audio effect interface
+     */
+    WnrAudioEffect(const effect_interface_s *itfe);
 
-            return 1 << effectTableSize;
-        }
-    }
-    return 0;
-}
+private:
+    /**
+     * Effect Descriptor structure.
+     * The effect descriptor contains necessary information to facilitate the enumeration of the
+     * effect.
+     */
+    static const effect_descriptor_t wnrDescriptor;
+};

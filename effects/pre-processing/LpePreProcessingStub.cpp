@@ -27,6 +27,7 @@
 #include "AudioEffectSessionStub.hpp"
 #include <LpeAec.hpp>
 #include <LpeBmf.hpp>
+#include <LpeWnr.hpp>
 #include <LpeNs.hpp>
 #include <LpeAgc.hpp>
 #include <utils/Errors.h>
@@ -318,6 +319,9 @@ status_t LpePreProcessingStub::init()
         BmfAudioEffect *bmf = new BmfAudioEffect(&effectInterface);
         _effectsList.push_back(bmf);
         effectSession->addEffect(bmf);
+        WnrAudioEffect *wnr = new WnrAudioEffect(&effectInterface);
+        _effectsList.push_back(wnr);
+        effectSession->addEffect(wnr);
 
         _effectSessionsList.push_back(effectSession);
     }

@@ -30,6 +30,7 @@ effect_pre_proc_src_files :=  \
     LpeAgc.cpp \
     LpeAec.cpp \
     LpeBmf.cpp \
+    LpeWnr.cpp \
     AudioEffectStub.cpp \
     AudioEffectSessionStub.cpp \
     LpeEffectLibrary.cpp \
