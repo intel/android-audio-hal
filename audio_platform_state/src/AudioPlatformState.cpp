@@ -76,17 +76,21 @@ const uint32_t AudioPlatformState::mMaxDebugStreamSize = 998;
 // Logger
 class ParameterMgrPlatformConnectorLogger : public CParameterMgrPlatformConnector::ILogger
 {
+private:
+    string mVerbose;
+
 public:
-    ParameterMgrPlatformConnectorLogger() {}
+    ParameterMgrPlatformConnectorLogger()
+        : mVerbose(TProperty<string>("media.pfw.verbose", "false"))
+    {}
 
     virtual void log(bool isWarning, const string &log)
     {
         const static string format("route-parameter-manager: ");
 
-        string verbose = TProperty<string>("media.pfw.verbose", "false");
         if (isWarning) {
             Log::Warning() << format << log;
-        } else if (verbose == true) {
+        } else if (mVerbose == "true") {
             Log::Debug() << format << log;
         }
     }
