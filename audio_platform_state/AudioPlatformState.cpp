@@ -23,13 +23,13 @@
 #define LOG_TAG "AudioIntelHal/AudioPlatformState"
 
 #include "AudioPlatformState.hpp"
-#include "Stream.hpp"
-#include "ParameterCriterion.hpp"
+#include "AudioHalConf.hpp"
+#include "CriterionParameter.hpp"
+#include "RogueParameter.hpp"
 #include "ParameterMgrPlatformConnector.h"
-#include "SelectionCriterionInterface.h"
+#include <Stream.hpp>
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
-#include <AudioCommsAssert.hpp>
 #include <ParameterMgrHelper.hpp>
 #include <Property.h>
 #include "NaiveTokenizer.h"
@@ -84,13 +84,6 @@ public:
     }
 };
 
-const char *const AudioPlatformState::mRouteCriterionConfFilePath =
-    "/system/etc/route_criteria.conf";
-const char *const AudioPlatformState::mRouteCriterionVendorConfFilePath =
-    "/vendor/etc/route_criteria.conf";
-const char *const AudioPlatformState::mInclusiveCriterionTypeTag = "InclusiveCriterionType";
-const char *const AudioPlatformState::mExclusiveCriterionTypeTag = "ExclusiveCriterionType";
-const char *const AudioPlatformState::mCriterionTag = "Criterion";
 const char *const AudioPlatformState::mOutputDevice = "OutputDevices";
 const char *const AudioPlatformState::mInputDevice = "InputDevices";
 const char *const AudioPlatformState::mInputSources = "InputSources";
@@ -111,8 +104,10 @@ struct AudioPlatformState::parameterManagerElementSupported<Criterion> {};
 template <>
 struct AudioPlatformState::parameterManagerElementSupported<CriterionType> {};
 
-AudioPlatformState::AudioPlatformState()
-    : mRoutePfwConnectorLogger(new ParameterMgrPlatformConnectorLogger)
+AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
+    : mStreamInterface(streamInterface),
+      mRoutePfwConnectorLogger(new ParameterMgrPlatformConnectorLogger),
+      mAudioPfwHasChanged(false)
 {
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
@@ -125,23 +120,6 @@ AudioPlatformState::AudioPlatformState()
 
     // Logger
     mRoutePfwConnector->setLogger(mRoutePfwConnectorLogger);
-
-    if (loadRouteCriterionConfig(mRouteCriterionVendorConfFilePath) != OK) {
-        if (loadRouteCriterionConfig(mRouteCriterionConfFilePath) != OK) {
-
-            ALOGE("Neither vendor conf file (%s) nor system conf file (%s) could be found",
-                  mRouteCriterionVendorConfFilePath, mRouteCriterionConfFilePath);
-        }
-    }
-
-    /// Start PFW
-    std::string strError;
-    if (!mRoutePfwConnector->start(strError)) {
-
-        ALOGE("Route PFW start error: %s", strError.c_str());
-        return;
-    }
-    ALOGD("%s: Route PFW successfully started!", __FUNCTION__);
 }
 
 AudioPlatformState::~AudioPlatformState()
@@ -168,21 +146,86 @@ AudioPlatformState::~AudioPlatformState()
     delete mRoutePfwConnector;
 }
 
+status_t AudioPlatformState::start()
+{
+    if ((loadAudioHalConfig(mAudioHalVendorConfFilePath) != OK) &&
+        (loadAudioHalConfig(mAudioHalConfFilePath) != OK)) {
+
+        ALOGE("Neither vendor conf file (%s) nor system conf file (%s) could be found",
+              mAudioHalVendorConfFilePath, mAudioHalConfFilePath);
+        return NO_INIT;
+    }
+
+    /// Start PFW
+    std::string strError;
+    if (!mRoutePfwConnector->start(strError)) {
+
+        ALOGE("Route PFW start error: %s", strError.c_str());
+        return NO_INIT;
+    }
+    ALOGD("%s: Route PFW successfully started!", __FUNCTION__);
+    return OK;
+}
+
+template <>
+void AudioPlatformState::addCriterionType<Audio>(const string &typeName,
+                                                 bool isInclusive)
+{
+    if (mStreamInterface->addCriterionType(typeName, isInclusive)) {
+        ALOGV("%s:criterionType %s already added in Audio PFW", __FUNCTION__, typeName.c_str());
+    }
+}
+
+template <>
+void AudioPlatformState::addCriterionType<Route>(const string &typeName,
+                                                 bool isInclusive)
+{
+    AUDIOCOMMS_ASSERT(mCriterionTypeMap.find(typeName) == mCriterionTypeMap.end(),
+                      "CriterionType " << typeName << " already added");
+
+    ALOGD("%s: Adding new criterionType %s for Route PFW", __FUNCTION__, typeName.c_str());
+    mCriterionTypeMap[typeName] = new CriterionType(typeName,
+                                                    isInclusive,
+                                                    mRoutePfwConnector);
+}
+
+template <>
+void AudioPlatformState::addCriterionTypeValuePair<Audio>(
+    const string &typeName,
+    uint32_t numericValue,
+    const string &literalValue)
+{
+    mStreamInterface->addCriterionTypeValuePair(typeName, literalValue, numericValue);
+}
+
+template <>
+void AudioPlatformState::addCriterionTypeValuePair<Route>(
+    const string &typeName,
+    uint32_t numericValue,
+    const string &literalValue)
+{
+    AUDIOCOMMS_ASSERT(mCriterionTypeMap.find(typeName) != mCriterionTypeMap.end(),
+                      "CriterionType " << typeName.c_str() << "not found");
+
+    ALOGV("%s: Adding new value pair (%d, %s) for criterionType %s for Route PFW", __FUNCTION__,
+          numericValue, literalValue.c_str(), typeName.c_str());
+    CriterionType *criterionType = mCriterionTypeMap[typeName];
+    criterionType->addValuePair(numericValue, literalValue);
+}
+
+template <PfwInstance pfw>
 void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = root->first_child;
+    cnode *node;
+    for (node = root->first_child; node != NULL; node = node->next) {
 
-    while (node) {
-
-        char *criterionTypeName = (char *)node->name;
+        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
+        const char *typeName = node->name;
         char *valueNames = (char *)node->value;
-        AUDIOCOMMS_ASSERT(mCriterionTypeMap.find(criterionTypeName) == mCriterionTypeMap.end(),
-                          "CriterionType " << criterionTypeName << " already added");
 
-        CriterionType *criterionType = new CriterionType(criterionTypeName,
-                                                         isInclusive,
-                                                         mRoutePfwConnector);
+        addCriterionType<pfw>(typeName, isInclusive);
+
         uint32_t index = 0;
         char *ctx;
         char *valueName = strtok_r(valueNames, ",", &ctx);
@@ -203,42 +246,189 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
 
                         ALOGE("%s: Invalid index(%s) found", __FUNCTION__, first);
                     }
-                    ALOGV("%s: name=%s, index=0x%X, value=%s", __FUNCTION__, criterionTypeName,
+                    ALOGV("%s: name=%s, index=0x%X, value=%s", __FUNCTION__, typeName,
                           index, second);
-                    criterionType->addValuePair(index, second);
+
+                    addCriterionTypeValuePair<pfw>(typeName, index, second);
                 } else {
 
-                    ALOGV("%s: name=%s, index=0x%X, value=%s", __FUNCTION__, criterionTypeName,
-                          isInclusive ? 1 << index : index, valueName);
-                    criterionType->addValuePair(isInclusive ? 1 << index : index, valueName);
+                    uint32_t pfwIndex = isInclusive ? 1 << index : index;
+                    ALOGV("%s: name=%s, index=0x%X, value=%s", __FUNCTION__, typeName,
+                          pfwIndex, valueName);
+
+                    addCriterionTypeValuePair<pfw>(typeName, pfwIndex, valueName);
                     index += 1;
                 }
             }
             valueName = strtok_r(NULL, ",", &ctx);
         }
-        mCriterionTypeMap[criterionTypeName] = criterionType;
-        node = node->next;
     }
 }
 
+template <PfwInstance pfw>
 void AudioPlatformState::loadInclusiveCriterionType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mInclusiveCriterionTypeTag);
+    cnode *node = config_find(root, mInclusiveCriterionTypeTag.c_str());
     if (node == NULL) {
         return;
     }
-    loadCriterionType(node, true);
+    loadCriterionType<pfw>(node, true);
 }
 
+template <PfwInstance pfw>
 void AudioPlatformState::loadExclusiveCriterionType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mExclusiveCriterionTypeTag);
+    cnode *node = config_find(root, mExclusiveCriterionTypeTag.c_str());
     if (node == NULL) {
         return;
     }
-    loadCriterionType(node, false);
+    loadCriterionType<pfw>(node, false);
+}
+
+
+void AudioPlatformState::addParameter(Parameter *param,
+                                      const vector<AndroidParamMappingValuePair> &valuePairs)
+{
+    for_each(valuePairs.begin(), valuePairs.end(), SetAndroidParamMappingPairHelper(param));
+    mParameterVector.push_back(param);
+}
+
+template <>
+void AudioPlatformState::addParameter<Audio, ParamRogue>(
+    const std::string &typeName, const std::string &paramKey, const std::string &name,
+    const std::string &defaultValue, const std::vector<AndroidParamMappingValuePair> &valuePairs)
+{
+    Parameter *rogueParam;
+    if (typeName == mUnsignedIntegerTypeTag) {
+        rogueParam = new AudioRogueParameter<uint32_t>(this, paramKey,
+                                                       name,
+                                                       mStreamInterface,
+                                                       defaultValue);
+    } else if (typeName == mStringTypeTag) {
+        rogueParam = new AudioRogueParameter<string>(this, paramKey, name,
+                                                     mStreamInterface,
+                                                     defaultValue);
+    } else {
+        ALOGE("%s: type %s not supported ", __FUNCTION__, typeName.c_str());
+        return;
+    }
+    addParameter(rogueParam, valuePairs);
+}
+
+template <>
+void AudioPlatformState::addParameter<Audio, ParamCriterion>(
+    const std::string &typeName, const std::string &paramKey, const std::string &name,
+    const std::string &defaultValue,
+    const std::vector<AndroidParamMappingValuePair> &valuePairs)
+{
+    Parameter *paramCriterion = new AudioCriterionParameter(this, paramKey, name, typeName,
+                                                            mStreamInterface, defaultValue);
+    addParameter(paramCriterion, valuePairs);
+}
+
+template <>
+void AudioPlatformState::addParameter<Route, ParamCriterion>(
+    const std::string &typeName, const std::string &paramKey, const std::string &name,
+    const std::string &defaultValue,
+    const std::vector<AndroidParamMappingValuePair> &valuePairs)
+{
+    CriterionType *criterionType = getElement<CriterionType>(typeName, mCriterionTypeMap);
+    RouteCriterionParameter *routeParamCriterion = new RouteCriterionParameter(
+        this, paramKey, name, criterionType, mRoutePfwConnector, defaultValue);
+    mCriterionMap[name] = routeParamCriterion->getCriterion();
+    addParameter(routeParamCriterion, valuePairs);
+}
+
+
+template <>
+void AudioPlatformState::addParameter<Route, ParamRogue>(
+    const std::string &typeName, const std::string &paramKey, const std::string &name,
+    const std::string &defaultValue,
+    const std::vector<AndroidParamMappingValuePair> &valuePairs)
+{
+    RogueParameter *paramRogue;
+    if (typeName == mUnsignedIntegerTypeTag) {
+        paramRogue = new RouteRogueParameter<uint32_t>(this, paramKey, name, mRoutePfwConnector,
+                                                       defaultValue);
+    } else if (typeName == mStringTypeTag) {
+        paramRogue = new RouteRogueParameter<string>(this, paramKey, name, mRoutePfwConnector,
+                                                     defaultValue);
+    } else {
+        ALOGE("%s: type %s not supported ", __FUNCTION__, typeName.c_str());
+        return;
+    }
+    addParameter(paramRogue, valuePairs);
+}
+
+void AudioPlatformState::parseChildren(cnode *root,
+                                       string &path,
+                                       string &defaultValue,
+                                       string &key,
+                                       string &type,
+                                       vector<AndroidParamMappingValuePair> &valuePairs)
+{
+    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
+    cnode *node;
+    for (node = root->first_child; node != NULL; node = node->next) {
+        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
+
+        if (string(node->name) == mPathTag) {
+            path = node->value;
+        } else if (string(node->name) == mParameterDefaultTag) {
+            defaultValue = node->value;
+        } else if (string(node->name) == mAndroidParameterTag) {
+            key = node->value;
+        } else if (string(node->name) == mMappingTableTag) {
+            valuePairs = parseMappingTable(node->value);
+        } else if (string(node->name) == mTypeTag) {
+            type = node->value;
+        } else {
+            ALOGE("%s: Unrecognized %s %s node ", __FUNCTION__, node->name, node->value);
+        }
+    }
+    ALOGV("%s: path=%s,  key=%s default=%s, type=%s",
+          __FUNCTION__, path.c_str(), key.c_str(), defaultValue.c_str(), type.c_str());
+}
+
+template <PfwInstance pfw>
+void AudioPlatformState::loadRogueParameterType(cnode *root)
+{
+    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
+
+    const char *rogueParameterName = root->name;
+
+    vector<AndroidParamMappingValuePair> valuePairs;
+    string paramKeyName = "";
+    string rogueParameterPath = "";
+    string typeName = "";
+    string defaultValue = "";
+
+    parseChildren(root, rogueParameterPath, defaultValue, paramKeyName, typeName, valuePairs);
+
+    AUDIOCOMMS_ASSERT(!paramKeyName.empty(), "Rogue Parameter " << rogueParameterName <<
+                      " not associated to any Android parameter");
+
+    addParameter<pfw, ParamRogue>(typeName,
+                                  paramKeyName,
+                                  rogueParameterPath,
+                                  defaultValue,
+                                  valuePairs);
+}
+
+template <PfwInstance pfw>
+void AudioPlatformState::loadRogueParameterTypeList(cnode *root)
+{
+    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
+    cnode *node = config_find(root, mRogueParameterTag.c_str());
+    if (node == NULL) {
+        ALOGW("%s: no rogue parameter type found", __FUNCTION__);
+        return;
+    }
+    for (node = node->first_child; node != NULL; node = node->next) {
+        loadRogueParameterType<pfw>(node);
+    }
 }
 
 template <typename T>
@@ -260,28 +450,28 @@ const T *AudioPlatformState::getElement(const string &name,
     return it->second;
 }
 
+template <PfwInstance pfw>
 void AudioPlatformState::loadCriteria(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mCriterionTag);
-    if (node != NULL) {
+    cnode *node = config_find(root, mCriterionTag.c_str());
 
-        node = node->first_child;
-        while (node) {
-
-            loadCriterion(node);
-            node = node->next;
-        }
+    if (node == NULL) {
+        ALOGW("%s: no inclusive criteria found", __FUNCTION__);
+        return;
+    }
+    for (node = node->first_child; node != NULL; node = node->next) {
+        loadCriterion<pfw>(node);
     }
 }
 
-vector<AudioPlatformState::ParamToCriterionValuePair> AudioPlatformState::parseMappingTable(
+vector<AudioPlatformState::AndroidParamMappingValuePair> AudioPlatformState::parseMappingTable(
     const char *values)
 {
     AUDIOCOMMS_ASSERT(values != NULL, "error in parsing file");
     char *mappingPairs = (char *)(values);
     char *ctx;
-    vector<ParamToCriterionValuePair> valuePairs;
+    vector<AndroidParamMappingValuePair> valuePairs;
 
     char *mappingPair = strtok_r(mappingPairs, ",", &ctx);
     while (mappingPair != NULL) {
@@ -292,7 +482,7 @@ vector<AudioPlatformState::ParamToCriterionValuePair> AudioPlatformState::parseM
             AUDIOCOMMS_ASSERT((first != NULL) && (strlen(first) != 0) &&
                               (second != NULL) && (strlen(second) != 0),
                               "invalid value pair");
-            ParamToCriterionValuePair pair = make_pair(first, second);
+            AndroidParamMappingValuePair pair = make_pair(first, second);
             valuePairs.push_back(pair);
         }
         mappingPair = strtok_r(NULL, ",", &ctx);
@@ -300,97 +490,88 @@ vector<AudioPlatformState::ParamToCriterionValuePair> AudioPlatformState::parseM
     return valuePairs;
 }
 
-class AudioPlatformState::SetParamToCriterionPair
+template <>
+void AudioPlatformState::addCriterion<Audio>(const string &name,
+                                             const string &typeName,
+                                             const string &defaultLiteralValue)
 {
+    mStreamInterface->addCriterion(name, typeName, defaultLiteralValue);
+}
 
-public:
-    SetParamToCriterionPair(ParameterCriterion *paramCriterion)
-        : mParamCriterion(paramCriterion)
-    {}
+template <>
+void AudioPlatformState::addCriterion<Route>(const string &name,
+                                             const string &typeName,
+                                             const string &defaultLiteralValue)
+{
+    CriterionType *criterionType = getElement<CriterionType>(typeName, mCriterionTypeMap);
+    mCriterionMap[name] = new Criterion(name,
+                                        criterionType,
+                                        mRoutePfwConnector,
+                                        defaultLiteralValue);
+}
 
-    void operator()(ParamToCriterionValuePair pair)
-    {
-
-        int numerical = 0;
-        if (!mParamCriterion->getCriterionType()->getTypeInterface()->getNumericalValue(pair.second,
-                                                                                        numerical))
-        {
-
-            ALOGW("%s: could not retrieve numerical value for %s", __FUNCTION__, pair.second);
-        }
-        mParamCriterion->setParamToCriterionPair(pair.first, numerical);
-    }
-
-    ParameterCriterion *mParamCriterion;
-};
-
+template <PfwInstance pfw>
 void AudioPlatformState::loadCriterion(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    vector<ParamToCriterionValuePair> valuePairs;
-    const char *paramKeyName = "";
-
     const char *criterionName = root->name;
-    const char *typeName = "";
-    const char *defaultValue = "";
-    int defaultNumValue = 0;
-    CriterionType *criterionType = NULL;
 
     AUDIOCOMMS_ASSERT(mCriterionMap.find(criterionName) == mCriterionMap.end(),
                       "Criterion " << criterionName << " already added");
 
-    cnode *node = root->first_child;
-    while (node) {
+    vector<AndroidParamMappingValuePair> valuePairs;
+    string paramKeyName = "";
+    string path = "";
+    string typeName = "";
+    string defaultValue = "";
 
-        if (!strcmp(node->name, "Default")) {
+    parseChildren(root, path, defaultValue, paramKeyName, typeName, valuePairs);
 
-            defaultValue = node->value;
-        } else if (!strcmp(node->name, "Parameter")) {
-
-            paramKeyName = node->value;
-        } else if (!strcmp(node->name, "Mapping")) {
-
-            valuePairs = parseMappingTable(node->value);
-        } else if (!strcmp(node->name, "Type")) {
-
-            typeName = node->value;
-        } else {
-
-            ALOGE("%s: Unrecognized %s %s node ", __FUNCTION__, node->name, node->value);
-        }
-        node = node->next;
-    }
-    criterionType = getElement<CriterionType>(typeName, mCriterionTypeMap);
-    if (!criterionType->getTypeInterface()->getNumericalValue(defaultValue, defaultNumValue)) {
-
-        ALOGE("%s: could not retrieve numerical value for %s", __FUNCTION__, defaultValue);
-    }
-
-    ALOGV("%s: criterion name=%s,type=%s paramKey=%s default=%s,%d",
-          __FUNCTION__, criterionName, typeName, paramKeyName, defaultValue, defaultNumValue);
-
-    if (strlen(paramKeyName) != 0) {
-
-        ParameterCriterion *paramCriterion = new ParameterCriterion(paramKeyName,
-                                                                    criterionName,
-                                                                    criterionType,
-                                                                    mRoutePfwConnector,
-                                                                    defaultNumValue);
-
-        for_each(valuePairs.begin(), valuePairs.end(), SetParamToCriterionPair(paramCriterion));
-
-        mCriterionMap[criterionName] = paramCriterion;
-        mParameterCriteriaVector.push_back(paramCriterion);
+    if (!paramKeyName.empty()) {
+        /**
+         * If a parameter key is found, this criterion is linked to a parameter received from
+         * AudioSystem::setParameters.
+         */
+        addParameter<pfw, ParamCriterion>(typeName,
+                                          paramKeyName,
+                                          criterionName,
+                                          defaultValue,
+                                          valuePairs);
     } else {
-
-        mCriterionMap[criterionName] = new Criterion(criterionName,
-                                                     criterionType,
-                                                     mRoutePfwConnector,
-                                                     defaultNumValue);
+        addCriterion<pfw>(criterionName, typeName, defaultValue);
     }
 }
 
-status_t AudioPlatformState::loadRouteCriterionConfig(const char *path)
+template <>
+const string &AudioPlatformState::getPfwInstanceName<Audio>() const
+{
+    return mAudioConfTag;
+}
+
+template <>
+const string &AudioPlatformState::getPfwInstanceName<Route>() const
+{
+    return mRouteConfTag;
+}
+
+template <PfwInstance pfw>
+void AudioPlatformState::loadConfig(cnode *root)
+{
+    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
+    cnode *node = config_find(root, getPfwInstanceName<pfw>().c_str());
+    if (node == NULL) {
+        ALOGW("%s Could not find node for pfw=%s", __FUNCTION__, getPfwInstanceName<pfw>().c_str());
+        return;
+    }
+    ALOGD("%s Loading conf for pfw=%s", __FUNCTION__, getPfwInstanceName<pfw>().c_str());
+
+    loadInclusiveCriterionType<pfw>(node);
+    loadExclusiveCriterionType<pfw>(node);
+    loadCriteria<pfw>(node);
+    loadRogueParameterTypeList<pfw>(node);
+}
+
+status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 {
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
     cnode *root;
@@ -404,9 +585,8 @@ status_t AudioPlatformState::loadRouteCriterionConfig(const char *path)
     AUDIOCOMMS_ASSERT(root != NULL, "Unable to allocate a configuration node");
     config_load(root, data);
 
-    loadInclusiveCriterionType(root);
-    loadExclusiveCriterionType(root);
-    loadCriteria(root);
+    loadConfig<Audio>(root);
+    loadConfig<Route>(root);
 
     config_free(root);
     free(root);
@@ -417,46 +597,30 @@ status_t AudioPlatformState::loadRouteCriterionConfig(const char *path)
     return NO_ERROR;
 }
 
-class AudioPlatformState::CheckAndSetParameter
+void AudioPlatformState::clearParamKeys(AudioParameter *param)
 {
+    std::for_each(mParameterVector.begin(), mParameterVector.end(),
+                  CheckAndClearKeyAndroidParameter(param));
+    if (param->size()) {
 
-public:
-    CheckAndSetParameter(AudioParameter *param, AudioPlatformState *ctx)
-        : mParam(param),
-          mCtx(ctx)
-    {}
-
-    void operator()(ParameterCriterion *paramCriterion)
-    {
-
-        String8 key = String8(paramCriterion->getKey());
-        String8 value;
-        if (mParam->get(key, value) == NO_ERROR) {
-
-            if (paramCriterion->setParameter(value.string())) {
-
-                mCtx->setPlatformStateEvent(paramCriterion->getName().c_str());
-            }
-            mParam->remove(key);
-        }
+        ALOGW("%s: Unhandled argument: %s", __FUNCTION__, param->toString().string());
     }
-
-    AudioParameter *mParam;
-    AudioPlatformState *mCtx;
-};
+}
 
 status_t AudioPlatformState::setParameters(const android::String8 &keyValuePairs)
 {
     AudioParameter param = AudioParameter(keyValuePairs);
+    int errorCount = 0;
+    std::for_each(mParameterVector.begin(), mParameterVector.end(),
+                  CheckAndSetAndroidParameter(&param, &errorCount));
 
-    std::for_each(mParameterCriteriaVector.begin(), mParameterCriteriaVector.end(),
-                  CheckAndSetParameter(&param, this));
+    clearParamKeys(&param);
+    return errorCount == 0 ? OK : BAD_VALUE;
+}
 
-    if (param.size()) {
-
-        ALOGW("%s: Unhandled argument: %s", __FUNCTION__, param.toString().string());
-    }
-    return OK;
+void AudioPlatformState::parameterHasChanged(const std::string &event)
+{
+    setPlatformStateEvent(event);
 }
 
 bool AudioPlatformState::hasPlatformStateChanged(int iEvents) const
@@ -464,24 +628,24 @@ bool AudioPlatformState::hasPlatformStateChanged(int iEvents) const
     CriterionMapConstIterator it = mCriterionMap.find(mStateChanged);
     AUDIOCOMMS_ASSERT(it != mCriterionMap.end(), "state " << mStateChanged << " not found");
 
-    return (it->second->getValue() & iEvents) != 0;
+    return (it->second->getValue() & iEvents) != 0 || mAudioPfwHasChanged;
 }
 
 void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
 {
-    CriterionMapIterator it = mCriterionMap.find(mStateChanged);
-    AUDIOCOMMS_ASSERT(it != mCriterionMap.end(), "state " << mStateChanged << " not found");
+    Criterion *stateChangeCriterion = getElement<Criterion>(mStateChanged, mCriterionMap);
 
     // Checks if eventState name is a possible value of HasChanged criteria
     int eventId = 0;
-    if (!it->second->getCriterionType()->getTypeInterface()->getNumericalValue(
+    if (!stateChangeCriterion->getCriterionType()->getTypeInterface()->getNumericalValue(
             eventStateName, eventId)) {
 
-        ALOGD("%s: event %s is not part of knowed state", __FUNCTION__, eventStateName.c_str());
-        return;
+        // Checks if eventState name is a possible value of HasChanged criteria of Route PFW.
+        // If not, consider that this event is related to Audio PFW Instance.
+        mAudioPfwHasChanged = true;
     }
-    uint32_t platformEventChanged = it->second->getValue() | eventId;
-    it->second->setValue<uint32_t>(platformEventChanged);
+    uint32_t platformEventChanged = stateChangeCriterion->getValue() | eventId;
+    stateChangeCriterion->setValue<uint32_t>(platformEventChanged);
 }
 
 void AudioPlatformState::setVoipBandType(const Stream *activeStream)
@@ -562,6 +726,7 @@ void AudioPlatformState::stopStream(const Stream *stoppedStream)
 void AudioPlatformState::clearPlatformStateEvents()
 {
     mCriterionMap[mStateChanged]->setValue<uint32_t>(0);
+    mAudioPfwHasChanged = false;
 }
 
 bool AudioPlatformState::isStarted()

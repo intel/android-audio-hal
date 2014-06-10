@@ -88,7 +88,7 @@ const char *const AudioIntelHal::mRestartingRequested = "true";
 
 AudioIntelHal::AudioIntelHal()
     : mEchoReference(NULL),
-      mPlatformState(new AudioPlatformState()),
+      mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
       mEventThread(new CEventThread(this)),
@@ -96,6 +96,11 @@ AudioIntelHal::AudioIntelHal()
       _bluetoothHFPSupported(TProperty<bool>(mBluetoothHfpSupportedPropName,
                                              mBluetoothHfpSupportedDefaultValue))
 {
+    // Prevents any access to PFW during whole construction of the Audio HAL.
+    AutoW lock(mPfwLock);
+
+    bool platformHasModem = false;
+
     /// MAMGR Interface
     // Try to connect a ModemAudioManager Interface
     NInterfaceProvider::IInterfaceProvider *interfaceProvider =
@@ -116,13 +121,10 @@ AudioIntelHal::AudioIntelHal()
 
             // Declare ourselves as observer
             mModemAudioManagerInterface->setModemAudioManagerObserver(this);
-            mPlatformState->setModemEmbedded(true);
+            platformHasModem = true;
             ALOGI("Connected to a ModemAudioManager interface");
         }
     }
-
-    // Prevents any access to PFW while starting the event thread and initialising
-    AutoW lock(mPfwLock);
 
     // Start Event thread
     mEventThread->start();
@@ -149,20 +151,41 @@ AudioIntelHal::AudioIntelHal()
             ALOGE("Failed to get Stream Interface on RouteMgr");
             return;
         }
-
-        ALOGD("Stream Interface on RouteMgr successfully loaded");
-
-        /// Start Routing service
-        if (mStreamInterface->startService() != OK) {
-
-            ALOGE("Could not start Route Manager stream service");
-            // Reset interface pointer to give a chance for initCheck to catch any issue
-            // with the RouteMgr.
-            mStreamInterface = NULL;
-            return;
-        }
-        ALOGD("%s Route Manager Service successfully started", __FUNCTION__);
     }
+
+    /// Construct the platform state component and start it
+    mPlatformState = new AudioPlatformState(mStreamInterface);
+    if (mPlatformState->start() != OK) {
+
+        ALOGE("%s: could not start Platform State", __FUNCTION__);
+        mStreamInterface = NULL;
+        delete mPlatformState;
+        mPlatformState = NULL;
+        return;
+    }
+
+    /// Initialize current modem status
+    // Has Modem
+    mPlatformState->setModemEmbedded(platformHasModem);
+    // Modem status
+    mPlatformState->setModemAlive(mModemAudioManagerInterface->isModemAlive());
+    // Modem audio availability
+    mPlatformState->setModemAudioAvailable(mModemAudioManagerInterface->isModemAudioAvailable());
+    // Modem band
+    mPlatformState->setCsvBandType(mModemAudioManagerInterface->getAudioBand());
+
+    /// Start Routing service
+    if (mStreamInterface->startService() != OK) {
+
+        ALOGE("Could not start Route Manager stream service");
+        // Reset interface pointer to give a chance for initCheck to catch any issue
+        // with the RouteMgr.
+        mStreamInterface = NULL;
+        delete mPlatformState;
+        mPlatformState = NULL;
+        return;
+    }
+    ALOGD("%s Route Manager Service successfully started", __FUNCTION__);
 }
 
 AudioIntelHal::~AudioIntelHal()
@@ -712,13 +735,6 @@ bool AudioIntelHal::startModemAudioManager()
         mModemAudioManagerInterface = NULL;
         return false;
     }
-    /// Initialize current modem status
-    // Modem status
-    mPlatformState->setModemAlive(mModemAudioManagerInterface->isModemAlive());
-    // Modem audio availability
-    mPlatformState->setModemAudioAvailable(mModemAudioManagerInterface->isModemAudioAvailable());
-    // Modem band
-    mPlatformState->setCsvBandType(mModemAudioManagerInterface->getAudioBand());
     return true;
 }
 

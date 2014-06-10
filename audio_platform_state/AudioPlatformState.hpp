@@ -22,11 +22,14 @@
  */
 #pragma once
 
+#include "Parameter.hpp"
 #include "AudioBand.h"
 #include "VolumeKeys.hpp"
 #include <NonCopyable.hpp>
 #include <Direction.hpp>
 #include <hardware_legacy/AudioHardwareBase.h>
+#include <StreamInterface.hpp>
+#include <AudioCommsAssert.hpp>
 #include <list>
 #include <map>
 #include <string>
@@ -37,7 +40,6 @@
 class CParameterMgrPlatformConnector;
 class Criterion;
 class CriterionType;
-class ParameterCriterion;
 class cnode;
 class Stream;
 
@@ -48,16 +50,14 @@ class ParameterMgrPlatformConnectorLogger;
 
 
 
-class AudioPlatformState : public audio_comms::utilities::NonCopyable
+class AudioPlatformState
+    : public ParameterChangedObserver,
+      private audio_comms::utilities::NonCopyable
 {
 private:
-    class CheckAndSetParameter;
-    class SetParamToCriterionPair;
-
-    typedef std::pair<const char *, const char *> ParamToCriterionValuePair;
+    typedef std::pair<const char *, const char *> AndroidParamMappingValuePair;
     typedef std::pair<int, const char *> CriterionTypeValuePair;
-    typedef std::vector<ParameterCriterion *>::iterator CriteriaVectorIterator;
-
+    typedef std::vector<Parameter *>::iterator ParamIterator;
     typedef std::map<std::string, Criterion *>::iterator CriterionMapIterator;
     typedef std::map<std::string, Criterion *>::const_iterator CriterionMapConstIterator;
     typedef std::map<std::string, CriterionType *>::iterator CriterionTypeMapIterator;
@@ -66,9 +66,93 @@ private:
     typedef std::list<Stream *>::iterator StreamListIterator;
     typedef std::list<const Stream *>::const_iterator StreamListConstIterator;
 
+    /**
+     * This class defines a unary function to be used when looping on the vector of value pairs
+     * of a parameter.
+     * It will help applying all the pairs (Android-Parameter value - PFW-Parameter value)
+     * for the mapping table.
+     */
+    class SetAndroidParamMappingPairHelper
+    {
+    public:
+        SetAndroidParamMappingPairHelper(Parameter *param)
+            : mParamCriterion(param)
+        {}
+
+        void operator()(AndroidParamMappingValuePair pair)
+        {
+            mParamCriterion->setMappingValuePair(pair.first, pair.second);
+        }
+
+        Parameter *mParamCriterion;
+    };
+
+    /**
+     * This class defines a unary function to be used when looping on the vector of parameters
+     * It will help checking if the key received in the AudioParameter structure is associated
+     * to a Parameter object and if found, the value will be set to this parameter.
+     */
+    class CheckAndSetAndroidParameterHelper
+    {
+    public:
+        CheckAndSetAndroidParameterHelper(AudioParameter *param, int *errorCount)
+            : mParam(param),
+              mErrorCount(errorCount)
+        {}
+
+        void operator()(Parameter *param)
+        {
+
+            String8 key(param->getKey().c_str());
+            String8 value;
+            if (mParam->get(key, value) == NO_ERROR) {
+
+                if (!param->set(value.string())) {
+                    *mErrorCount += 1;
+                }
+                // Do not remove the key as nothing forbid to give the same key for 2
+                // criteria / rogue parameters...
+            }
+        }
+
+        AudioParameter *mParam;
+        int *mErrorCount;
+    };
+
+    /**
+     * This class defines a unary function to be used when looping on the vector of parameters
+     * It will help checking if the key received in the AudioParameter structure is associated
+     * to a Parameter object and if found, the key will be removed in order to be sure all keys
+     * received have been taken into account.
+     */
+    class CheckAndClearKeyAndroidParameterHelper
+    {
+    public:
+        CheckAndClearKeyAndroidParameterHelper(AudioParameter *param)
+            : mParam(param)
+        {}
+
+        void operator()(Parameter *param)
+        {
+            String8 key(param->getKey().c_str());
+            String8 value;
+            if (mParam->get(key, value) == NO_ERROR) {
+                mParam->remove(key);
+            }
+        }
+        AudioParameter *mParam;
+    };
+
 public:
-    AudioPlatformState();
+    AudioPlatformState(IStreamInterface *streamInterface);
     virtual ~AudioPlatformState();
+
+    /**
+     * Starts the platform state service.
+     *
+     * @return OK if success, error code otherwise.
+     */
+    android::status_t start();
 
     /**
      * Apply the configuration of the platform on the route parameter manager.
@@ -314,9 +398,19 @@ public:
     /**
      * Print debug information from target debug files
      */
-    void printPlatformFwErrorInfo();
+    void printPlatformFwErrorInfo() const;
 
 private:
+    virtual void parameterHasChanged(const std::string &name);
+
+    /**
+     * Clear all the keys found into AudioParameter and in the configuration file.
+     * If unknown keys remain, it prints a warn log.
+     *
+     * @param[in,out] param: AudioParameter structure.
+     */
+    void clearParamKeys(AudioParameter *param);
+
     /**
      * Set the Voice Band Type.
      * Voice band type is inferred by the rate of the input stream (which is a "direct" stream, ie
@@ -343,57 +437,163 @@ private:
      *
      * @return OK is parsing successfull, error code otherwise.
      */
-    android::status_t loadRouteCriterionConfig(const char *path);
+    android::status_t loadAudioHalConfig(const char *path);
 
+    /**
+     * Returns a human readable name of the PFW instance associated to a given type.
+     *
+     * @tparam pfw Instance of parameter framework to which the type is linked.
+     *
+     * @return name of the PFW Instance
+     */
+    template <PfwInstance pfw>
+    const std::string &getPfwInstanceName() const;
+
+    /**
+     * Add a criterion type to AudioPlatformState.
+     *
+     * @tparam pfw Instance of parameter framework to which the criterion type is linked.
+     * @param[in] typeName of the PFW criterion type.
+     * @param[in] isInclusive attribute of the criterion type.
+     */
+    template <PfwInstance pfw>
+    void addCriterionType(const std::string &typeName, bool isInclusive);
+
+    /**
+     * Add a criterion type value pair to AudioPlatformState.
+     *
+     * @tparam pfw Instance of parameter framework to which the criterion is linked.
+     * @param[in] typeName criterion type name to which this value pair is added to.
+     * @param[in] numeric part of the value pair.
+     * @param[in] literal part of the value pair.
+     */
+    template <PfwInstance pfw>
+    void addCriterionTypeValuePair(const std::string &typeName, uint32_t numeric,
+                                   const std::string &literal);
+
+    /**
+     * Add a criterion to AudioPlatformState.
+     *
+     * @tparam pfw Instance of parameter framework to which the parameter is linked.
+     * @param[in] name of the PFW criterion.
+     * @param[in] typeName criterion type name to which this criterion is associated to.
+     * @param[in] defaultLiteralValue of the PFW criterion.
+     */
+    template <PfwInstance pfw>
+    void addCriterion(const std::string &name,
+                      const std::string &typeName,
+                      const std::string &defaultLiteralValue);
     /**
      * Parse and load the inclusive criterion type from configuration file.
      *
+     * @tparam[in] pfw Target Parameter framework for this element.
      * @param[in] root node of the configuration file.
      */
+    template <PfwInstance pfw>
     void loadInclusiveCriterionType(cnode *root);
 
     /**
      * Parse and load the exclusive criterion type from configuration file.
      *
+     * @tparam[in] pfw Target Parameter framework for this element.
      * @param[in] root node of the configuration file.
      */
+    template <PfwInstance pfw>
     void loadExclusiveCriterionType(cnode *root);
+
+    /**
+     * Add a parameter and its mapping pairs to the Platform state.
+     *
+     * @param[in] param object to add.
+     * @param[in] valuePairs Mapping table between android-parameter values and PFW parameter values
+     */
+    void addParameter(Parameter *param,
+                      const std::vector<AndroidParamMappingValuePair> &valuePairs);
+
+    /**
+     * Add a parameter to AudioPlatformState.
+     *
+     * @tparam pfw Instance of parameter framework to which the parameter is linked.
+     * @tparam type of the parameter (i.e. rogue or criterion).
+     * @param[in] typeName parameter type.
+     * @param[in] paramKey android-parameter key to which this PFW parameter is associated to.
+     * @param[in] name of the PFW parameter.
+     * @param[in] defaultValue of the PFW parameter.
+     * @param[in] valuePairs Mapping table between android-parameter values and PFW parameter values
+     */
+    template <PfwInstance pfw, ParameterType type>
+    void addParameter(const std::string &typeName, const std::string &paramKey,
+                      const std::string &name, const std::string &defaultValue,
+                      const std::vector<AndroidParamMappingValuePair> &valuePairs);
+    /**
+     * Parse and load the rogue parameter type from configuration file.
+     *
+     * @tparam[in] pfw Target Parameter framework for this element.
+     * @param[in] root node of the configuration file.
+     */
+    template <PfwInstance pfw>
+    void loadRogueParameterType(cnode *root);
+
+    /**
+     * Parse and load the rogue parameters type from configuration file and push them into a list.
+     *
+     * @tparam[in] pfw Target Parameter framework for this element.
+     * @param[in] root node of the configuration file.
+     */
+    template <PfwInstance pfw>
+    void loadRogueParameterTypeList(cnode *root);
 
     /**
      * Parse and load the criteria from configuration file.
      *
+     * @tparam[in] pfw Target Parameter framework for this element.
      * @param[in] root node of the configuration file.
      */
+    template <PfwInstance pfw>
     void loadCriteria(cnode *root);
 
     /**
      * Parse and load a criterion from configuration file.
      *
+     * @tparam[in] pfw Target Parameter framework for this element.
      * @param[in] root node of the configuration file.
      */
+    template <PfwInstance pfw>
     void loadCriterion(cnode *root);
-
-    /**
-     * Parse and load parameter criteria from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadParameterCriteria(cnode *root);
-
-    /**
-     * Parse and load a parameter criterion from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadParameterCriterion(cnode *root);
 
     /**
      * Parse and load the criterion types from configuration file.
      *
+     * @tparam[in] pfw Target Parameter framework for this element.
      * @param[in] root node of the configuration file
      * @param[in] isInclusive true if inclusive, false is exclusive.
      */
+    template <PfwInstance pfw>
     void loadCriterionType(cnode *root, bool isInclusive);
+
+    /**
+     * Parse and load the chidren node from a given root node.
+     *
+     * @param[in] root node of the configuration file
+     * @param[out] path of the parameter manager element to retrieve.
+     * @param[out] defaultValue of the parameter manager element to retrieve.
+     * @param[out] key of the android parameter to retrieve.
+     * @param[out] type of the parameter manager element to retrieve.
+     * @param[out] valuePairs pair of android value / parameter Manager value.
+     */
+    void parseChildren(cnode *root, std::string &path, std::string &defaultValue, std::string &key,
+                       std::string &type, std::vector<AndroidParamMappingValuePair> &valuePairs);
+
+    /**
+     * Load the configuration file.
+     *
+     * @tparam[in] pfw Target Parameter framework for this element.
+     * @param[in] root node of the configuration file.
+     */
+    template <PfwInstance pfw>
+    void loadConfig(cnode *root);
+
+    IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */
 
     /**
      * Parse and load the mapping table of a criterion from configuration file.
@@ -403,7 +603,7 @@ private:
      *
      * @return vector of value pairs.
      */
-    std::vector<ParamToCriterionValuePair> parseMappingTable(const char *values);
+    std::vector<AndroidParamMappingValuePair> parseMappingTable(const char *values);
 
     /**
      * Retrieve an element from a map by its name.
@@ -477,7 +677,7 @@ private:
 
     std::map<std::string, CriterionType *> mCriterionTypeMap;
     std::map<std::string, Criterion *> mCriterionMap;
-    std::vector<ParameterCriterion *> mParameterCriteriaVector; /**< Map of parameter criteria. */
+    std::vector<Parameter *> mParameterVector; /**< Map of parameters. */
 
     CParameterMgrPlatformConnector *mRoutePfwConnector; /**< Route Parameter Manager connector. */
     ParameterMgrPlatformConnectorLogger *mRoutePfwConnectorLogger; /**< Route PFW logger. */
@@ -487,21 +687,6 @@ private:
      */
     static const char *const mRoutePfwConfFileNamePropName;
     static const char *const mRoutePfwDefaultConfFileName; /**< default PFW conf file name. */
-
-    static const char *const mRouteCriterionConfFilePath; /**< Criterion conf file path. */
-
-    /**
-     * Stream Rate associated with narrow band in case of VoIP.
-     */
-    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
-    /**
-     * Criterion vendor conf file path.
-     */
-    static const char *const mRouteCriterionVendorConfFilePath;
-    static const char *const mInclusiveCriterionTypeTag; /**< tag for inclusive criterion. */
-    static const char *const mExclusiveCriterionTypeTag; /**< tag for exclusive criterion. */
-    static const char *const mCriterionTag; /**< tag for criterion. */
-
     static const char *const mOutputDevice; /**< Output device criterion name. */
     static const char *const mInputDevice; /**< Input device criterion name. */
     static const char *const mInputSources; /**< Input sources criterion name. */
@@ -515,6 +700,10 @@ private:
     static const char *const mVoipBand; /**< VoIP band criterion name. */
     static const char *const mMicMute; /**< Mic Mute criterion name. */
     static const char *const mPreProcessorRequestedByActiveInput; /**< requested preproc. */
+    /**
+     * Stream Rate associated with narrow band in case of VoIP.
+     */
+    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
 
     /**
      * String containing a list of paths to the hardware debug files on target
@@ -536,5 +725,12 @@ private:
      */
     template <typename T>
     struct parameterManagerElementSupported;
+
+    /**
+     * Boolean to indicate that at least one of the audio PFW criterion has changed and the
+     * routing must be reconsidered in order to apply configurations that may depend on these
+     * criteria.
+     */
+    bool mAudioPfwHasChanged;
 };
 }         // namespace android

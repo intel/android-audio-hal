@@ -28,6 +28,8 @@ LOCAL_PATH := $(call my-dir)
 # Common variables
 
 audio_platform_state_src_files :=  \
+    Parameter.cpp \
+    CriterionParameter.cpp \
     AudioPlatformState.cpp \
     VolumeKeys.cpp
 
