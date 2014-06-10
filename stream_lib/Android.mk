@@ -35,7 +35,6 @@ stream_lib_includes_common := \
     $(LOCAL_PATH)/include
 
 stream_lib_includes_dir := \
-    $(TARGET_OUT_HEADERS)/audio_hal_utils \
     $(TARGET_OUT_HEADERS)/hw \
     $(TARGET_OUT_HEADERS)/parameter \
     $(call include-path-for, frameworks-av) \
@@ -63,16 +62,6 @@ stream_lib_static_lib_host += \
 stream_lib_static_lib_target += \
     $(stream_lib_static_lib) \
     libmedia_helper
-
-stream_lib_shared_lib_target += \
-    libtinyalsa \
-    libcutils \
-    libutils \
-    libparameter \
-    libhardware_legacy \
-    libicuuc \
-    libaudioutils \
-    libproperty
 
 stream_lib_include_dirs_from_static_libraries := \
     libproperty_static

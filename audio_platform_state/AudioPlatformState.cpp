@@ -23,7 +23,7 @@
 #define LOG_TAG "AudioIntelHal/AudioPlatformState"
 
 #include "AudioPlatformState.hpp"
-#include "AudioStream.hpp"
+#include "Stream.hpp"
 #include "ParameterCriterion.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "SelectionCriterionInterface.h"
@@ -484,7 +484,7 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
     it->second->setValue(platformEventChanged);
 }
 
-void AudioPlatformState::setVoipBandType(const AudioStream *activeStream)
+void AudioPlatformState::setVoipBandType(const Stream *activeStream)
 {
     CAudioBand::Type band = CAudioBand::EWide;
     if (activeStream->sampleRate() == mVoiceStreamRateForNarrowBandProcessing) {
@@ -500,7 +500,7 @@ void AudioPlatformState::updateParametersFromActiveInput()
 
     for (it = mActiveStreamsList[false].begin(); it != mActiveStreamsList[false].end(); ++it) {
 
-        const AudioStream *stream = *it;
+        const Stream *stream = *it;
         if (stream->getDevices() != 0) {
 
             ALOGD("%s: found valid input stream, effectResMask=0x%X", __FUNCTION__,
@@ -525,7 +525,7 @@ uint32_t AudioPlatformState::updateStreamsMask(bool isOut)
 
     for (it = mActiveStreamsList[isOut].begin(); it != mActiveStreamsList[isOut].end(); ++it) {
 
-        const AudioStream *stream = *it;
+        const Stream *stream = *it;
         streamsMask |= stream->getApplicabilityMask();
     }
     return streamsMask;
@@ -537,7 +537,7 @@ void AudioPlatformState::updateApplicabilityMask(bool isOut)
     setValue(applicabilityMask, isOut ? mOutputFlags : mInputSources);
 }
 
-void AudioPlatformState::startStream(const AudioStream *startedStream)
+void AudioPlatformState::startStream(const Stream *startedStream)
 {
     AUDIOCOMMS_ASSERT(startedStream != NULL, "NULL stream");
     bool isOut = startedStream->isOut();
@@ -548,7 +548,7 @@ void AudioPlatformState::startStream(const AudioStream *startedStream)
     }
 }
 
-void AudioPlatformState::stopStream(const AudioStream *stoppedStream)
+void AudioPlatformState::stopStream(const Stream *stoppedStream)
 {
     AUDIOCOMMS_ASSERT(stoppedStream != NULL, "NULL stream");
     bool isOut = stoppedStream->isOut();

@@ -24,6 +24,7 @@
 
 #include "AudioStreamInImpl.hpp"
 #include <AudioCommsAssert.hpp>
+#include <HalAudioDump.hpp>
 #include <BitField.hpp>
 #include <EffectHelper.hpp>
 #include <algorithm>

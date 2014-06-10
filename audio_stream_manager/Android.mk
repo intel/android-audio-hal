@@ -32,9 +32,7 @@ audio_stream_manager_src_files :=  \
     AudioIntelHal.cpp \
     AudioStreamInImpl.cpp \
     AudioStreamOutImpl.cpp \
-    AudioParameterHandler.cpp \
-    AudioPlatformState.cpp \
-    VolumeKeys.cpp
+    AudioParameterHandler.cpp
 
 audio_stream_manager_includes_dir := \
     $(TARGET_OUT_HEADERS)/libaudioresample \
@@ -59,6 +57,7 @@ audio_stream_manager_static_lib += \
     libsamplespec_static \
     libaudioconversion_static \
     libstream_static \
+    libaudioplatformstate_static \
     libparametermgr_static \
     libaudio_comms_utilities \
     libaudio_comms_convert \
@@ -125,19 +124,7 @@ include $(BUILD_PHONY_PACKAGE)
 # Build for target audio.primary
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := route_criteria.conf
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
-LOCAL_SRC_FILES := $(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
 
-#######################################################################
-# Build for target audio.primary
-
-include $(CLEAR_VARS)
-
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_SHARED_LIBRARIES := audio.routemanager
 LOCAL_C_INCLUDES := \
     $(audio_stream_manager_includes_dir_target)
 

@@ -81,6 +81,13 @@ public:
     virtual bool isStarted() const = 0;
 
     /**
+     * Get the device(s) assigned to the stream.
+     *
+     * @return device mask.
+     */
+    virtual uint32_t getDevices() const = 0;
+
+    /**
      * Applicability mask.
      * For an input stream, applicability mask is the ID of the input source
      * For an output stream, applicability mask is the output flags
@@ -127,6 +134,58 @@ public:
      * @return sample specifications.
      */
     android_audio_legacy::SampleSpec routeSampleSpec() const { return mRouteSampleSpec; }
+
+    /**
+     * Get the stream sample specification.
+     * Stream Sample specification is the sample spec in which the client gives/receives samples
+     *
+     * @return sample specifications.
+     */
+    android_audio_legacy::SampleSpec streamSampleSpec() const
+    {
+        return mSampleSpec;
+    }
+
+    /**
+     * Get the sample rate of the stream.
+     *
+     * @return sample rate of the stream.
+     */
+    inline uint32_t sampleRate() const
+    {
+        return mSampleSpec.getSampleRate();
+    }
+
+    /**
+     * Get the format of the stream.
+     *
+     * @return format of the stream.
+     */
+    inline int format() const
+    {
+        return mSampleSpec.getFormat();
+    }
+
+    /**
+     * Get the channel count of the stream.
+     *
+     * @return channel count of the stream.
+     */
+    inline uint32_t channelCount() const
+    {
+        return mSampleSpec.getChannelCount();
+    }
+
+    /**
+     * Get the channels of the stream.
+     * Channels is a mask, each bit represents a specific channel.
+     *
+     * @return channel mask of the stream.
+     */
+    inline uint32_t channels() const
+    {
+        return mSampleSpec.getChannelMask();
+    }
 
     /**
      * Reset the new stream route.
@@ -230,6 +289,8 @@ protected:
     mutable android::RWLock mStreamLock;
 
     virtual ~Stream() {}
+
+    android_audio_legacy::SampleSpec mSampleSpec; /**< stream sample specifications. */
 
 private:
     void setCurrentStreamRouteL(IStreamRoute *currentStreamRoute);

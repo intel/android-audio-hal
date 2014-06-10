@@ -37,7 +37,8 @@ SUBDIRS := audio_conversion \
            effects \
            parameter_mgr_helper \
            sample_specifications \
-           stream_lib
+           stream_lib \
+           audio_platform_state
 
 # Call sub-folders' Android.mk
 include $(call named-subdir-makefiles, $(SUBDIRS))

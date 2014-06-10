@@ -39,12 +39,12 @@ class Criterion;
 class CriterionType;
 class ParameterCriterion;
 class cnode;
+class Stream;
 
 namespace android_audio_legacy
 {
 
 class ParameterMgrPlatformConnectorLogger;
-class AudioStream;
 
 
 
@@ -63,8 +63,8 @@ private:
     typedef std::map<std::string, CriterionType *>::iterator CriterionTypeMapIterator;
     typedef std::map<std::string, CriterionType *>::const_iterator CriteriaTypeMapConstIterator;
 
-    typedef std::list<AudioStream *>::iterator StreamListIterator;
-    typedef std::list<const AudioStream *>::const_iterator StreamListConstIterator;
+    typedef std::list<Stream *>::iterator StreamListIterator;
+    typedef std::list<const Stream *>::const_iterator StreamListConstIterator;
 
 public:
     AudioPlatformState();
@@ -281,7 +281,7 @@ public:
      *
      * @param startedStream stream to be added to the list.
      */
-    void startStream(const AudioStream *startedStream);
+    void startStream(const Stream *startedStream);
 
     /**
      * Informs that a stream is stopped.
@@ -290,7 +290,7 @@ public:
      *
      * @param startedStream stream to be added to the list.
      */
-    void stopStream(const AudioStream *stoppedStream);
+    void stopStream(const Stream *stoppedStream);
 
     /**
      * Update all the parameters of the active input.
@@ -325,7 +325,7 @@ private:
      * @param[in] activeStream: current active input stream (i.e. input stream that has a valid
      *                          input device as per policy implementation.
      */
-    void setVoipBandType(const AudioStream *activeStream);
+    void setVoipBandType(const Stream *activeStream);
 
     /**
      * Update the applicability mask.
@@ -472,7 +472,7 @@ private:
     /**
      * Input/Output Streams list.
      */
-    std::list<const AudioStream *>
+    std::list<const Stream *>
     mActiveStreamsList[audio_comms::utilities::Direction::_nbDirections];
 
     std::map<std::string, CriterionType *> mCriterionTypeMap;

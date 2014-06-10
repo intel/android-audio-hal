@@ -29,6 +29,7 @@
 #include "AudioStreamOutImpl.hpp"
 
 #include <AudioCommsAssert.hpp>
+#include <HalAudioDump.hpp>
 #include <cutils/properties.h>
 #include <media/AudioRecord.h>
 #include <utils/String8.h>

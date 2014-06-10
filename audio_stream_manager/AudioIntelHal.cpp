@@ -28,7 +28,7 @@
 #include "AudioStream.hpp"
 #include "AudioStreamInImpl.hpp"
 #include "AudioStreamOutImpl.hpp"
-#include "AudioPlatformState.hpp"
+#include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
 #include "ModemAudioManagerInterface.h"
 #include "Property.h"

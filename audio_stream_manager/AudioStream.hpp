@@ -31,10 +31,7 @@
 #include <utils/String8.h>
 #include <utils/RWLock.h>
 
-/**
- * For debug purposes only, property-driven (dynamic)
- */
-#include <HalAudioDump.hpp>
+class HalAudioDump;
 
 namespace android_audio_legacy
 {
@@ -71,47 +68,6 @@ public:
      * @return OK if set is successfull, error code otherwise.
      */
     android::String8 getParameters(const android::String8 &keys);
-
-    /**
-     * Get the sample rate of the stream.
-     *
-     * @return sample rate of the stream.
-     */
-    inline uint32_t sampleRate() const
-    {
-        return mSampleSpec.getSampleRate();
-    }
-
-    /**
-     * Get the format of the stream.
-     *
-     * @return format of the stream.
-     */
-    inline int format() const
-    {
-        return mSampleSpec.getFormat();
-    }
-
-    /**
-     * Get the channel count of the stream.
-     *
-     * @return channel count of the stream.
-     */
-    inline uint32_t channelCount() const
-    {
-        return mSampleSpec.getChannelCount();
-    }
-
-    /**
-     * Get the channels of the stream.
-     * Channels is a mask, each bit represents a specific channel.
-     *
-     * @return channel mask of the stream.
-     */
-    inline uint32_t channels() const
-    {
-        return mSampleSpec.getChannelMask();
-    }
 
     /**
      * Get the size of the buffer.
@@ -152,7 +108,7 @@ public:
      *
      * @return _devices specifications.
      */
-    uint32_t getDevices() const
+    virtual uint32_t getDevices() const
     {
         return mDevices;
     }
@@ -174,17 +130,6 @@ public:
     {
         AutoR lock(mStreamLock);
         return mApplicabilityMask;
-    }
-
-    /**
-     * Get the stream sample specification.
-     * Stream Sample specification is the sample spec in which the client gives/receives samples
-     *
-     * @return sample specifications.
-     */
-    SampleSpec streamSampleSpec() const
-    {
-        return mSampleSpec;
     }
 
 protected:
@@ -368,8 +313,6 @@ private:
     bool mStandby; /**< state of the stream, true if standby, false if started. */
 
     uint32_t mDevices; /**< devices mask selected by the policy for this stream.*/
-
-    SampleSpec mSampleSpec; /**< stream sample specifications. */
 
     AudioConversion *mAudioConversion; /**< Audio Conversion utility class. */
 

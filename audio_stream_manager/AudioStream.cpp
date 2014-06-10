@@ -31,6 +31,7 @@
 #include <AudioCommsAssert.hpp>
 #include "Property.h"
 #include <AudioConversion.hpp>
+#include <HalAudioDump.hpp>
 #include <cutils/bitops.h>
 #include <cutils/properties.h>
 #include <dlfcn.h>
