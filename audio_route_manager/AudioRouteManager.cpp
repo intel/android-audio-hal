@@ -32,11 +32,9 @@
 #include "ParameterMgrPlatformConnector.h"
 #include "Property.h"
 #include <Observer.hpp>
-#include <ParameterMgrHelper.hpp>
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <Stream.hpp>
-#include <AudioCommsAssert.hpp>
 #include <BitField.hpp>
 #include <cutils/bitops.h>
 #include <hardware_legacy/AudioSystemLegacy.h>
@@ -50,8 +48,8 @@ using NInterfaceProvider::CInterfaceProviderImpl;
 using audio_comms::utilities::BitField;
 using audio_comms::utilities::Direction;
 
-typedef RWLock::AutoRLock AutoR;
-typedef RWLock::AutoWLock AutoW;
+typedef android::RWLock::AutoRLock AutoR;
+typedef android::RWLock::AutoWLock AutoW;
 
 const char *const AudioRouteManager::mVoiceVolume =
     "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
@@ -113,6 +111,8 @@ template <>
 struct AudioRouteManager::routingElementSupported<AudioRoute> {};
 template <>
 struct AudioRouteManager::routingElementSupported<AudioStreamRoute> {};
+template <>
+struct AudioRouteManager::routingElementSupported<Criterion> {};
 
 AudioRouteManager::AudioRouteManager()
     : mRouteInterface(this),
@@ -546,7 +546,8 @@ T *AudioRouteManager::getElement(const string &name, map<string, T *> &elementsM
 {
     routingElementSupported<T>();
     typename map<string, T *>::iterator it = elementsMap.find(name);
-    LOG_ALWAYS_FATAL_IF(it == elementsMap.end(), "Element %s not found", name.c_str());
+    AUDIOCOMMS_ASSERT(it != elementsMap.end(),
+                      "Element " << name.c_str() << " not found");
     return it->second;
 }
 
@@ -754,14 +755,17 @@ bool AudioRouteManager::routingHasChanged()
 
 bool AudioRouteManager::addCriterionType(const std::string &name, bool isInclusive)
 {
+    AutoW lock(mRoutingLock);
     CriteriaTypeMapIterator it;
     if ((it = mCriterionTypesMap.find(name)) == mCriterionTypesMap.end()) {
 
-        ALOGD("%s: adding  %s criterion [%s]", __FUNCTION__, name.c_str(),
+        ALOGV("%s: adding  %s criterion [%s]", __FUNCTION__, name.c_str(),
               isInclusive ? "inclusive" : "exclusive");
         mCriterionTypesMap[name] = new CriterionType(name, isInclusive, mAudioPfwConnector);
         return false;
     }
+    ALOGV("%s: already added %s criterion [%s]", __FUNCTION__, name.c_str(),
+          isInclusive ? "inclusive" : "exclusive");
     return true;
 }
 
@@ -769,6 +773,7 @@ void AudioRouteManager::addCriterionTypeValuePair(const string &name,
                                                   const string &literal,
                                                   uint32_t value)
 {
+    AutoW lock(mRoutingLock);
     AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(name) != mCriterionTypesMap.end(),
                       "CriterionType " << name.c_str() << "not found");
 
@@ -779,14 +784,16 @@ void AudioRouteManager::addCriterionTypeValuePair(const string &name,
         ALOGV("%s: value pair already added", __FUNCTION__);
         return;
     }
-    ALOGD("%s: appending new value pair (%s,%d)of criterion type %s",
+    ALOGV("%s: appending new value pair (%s,%d)of criterion type %s",
           __FUNCTION__, literal.c_str(), value, name.c_str());
     criterionType->addValuePair(value, literal);
 }
 
-void AudioRouteManager::addCriterion(const string &name, const string &criterionTypeName)
+void AudioRouteManager::addCriterion(const string &name, const string &criterionTypeName,
+                                     const string &defaultLiteralValue /* = "" */)
 {
-    ALOGD("%s: name=%s criterionType=%s", __FUNCTION__, name.c_str(), criterionTypeName.c_str());
+    AutoW lock(mRoutingLock);
+    ALOGV("%s: name=%s criterionType=%s", __FUNCTION__, name.c_str(), criterionTypeName.c_str());
     AUDIOCOMMS_ASSERT(mCriteriaMap.find(name) == mCriteriaMap.end(), "Criterion already added");
 
     // Retrieve criteria Type object
@@ -796,14 +803,41 @@ void AudioRouteManager::addCriterion(const string &name, const string &criterion
                       "type " << criterionTypeName.c_str() << "not found for " << name.c_str() <<
                       " criteria");
 
-    mCriteriaMap[name] = new Criterion(name, it->second, mAudioPfwConnector);
+    mCriteriaMap[name] = new Criterion(name, it->second, mAudioPfwConnector, defaultLiteralValue);
 }
 
-void AudioRouteManager::setCriterion(const std::string &name, uint32_t value)
+template <typename T>
+bool AudioRouteManager::setAudioCriterion(const std::string &name, const T &value)
 {
+    AutoW lock(mRoutingLock);
+    return getElement<Criterion>(name, mCriteriaMap)->setValue<T>(value);
+}
+
+bool AudioRouteManager::getAudioCriterion(const std::string &name, std::string &value) const
+{
+    AutoR lock(mRoutingLock);
     ALOGV("%s: (%s, %d)", __FUNCTION__, name.c_str(), value);
-    AUDIOCOMMS_ASSERT(mCriteriaMap.find(name) != mCriteriaMap.end(), "Criterion does not exist");
-    mCriteriaMap[name]->setValue(value);
+    CriteriaMapConstIterator it = mCriteriaMap.find(name);
+    if (it == mCriteriaMap.end()) {
+        ALOGW("%s Criterion %s does not exist", __FUNCTION__, name.c_str());
+        return false;
+    }
+    value = it->second->getFormattedValue();
+    return true;
+}
+
+template <typename T>
+bool AudioRouteManager::setAudioParameter(const std::string &paramPath, const T &value)
+{
+    AutoW lock(mRoutingLock);
+    return ParameterMgrHelper::setParameterValue<T>(mAudioPfwConnector, paramPath, value);
+}
+
+template <typename T>
+bool AudioRouteManager::getAudioParameter(const std::string &paramPath, T &value) const
+{
+    AutoW lock(mRoutingLock);
+    return ParameterMgrHelper::getParameterValue<T>(mAudioPfwConnector, paramPath, value);
 }
 
 void AudioRouteManager::commitCriteriaAndApply()

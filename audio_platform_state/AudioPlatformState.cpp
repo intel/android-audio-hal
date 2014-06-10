@@ -480,8 +480,8 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
         ALOGD("%s: event %s is not part of knowed state", __FUNCTION__, eventStateName.c_str());
         return;
     }
-    int32_t platformEventChanged = it->second->getValue() | eventId;
-    it->second->setValue(platformEventChanged);
+    uint32_t platformEventChanged = it->second->getValue() | eventId;
+    it->second->setValue<uint32_t>(platformEventChanged);
 }
 
 void AudioPlatformState::setVoipBandType(const Stream *activeStream)
@@ -561,7 +561,7 @@ void AudioPlatformState::stopStream(const Stream *stoppedStream)
 
 void AudioPlatformState::clearPlatformStateEvents()
 {
-    mCriterionMap[mStateChanged]->setValue(0);
+    mCriterionMap[mStateChanged]->setValue<uint32_t>(0);
 }
 
 bool AudioPlatformState::isStarted()

@@ -153,11 +153,11 @@ public:
      * Creates and opens the audio output stream.
      *
      * @param[in] devices: audio devices requested by the playback client.
-     * @param[in|out] format: format of the samples of the playback client.
+     * @param[in,out] format: format of the samples of the playback client.
      *                        If not set, AudioHAL returns format chosen.
-     * @param[in|out] channels: channels of the samples of the playback client.
+     * @param[in,out] channels: channels of the samples of the playback client.
      *                          If not set, AudioHAL returns channels chosen.
-     * @param[in|out] sampleRate: sample rate of the samples of the playback client.
+     * @param[in,out] sampleRate: sample rate of the samples of the playback client.
      *                            If not set, AudioHAL returns sample rate chosen.
      * @param[out] status: error code to set if parameters given by playback client not supported.
      *.
@@ -181,11 +181,11 @@ public:
      * Creates and opens the audio input stream.
      *
      * @param[in] devices: audio devices requested by the record client.
-     * @param[in|out] format: format of the samples of the record client.
+     * @param[in,out] format: format of the samples of the record client.
      *                        If not set, AudioHAL returns format chosen.
-     * @param[in|out] channels: channels of the samples of the record client.
+     * @param[in,out] channels: channels of the samples of the record client.
      *                          If not set, AudioHAL returns channels chosen.
-     * @param[in|out] sampleRate: sample rate of the samples of the record client.
+     * @param[in,out] sampleRate: sample rate of the samples of the record client.
      *                            If not set, AudioHAL returns sample rate chosen.
      * @param[out] status: error code to set if parameters given by record client not supported.
      *
@@ -369,7 +369,7 @@ private:
      * change.
      *
      * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in|out] param: contains all the key value pairs to check.
+     * @param[in,out] param: contains all the key value pairs to check.
      */
     void checkAndSetRoutingStreamParameter(AudioStream *stream, AudioParameter &param);
 
@@ -379,7 +379,7 @@ private:
      * state accordingly and removes the value pair from the parameter
      *
      * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in|out] param: contains all the key value pairs to check.
+     * @param[in,out] param: contains all the key value pairs to check.
      */
     void checkAndSetInputSourceStreamParameter(AudioStream *stream, AudioParameter &param);
 

@@ -27,6 +27,8 @@
 #include "RoutingStage.hpp"
 #include "RouteInterface.hpp"
 #include "StreamInterface.hpp"
+#include <AudioCommsAssert.hpp>
+#include <ParameterMgrHelper.hpp>
 #include <Direction.hpp>
 #include <Observable.hpp>
 #include <EventListener.h>
@@ -149,27 +151,28 @@ private:
             mRouteMgr->setPortBlocked(name, isBlocked);
         }
 
-        virtual bool addCriterionType(const std::string &name,
-                                      bool isInclusive)
+        virtual bool addAudioCriterionType(const std::string &name,
+                                           bool isInclusive)
         {
             return mRouteMgr->addCriterionType(name, isInclusive);
         }
 
-        virtual void addCriterionTypeValuePair(const std::string &name,
-                                               const std::string &literal,
-                                               uint32_t value)
+        virtual void addAudioCriterionTypeValuePair(const std::string &name,
+                                                    const std::string &literal,
+                                                    uint32_t value)
         {
             mRouteMgr->addCriterionTypeValuePair(name, literal, value);
         }
 
-        virtual void addCriterion(const std::string &name, const std::string &criteriaType)
+        virtual void addAudioCriterion(const std::string &name, const std::string &criteriaType,
+                                       const std::string &defaultLiteralValue = "")
         {
-            mRouteMgr->addCriterion(name, criteriaType);
+            mRouteMgr->addCriterion(name, criteriaType, defaultLiteralValue);
         }
 
         virtual void setParameter(const std::string &name, uint32_t value)
         {
-            mRouteMgr->setCriterion(name, value);
+            mRouteMgr->setAudioCriterion<uint32_t>(name, value);
         }
 
     private:
@@ -237,6 +240,55 @@ private:
             return mRouteMgr->getPeriodInUs(isOut, flags);
         }
 
+        virtual bool addCriterionType(const std::string &name,
+                                      bool isInclusive)
+        {
+            return mRouteMgr->addCriterionType(name, isInclusive);
+        }
+
+        virtual void addCriterionTypeValuePair(const std::string &name,
+                                               const std::string &literal,
+                                               uint32_t value)
+        {
+            mRouteMgr->addCriterionTypeValuePair(name, literal, value);
+        }
+
+        virtual void addCriterion(const std::string &name, const std::string &criteriaType,
+                                  const std::string &defaultLiteralValue = "")
+        {
+            mRouteMgr->addCriterion(name, criteriaType, defaultLiteralValue);
+        }
+
+        virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue)
+        {
+            return mRouteMgr->setAudioCriterion<std::string>(name, literalValue);
+        }
+
+        virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const
+        {
+            return mRouteMgr->getAudioCriterion(name, literalValue);
+        }
+
+        virtual bool setAudioParameter(const std::string &paramPath, const uint32_t &value)
+        {
+            return mRouteMgr->setAudioParameter<uint32_t>(paramPath, value);
+        }
+
+        virtual bool setAudioParameter(const std::string &paramPath, const std::string &value)
+        {
+            return mRouteMgr->setAudioParameter<std::string>(paramPath, value);
+        }
+
+        virtual bool getAudioParameter(const std::string &paramPath, uint32_t &value) const
+        {
+            return mRouteMgr->getAudioParameter<uint32_t>(paramPath, value);
+        }
+
+        virtual bool getAudioParameter(const std::string &paramPath, std::string &value) const
+        {
+            return mRouteMgr->getAudioParameter<std::string>(paramPath, value);
+        }
+
     private:
         AudioRouteManager *mRouteMgr;
     } mStreamInterface;
@@ -248,7 +300,50 @@ private:
      */
     void commitCriteriaAndApply();
 
-    void setCriterion(const std::string &name, uint32_t value);
+    /**
+     * Gets an audio parameter manager criterion value.
+     *
+     * @param[in] name: criterion name.
+     * @param[in] literalValue: the value is correctly set if return code is true.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    bool getAudioCriterion(const std::string &name, std::string &value) const;
+
+    /**
+     * Sets an audio parameter manager parameter value.
+     *
+     * @tparam T type of the value to set, uint32_t and string supported
+     * @param[in] name: parameter name.
+     * @param[in] value: value to set.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    template <typename T>
+    bool setAudioParameter(const std::string &name, const T &value);
+
+    /**
+     * Gets an audio parameter manager parameter value.
+     *
+     * @param[in] name: parameter name.
+     * @param[in] literalValue: the value is correctly set if return code is true.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    template <typename T>
+    bool getAudioParameter(const std::string &name, T &value) const;
+
+    /**
+     * Sets an audio parameter manager criterion value.
+     *
+     * @tparam T type of the value to set, uint32_t and string supported
+     * @param[in] name: criterion name.
+     * @param[in] value: value to set.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    template <typename T>
+    bool setAudioCriterion(const std::string &name, const T &value);
 
     /**
      * Add a new port to route manager.
@@ -313,16 +408,17 @@ private:
      * @param[in] name: name of the criterion type.
      * @param[in] isInclusive: true if criterion is inclusive, false if exclusive.
      *
-     * @return true if criterion type added, false if criterion type is already added.
+     * @return true if criterion type has already been added, false otherwise.
      */
     bool addCriterionType(const std::string &name, bool isInclusive);
 
     /**
-     * Adds a criterion type.
+     * Adds a value pair for a given criterion type.
      * Called at audio platform discovery.
      *
      * @param[in] name: name of the criterion type.
-     * @param[in] isInclusive: true if criterion is inclusive, false if exclusive.
+     * @param[in] literal part of the value pair to add.
+     * @param[in] value numerical part of the value pair to add.
      *
      * @return true if criterion type added, false if criterion type is already added.
      */
@@ -337,8 +433,10 @@ private:
      *
      * @param[in] name criterion name.
      * @param[in] criteriaTypeName criterion type referred by its name.
+     * @param[in] defaultLiteralValue default literal value of the criterion.
      */
-    virtual void addCriterion(const std::string &name, const std::string &criteriaTypeName);
+    void addCriterion(const std::string &name, const std::string &criteriaTypeName,
+                      const std::string &defaultLiteralValue = "");
 
     /**
      * Add a stream to route manager.
@@ -358,6 +456,8 @@ private:
 
     /**
      * Starts the route manager service.
+     *
+     * @return OK if success, error code otherwise.
      */
     android::status_t startService();
 
@@ -450,7 +550,7 @@ private:
      *
      * @param[in] isSet if true, the bit will be set, if false, nop (bit will not be cleared).
      * @param[in] index bit index to set.
-     * @param[in|out] mask in which the bit must be set.
+     * @param[in,out] mask in which the bit must be set.
      */
     void setBit(bool isSet, uint32_t index, uint32_t &mask);
 

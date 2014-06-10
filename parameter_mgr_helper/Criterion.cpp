@@ -68,7 +68,8 @@ string Criterion::getFormattedValue() const
     return mCriterionType->getTypeInterface()->getFormattedState(mValue);
 }
 
-bool Criterion::setValue(int32_t value)
+template <>
+bool Criterion::setValue<uint32_t>(const uint32_t &value)
 {
     if (mValue != value) {
 
@@ -76,6 +77,12 @@ bool Criterion::setValue(int32_t value)
         return true;
     }
     return false;
+}
+
+template <>
+bool Criterion::setValue<std::string>(const std::string &literalValue)
+{
+    return setValue<uint32_t>(getNumericalFromLiteral(literalValue));
 }
 
 void Criterion::setCriterionState()
@@ -87,7 +94,7 @@ void Criterion::setCriterionState()
 template <>
 bool Criterion::setCriterionState<int32_t>(const int32_t &value)
 {
-    if (setValue(value)) {
+    if (setValue<uint32_t>(value)) {
 
         AUDIOCOMMS_ASSERT(mSelectionCriterionInterface != NULL, "NULL criterion interface");
         mSelectionCriterionInterface->setCriterionState(mValue);

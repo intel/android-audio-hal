@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -151,7 +151,7 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
     virtual void setPortBlocked(const std::string &name, bool isBlocked) = 0;
 
     /**
-     * Adds a criterion type to route manager.
+     * Adds a criterion type for Audio PFW instance to route manager.
      * Called at audio platform discovery.
      *
      * @param[in] name: name of the criterion type.
@@ -159,31 +159,32 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
      *
      * @return true if criterion type added, false if criterion type is already added.
      */
-    virtual bool addCriterionType(const std::string &name,
-                                  bool isInclusive) = 0;
+    virtual bool addAudioCriterionType(const std::string &name, bool isInclusive) = 0;
 
     /**
-     * Adds a criterion type value pair to route manager.
+     * Adds a criterion type value pair for Audio PFW instance to route manager.
      * Called at audio platform discovery.
      *
      * @param[in] name: name of the criterion type.
      * @param[in] literal: name of the criterion value pair.
      * @param[in] value: value of the criterion value pair.
      */
-    virtual void addCriterionTypeValuePair(const std::string &name,
-                                           const std::string &literal,
-                                           uint32_t value) = 0;
+    virtual void addAudioCriterionTypeValuePair(const std::string &name,
+                                                const std::string &literal,
+                                                uint32_t value) = 0;
 
     /**
-     * Adds a criterion to route manager.
+     * Adds a criterion for Audio PFW instance to route manager.
      * Called at audio platform discovery.
      *
      * @param[in] name: name of the criterion.
      * @param[in] criteriaType: name of the criterion type used for this criterion.
+     * @param[in] defaultLiteralValue: default literal value of the criterion.
      *
      * @return true if criterion type added, false if criterion type is already added.
      */
-    virtual void addCriterion(const std::string &name, const std::string &criterionType) = 0;
+    virtual void addAudioCriterion(const std::string &name, const std::string &criterionType,
+                                   const std::string &defaultLiteralValue = "") = 0;
 
     /**
      * Sets a parameter to a value.

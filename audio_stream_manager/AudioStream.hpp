@@ -49,11 +49,11 @@ public:
     /**
      * Sets the sample specifications of the stream.
      *
-     * @param[in|out] format: format of the samples of the playback client.
+     * @param[in,out] format: format of the samples of the playback client.
      *                        If not set, stream returns format it supports.
-     * @param[in|out] channels: mask of channels of the samples of the playback client.
+     * @param[in,out] channels: mask of channels of the samples of the playback client.
      *                          If not set, stream returns channels it supports.
-     * @param[in|out] sampleRate: sample rate of the samples of the playback client.
+     * @param[in,out] sampleRate: sample rate of the samples of the playback client.
      *                            If not set, stream returns sample rate it supports.
      *
      * @return status: error code to set if parameters given by playback client not supported.
@@ -200,7 +200,7 @@ protected:
      * the HW would have used to read/write the amount of requested bytes.
      *
      * @param[in] bytes amount of byte to set to 0 within the buffer.
-     * @param[in|out] buffer: if provided, need to fill with 0 (expected for input)
+     * @param[in,out] buffer: if provided, need to fill with 0 (expected for input)
      *
      * @return size of the sample trashed / filled with 0.
      */

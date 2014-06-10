@@ -353,7 +353,7 @@ private:
      * It computes the time between the data were read and retrieved and sets the value in the
      * echo reference structure.
      *
-     * @param[in|out] buffer echo reference structure.
+     * @param[in,out] buffer echo reference structure.
      */
     void getCaptureDelay(struct echo_reference_buffer *buffer);
 

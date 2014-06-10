@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -123,4 +123,103 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @return period size in microseconds
      */
     virtual uint32_t getPeriodInUs(bool isOut, uint32_t flags = 0) const = 0;
+
+
+    /**
+     * Adds a criterion type to route manager.
+     * Called at audio platform discovery.
+     *
+     * @param[in] name: name of the criterion type.
+     * @param[in] isInclusive: true if criterion is inclusive, false if exclusive.
+     *
+     * @return true if criterion type added, false if criterion type is already added.
+     */
+    virtual bool addCriterionType(const std::string &name,
+                                  bool isInclusive) = 0;
+
+    /**
+     * Adds a criterion type value pair to route manager.
+     * Called at audio platform discovery.
+     *
+     * @param[in] name: name of the criterion type.
+     * @param[in] literal: name of the criterion value pair.
+     * @param[in] value: value of the criterion value pair.
+     */
+    virtual void addCriterionTypeValuePair(const std::string &name,
+                                           const std::string &literal,
+                                           uint32_t value) = 0;
+
+    /**
+     * Adds a criterion to route manager.
+     * Called at audio platform discovery.
+     *
+     * @param[in] name: name of the criterion.
+     * @param[in] criteriaType: name of the criterion type used for this criterion.
+     *
+     * @return true if criterion type added, false if criterion type is already added.
+     */
+    virtual void addCriterion(const std::string &name, const std::string &criterionType,
+                              const std::string &defaultLiteralValue = "") = 0;
+
+    /**
+     * Sets an audio parameter manager criterion value.
+     *
+     * @param[in] name: criterion name.
+     * @param[in] literalValue: value to set.
+     *
+     * @return true if operation successfull, false otherwise.
+     */
+    virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue) = 0;
+
+    /**
+     * Gets an audio parameter manager criterion value.
+     *
+     * @param[in] name: criterion name.
+     * @param[in] literalValue: the value is correctly set if return code is true.
+     *
+     * @return true if operation successfull, false otherwise.
+     */
+    virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const = 0;
+
+    /**
+     * Sets an audio parameter manager rogue parameter.
+     *
+     * @param[in] path: parameter path.
+     * @param[in] value: numerical value to set. Only String and Integer are supported until now.
+     *
+     * @return true if operation successfull, false otherwise.
+     */
+    virtual bool setAudioParameter(const std::string &path, const uint32_t &value) = 0;
+
+    /**
+     * Sets an audio parameter manager rogue parameter.
+     *
+     * @param[in] path: parameter path.
+     * @param[in] value: literal value to set. Only String and Integer are supported until now.
+     *
+     * @return true if operation successfull, false otherwise.
+     */
+    virtual bool setAudioParameter(const std::string &path, const std::string &value) = 0;
+
+    /**
+     * Gets an audio parameter manager rogue parameter.
+     *
+     * @param[in] path: parameter path.
+     * @param[in] value: numerical value to get. Only String and Integer are supported until now.
+     *                   The value is correctly set if return code is true.
+     *
+     * @return true if operation successfull, false otherwise.
+     */
+    virtual bool getAudioParameter(const std::string &path, uint32_t &value) const = 0;
+
+    /**
+     * Gets an audio parameter manager rogue parameter.
+     *
+     * @param[in] path: parameter path
+     * @param[in] value: literal value to get. Only String and Integer are supported until now.
+     *                   The value is correctly set if return code is true.
+     *
+     * @return true if operation successfull, false otherwise.
+     */
+    virtual bool getAudioParameter(const std::string &path, std::string &value) const = 0;
 };

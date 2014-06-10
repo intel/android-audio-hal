@@ -58,11 +58,13 @@ public:
      * Set the local value of the criterion.
      * Upon this call, the value is not written in the parameter manager.
      *
-     * @param[in] value numerical value to set.
+     * @tparam T type of the value to set. uint32_t and std::string specialization provided.
+     * @param[in] value to set.
      *
      * @return true if the value was changed, false if same value requested to be set.
      */
-    bool setValue(int32_t value);
+    template <typename T>
+    bool setValue(const T &value);
 
     /**
      * Get the local value of the criterion.
@@ -83,7 +85,7 @@ public:
     /**
      * Set the local value to the parameter manager.
      *
-     * @tparam[in] T type of the value to set.
+     * @tparam T type of the value to set.
      * @param[in] value value to set to the criterion of the parameter manager.
      *
      * @return true if the value was changed, false if same value requested to be set.
@@ -138,5 +140,5 @@ private:
 
     std::string mName; /**< name of the criterion. */
 
-    int32_t mValue; /**< value of the criterion. */
+    uint32_t mValue; /**< value of the criterion. */
 };
