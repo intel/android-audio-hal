@@ -48,7 +48,7 @@ class AudioPort;
 class AudioStreamRoute;
 class Criterion;
 class CriterionType;
-class AudioParameterHelper;
+class ParameterMgrHelper;
 struct pcm_config;
 
 class AudioRouteManager : public NInterfaceProvider::IInterfaceImplementer,
@@ -747,7 +747,7 @@ private:
     Criterion *mSelectedClosingRoutes[audio_comms::utilities::Direction::_nbDirections];
     Criterion *mSelectedOpenedRoutes[audio_comms::utilities::Direction::_nbDirections];
 
-    AudioParameterHelper *mParameterHelper;
+    ParameterMgrHelper *mParameterHelper;
 
     /**
      * array of list of streams opened.

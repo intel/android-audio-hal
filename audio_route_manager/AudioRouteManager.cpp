@@ -32,7 +32,7 @@
 #include "ParameterMgrPlatformConnector.h"
 #include "Property.h"
 #include <Observer.hpp>
-#include <AudioParameterHelper.hpp>
+#include <ParameterMgrHelper.hpp>
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <Stream.hpp>
@@ -134,7 +134,7 @@ AudioRouteManager::AudioRouteManager()
     // Actually create the Connector
     mAudioPfwConnector = new CParameterMgrPlatformConnector(audioPfwConfigurationFilePath);
 
-    mParameterHelper = new AudioParameterHelper(mAudioPfwConnector);
+    mParameterHelper = new ParameterMgrHelper(mAudioPfwConnector);
 
     // Logger
     mAudioPfwConnector->setLogger(mAudioPfwConnectorLogger);

@@ -31,15 +31,15 @@ class CParameterMgrPlatformConnector;
 class CParameterHandle;
 
 
-class AudioParameterHelper
+class ParameterMgrHelper
 {
 private:
     typedef std::map<std::string, CParameterHandle *>::iterator ParameterHandleMapIterator;
 
 public:
-    AudioParameterHelper(CParameterMgrPlatformConnector *audioPFWConnector);
+    ParameterMgrHelper(CParameterMgrPlatformConnector *audioPFWConnector);
 
-    virtual ~AudioParameterHelper();
+    virtual ~ParameterMgrHelper();
 
     /**
      * unsigned integer parameter value retrieval.

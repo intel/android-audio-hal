@@ -30,7 +30,7 @@
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <AudioCommsAssert.hpp>
-#include <AudioParameterHelper.hpp>
+#include <ParameterMgrHelper.hpp>
 #include <Property.h>
 #include "NaiveTokenizer.h"
 #include <algorithm>
@@ -597,7 +597,7 @@ void AudioPlatformState::printPlatformFwErrorInfo()
 
     ALOGE("^^^^  Print platform Audio firmware error info  ^^^^");
 
-    AudioParameterHelper routeParamHelper(mRoutePfwConnector);
+    ParameterMgrHelper routeParamHelper(mRoutePfwConnector);
 
     string paramValue;
     status_t getStringError;

@@ -22,7 +22,7 @@
  */
 #define LOG_TAG "ParameterHelper"
 
-#include "AudioParameterHelper.hpp"
+#include "ParameterMgrHelper.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "SelectionCriterionInterface.h"
 #include <string>
@@ -33,12 +33,12 @@ using std::string;
 using std::vector;
 using namespace android;
 
-AudioParameterHelper::AudioParameterHelper(CParameterMgrPlatformConnector *audioPFWConnector)
+ParameterMgrHelper::ParameterMgrHelper(CParameterMgrPlatformConnector *audioPFWConnector)
     : mPfwConnector(audioPFWConnector)
 {
 }
 
-AudioParameterHelper::~AudioParameterHelper()
+ParameterMgrHelper::~ParameterMgrHelper()
 {
     ParameterHandleMapIterator it;
 
@@ -49,8 +49,8 @@ AudioParameterHelper::~AudioParameterHelper()
     mParameterHandleMap.clear();
 }
 
-uint32_t AudioParameterHelper::getIntegerParameterValue(const string &paramPath,
-                                                        uint32_t defaultValue) const
+uint32_t ParameterMgrHelper::getIntegerParameterValue(const string &paramPath,
+                                                      uint32_t defaultValue) const
 {
     ALOGV("%s in", __FUNCTION__);
 
@@ -89,8 +89,8 @@ uint32_t AudioParameterHelper::getIntegerParameterValue(const string &paramPath,
     return value;
 }
 
-status_t AudioParameterHelper::getStringParameterValue(const string &paramPath,
-                                                       string &value) const
+status_t ParameterMgrHelper::getStringParameterValue(const string &paramPath,
+                                                     string &value) const
 {
     if (!mPfwConnector->isStarted()) {
 
@@ -125,7 +125,7 @@ status_t AudioParameterHelper::getStringParameterValue(const string &paramPath,
     return ret;
 }
 
-status_t AudioParameterHelper::setIntegerParameterValue(const string &paramPath, uint32_t value)
+status_t ParameterMgrHelper::setIntegerParameterValue(const string &paramPath, uint32_t value)
 {
     if (!mPfwConnector->isStarted()) {
 
@@ -160,8 +160,8 @@ status_t AudioParameterHelper::setIntegerParameterValue(const string &paramPath,
     return ret;
 }
 
-status_t AudioParameterHelper::setIntegerArrayParameterValue(const string &paramPath,
-                                                             vector<uint32_t> &array) const
+status_t ParameterMgrHelper::setIntegerArrayParameterValue(const string &paramPath,
+                                                           vector<uint32_t> &array) const
 {
     if (!mPfwConnector->isStarted()) {
 
@@ -194,7 +194,7 @@ status_t AudioParameterHelper::setIntegerArrayParameterValue(const string &param
     return ret;
 }
 
-CParameterHandle *AudioParameterHelper::getParameterHandle(const string &paramPath)
+CParameterHandle *ParameterMgrHelper::getParameterHandle(const string &paramPath)
 {
     string parameter;
 
@@ -217,7 +217,7 @@ CParameterHandle *AudioParameterHelper::getParameterHandle(const string &paramPa
     return handle;
 }
 
-CParameterHandle *AudioParameterHelper::getDynamicParameterHandle(const string &dynamicParamPath)
+CParameterHandle *ParameterMgrHelper::getDynamicParameterHandle(const string &dynamicParamPath)
 {
     if (mParameterHandleMap.find(dynamicParamPath) == mParameterHandleMap.end()) {
         ALOGD("Dynamic parameter %s not found in map, get a handle and push it in the map",

@@ -28,7 +28,7 @@ LOCAL_PATH := $(call my-dir)
 # Common variables
 
 param_mgr_helper_src_files :=  \
-    AudioParameterHelper.cpp \
+    ParameterMgrHelper.cpp \
     Criterion.cpp \
     CriterionType.cpp
 
