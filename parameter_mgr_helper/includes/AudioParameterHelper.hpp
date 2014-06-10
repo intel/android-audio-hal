@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -109,5 +109,5 @@ private:
 
     CParameterMgrPlatformConnector *mPfwConnector; /** < PFW Connector */
 
-    std::map<std::string, CParameterHandle *> _parameterHandleMap; /**< Parameter handle Map */
+    std::map<std::string, CParameterHandle *> mParameterHandleMap; /**< Parameter handle Map */
 };

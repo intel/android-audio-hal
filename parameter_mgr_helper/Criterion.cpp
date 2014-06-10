@@ -31,13 +31,13 @@ Criterion::Criterion(const string &name,
                      CriterionType *criterionType,
                      CParameterMgrPlatformConnector *parameterMgrConnector,
                      int32_t defaultValue)
-    : _criterionType(criterionType),
-      _parameterMgrConnector(parameterMgrConnector),
-      _name(name),
-      _value(defaultValue)
+    : mCriterionType(criterionType),
+      mParameterMgrConnector(parameterMgrConnector),
+      mName(name),
+      mValue(defaultValue)
 {
-    _selectionCriterionInterface =
-        _parameterMgrConnector->createSelectionCriterion(_name, criterionType->getTypeInterface());
+    mSelectionCriterionInterface =
+        mParameterMgrConnector->createSelectionCriterion(mName, criterionType->getTypeInterface());
 
     setCriterionState();
 }
@@ -48,14 +48,14 @@ Criterion::~Criterion()
 
 string Criterion::getFormattedValue()
 {
-    return _criterionType->getTypeInterface()->getFormattedState(_value);
+    return mCriterionType->getTypeInterface()->getFormattedState(mValue);
 }
 
 bool Criterion::setValue(int32_t value)
 {
-    if (_value != value) {
+    if (mValue != value) {
 
-        _value = value;
+        mValue = value;
         return true;
     }
     return false;
@@ -63,16 +63,16 @@ bool Criterion::setValue(int32_t value)
 
 void Criterion::setCriterionState()
 {
-    AUDIOCOMMS_ASSERT(_selectionCriterionInterface != NULL, "NULL criterion interface");
-    _selectionCriterionInterface->setCriterionState(_value);
+    AUDIOCOMMS_ASSERT(mSelectionCriterionInterface != NULL, "NULL criterion interface");
+    mSelectionCriterionInterface->setCriterionState(mValue);
 }
 
 bool Criterion::setCriterionState(int32_t value)
 {
     if (setValue(value)) {
 
-        AUDIOCOMMS_ASSERT(_selectionCriterionInterface != NULL, "NULL criterion interface");
-        _selectionCriterionInterface->setCriterionState(_value);
+        AUDIOCOMMS_ASSERT(mSelectionCriterionInterface != NULL, "NULL criterion interface");
+        mSelectionCriterionInterface->setCriterionState(mValue);
         return true;
     }
     return false;

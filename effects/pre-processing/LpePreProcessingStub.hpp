@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -144,14 +144,14 @@ private:
     /**
      * List of Audio Effects available on LPE
      */
-    std::list<AudioEffectStub *> _effectsList;
+    std::list<AudioEffectStub *> mEffectsList;
 
     /**
      * List of Audio Effect Sessions available on LPE
      */
-    std::list<AudioEffectSessionStub *> _effectSessionsList;
+    std::list<AudioEffectSessionStub *> mEffectSessionsList;
 
-    static const uint32_t _maxEffectSessions = 8; /**< Max number of sessions for effect bundle. */
+    static const uint32_t mMaxEffectSessions = 8; /**< Max number of sessions for effect bundle. */
 
     /**
      * Send a command and receive a response to/from effect engine.
@@ -198,11 +198,11 @@ private:
      * It will be used as a unique entry point to interact with audio effects by
      * the audio effect module.
      */
-    static const struct effect_interface_s effectInterface;
+    static const struct effect_interface_s mEffectInterface;
 
     /**
      * Effects are handled in a separated thread, need to lock to protect concurrent
      * access to the input stream.
      */
-    audio_comms::utilities::Mutex _lpeEffectsLock;
+    audio_comms::utilities::Mutex mLpeEffectsLock;
 };

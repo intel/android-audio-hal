@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -39,28 +39,28 @@ using android::OK;
 using android::BAD_VALUE;
 
 AudioEffectSessionStub::AudioEffectSessionStub(uint32_t sessionId)
-    : _id(sessionId)
+    : mId(sessionId)
 {
     init();
 }
 
 void AudioEffectSessionStub::init()
 {
-    _ioHandle = _sessionNone;
-    _source = AUDIO_SOURCE_DEFAULT;
+    mIoHandle = mSessionNone;
+    mSource = AUDIO_SOURCE_DEFAULT;
 }
 
 void AudioEffectSessionStub::setIoHandle(int ioHandle)
 {
-    ALOGD("%s: setting io=%d for session %d", __FUNCTION__, ioHandle, _id);
-    _ioHandle = ioHandle;
+    ALOGD("%s: setting io=%d for session %d", __FUNCTION__, ioHandle, mId);
+    mIoHandle = ioHandle;
 }
 
 status_t AudioEffectSessionStub::addEffect(AudioEffectStub *effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "trying to add null Effect");
     effect->setSession(this);
-    _effectsList.push_back(effect);
+    mEffectsList.push_back(effect);
     return OK;
 }
 
@@ -68,9 +68,9 @@ AudioEffectStub *AudioEffectSessionStub::findEffectByUuid(const effect_uuid_t *u
 {
     AUDIOCOMMS_ASSERT(uuid != NULL, "Invalid UUID");
     EffectListIterator it;
-    it = std::find_if(_effectsList.begin(), _effectsList.end(), std::bind2nd(MatchUuid(), uuid));
+    it = std::find_if(mEffectsList.begin(), mEffectsList.end(), std::bind2nd(MatchUuid(), uuid));
 
-    return (it != _effectsList.end()) ? *it : NULL;
+    return (it != mEffectsList.end()) ? *it : NULL;
 }
 
 status_t AudioEffectSessionStub::createEffect(const effect_uuid_t *uuid, effect_handle_t *interface)
@@ -83,11 +83,11 @@ status_t AudioEffectSessionStub::createEffect(const effect_uuid_t *uuid, effect_
         return BAD_VALUE;
     }
     ALOGD("%s: requesting to create effect %s on session %d",
-          __FUNCTION__, effect->getDescriptor()->name, _id);
+          __FUNCTION__, effect->getDescriptor()->name, mId);
     // Set the interface handle
     *interface = effect->getHandle();
 
-    _effectsCreatedList.push_back(effect);
+    mEffectsCreatedList.push_back(effect);
 
     return OK;
 }
@@ -96,13 +96,13 @@ status_t AudioEffectSessionStub::removeEffect(AudioEffectStub *effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "trying to remove null Effect");
     ALOGD("%s: requesting to remove effect %s on session %d",
-          __FUNCTION__, effect->getDescriptor()->name, _id);
-    _effectsCreatedList.remove(effect);
+          __FUNCTION__, effect->getDescriptor()->name, mId);
+    mEffectsCreatedList.remove(effect);
 
     // Reset the session if no more effects are created on it.
-    if (_effectsCreatedList.empty()) {
+    if (mEffectsCreatedList.empty()) {
 
-        ALOGD("%s: no more effect within session=%d, reinitialising session", __FUNCTION__, _id);
+        ALOGD("%s: no more effect within session=%d, reinitialising session", __FUNCTION__, mId);
         init();
     }
 

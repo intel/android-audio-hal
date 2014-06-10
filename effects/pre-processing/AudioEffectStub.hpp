@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -102,7 +102,7 @@ public:
      *
      * @return effect descriptor structure.
      */
-    const effect_descriptor_t *getDescriptor() const { return _descriptor; }
+    const effect_descriptor_t *getDescriptor() const { return mDescriptor; }
 
     /**
      * Get the effect UUID.
@@ -123,7 +123,7 @@ public:
      *
      * @return session.
      */
-    AudioEffectSessionStub *getSession() const { return _session; }
+    AudioEffectSessionStub *getSession() const { return mSession; }
 
     /**
      * Get effect Handle.
@@ -132,7 +132,7 @@ public:
      *
      * @return address the of the effect interface.
      */
-    effect_handle_t getHandle() { return (effect_handle_t)(&_itfe); }
+    effect_handle_t getHandle() { return (effect_handle_t)(&mItfe); }
 
 private:
     /**
@@ -140,9 +140,9 @@ private:
      * The effect descriptor contains necessary information to facilitate the enumeration of the
      * effect.
      */
-    const effect_descriptor_t *_descriptor;
-    const struct effect_interface_s *_itfe; /**< Effect control interface structure. */
-    uint32_t _preProcessorId; /**< type of preprocessor. */
-    uint32_t _state; /**< state of the effect. */
-    AudioEffectSessionStub *_session; /**< Session on which the effect is on. */
+    const effect_descriptor_t *mDescriptor;
+    const struct effect_interface_s *mItfe; /**< Effect control interface structure. */
+    uint32_t mPreProcessorId; /**< type of preprocessor. */
+    uint32_t mState; /**< state of the effect. */
+    AudioEffectSessionStub *mSession; /**< Session on which the effect is on. */
 };

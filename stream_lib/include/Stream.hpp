@@ -37,10 +37,10 @@ class Stream
 {
 public:
     Stream()
-        : _currentStreamRoute(NULL),
-          _newStreamRoute(NULL),
-          _effectsRequestedMask(0),
-          _isRouted(false)
+        : mCurrentStreamRoute(NULL),
+          mNewStreamRoute(NULL),
+          mEffectsRequestedMask(0),
+          mIsRouted(false)
     {}
 
     /**
@@ -119,14 +119,14 @@ public:
      *
      * @return mask with Id of requested effects
      */
-    uint32_t getEffectRequested() const { return _effectsRequestedMask; }
+    uint32_t getEffectRequested() const { return mEffectsRequestedMask; }
 
     /**
      * Get the sample specifications of the stream route.
      *
      * @return sample specifications.
      */
-    android_audio_legacy::SampleSpec routeSampleSpec() const { return _routeSampleSpec; }
+    android_audio_legacy::SampleSpec routeSampleSpec() const { return mRouteSampleSpec; }
 
     /**
      * Reset the new stream route.
@@ -182,9 +182,9 @@ public:
     virtual android::status_t getFramesAvailable(uint32_t &avail,
                                                  struct timespec &tStamp) const = 0;
 
-    IStreamRoute *getCurrentStreamRoute() { return _currentStreamRoute; }
+    IStreamRoute *getCurrentStreamRoute() { return mCurrentStreamRoute; }
 
-    IStreamRoute *getNewStreamRoute() { return _newStreamRoute; }
+    IStreamRoute *getNewStreamRoute() { return mNewStreamRoute; }
 
     /**
      * Attach the stream to its route.
@@ -227,7 +227,7 @@ protected:
      * Lock to protect not only the access to pcm device but also any access to device dependant
      * parameters as sample specification.
      */
-    mutable android::RWLock _streamLock;
+    mutable android::RWLock mStreamLock;
 
     virtual ~Stream() {}
 
@@ -242,15 +242,15 @@ private:
      */
     void setRouteSampleSpecL(android_audio_legacy::SampleSpec sampleSpec);
 
-    IStreamRoute *_currentStreamRoute; /**< route assigned to the stream (routed yet). */
-    IStreamRoute *_newStreamRoute; /**< New route assigned to the stream (not routed yet). */
+    IStreamRoute *mCurrentStreamRoute; /**< route assigned to the stream (routed yet). */
+    IStreamRoute *mNewStreamRoute; /**< New route assigned to the stream (not routed yet). */
 
     /**
      * Sample specifications of the route assigned to the stream.
      */
-    android_audio_legacy::SampleSpec _routeSampleSpec;
+    android_audio_legacy::SampleSpec mRouteSampleSpec;
 
-    uint32_t _effectsRequestedMask; /**< Mask of requested effects. */
+    uint32_t mEffectsRequestedMask; /**< Mask of requested effects. */
 
-    bool _isRouted; /**< flag indicating the stream is routed and device is ready to use. */
+    bool mIsRouted; /**< flag indicating the stream is routed and device is ready to use. */
 };

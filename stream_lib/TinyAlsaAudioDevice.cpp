@@ -34,9 +34,9 @@ using android_audio_legacy::AudioUtils;
 
 pcm *TinyAlsaAudioDevice::getPcmDevice()
 {
-    AUDIOCOMMS_ASSERT(_pcmDevice != NULL, "NULL tiny alsa device");
+    AUDIOCOMMS_ASSERT(mPcmDevice != NULL, "NULL tiny alsa device");
 
-    return _pcmDevice;
+    return mPcmDevice;
 }
 
 android::status_t TinyAlsaAudioDevice::open(const char *cardName,
@@ -44,7 +44,7 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
                                             const StreamRouteConfig &routeConfig,
                                             bool isOut)
 {
-    AUDIOCOMMS_ASSERT(_pcmDevice == NULL, "Tiny alsa device already opened");
+    AUDIOCOMMS_ASSERT(mPcmDevice == NULL, "Tiny alsa device already opened");
     AUDIOCOMMS_ASSERT(cardName != NULL, "Null card name");
 
     pcm_config config;
@@ -71,28 +71,28 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
     // it will return a reference on a "bad pcm" structure
     //
     uint32_t flags = (isOut ? PCM_OUT : PCM_IN);
-    _pcmDevice = pcm_open(AudioUtils::getCardIndexByName(cardName),
+    mPcmDevice = pcm_open(AudioUtils::getCardIndexByName(cardName),
                           deviceId, flags, &config);
-    if (_pcmDevice && !pcm_is_ready(_pcmDevice)) {
+    if (mPcmDevice && !pcm_is_ready(mPcmDevice)) {
 
         ALOGE("%s: Cannot open tinyalsa (%s,%d) device for %s stream (error=%s)", __FUNCTION__,
               cardName,
               deviceId,
               isOut ? "output" : "input",
-              pcm_get_error(_pcmDevice));
+              pcm_get_error(mPcmDevice));
         goto close_device;
     }
     // Prepare the device (ie allocation of the stream)
-    if (pcm_prepare(_pcmDevice) != 0) {
+    if (pcm_prepare(mPcmDevice) != 0) {
 
         ALOGE("%s: prepare failed with error %s", __FUNCTION__,
-              pcm_get_error(_pcmDevice));
+              pcm_get_error(mPcmDevice));
         goto close_device;
     }
-    ALOGW_IF((config.period_count * config.period_size) != (pcm_get_buffer_size(_pcmDevice)),
+    ALOGW_IF((config.period_count * config.period_size) != (pcm_get_buffer_size(mPcmDevice)),
              "%s, refine done by alsa, ALSA RingBuffer = %d (frames), "
              "expected by AudioHAL and AudioFlinger = %d (frames)",
-             __FUNCTION__, pcm_get_buffer_size(_pcmDevice),
+             __FUNCTION__, pcm_get_buffer_size(mPcmDevice),
              config.period_count * config.period_size);
 
     return android::NO_ERROR;
@@ -105,18 +105,18 @@ close_device:
 
 bool TinyAlsaAudioDevice::isOpened()
 {
-    return _pcmDevice != NULL;
+    return mPcmDevice != NULL;
 }
 
 android::status_t TinyAlsaAudioDevice::close()
 {
-    if (_pcmDevice == NULL) {
+    if (mPcmDevice == NULL) {
 
         return android::DEAD_OBJECT;
     }
     ALOGD("%s", __FUNCTION__);
-    pcm_close(_pcmDevice);
-    _pcmDevice = NULL;
+    pcm_close(mPcmDevice);
+    mPcmDevice = NULL;
 
     return android::OK;
 }

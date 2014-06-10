@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -136,11 +136,11 @@ public:
      */
     static bool isAudioInputDevice(uint32_t devices);
 
-    static const uint32_t _usecToSec = 1000000; /**< Constant used or delays computation */
+    static const uint32_t mUsecToSec = 1000000; /**< Constant used or delays computation */
 
 private:
-    static const uint32_t _frameAlignementOn16 = 16; /**< 16 is an audioflinger requirement. */
+    static const uint32_t mFrameAlignementOn16 = 16; /**< 16 is an audioflinger requirement. */
 
-    static const uint32_t _usecPerMsec = 1000;
+    static const uint32_t mUsecPerMsec = 1000;
 };
 }  // namespace android

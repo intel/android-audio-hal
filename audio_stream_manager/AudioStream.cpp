@@ -25,7 +25,7 @@
 #endif
 #define LOG_TAG "AudioStream"
 
-#include "AudioIntelHAL.hpp"
+#include "AudioIntelHal.hpp"
 #include "AudioStream.hpp"
 
 #include <AudioCommsAssert.hpp>
@@ -61,15 +61,15 @@ const std::string AudioStream::dumpAfterConvProps[Direction::_nbDirections] = {
     "media.dump_input.aftconv", "media.dump_output.aftconv"
 };
 
-AudioStream::AudioStream(AudioIntelHAL *parent)
-    : _parent(parent),
-      _standby(true),
-      _devices(0),
-      _audioConversion(new AudioConversion),
-      _latencyMs(0),
-      _applicabilityMask(0),
-      _dumpBeforeConv(NULL),
-      _dumpAfterConv(NULL)
+AudioStream::AudioStream(AudioIntelHal *parent)
+    : mParent(parent),
+      mStandby(true),
+      mDevices(0),
+      mAudioConversion(new AudioConversion),
+      mLatencyMs(0),
+      mApplicabilityMask(0),
+      mDumpBeforeConv(NULL),
+      mDumpAfterConv(NULL)
 {
 }
 
@@ -77,9 +77,9 @@ AudioStream::~AudioStream()
 {
     setStandby(true);
 
-    delete _audioConversion;
-    delete _dumpAfterConv;
-    delete _dumpBeforeConv;
+    delete mAudioConversion;
+    delete mDumpAfterConv;
+    delete mDumpBeforeConv;
 }
 
 status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
@@ -98,7 +98,7 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
                   __FUNCTION__, *channels, popcount(*channels));
             // Always accept the channels requested by the client
             // as far as the channel count is supported
-            _sampleSpec.setChannelMask(*channels);
+            mSampleSpec.setChannelMask(*channels);
 
             if (popcount(*channels) > 2) {
 
@@ -120,12 +120,12 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
 
                 *channels = AudioSystem::CHANNEL_IN_LEFT | AudioSystem::CHANNEL_IN_RIGHT;
             }
-            _sampleSpec.setChannelMask(*channels);
+            mSampleSpec.setChannelMask(*channels);
         }
         ALOGD("%s: set channels to 0x%x", __FUNCTION__, *channels);
 
         // Resampler is always working @ the channel count of the HAL
-        _sampleSpec.setChannelCount(popcount(_sampleSpec.getChannelMask()));
+        mSampleSpec.setChannelCount(popcount(mSampleSpec.getChannelMask()));
     }
 
     if (rate != NULL) {
@@ -134,15 +134,15 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
 
             ALOGD("%s(requested rate: %d))", __FUNCTION__, *rate);
             // Always accept the rate provided by the client
-            _sampleSpec.setSampleRate(*rate);
+            mSampleSpec.setSampleRate(*rate);
         }
         if ((bad_rate) || (*rate == 0)) {
 
             // No rate information was provided by the client
             // or set rate error
             // Use default HAL rate
-            *rate = AudioStream::_defaultSampleRate;
-            _sampleSpec.setSampleRate(*rate);
+            *rate = AudioStream::mDefaultSampleRate;
+            mSampleSpec.setSampleRate(*rate);
         }
         ALOGD("%s: set rate to %d", __FUNCTION__, *rate);
     }
@@ -160,14 +160,14 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
                 bad_format = true;
             }
 
-            _sampleSpec.setFormat(*format);
+            mSampleSpec.setFormat(*format);
         }
         if ((bad_format) || (*format == 0)) {
 
             // No format provided or set format error
             // Use default HAL format
-            *format = AudioStream::_defaultFormat;
-            _sampleSpec.setFormat(*format);
+            *format = AudioStream::mDefaultFormat;
+            mSampleSpec.setFormat(*format);
         }
         ALOGD("%s : set format to %d (%d)", __FUNCTION__, *format, this->format());
     }
@@ -199,12 +199,12 @@ String8 AudioStream::getParameters(const String8 &keys)
 
 size_t AudioStream::getBufferSize() const
 {
-    size_t size = _sampleSpec.convertUsecToframes(
-        _parent->getStreamInterface()->getPeriodInUs(isOut(), getApplicabilityMask()));
+    size_t size = mSampleSpec.convertUsecToframes(
+        mParent->getStreamInterface()->getPeriodInUs(isOut(), getApplicabilityMask()));
 
     size = AudioUtils::alignOn16(size);
 
-    size_t bytes = _sampleSpec.convertFramesToBytes(size);
+    size_t bytes = mSampleSpec.convertFramesToBytes(size);
     ALOGD("%s: %d (in bytes) for %s stream", __FUNCTION__, bytes, isOut() ? "output" : "input");
 
     return bytes;
@@ -224,7 +224,7 @@ size_t AudioStream::generateSilence(size_t bytes, void *buffer)
 
 uint32_t AudioStream::latencyMs() const
 {
-    return _latencyMs;
+    return mLatencyMs;
 }
 
 void AudioStream::setApplicabilityMask(uint32_t applicabilityMask)
@@ -233,16 +233,16 @@ void AudioStream::setApplicabilityMask(uint32_t applicabilityMask)
 
         return;
     }
-    _streamLock.writeLock();
-    _applicabilityMask = applicabilityMask;
-    _streamLock.unlock();
+    mStreamLock.writeLock();
+    mApplicabilityMask = applicabilityMask;
+    mStreamLock.unlock();
     updateLatency();
 }
 
 void AudioStream::updateLatency()
 {
-    _latencyMs = AudioUtils::convertUsecToMsec(
-        _parent->getStreamInterface()->getLatencyInUs(isOut(), getApplicabilityMask()));
+    mLatencyMs = AudioUtils::convertUsecToMsec(
+        mParent->getStreamInterface()->getLatencyInUs(isOut(), getApplicabilityMask()));
 }
 
 status_t AudioStream::setStandby(bool isSet)
@@ -253,7 +253,7 @@ status_t AudioStream::setStandby(bool isSet)
     }
     setStarted(!isSet);
 
-    return isSet ? _parent->stopStream(this) : _parent->startStream(this);
+    return isSet ? mParent->stopStream(this) : mParent->startStream(this);
 }
 
 status_t AudioStream::attachRouteL()
@@ -289,38 +289,38 @@ status_t AudioStream::detachRouteL()
 
 status_t AudioStream::configureAudioConversion(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    return _audioConversion->configure(ssSrc, ssDst);
+    return mAudioConversion->configure(ssSrc, ssDst);
 }
 
 status_t AudioStream::getConvertedBuffer(void *dst, const uint32_t outFrames,
                                          AudioBufferProvider *bufferProvider)
 {
-    return _audioConversion->getConvertedBuffer(dst, outFrames, bufferProvider);
+    return mAudioConversion->getConvertedBuffer(dst, outFrames, bufferProvider);
 }
 
 status_t AudioStream::applyAudioConversion(const void *src, void **dst, uint32_t inFrames,
                                            uint32_t *outFrames)
 {
-    return _audioConversion->convert(src, dst, inFrames, outFrames);
+    return mAudioConversion->convert(src, dst, inFrames, outFrames);
 }
 
 
 void AudioStream::setDevices(uint32_t devices)
 {
-    AutoW lock(_streamLock);
-    _devices = devices;
+    AutoW lock(mStreamLock);
+    mDevices = devices;
 }
 
 bool AudioStream::isStarted() const
 {
-    AutoR lock(_streamLock);
-    return !_standby;
+    AutoR lock(mStreamLock);
+    return !mStandby;
 }
 
 void AudioStream::setStarted(bool isStarted)
 {
-    AutoW lock(_streamLock);
-    _standby = !isStarted;
+    AutoW lock(mStreamLock);
+    mStandby = !isStarted;
 
     if (isStarted) {
 
@@ -337,22 +337,22 @@ void AudioStream::initAudioDump()
      * is set to false, the dump object will be deleted to stop the dump.
      */
     if (TProperty<bool>(dumpBeforeConvProps[isOut()], false)) {
-        if (!_dumpBeforeConv) {
+        if (!mDumpBeforeConv) {
             ALOGI("Debug: create dump object for audio before conversion");
-            _dumpBeforeConv = new HALAudioDump();
+            mDumpBeforeConv = new HalAudioDump();
         }
-    } else if (_dumpBeforeConv) {
-        delete _dumpBeforeConv;
-        _dumpBeforeConv = NULL;
+    } else if (mDumpBeforeConv) {
+        delete mDumpBeforeConv;
+        mDumpBeforeConv = NULL;
     }
     if (TProperty<bool>(dumpAfterConvProps[isOut()], false)) {
-        if (!_dumpAfterConv) {
+        if (!mDumpAfterConv) {
             ALOGI("Debug: create dump object for audio after conversion");
-            _dumpAfterConv = new HALAudioDump();
+            mDumpAfterConv = new HalAudioDump();
         }
-    } else if (_dumpAfterConv) {
-        delete _dumpAfterConv;
-        _dumpAfterConv = NULL;
+    } else if (mDumpAfterConv) {
+        delete mDumpAfterConv;
+        mDumpAfterConv = NULL;
     }
 }
 

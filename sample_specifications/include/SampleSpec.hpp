@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -60,8 +60,8 @@ public:
     bool operator==(const SampleSpec &right) const
     {
 
-        return !memcmp(_sampleSpec, right._sampleSpec, sizeof(_sampleSpec)) &&
-               (_channelsPolicy == right._channelsPolicy);
+        return !memcmp(mSampleSpec, right.mSampleSpec, sizeof(mSampleSpec)) &&
+               (mChannelsPolicy == right.mChannelsPolicy);
     }
 
     /**
@@ -99,9 +99,9 @@ public:
         NbChannelsPolicy
     };
 
-    SampleSpec(uint32_t channel = _defaultChannels,
-               uint32_t format = _defaultFormat,
-               uint32_t rate = _defaultRate);
+    SampleSpec(uint32_t channel = mDefaultChannels,
+               uint32_t format = mDefaultFormat,
+               uint32_t rate = mDefaultRate);
 
     SampleSpec(uint32_t channel,
                uint32_t format,
@@ -138,17 +138,17 @@ public:
     }
     void setChannelMask(uint32_t channelMask)
     {
-        _channelMask = channelMask;
+        mChannelMask = channelMask;
     }
     uint32_t getChannelMask() const
     {
-        return _channelMask;
+        return mChannelMask;
     }
 
     void setChannelsPolicy(const std::vector<ChannelsPolicy> &channelsPolicy);
     const std::vector<ChannelsPolicy> &getChannelsPolicy() const
     {
-        return _channelsPolicy;
+        return mChannelsPolicy;
     }
     ChannelsPolicy getChannelsPolicy(uint32_t channelIndex) const;
 
@@ -204,12 +204,12 @@ public:
 
     bool isMono() const
     {
-        return _sampleSpec[ChannelCountSampleSpecItem] == 1;
+        return mSampleSpec[ChannelCountSampleSpecItem] == 1;
     }
 
     bool isStereo() const
     {
-        return _sampleSpec[ChannelCountSampleSpecItem] == 2;
+        return mSampleSpec[ChannelCountSampleSpecItem] == 2;
     }
 
     /**
@@ -239,19 +239,19 @@ private:
      */
     void init(uint32_t channel, uint32_t format, uint32_t rate);
 
-    uint32_t _sampleSpec[NbSampleSpecItems]; /**< Array of sample spec items:
+    uint32_t mSampleSpec[NbSampleSpecItems]; /**< Array of sample spec items:
                                               *         -channel number
                                               *         -format
                                               *         -sample rate. */
 
-    uint32_t _channelMask; /**< Bit field that defines the channels used. */
+    uint32_t mChannelMask; /**< Bit field that defines the channels used. */
 
-    std::vector<ChannelsPolicy> _channelsPolicy; /**< channels policy array. */
+    std::vector<ChannelsPolicy> mChannelsPolicy; /**< channels policy array. */
 
-    static const uint32_t _usecPerSec = 1000000; /**<  to convert sec to-from microseconds. */
-    static const uint32_t _defaultChannels = 2; /**< default channel used is stereo. */
-    static const uint32_t _defaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< default format is 16bits.*/
-    static const uint32_t _defaultRate = 48000; /**< default rate is 48 kHz. */
-    static const uint32_t _maxChannels = 32; /**< supports until 32 channels. */
+    static const uint32_t mUsecPerSec = 1000000; /**<  to convert sec to-from microseconds. */
+    static const uint32_t mDefaultChannels = 2; /**< default channel used is stereo. */
+    static const uint32_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< default format is 16bits.*/
+    static const uint32_t mDefaultRate = 48000; /**< default rate is 48 kHz. */
+    static const uint32_t mMaxChannels = 32; /**< supports until 32 channels. */
 };
 }  // namespace android

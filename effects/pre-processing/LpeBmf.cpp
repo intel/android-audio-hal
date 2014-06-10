@@ -26,7 +26,7 @@
 #include "LpeBmf.hpp"
 
 BmfAudioEffect::BmfAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &bmfDescriptor)
+    : AudioEffectStub(itfe, &mBmfDescriptor)
 {
 }
 
@@ -40,7 +40,7 @@ static const effect_uuid_t FX_IID_BMF_ = {
 
 const effect_uuid_t *const FX_IID_BMF = &FX_IID_BMF_;
 
-const effect_descriptor_t BmfAudioEffect::bmfDescriptor = {
+const effect_descriptor_t BmfAudioEffect::mBmfDescriptor = {
     type:         FX_IID_BMF_,
     uuid:         {
         timeLow: 0xff619c00,

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -72,9 +72,9 @@ private:
      */
     void add(const android::String8 &keyValuePairs);
 
-    mutable android::AudioParameter _audioParameter; /**< parameters backuped. */
+    mutable android::AudioParameter mAudioParameter; /**< parameters backuped. */
 
-    static const char _filePath[]; /**< path of the backup file. */
-    static const int _readBufSize; /**< size of the buffer to read the backup file. */
+    static const char mFilePath[]; /**< path of the backup file. */
+    static const int mReadBufSize; /**< size of the buffer to read the backup file. */
 };
 }

@@ -58,7 +58,7 @@ class AudioParameterHandler;
 using android::RWLock;
 using android::Mutex;
 
-class AudioIntelHAL : public AudioHardwareBase, private IModemAudioManagerObserver,
+class AudioIntelHal : public AudioHardwareBase, private IModemAudioManagerObserver,
                       public IEventListener,
                       public audio_comms::utilities::NonCopyable
 {
@@ -71,8 +71,8 @@ private:
     };
 
 public:
-    AudioIntelHAL();
-    virtual ~AudioIntelHAL();
+    AudioIntelHal();
+    virtual ~AudioIntelHal();
 
     /**
      * check to see if the audio hardware interface has been initialized.
@@ -223,8 +223,8 @@ protected:
      */
     IStreamInterface *getStreamInterface()
     {
-        LOG_ALWAYS_FATAL_IF(_streamInterface == NULL);
-        return _streamInterface;
+        LOG_ALWAYS_FATAL_IF(mStreamInterface == NULL);
+        return mStreamInterface;
     }
 
     friend class AudioStreamOutImpl;
@@ -443,33 +443,35 @@ private:
      */
     struct echo_reference_itfe *getEchoReference(const SampleSpec &inputSampleSpec);
 
-    struct echo_reference_itfe *_echoReference; /**< Echo reference to use for AEC effect. */
+    struct echo_reference_itfe *mEchoReference; /**< Echo reference to use for AEC effect. */
 
-    AudioPlatformState *_platformState; /**< Platform state pointer. */
+    AudioPlatformState *mPlatformState; /**< Platform state pointer. */
 
-    AudioParameterHandler *_audioParameterHandler; /**< backup and restore audio parameters. */
+    AudioParameterHandler *mAudioParameterHandler; /**< backup and restore audio parameters. */
 
-    IStreamInterface *_streamInterface; /**< Route Manager Stream Interface pointer. */
+    IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */
 
-    android::RWLock _pfwLock; /**< PFW concurrency protection - to garantee atomic operation only. */
+    /**
+     * PFW concurrency protection - to garantee atomic operation only.
+     */
+    android::RWLock mPfwLock;
+    CEventThread *mEventThread; /**< Worker Thread. */
 
-    CEventThread *_eventThread; /**< Worker Thread. */
-
-    IModemAudioManagerInterface *_modemAudioManagerInterface; /**< Audio AT Manager interface. */
+    IModemAudioManagerInterface *mModemAudioManagerInterface; /**< Audio AT Manager interface. */
 
     bool _bluetoothHFPSupported; /**< track if platform supports Bluetooth HFP. */
 
-    static const char *const _defaultGainPropName; /**< Gain property name. */
-    static const float _defaultGainValue; /**< Default gain value if empty property. */
-    static const char *const _bluetoothHfpSupportedPropName; /**< BT HFP property name. */
-    static const bool _bluetoothHfpSupportedDefaultValue; /**< Default BT HFP value. */
+    static const char *const mDefaultGainPropName; /**< Gain property name. */
+    static const float mDefaultGainValue; /**< Default gain value if empty property. */
+    static const char *const mBluetoothHfpSupportedPropName; /**< BT HFP property name. */
+    static const bool mBluetoothHfpSupportedDefaultValue; /**< Default BT HFP value. */
 
-    static const char *const _routeLibPropName;  /**< Route Manager name property. */
-    static const char *const _routeLibPropDefaultValue;  /**< Route Manager lib default value. */
+    static const char *const mRouteLibPropName;  /**< Route Manager name property. */
+    static const char *const mRouteLibPropDefaultValue;  /**< Route Manager lib default value. */
 
-    static const char *const _modemLibPropName; /**< MAMGR library name property. */
+    static const char *const mModemLibPropName; /**< MAMGR library name property. */
 
-    static const char *const _restartingKey; /**< Restart key parameter. */
-    static const char *const _restartingRequested; /**< Restart key parameter value. */
+    static const char *const mRestartingKey; /**< Restart key parameter. */
+    static const char *const mRestartingRequested; /**< Restart key parameter value. */
 };
 }         // namespace android

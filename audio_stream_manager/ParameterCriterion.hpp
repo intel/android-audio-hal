@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -40,20 +40,20 @@ public:
                        CParameterMgrPlatformConnector *parameterMgrConnector,
                        int32_t defaultValue = 0)
         : Criterion(name, criterionType, parameterMgrConnector, defaultValue),
-          _defaultValue(defaultValue),
-          _key(key)
+          mDefaultValue(defaultValue),
+          mKey(key)
     {}
 
     const char *getKey() const
     {
-        return _key.c_str();
+        return mKey.c_str();
     }
 
     void setParamToCriterionPair(const std::string &name, uint32_t value)
     {
-        AUDIOCOMMS_ASSERT(_paramToCriterionMap.find(name) == _paramToCriterionMap.end(),
+        AUDIOCOMMS_ASSERT(mParamToCriterionMap.find(name) == mParamToCriterionMap.end(),
                           "parameter value " << name.c_str() << " already appended");
-        _paramToCriterionMap[name] = value;
+        mParamToCriterionMap[name] = value;
     }
 
     bool setParameter(const std::string &value)
@@ -61,12 +61,12 @@ public:
         if (!isParameterValueValid(value)) {
 
             ALOGD("%s: unknown parameter value(%s) for %s, setting default value (%d)",
-                  __FUNCTION__, value.c_str(), _key.c_str(), _defaultValue);
-            return setCriterionState(_defaultValue);
+                  __FUNCTION__, value.c_str(), mKey.c_str(), mDefaultValue);
+            return setCriterionState(mDefaultValue);
         }
         ALOGD("%s: %s (%s, %d)", __FUNCTION__, getName().c_str(), value.c_str(),
-              _paramToCriterionMap[value]);
-        return setCriterionState(_paramToCriterionMap[value]);
+              mParamToCriterionMap[value]);
+        return setCriterionState(mParamToCriterionMap[value]);
     }
 
 private:
@@ -80,15 +80,15 @@ private:
      */
     bool isParameterValueValid(const std::string value) const
     {
-        return _paramToCriterionMap.find(value) != _paramToCriterionMap.end();
+        return mParamToCriterionMap.find(value) != mParamToCriterionMap.end();
     }
 
     /**
      * associate parameter value to criteria value.
      */
-    std::map<std::string, int> _paramToCriterionMap;
+    std::map<std::string, int> mParamToCriterionMap;
 
-    int32_t _defaultValue; /**< default numerical value. */
+    int32_t mDefaultValue; /**< default numerical value. */
 
-    std::string _key; /**< key name of the parameter. */
+    std::string mKey; /**< key name of the parameter. */
 };

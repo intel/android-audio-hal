@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -48,7 +48,7 @@ public:
      */
     virtual const android_audio_legacy::SampleSpec getSampleSpec() const
     {
-        return _sampleSpec;
+        return mSampleSpec;
     }
 
     /**
@@ -59,7 +59,7 @@ public:
      */
     virtual IAudioDevice *getAudioDevice()
     {
-        return _audioDevice;
+        return mAudioDevice;
     }
 
     /**
@@ -70,7 +70,7 @@ public:
      */
     virtual uint32_t getOutputSilencePrologMs() const
     {
-        return _config.silencePrologInMs;
+        return mConfig.silencePrologInMs;
     }
 
     /**
@@ -142,7 +142,7 @@ public:
      */
     uint32_t getApplicableMask() const
     {
-        return _config.applicabilityMask;
+        return mConfig.applicabilityMask;
     }
 
     /**
@@ -172,7 +172,7 @@ public:
      */
     bool isPreEnableRequired()
     {
-        return _config.requirePreEnable;
+        return mConfig.requirePreEnable;
     }
 
     /**
@@ -183,7 +183,7 @@ public:
      */
     bool isPostDisableRequired()
     {
-        return _config.requirePostDisable;
+        return mConfig.requirePostDisable;
     }
 
     /**
@@ -193,7 +193,7 @@ public:
      */
     const StreamRouteConfig &getRouteConfig() const
     {
-        return _config;
+        return mConfig;
     }
 
     /**
@@ -215,11 +215,11 @@ public:
     uint32_t getPeriodInUs() const;
 
 protected:
-    Stream *_currentStream; /**< Current stream attached to this route. */
-    Stream *_newStream; /**< New stream that will be attached to this route after rerouting. */
+    Stream *mCurrentStream; /**< Current stream attached to this route. */
+    Stream *mNewStream; /**< New stream that will be attached to this route after rerouting. */
 
-    std::list<std::string> _effectSupported; /**< list of name of supported effects. */
-    uint32_t _effectSupportedMask; /**< Mask of supported effects. */
+    std::list<std::string> mEffectSupported; /**< list of name of supported effects. */
+    uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
 
 private:
     /**
@@ -239,7 +239,7 @@ private:
      */
     uint32_t getPcmDeviceId() const
     {
-        return _config.deviceId;
+        return mConfig.deviceId;
     }
 
     /**
@@ -250,7 +250,7 @@ private:
 
     const char *getCardName() const
     {
-        return _config.cardName;
+        return mConfig.cardName;
     }
 
     /**
@@ -267,9 +267,9 @@ private:
      */
     void detachCurrentStream();
 
-    StreamRouteConfig _config; /**< Configuration of the audio stream route. */
+    StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 
-    android_audio_legacy::SampleSpec _sampleSpec; /**< Sample specification of the stream route. */
+    android_audio_legacy::SampleSpec mSampleSpec; /**< Sample specification of the stream route. */
 
-    IAudioDevice *_audioDevice; /**< Platform dependant audio device. */
+    IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
 };

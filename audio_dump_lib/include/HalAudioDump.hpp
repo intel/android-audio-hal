@@ -1,17 +1,24 @@
 /*
- * Copyright 2013 Intel Corporation
+ * INTEL CONFIDENTIAL
+ * Copyright (c) 2013-2014 Intel
+ * Corporation All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * The source code contained or described herein and all documents related to
+ * the source code ("Material") are owned by Intel Corporation or its suppliers
+ * or licensors. Title to the Material remains with Intel Corporation or its
+ * suppliers and licensors. The Material contains trade secrets and proprietary
+ * and confidential information of Intel or its suppliers and licensors. The
+ * Material is protected by worldwide copyright and trade secret laws and
+ * treaty provisions. No part of the Material may be used, copied, reproduced,
+ * modified, published, uploaded, posted, transmitted, distributed, or
+ * disclosed in any way without Intel's prior express written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * No license under any patent, copyright, trade secret or other intellectual
+ * property right is granted to or conferred upon you by disclosure or delivery
+ * of the Materials, either expressly, by implication, inducement, estoppel or
+ * otherwise. Any license under such intellectual property rights must be
+ * express and approved by Intel in writing.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
 #pragma once
@@ -21,11 +28,11 @@
 #include <utils/Errors.h>
 #include <string>
 
-class HALAudioDump
+class HalAudioDump
 {
 public:
-    HALAudioDump();
-    ~HALAudioDump();
+    HalAudioDump();
+    ~HalAudioDump();
 
     /**
      * Dumps the raw audio samples in a file. The name of the
@@ -83,27 +90,27 @@ private:
     android::status_t writeDumpFile(const void *buf,
                                     ssize_t bytes);
 
-    FILE *_dumpFile;
-    uint32_t _fileCount;
+    FILE *mDumpFile;
+    uint32_t mFileCount;
 
     /**
      * Maximum number of files per dump instance.
      */
-    static const uint32_t _maxNumberOfFiles;
+    static const uint32_t mMaxNumberOfFiles;
 
     /**
      * Store stream directions in and out.
      */
-    static const char *_streamDirections[];
+    static const char *mStreamDirections[];
 
     /**
      * Dump directory path to store audio dump files.
      */
-    static const char *_dumpDirPath;
+    static const char *mDumpDirPath;
 
     /**
      * Limit file size to about 20 MB for audio dump files
      * to avoid filling the mass storage to the brim.
      */
-    static const uint32_t _maxDumpFileSize = 20 * 1024 * 1024;
+    static const uint32_t mMaxDumpFileSize = 20 * 1024 * 1024;
 };

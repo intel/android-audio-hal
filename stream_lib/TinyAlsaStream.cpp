@@ -34,13 +34,13 @@ using android::OK;
 
 pcm *TinyAlsaStream::getPcmDevice() const
 {
-    AUDIOCOMMS_ASSERT(_device != NULL, "Null audio device attached to stream");
-    return _device->getPcmDevice();
+    AUDIOCOMMS_ASSERT(mDevice != NULL, "Null audio device attached to stream");
+    return mDevice->getPcmDevice();
 }
 
 android::status_t TinyAlsaStream::attachRouteL()
 {
-    _device = static_cast<TinyAlsaAudioDevice *>(getNewStreamRoute()->getAudioDevice());
+    mDevice = static_cast<TinyAlsaAudioDevice *>(getNewStreamRoute()->getAudioDevice());
     Stream::attachRouteL();
     return OK;
 }
@@ -48,7 +48,7 @@ android::status_t TinyAlsaStream::attachRouteL()
 android::status_t TinyAlsaStream::detachRouteL()
 {
     Stream::detachRouteL();
-    _device = NULL;
+    mDevice = NULL;
     return OK;
 }
 

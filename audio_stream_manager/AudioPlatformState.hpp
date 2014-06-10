@@ -109,7 +109,7 @@ public:
      */
     void setModemAlive(bool isAlive)
     {
-        setValue(isAlive, _modemState);
+        setValue(isAlive, mModemState);
     }
     /**
      * Get the modem status.
@@ -118,7 +118,7 @@ public:
      */
     bool isModemAlive() const
     {
-        return getValue(_modemState);
+        return getValue(mModemState);
     }
 
     /**
@@ -128,7 +128,7 @@ public:
      */
     void setModemAudioAvailable(bool isAudioAvailable)
     {
-        setValue(isAudioAvailable, _modemAudioStatus);
+        setValue(isAudioAvailable, mModemAudioStatus);
     }
     /**
      * Get the modem audio call status.
@@ -137,7 +137,7 @@ public:
      */
     bool isModemAudioAvailable() const
     {
-        return getValue(_modemAudioStatus);
+        return getValue(mModemAudioStatus);
     }
 
     /**
@@ -147,7 +147,7 @@ public:
      */
     void setModemEmbedded(bool isPresent)
     {
-        setValue(isPresent, _hasModem);
+        setValue(isPresent, mHasModem);
     }
 
     /**
@@ -157,7 +157,7 @@ public:
      */
     bool isModemEmbedded() const
     {
-        return getValue(_hasModem);
+        return getValue(mHasModem);
     }
 
     /**
@@ -169,7 +169,7 @@ public:
     void setMode(int mode)
     {
         VolumeKeys::wakeup(mode == AudioSystem::MODE_IN_CALL);
-        setValue(mode, _androidMode);
+        setValue(mode, mAndroidMode);
     }
 
     /**
@@ -180,7 +180,7 @@ public:
      */
     int getMode() const
     {
-        return getValue(_androidMode);
+        return getValue(mAndroidMode);
     }
 
     /**
@@ -191,7 +191,7 @@ public:
      */
     void setDevices(uint32_t devices, bool isOut)
     {
-        setValue(devices, isOut ? _outputDevice : _inputDevice);
+        setValue(devices, isOut ? mOutputDevice : mInputDevice);
     }
     /**
      * Get the devices.
@@ -201,7 +201,7 @@ public:
      */
     uint32_t getDevices(bool isOut) const
     {
-        return getValue(isOut ? _outputDevice : _inputDevice);
+        return getValue(isOut ? mOutputDevice : mInputDevice);
     }
 
     /**
@@ -212,7 +212,7 @@ public:
      */
     void setCsvBandType(CAudioBand::Type bandType)
     {
-        setValue(bandType, _csvBand);
+        setValue(bandType, mCsvBand);
     }
     /**
      * Get the CSV Band Type.
@@ -222,7 +222,7 @@ public:
      */
     CAudioBand::Type getCsvBandType() const
     {
-        return static_cast<CAudioBand::Type>(getValue(_csvBand));
+        return static_cast<CAudioBand::Type>(getValue(mCsvBand));
     }
 
     /**
@@ -237,7 +237,7 @@ public:
      */
     uint32_t getInputSource() const
     {
-        return getValue(_inputSources);
+        return getValue(mInputSources);
     }
 
     /**
@@ -251,7 +251,7 @@ public:
      */
     uint32_t getOutputFlags() const
     {
-        return getValue(_outputFlags);
+        return getValue(mOutputFlags);
     }
 
     /**
@@ -261,7 +261,7 @@ public:
      */
     void setMicMute(bool muted)
     {
-        setValue(muted, _micMute);
+        setValue(muted, mMicMute);
     }
     /**
      * Get the mic to muted/unmuted state.
@@ -270,7 +270,7 @@ public:
      */
     bool isMicMuted() const
     {
-        return getValue(_micMute);
+        return getValue(mMicMute);
     }
 
     /**
@@ -469,53 +469,52 @@ private:
      */
     uint32_t updateStreamsMask(bool isOut);
 
-    uint32_t _directStreamsRefCount; /**< reference counter of direct streams. */
-
     /**
      * Input/Output Streams list.
      */
     std::list<const AudioStream *>
-    _activeStreamsList[audio_comms::utilities::Direction::_nbDirections];
+    mActiveStreamsList[audio_comms::utilities::Direction::_nbDirections];
 
-    std::map<std::string, CriterionType *> _criterionTypeMap;
-    std::map<std::string, Criterion *> _criterionMap;
-    std::vector<ParameterCriterion *> _parameterCriteriaVector; /**< Map of parameter criteria. */
+    std::map<std::string, CriterionType *> mCriterionTypeMap;
+    std::map<std::string, Criterion *> mCriterionMap;
+    std::vector<ParameterCriterion *> mParameterCriteriaVector; /**< Map of parameter criteria. */
 
-    CParameterMgrPlatformConnector *_routePfwConnector; /**< Route Parameter Manager connector. */
-    ParameterMgrPlatformConnectorLogger *_routePfwConnectorLogger; /**< Route PFW logger. */
+    CParameterMgrPlatformConnector *mRoutePfwConnector; /**< Route Parameter Manager connector. */
+    ParameterMgrPlatformConnectorLogger *mRoutePfwConnectorLogger; /**< Route PFW logger. */
 
     /**
      * Defines the name of the Android property describing the name of the PFW configuration file.
      */
-    static const char *const _routePfwConfFileNamePropName;
-    static const char *const _routePfwDefaultConfFileName; /**< default PFW conf file name. */
+    static const char *const mRoutePfwConfFileNamePropName;
+    static const char *const mRoutePfwDefaultConfFileName; /**< default PFW conf file name. */
 
-    static const char *const _routeCriterionConfFilePath; /**< Criterion conf file path. */
-    /**
-     * Criterion vendor conf file path.
-     */
-    static const char *const _routeCriterionVendorConfFilePath;
-    static const char *const _inclusiveCriterionTypeTag; /**< tag for inclusive criterion. */
-    static const char *const _exclusiveCriterionTypeTag; /**< tag for exclusive criterion. */
-    static const char *const _criterionTag; /**< tag for criterion. */
+    static const char *const mRouteCriterionConfFilePath; /**< Criterion conf file path. */
 
-    static const char *const _outputDevice; /**< Output device criterion name. */
-    static const char *const _inputDevice; /**< Input device criterion name. */
-    static const char *const _inputSources; /**< Input sources criterion name. */
-    static const char *const _outputFlags; /**< Output flags criterion name. */
-    static const char *const _modemAudioStatus; /**< Modem audio status criterion name. */
-    static const char *const _androidMode; /**< Android Mode criterion name. */
-    static const char *const _hasModem; /**< has modem criterion name. */
-    static const char *const _modemState; /**< Modem State criterion name. */
-    static const char *const _stateChanged; /**< State Changed criterion name. */
-    static const char *const _csvBand; /**< CSV Band criterion name. */
-    static const char *const _voipBand; /**< VoIP band criterion name. */
-    static const char *const _micMute; /**< Mic Mute criterion name. */
-    static const char *const _preProcessorRequestedByActiveInput; /**< requested preproc. */
     /**
      * Stream Rate associated with narrow band in case of VoIP.
      */
-    static const uint32_t _voiceStreamRateForNarrowBandProcessing = 8000;
+    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
+    /**
+     * Criterion vendor conf file path.
+     */
+    static const char *const mRouteCriterionVendorConfFilePath;
+    static const char *const mInclusiveCriterionTypeTag; /**< tag for inclusive criterion. */
+    static const char *const mExclusiveCriterionTypeTag; /**< tag for exclusive criterion. */
+    static const char *const mCriterionTag; /**< tag for criterion. */
+
+    static const char *const mOutputDevice; /**< Output device criterion name. */
+    static const char *const mInputDevice; /**< Input device criterion name. */
+    static const char *const mInputSources; /**< Input sources criterion name. */
+    static const char *const mOutputFlags; /**< Output flags criterion name. */
+    static const char *const mModemAudioStatus; /**< Modem audio status criterion name. */
+    static const char *const mAndroidMode; /**< Android Mode criterion name. */
+    static const char *const mHasModem; /**< has modem criterion name. */
+    static const char *const mModemState; /**< Modem State criterion name. */
+    static const char *const mStateChanged; /**< State Changed criterion name. */
+    static const char *const mCsvBand; /**< CSV Band criterion name. */
+    static const char *const mVoipBand; /**< VoIP band criterion name. */
+    static const char *const mMicMute; /**< Mic Mute criterion name. */
+    static const char *const mPreProcessorRequestedByActiveInput; /**< requested preproc. */
 
     /**
      * String containing a list of paths to the hardware debug files on target

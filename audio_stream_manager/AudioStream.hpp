@@ -34,12 +34,12 @@
 /**
  * For debug purposes only, property-driven (dynamic)
  */
-#include <HALAudioDump.hpp>
+#include <HalAudioDump.hpp>
 
 namespace android_audio_legacy
 {
 
-class AudioIntelHAL;
+class AudioIntelHal;
 class AudioConversion;
 
 
@@ -79,7 +79,7 @@ public:
      */
     inline uint32_t sampleRate() const
     {
-        return _sampleSpec.getSampleRate();
+        return mSampleSpec.getSampleRate();
     }
 
     /**
@@ -89,7 +89,7 @@ public:
      */
     inline int format() const
     {
-        return _sampleSpec.getFormat();
+        return mSampleSpec.getFormat();
     }
 
     /**
@@ -99,7 +99,7 @@ public:
      */
     inline uint32_t channelCount() const
     {
-        return _sampleSpec.getChannelCount();
+        return mSampleSpec.getChannelCount();
     }
 
     /**
@@ -110,7 +110,7 @@ public:
      */
     inline uint32_t channels() const
     {
-        return _sampleSpec.getChannelMask();
+        return mSampleSpec.getChannelMask();
     }
 
     /**
@@ -154,7 +154,7 @@ public:
      */
     uint32_t getDevices() const
     {
-        return _devices;
+        return mDevices;
     }
 
     /**
@@ -172,8 +172,8 @@ public:
      */
     virtual uint32_t getApplicabilityMask() const
     {
-        AutoR lock(_streamLock);
-        return _applicabilityMask;
+        AutoR lock(mStreamLock);
+        return mApplicabilityMask;
     }
 
     /**
@@ -184,11 +184,11 @@ public:
      */
     SampleSpec streamSampleSpec() const
     {
-        return _sampleSpec;
+        return mSampleSpec;
     }
 
 protected:
-    AudioStream(AudioIntelHAL *parent);
+    AudioStream(AudioIntelHal *parent);
 
     /**
      * Set the Applicability mask.
@@ -289,9 +289,9 @@ protected:
      *
      * @return a HALAudioDump object before conversion
      */
-    HALAudioDump *getDumpObjectBeforeConv() const
+    HalAudioDump *getDumpObjectBeforeConv() const
     {
-        return _dumpBeforeConv;
+        return mDumpBeforeConv;
     }
 
 
@@ -300,9 +300,9 @@ protected:
      *
      * @return a HALAudioDump object after conversion
      */
-    HALAudioDump *getDumpObjectAfterConv() const
+    HalAudioDump *getDumpObjectAfterConv() const
     {
-        return _dumpAfterConv;
+        return mDumpAfterConv;
     }
 
     /**
@@ -324,7 +324,7 @@ protected:
      */
     bool safeSleep(uint32_t sleepTimeUs);
 
-    AudioIntelHAL *_parent; /**< Audio HAL singleton handler. */
+    AudioIntelHal *mParent; /**< Audio HAL singleton handler. */
 
     /**
      * Lock to protect preprocessing effects accessed from multiple contexts.
@@ -333,7 +333,7 @@ protected:
      * For input streams, variable protected by the lock is the list of pre processing effects
      * pushed by Audio Flinger and hooked by the stream in the context of the record thread.
      */
-    android::RWLock _preProcEffectLock;
+    android::RWLock mPreProcEffectLock;
 
     /**
      * maximum number of read/write retries.
@@ -365,15 +365,15 @@ private:
     void initAudioDump();
 
 
-    bool _standby; /**< state of the stream, true if standby, false if started. */
+    bool mStandby; /**< state of the stream, true if standby, false if started. */
 
-    uint32_t _devices; /**< devices mask selected by the policy for this stream.*/
+    uint32_t mDevices; /**< devices mask selected by the policy for this stream.*/
 
-    SampleSpec _sampleSpec; /**< stream sample specifications. */
+    SampleSpec mSampleSpec; /**< stream sample specifications. */
 
-    AudioConversion *_audioConversion; /**< Audio Conversion utility class. */
+    AudioConversion *mAudioConversion; /**< Audio Conversion utility class. */
 
-    uint32_t _latencyMs; /**< Latency associated with the current flag of the stream. */
+    uint32_t mLatencyMs; /**< Latency associated with the current flag of the stream. */
 
     /**
      * Applicability mask is either:
@@ -383,23 +383,23 @@ private:
      *  -for input streams: input source (bitfield done from audio_source_t in audio.h file.
      *          Note that 0 will be taken as none.
      */
-    uint32_t _applicabilityMask;
+    uint32_t mApplicabilityMask;
 
-    static const uint32_t _defaultSampleRate = 48000; /**< Default HAL sample rate. */
-    static const uint32_t _defaultChannelCount = 2; /**< Default HAL nb of channels. */
-    static const uint32_t _defaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format. */
+    static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
+    static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */
+    static const uint32_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format. */
 
     /**
      * Audio dump object used if one of the dump property before
      * conversion is true (check init.rc file)
      */
-    HALAudioDump *_dumpBeforeConv;
+    HalAudioDump *mDumpBeforeConv;
 
     /**
      * Audio dump object used if one of the dump property after
      * conversion is true (check init.rc file)
      */
-    HALAudioDump *_dumpAfterConv;
+    HalAudioDump *mDumpAfterConv;
 
     /**
      * Array of property names before conversion

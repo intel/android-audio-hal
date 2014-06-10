@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -87,10 +87,10 @@ private:
      */
     void convertFloat2Short(float *inp, int16_t *out, size_t sz) const;
 
-    static const int _bufSize = 4608; /**< default buffer is 24 ms @ 48kHz on S16LE samples. */
-    size_t _maxFrameCnt;  /* max frame count the buffer can store */
-    void *_context;      /* handle used to do resample */
-    float *_floatInp;     /* here sample size is 4 bytes */
-    float *_floatOut;     /* here sample size is 4 bytes */
+    static const int mBufSize = 4608; /**< default buffer is 24 ms @ 48kHz on S16LE samples. */
+    size_t mMaxFrameCnt;  /* max frame count the buffer can store */
+    void *mContext;      /* handle used to do resample */
+    float *mFloatInp;     /* here sample size is 4 bytes */
+    float *mFloatOut;     /* here sample size is 4 bytes */
 };
 }  // namespace android

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -42,16 +42,16 @@ using std::string;
 
 AudioStreamRoute::AudioStreamRoute(const string &name, uint32_t routeIndex)
     : AudioRoute(name, routeIndex),
-      _currentStream(NULL),
-      _newStream(NULL),
-      _effectSupported(0),
-      _audioDevice(StreamLib::createAudioDevice())
+      mCurrentStream(NULL),
+      mNewStream(NULL),
+      mEffectSupported(0),
+      mAudioDevice(StreamLib::createAudioDevice())
 {
 }
 
 AudioStreamRoute::~AudioStreamRoute()
 {
-    delete _audioDevice;
+    delete mAudioDevice;
 }
 
 void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
@@ -68,24 +68,24 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
     ALOGV("%s: channels=%d", __FUNCTION__, config.channels);
     ALOGV("%s: rate=%d", __FUNCTION__, config.rate);
     ALOGV("%s: format=0x%X", __FUNCTION__, config.format);
-    _config = config;
+    mConfig = config;
 
-    _sampleSpec = SampleSpec(_config.channels, _config.format,
-                             _config.rate,  _config.channelsPolicy);
+    mSampleSpec = SampleSpec(mConfig.channels, mConfig.format,
+                             mConfig.rate,  mConfig.channelsPolicy);
 }
 
 bool AudioStreamRoute::needReflow() const
 {
-    return _previouslyUsed && _isUsed &&
-           (_routingStageRequested.test(Flow) || _routingStageRequested.test(Path) ||
-            _currentStream != _newStream);
+    return mPreviouslyUsed && mIsUsed &&
+           (mRoutingStageRequested.test(Flow) || mRoutingStageRequested.test(Path) ||
+            mCurrentStream != mNewStream);
 }
 
 status_t AudioStreamRoute::route(bool isPreEnable)
 {
     if (isPreEnable == isPreEnableRequired()) {
 
-        status_t err = _audioDevice->open(getCardName(), getPcmDeviceId(),
+        status_t err = mAudioDevice->open(getCardName(), getPcmDeviceId(),
                                           getRouteConfig(), isOut());
         if (err) {
 
@@ -96,7 +96,7 @@ status_t AudioStreamRoute::route(bool isPreEnable)
 
     if (!isPreEnable) {
 
-        if (!_audioDevice->isOpened()) {
+        if (!mAudioDevice->isOpened()) {
 
             ALOGE("%s: error opening audio device, cannot route new stream", __FUNCTION__);
             return NO_INIT;
@@ -121,7 +121,7 @@ void AudioStreamRoute::unroute(bool isPostDisable)
 {
     if (!isPostDisable) {
 
-        if (!_audioDevice->isOpened()) {
+        if (!mAudioDevice->isOpened()) {
 
             ALOGE("%s: error opening audio device, cannot unroute current stream", __FUNCTION__);
             return;
@@ -137,7 +137,7 @@ void AudioStreamRoute::unroute(bool isPostDisable)
 
     if (isPostDisable == isPostDisableRequired()) {
 
-        status_t err = _audioDevice->close();
+        status_t err = mAudioDevice->close();
         if (err) {
 
             return;
@@ -147,9 +147,9 @@ void AudioStreamRoute::unroute(bool isPostDisable)
 
 void AudioStreamRoute::configure()
 {
-    if (_currentStream != _newStream) {
+    if (mCurrentStream != mNewStream) {
 
-        if (!_audioDevice->isOpened()) {
+        if (!mAudioDevice->isOpened()) {
 
             ALOGE("%s: error opening audio device, cannot configure any stream", __FUNCTION__);
             return;
@@ -168,10 +168,10 @@ void AudioStreamRoute::configure()
 
 void AudioStreamRoute::resetAvailability()
 {
-    if (_newStream) {
+    if (mNewStream) {
 
-        _newStream->resetNewStreamRoute();
-        _newStream = NULL;
+        mNewStream->resetNewStreamRoute();
+        mNewStream = NULL;
     }
     AudioRoute::resetAvailability();
 }
@@ -183,10 +183,10 @@ void AudioStreamRoute::setStream(Stream *stream)
     ALOGV("%s to %s route", __FUNCTION__, getName().c_str());
     AUDIOCOMMS_ASSERT(stream->isOut() == isOut(), "Fatal: unexpected stream direction!");
 
-    AUDIOCOMMS_ASSERT(_newStream == NULL, "Fatal: invalid stream value!");
+    AUDIOCOMMS_ASSERT(mNewStream == NULL, "Fatal: invalid stream value!");
 
-    _newStream = stream;
-    _newStream->setNewStreamRoute(this);
+    mNewStream = stream;
+    mNewStream->setNewStreamRoute(this);
 }
 
 bool AudioStreamRoute::isApplicable(const Stream *stream) const
@@ -198,52 +198,52 @@ bool AudioStreamRoute::isApplicable(const Stream *stream) const
           isOut() ? "output" : "input",
           mask,
           isOut() ? "output" : "input",
-          _config.applicabilityMask);
+          mConfig.applicabilityMask);
 
-    return AudioRoute::isApplicable() && !isUsed() && (mask & _config.applicabilityMask) &&
+    return AudioRoute::isApplicable() && !isUsed() && (mask & mConfig.applicabilityMask) &&
            implementsEffects(stream->getEffectRequested());
 }
 
 bool AudioStreamRoute::implementsEffects(uint32_t effectsMask) const
 {
-    return (_effectSupportedMask & effectsMask) == effectsMask;
+    return (mEffectSupportedMask & effectsMask) == effectsMask;
 }
 
 status_t AudioStreamRoute::attachNewStream()
 {
-    AUDIOCOMMS_ASSERT(_newStream != NULL, "Fatal: invalid stream value!");
+    AUDIOCOMMS_ASSERT(mNewStream != NULL, "Fatal: invalid stream value!");
 
-    status_t err = _newStream->attachRoute();
+    status_t err = mNewStream->attachRoute();
 
     if (err != NO_ERROR) {
         ALOGE("Failing to attach route for new stream : %d", err);
         return err;
     }
 
-    _currentStream = _newStream;
+    mCurrentStream = mNewStream;
 
     return NO_ERROR;
 }
 
 void AudioStreamRoute::detachCurrentStream()
 {
-    AUDIOCOMMS_ASSERT(_currentStream != NULL, "Fatal: invalid stream value!");
+    AUDIOCOMMS_ASSERT(mCurrentStream != NULL, "Fatal: invalid stream value!");
 
-    _currentStream->detachRoute();
-    _currentStream = NULL;
+    mCurrentStream->detachRoute();
+    mCurrentStream = NULL;
 }
 
 void AudioStreamRoute::addEffectSupported(const std::string &effect)
 {
-    _effectSupportedMask |= EffectHelper::convertEffectNameToProcId(effect);
+    mEffectSupportedMask |= EffectHelper::convertEffectNameToProcId(effect);
 }
 
 uint32_t AudioStreamRoute::getLatencyInUs() const
 {
-    return getSampleSpec().convertFramesToUsec(_config.periodSize * _config.periodCount);
+    return getSampleSpec().convertFramesToUsec(mConfig.periodSize * mConfig.periodCount);
 }
 
 uint32_t AudioStreamRoute::getPeriodInUs() const
 {
-    return getSampleSpec().convertFramesToUsec(_config.periodSize);
+    return getSampleSpec().convertFramesToUsec(mConfig.periodSize);
 }

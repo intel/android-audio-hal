@@ -31,7 +31,7 @@ class TinyAlsaAudioDevice : public IAudioDevice
 {
 public:
     TinyAlsaAudioDevice()
-        : _pcmDevice(NULL) {}
+        : mPcmDevice(NULL) {}
 
     /**
      * Get the pcm device handle.
@@ -50,5 +50,5 @@ public:
     virtual android::status_t close();
 
 private:
-    pcm *_pcmDevice; /**< Handle on tiny alsa PCM device. */
+    pcm *mPcmDevice; /**< Handle on tiny alsa PCM device. */
 };

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -33,82 +33,82 @@ using std::string;
 
 bool Stream::isRouted() const
 {
-    AutoR lock(_streamLock);
+    AutoR lock(mStreamLock);
     return isRoutedL();
 }
 
 bool Stream::isRoutedL() const
 {
-    return _currentStreamRoute != NULL;
+    return mCurrentStreamRoute != NULL;
 }
 
 bool Stream::isNewRouteAvailable() const
 {
-    AutoR lock(_streamLock);
-    return _newStreamRoute != NULL;
+    AutoR lock(mStreamLock);
+    return mNewStreamRoute != NULL;
 }
 
 android::status_t Stream::attachRoute()
 {
-    AutoW lock(_streamLock);
+    AutoW lock(mStreamLock);
     return attachRouteL();
 }
 
 
 android::status_t Stream::detachRoute()
 {
-    AutoW lock(_streamLock);
+    AutoW lock(mStreamLock);
     return detachRouteL();
 }
 
 android::status_t Stream::attachRouteL()
 {
-    AUDIOCOMMS_ASSERT(_newStreamRoute != NULL, "NULL route pointer");
-    setCurrentStreamRouteL(_newStreamRoute);
-    AUDIOCOMMS_ASSERT(_currentStreamRoute != NULL, "NULL route pointer");
-    setRouteSampleSpecL(_currentStreamRoute->getSampleSpec());
+    AUDIOCOMMS_ASSERT(mNewStreamRoute != NULL, "NULL route pointer");
+    setCurrentStreamRouteL(mNewStreamRoute);
+    AUDIOCOMMS_ASSERT(mCurrentStreamRoute != NULL, "NULL route pointer");
+    setRouteSampleSpecL(mCurrentStreamRoute->getSampleSpec());
     return android::OK;
 }
 
 
 android::status_t Stream::detachRouteL()
 {
-    _currentStreamRoute = NULL;
+    mCurrentStreamRoute = NULL;
     return android::OK;
 }
 
 void Stream::addRequestedEffect(uint32_t effectId)
 {
-    _effectsRequestedMask |= effectId;
+    mEffectsRequestedMask |= effectId;
 }
 
 void Stream::removeRequestedEffect(uint32_t effectId)
 {
-    _effectsRequestedMask &= ~effectId;
+    mEffectsRequestedMask &= ~effectId;
 }
 
 uint32_t Stream::getOutputSilencePrologMs() const
 {
-    AUDIOCOMMS_ASSERT(_currentStreamRoute != NULL, "NULL route pointer");
-    return _currentStreamRoute->getOutputSilencePrologMs();
+    AUDIOCOMMS_ASSERT(mCurrentStreamRoute != NULL, "NULL route pointer");
+    return mCurrentStreamRoute->getOutputSilencePrologMs();
 }
 
 void Stream::resetNewStreamRoute()
 {
-    _newStreamRoute = NULL;
+    mNewStreamRoute = NULL;
 }
 
 void Stream::setNewStreamRoute(IStreamRoute *newStreamRoute)
 {
-    _newStreamRoute = newStreamRoute;
+    mNewStreamRoute = newStreamRoute;
 }
 
 void Stream::setCurrentStreamRouteL(IStreamRoute *currentStreamRoute)
 {
-    _currentStreamRoute = currentStreamRoute;
+    mCurrentStreamRoute = currentStreamRoute;
 }
 
 void Stream::setRouteSampleSpecL(SampleSpec sampleSpec)
 {
-    _routeSampleSpec = sampleSpec;
+    mRouteSampleSpec = sampleSpec;
 }

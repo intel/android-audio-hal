@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "AudioIntelHAL.hpp"
+#include "AudioIntelHal.hpp"
 #include "AudioStream.hpp"
 #include <media/AudioBufferProvider.h>
 
@@ -37,7 +37,7 @@ private:
     typedef std::list<effect_handle_t>::iterator AudioEffectsListIterator;
 
 public:
-    AudioStreamInImpl(AudioIntelHAL *parent,
+    AudioStreamInImpl(AudioIntelHal *parent,
                       AudioSystem::audio_in_acoustics audio_acoustics);
 
     /**
@@ -222,12 +222,12 @@ private:
     class AudioEffectHandle
     {
     public:
-        effect_handle_t _preprocessor;
-        struct echo_reference_itfe *_echoReference;
+        effect_handle_t mPreprocessor;
+        struct echo_reference_itfe *mEchoReference;
         AudioEffectHandle()
-            : _preprocessor(NULL), _echoReference(NULL) {}
+            : mPreprocessor(NULL), mEchoReference(NULL) {}
         AudioEffectHandle(effect_handle_t effect, struct echo_reference_itfe *reference)
-            : _preprocessor(effect), _echoReference(reference) {}
+            : mPreprocessor(effect), mEchoReference(reference) {}
         ~AudioEffectHandle() {}
     };
 
@@ -241,7 +241,7 @@ private:
                         const effect_handle_t &effect) const
         {
 
-            return effectHandle._preprocessor == effect;
+            return effectHandle.mPreprocessor == effect;
         }
     };
 
@@ -360,51 +360,51 @@ private:
     /**
      * amount of input frames lost in the audio driver (i.e. not provided on time to client).
      */
-    unsigned int _framesLost;
-    AudioSystem::audio_in_acoustics _acoustics; /**< acoustic effects status. */
+    unsigned int mFramesLost;
+    AudioSystem::audio_in_acoustics mAcoustics; /**< acoustic effects status. */
 
-    ssize_t _framesIn; /**< frames available in stream input buffer. */
+    ssize_t mFramesIn; /**< frames available in stream input buffer. */
 
     /**
      * This variable represents the number of frames of in mProcessingBuffer.
      */
-    ssize_t _processingFramesIn;
+    ssize_t mProcessingFramesIn;
 
     /**
      * This variable is a dynamic buffer and contains raw data read from input device.
      * It is used as input buffer before application of SW accoustics effects.
      */
-    int16_t *_processingBuffer;
+    int16_t *mProcessingBuffer;
 
     /**
      * This variable represents the size in frames of in mProcessingBuffer.
      */
-    ssize_t _processingBufferSizeInFrames;
+    ssize_t mProcessingBufferSizeInFrames;
 
     /**
      * This variable represents the number of frames of in mReferenceBuffer.
      */
-    ssize_t _referenceFramesIn;
+    ssize_t mReferenceFramesIn;
 
     /**
      * This variable is a dynamic buffer and contains the data used as reference for AEC and
      * which are read from AudioEffectHandle::mEchoReference.
      */
-    int16_t *_referenceBuffer;
+    int16_t *mReferenceBuffer;
 
     /**
      * This variable represents the size in frames of in mReferenceBuffer.
      */
-    ssize_t _referenceBufferSizeInFrames;
+    ssize_t mReferenceBufferSizeInFrames;
 
     /**
      * It is vector which contains the handlers to accoustics SW effects.
      */
-    Vector<AudioEffectHandle> _preprocessorsHandlerList;
+    Vector<AudioEffectHandle> mPreprocessorsHandlerList;
 
-    char *_hwBuffer; /**< buffer in which samples are read from audio device. */
-    ssize_t _hwBufferSize; /**< Size of the buffer in which samples are read from audio device. */
+    char *mHwBuffer; /**< buffer in which samples are read from audio device. */
+    ssize_t mHwBufferSize; /**< Size of the buffer in which samples are read from audio device. */
 
-    static const std::string _hwEffectImplementor; /**< Implementor name for HW effects. */
+    static const std::string mHwEffectImplementor; /**< Implementor name for HW effects. */
 };
 }         // namespace android

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -75,20 +75,20 @@ android::status_t AudioRemapper::configure()
 {
     formatSupported<type>();
 
-    if (_ssSrc.isMono() && _ssDst.isStereo()) {
+    if (mSsSrc.isMono() && mSsDst.isStereo()) {
 
-        _convertSamplesFct =
+        mConvertSamplesFct =
             static_cast<SampleConverter>(&AudioRemapper::convertMonoToStereo<type> );
-    } else if (_ssSrc.isStereo() && _ssDst.isMono()) {
+    } else if (mSsSrc.isStereo() && mSsDst.isMono()) {
 
-        _convertSamplesFct =
+        mConvertSamplesFct =
             static_cast<SampleConverter>(&AudioRemapper::convertStereoToMono<type> );
-    } else if (_ssSrc.isStereo() && _ssDst.isStereo()) {
+    } else if (mSsSrc.isStereo() && mSsDst.isStereo()) {
 
         // Iso channel, checks the channels policy
-        if (!SampleSpec::isSampleSpecItemEqual(ChannelCountSampleSpecItem, _ssSrc, _ssDst)) {
+        if (!SampleSpec::isSampleSpecItemEqual(ChannelCountSampleSpecItem, mSsSrc, mSsDst)) {
 
-            _convertSamplesFct =
+            mConvertSamplesFct =
                 static_cast<SampleConverter>(&AudioRemapper::convertChannelsPolicyInStereo<type> );
         }
     } else {
@@ -107,7 +107,7 @@ status_t AudioRemapper::convertStereoToMono(const void *src,
 {
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
-    uint32_t srcChannels = _ssSrc.getChannelCount();
+    uint32_t srcChannels = mSsSrc.getChannelCount();
     size_t frames;
 
     for (frames = 0; frames < inFrames; frames++) {
@@ -129,14 +129,14 @@ status_t AudioRemapper::convertMonoToStereo(const void *src,
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
     size_t frames = 0;
-    uint32_t dstChannels = _ssDst.getChannelCount();
+    uint32_t dstChannels = mSsDst.getChannelCount();
 
     for (frames = 0; frames < inFrames; frames++) {
 
         uint32_t channels;
         for (channels = 0; channels < dstChannels; channels++) {
 
-            if (_ssDst.getChannelsPolicy(channels) != SampleSpec::Ignore) {
+            if (mSsDst.getChannelsPolicy(channels) != SampleSpec::Ignore) {
 
                 dstTyped[dstChannels * frames + channels] = srcTyped[frames];
             }
@@ -156,7 +156,7 @@ status_t AudioRemapper::convertChannelsPolicyInStereo(const void *src,
 {
     const type *srcTyped = static_cast<const type *>(src);
     uint32_t frames = 0;
-    uint32_t srcChannels = _ssSrc.getChannelCount();
+    uint32_t srcChannels = mSsSrc.getChannelCount();
 
     struct Stereo
     {
@@ -179,7 +179,7 @@ status_t AudioRemapper::convertChannelsPolicyInStereo(const void *src,
 template <typename type>
 type AudioRemapper::convertSample(const type *src, Channel channel) const
 {
-    SampleSpec::ChannelsPolicy dstPolicy = _ssDst.getChannelsPolicy(channel);
+    SampleSpec::ChannelsPolicy dstPolicy = mSsDst.getChannelsPolicy(channel);
 
     if (dstPolicy == SampleSpec::Ignore) {
 
@@ -193,7 +193,7 @@ type AudioRemapper::convertSample(const type *src, Channel channel) const
 
     // Destination policy is Copy
     // so copy only if source channel policy is not ignore
-    if (_ssSrc.getChannelsPolicy(channel) != SampleSpec::Ignore) {
+    if (mSsSrc.getChannelsPolicy(channel) != SampleSpec::Ignore) {
 
         return src[channel];
     }
@@ -212,9 +212,9 @@ type AudioRemapper::getAveragedSrcFrame(const type *src) const
     // Loops on source channels, checks upon the channel policy to take it into account
     // or not.
     // Average on all valid source channels
-    for (uint32_t iSrcChannels = 0; iSrcChannels < _ssSrc.getChannelCount(); iSrcChannels++) {
+    for (uint32_t iSrcChannels = 0; iSrcChannels < mSsSrc.getChannelCount(); iSrcChannels++) {
 
-        if (_ssSrc.getChannelsPolicy(iSrcChannels) != SampleSpec::Ignore) {
+        if (mSsSrc.getChannelsPolicy(iSrcChannels) != SampleSpec::Ignore) {
 
             dst += src[iSrcChannels];
             validSrcChannels += 1;

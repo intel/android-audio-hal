@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -39,18 +39,18 @@ public:
 
 private:
     /**< tracks down state of wakeup property */
-    static bool _wakeupEnabled;
+    static bool mWakeupEnabled;
 
     /**< used to represent the filepath to enabled_wakeup property file */
-    static const char *const _gpioKeysWakeupEnable;
+    static const char *const mGpioKeysWakeupEnable;
 
     /**< used to represent the filepath to disabled_wakeup property file */
-    static const char *const _gpioKeysWakeupDisable;
+    static const char *const mGpioKeysWakeupDisable;
 
     /**< id of volume down key */
-    static const char *const _keyVolumeDown;
+    static const char *const mKeyVolumeDown;
 
     /**< id of volume up key */
-    static const char *const _keyVolumeUp;
+    static const char *const mKeyVolumeUp;
 };
 }

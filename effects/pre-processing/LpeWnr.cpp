@@ -26,7 +26,7 @@
 #include "LpeWnr.hpp"
 
 WnrAudioEffect::WnrAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &wnrDescriptor)
+    : AudioEffectStub(itfe, &mWnrDescriptor)
 {
 }
 
@@ -40,7 +40,7 @@ static const effect_uuid_t FX_IID_WNR_ = {
 
 const effect_uuid_t *const FX_IID_WNR = &FX_IID_WNR_;
 
-const effect_descriptor_t WnrAudioEffect::wnrDescriptor = {
+const effect_descriptor_t WnrAudioEffect::mWnrDescriptor = {
     type:         FX_IID_WNR_,
     uuid:         {
         timeLow: 0xe8c32c80,

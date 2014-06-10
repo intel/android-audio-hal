@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -59,7 +59,7 @@ void SampleSpec::init(uint32_t channel,
                       uint32_t format,
                       uint32_t rate)
 {
-    _channelMask = 0;
+    mChannelMask = 0;
     setSampleSpecItem(ChannelCountSampleSpecItem, channel);
     setSampleSpecItem(FormatSampleSpecItem, format);
     setSampleSpecItem(RateSampleSpecItem, rate);
@@ -72,36 +72,36 @@ void SampleSpec::setSampleSpecItem(SampleSpecItem sampleSpecItem, uint32_t value
 
     if (sampleSpecItem == ChannelCountSampleSpecItem) {
 
-        AUDIOCOMMS_ASSERT(value < _maxChannels, "Max channel number reached");
+        AUDIOCOMMS_ASSERT(value < mMaxChannels, "Max channel number reached");
 
-        _channelsPolicy.clear();
+        mChannelsPolicy.clear();
         // Reset all the channels policy to copy by default
         for (uint32_t i = 0; i < value; i++) {
 
-            _channelsPolicy.push_back(Copy);
+            mChannelsPolicy.push_back(Copy);
         }
     }
-    _sampleSpec[sampleSpecItem] = value;
+    mSampleSpec[sampleSpecItem] = value;
 }
 
 void SampleSpec::setChannelsPolicy(const vector<ChannelsPolicy> &channelsPolicy)
 {
-    AUDIOCOMMS_ASSERT(channelsPolicy.size() <= _sampleSpec[ChannelCountSampleSpecItem],
+    AUDIOCOMMS_ASSERT(channelsPolicy.size() <= mSampleSpec[ChannelCountSampleSpecItem],
                       "Channel policy vector has more channel than sample spec");
-    _channelsPolicy = channelsPolicy;
+    mChannelsPolicy = channelsPolicy;
 }
 
 SampleSpec::ChannelsPolicy SampleSpec::getChannelsPolicy(uint32_t channelIndex) const
 {
-    AUDIOCOMMS_ASSERT(channelIndex < _channelsPolicy.size(),
+    AUDIOCOMMS_ASSERT(channelIndex < mChannelsPolicy.size(),
                       "request of channel policy outside channel numbers");
-    return _channelsPolicy[channelIndex];
+    return mChannelsPolicy[channelIndex];
 }
 
 uint32_t SampleSpec::getSampleSpecItem(SampleSpecItem sampleSpecItem) const
 {
     SAMPLE_SPEC_ITEM_IS_VALID(sampleSpecItem);
-    return _sampleSpec[sampleSpecItem];
+    return mSampleSpec[sampleSpecItem];
 }
 
 size_t SampleSpec::getFrameSize() const
@@ -127,14 +127,14 @@ size_t SampleSpec::convertFramesToUsec(uint32_t frames) const
 {
     AUDIOCOMMS_ASSERT(getFrameSize() != 0, "Null frame size");
     AUDIOCOMMS_ASSERT((frames / getSampleRate()) <=
-                      (numeric_limits<size_t>::max() / _usecPerSec),
+                      (numeric_limits<size_t>::max() / mUsecPerSec),
                       "conversion exceeds limit");
-    return (_usecPerSec * static_cast<uint64_t>(frames)) / getSampleRate();
+    return (mUsecPerSec * static_cast<uint64_t>(frames)) / getSampleRate();
 }
 
 size_t SampleSpec::convertUsecToframes(uint32_t intervalUsec) const
 {
-    return static_cast<uint64_t>(intervalUsec) * getSampleRate() / _usecPerSec;
+    return static_cast<uint64_t>(intervalUsec) * getSampleRate() / mUsecPerSec;
 }
 
 bool SampleSpec::isSampleSpecItemEqual(SampleSpecItem sampleSpecItem,

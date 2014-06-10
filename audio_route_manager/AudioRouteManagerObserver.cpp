@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -28,20 +28,20 @@
 
 AudioRouteManagerObserver::AudioRouteManagerObserver()
 {
-    AUDIOCOMMS_ASSERT(sem_init(&_syncSem, 0, 0) == 0, "failed to create semaphore");
+    AUDIOCOMMS_ASSERT(sem_init(&mSyncSem, 0, 0) == 0, "failed to create semaphore");
 }
 
 AudioRouteManagerObserver::~AudioRouteManagerObserver()
 {
-    AUDIOCOMMS_ASSERT(sem_destroy(&_syncSem) == 0, "failed to destroy semaphore");
+    AUDIOCOMMS_ASSERT(sem_destroy(&mSyncSem) == 0, "failed to destroy semaphore");
 }
 
 void AudioRouteManagerObserver::waitNotification()
 {
-    AUDIOCOMMS_ASSERT(sem_wait(&_syncSem) == 0, "failed to wait semaphore");
+    AUDIOCOMMS_ASSERT(sem_wait(&mSyncSem) == 0, "failed to wait semaphore");
 }
 
 void AudioRouteManagerObserver::notify()
 {
-    AUDIOCOMMS_ASSERT(sem_post(&_syncSem) == 0, "failed to post semaphore");
+    AUDIOCOMMS_ASSERT(sem_post(&mSyncSem) == 0, "failed to post semaphore");
 }

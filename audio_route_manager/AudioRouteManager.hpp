@@ -87,26 +87,26 @@ private:
     {
     public:
         RouteInterfaceImpl(AudioRouteManager *audioRouteManager)
-            : _routeMgr(audioRouteManager) {}
+            : mRouteMgr(audioRouteManager) {}
 
         virtual void addPort(const std::string &name, uint32_t portId)
         {
-            _routeMgr->addPort(name, portId);
+            mRouteMgr->addPort(name, portId);
         }
 
         virtual void addPortGroup(const std::string &name,
                                   uint32_t groupId,
                                   const std::string &portMember)
         {
-            _routeMgr->addPortGroup(name, groupId, portMember);
+            mRouteMgr->addPortGroup(name, groupId, portMember);
         }
 
         virtual void addAudioRoute(const std::string &name, uint32_t routeId,
                                    const std::string &portSrc, const std::string &portDst,
                                    bool isOut)
         {
-            _routeMgr->addRoute<AudioRoute>(name, routeId, portSrc, portDst, isOut,
-                                            _routeMgr->_routeMap);
+            mRouteMgr->addRoute<AudioRoute>(name, routeId, portSrc, portDst, isOut,
+                                            mRouteMgr->mRouteMap);
         }
 
         virtual void addAudioStreamRoute(const std::string &name,
@@ -114,77 +114,77 @@ private:
                                          const std::string &portSrc, const std::string &portDst,
                                          bool isOut)
         {
-            _routeMgr->addRoute<AudioStreamRoute>(name, routeId, portSrc, portDst, isOut,
-                                                  _routeMgr->_streamRouteMap);
+            mRouteMgr->addRoute<AudioStreamRoute>(name, routeId, portSrc, portDst, isOut,
+                                                  mRouteMgr->mStreamRouteMap);
         }
 
         virtual void updateStreamRouteConfig(const std::string &name,
                                              const StreamRouteConfig &config)
         {
-            _routeMgr->updateStreamRouteConfig(name, config);
+            mRouteMgr->updateStreamRouteConfig(name, config);
         }
 
         virtual void addRouteSupportedEffect(const std::string &name, const std::string &effect)
         {
-            _routeMgr->addRouteSupportedEffect(name, effect);
+            mRouteMgr->addRouteSupportedEffect(name, effect);
         }
 
         virtual void setRouteApplicable(const std::string &name, bool isApplicable)
         {
-            _routeMgr->setRouteApplicable(name, isApplicable);
+            mRouteMgr->setRouteApplicable(name, isApplicable);
         }
 
         virtual void setRouteNeedReconfigure(const std::string &name, bool needReconfigure)
         {
-            _routeMgr->setRouteNeedReconfigure(name, needReconfigure);
+            mRouteMgr->setRouteNeedReconfigure(name, needReconfigure);
         }
 
         virtual void setRouteNeedReroute(const std::string &name, bool needReroute)
         {
-            _routeMgr->setRouteNeedReroute(name, needReroute);
+            mRouteMgr->setRouteNeedReroute(name, needReroute);
         }
 
         virtual void setPortBlocked(const std::string &name, bool isBlocked)
         {
-            _routeMgr->setPortBlocked(name, isBlocked);
+            mRouteMgr->setPortBlocked(name, isBlocked);
         }
 
         virtual bool addCriterionType(const std::string &name,
                                       bool isInclusive)
         {
-            return _routeMgr->addCriterionType(name, isInclusive);
+            return mRouteMgr->addCriterionType(name, isInclusive);
         }
 
         virtual void addCriterionTypeValuePair(const std::string &name,
                                                const std::string &literal,
                                                uint32_t value)
         {
-            _routeMgr->addCriterionTypeValuePair(name, literal, value);
+            mRouteMgr->addCriterionTypeValuePair(name, literal, value);
         }
 
         virtual void addCriterion(const std::string &name, const std::string &criteriaType)
         {
-            _routeMgr->addCriterion(name, criteriaType);
+            mRouteMgr->addCriterion(name, criteriaType);
         }
 
         virtual void setParameter(const std::string &name, uint32_t value)
         {
-            _routeMgr->setCriterion(name, value);
+            mRouteMgr->setCriterion(name, value);
         }
 
     private:
-        AudioRouteManager *_routeMgr;
-    } _routeInterface;
+        AudioRouteManager *mRouteMgr;
+    } mRouteInterface;
 
     class StreamInterfaceImpl : public IStreamInterface
     {
     public:
         StreamInterfaceImpl(AudioRouteManager *audioRouteManager)
-            : _routeMgr(audioRouteManager) {}
+            : mRouteMgr(audioRouteManager) {}
 
         virtual android::status_t startService()
         {
-            return _routeMgr->startService();
+            return mRouteMgr->startService();
         }
 
         virtual android::status_t stopService()
@@ -194,52 +194,52 @@ private:
 
         virtual void addStream(Stream *stream)
         {
-            return _routeMgr->addStream(stream);
+            return mRouteMgr->addStream(stream);
         }
 
         virtual void removeStream(Stream *stream)
         {
-            return _routeMgr->removeStream(stream);
+            return mRouteMgr->removeStream(stream);
         }
 
         virtual void startStream()
         {
-            return _routeMgr->reconsiderRouting(true);
+            return mRouteMgr->reconsiderRouting(true);
         }
 
         virtual void stopStream()
         {
-            return _routeMgr->reconsiderRouting(true);
+            return mRouteMgr->reconsiderRouting(true);
         }
 
         virtual void reconsiderRouting(bool forceResync)
         {
-            return _routeMgr->reconsiderRouting(false, forceResync);
+            return mRouteMgr->reconsiderRouting(false, forceResync);
         }
 
         virtual android::status_t setVoiceVolume(float gain)
         {
-            return _routeMgr->setVoiceVolume(gain);
+            return mRouteMgr->setVoiceVolume(gain);
         }
 
         virtual Stream *getVoiceOutputStream()
         {
-            return _routeMgr->getVoiceOutputStream();
+            return mRouteMgr->getVoiceOutputStream();
         }
 
         virtual uint32_t getLatencyInUs(bool isOut, uint32_t flags = 0) const
         {
-            return _routeMgr->getLatencyInUs(isOut, flags);
+            return mRouteMgr->getLatencyInUs(isOut, flags);
         }
 
         virtual uint32_t getPeriodInUs(bool isOut, uint32_t flags = 0) const
         {
-            return _routeMgr->getPeriodInUs(isOut, flags);
+            return mRouteMgr->getPeriodInUs(isOut, flags);
         }
 
     private:
-        AudioRouteManager *_routeMgr;
-    } _streamInterface;
+        AudioRouteManager *mRouteMgr;
+    } mStreamInterface;
 
 private:
     /**
@@ -692,7 +692,7 @@ private:
      */
     inline CriterionType *routeCriterionType()
     {
-        return _criterionTypesMap[_routeCriterionType];
+        return mCriterionTypesMap[mRouteCriterionType];
     }
 
     /**
@@ -719,59 +719,59 @@ private:
      */
     virtual bool onProcess(uint16_t event);
 
-    static const std::pair<int, const char *> _routingStageValuePairs[];
+    static const std::pair<int, const char *> mRoutingStageValuePairs[];
 
     /**
      * Defines the name of the Android property describing the name of the *
      * audio PFW configuration file.
      */
-    static const char *const _audioPfwConfFilePropName;
-    static const char *const _audioPfwDefaultConfFileName;
+    static const char *const mAudioPfwConfFilePropName;
+    static const char *const mAudioPfwDefaultConfFileName;
     static const char *const
-    _closingRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
+    mClosingRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
     static const char *const
-    _openedRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
-    static const char *const _routeCriterionType;
-    static const char *const _routingStage;
-    static const char *const _voiceVolume;
+    mOpenedRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
+    static const char *const mRouteCriterionType;
+    static const char *const mRoutingStage;
+    static const char *const mVoiceVolume;
 
-    CParameterMgrPlatformConnector *_audioPfwConnector; /**< parameter manager connector */
-    CParameterMgrPlatformConnectorLogger *_audioPfwConnectorLogger; /**< PFW logger. */
+    CParameterMgrPlatformConnector *mAudioPfwConnector; /**< parameter manager connector */
+    CParameterMgrPlatformConnectorLogger *mAudioPfwConnectorLogger; /**< PFW logger. */
 
     /**
      * Map of criteria used to pilot the audio PFW.
      */
-    std::map<std::string, Criterion *> _criteriaMap;
+    std::map<std::string, Criterion *> mCriteriaMap;
 
-    Criterion *_routingStageCriterion;
-    Criterion *_selectedClosingRoutes[audio_comms::utilities::Direction::_nbDirections];
-    Criterion *_selectedOpenedRoutes[audio_comms::utilities::Direction::_nbDirections];
+    Criterion *mRoutingStageCriterion;
+    Criterion *mSelectedClosingRoutes[audio_comms::utilities::Direction::_nbDirections];
+    Criterion *mSelectedOpenedRoutes[audio_comms::utilities::Direction::_nbDirections];
 
-    AudioParameterHelper *_parameterHelper;
+    AudioParameterHelper *mParameterHelper;
 
     /**
      * array of list of streams opened.
      */
-    std::list<Stream *> _streamsList[audio_comms::utilities::Direction::_nbDirections];
+    std::list<Stream *> mStreamsList[audio_comms::utilities::Direction::_nbDirections];
 
-    std::map<std::string, CriterionType *> _criterionTypesMap; /**< criterion types map. */
+    std::map<std::string, CriterionType *> mCriterionTypesMap; /**< criterion types map. */
 
-    std::map<std::string, AudioRoute *> _routeMap; /**< map of audio route to manage. */
+    std::map<std::string, AudioRoute *> mRouteMap; /**< map of audio route to manage. */
 
-    std::map<std::string, AudioStreamRoute *> _streamRouteMap; /**< map of audio stream route. */
+    std::map<std::string, AudioStreamRoute *> mStreamRouteMap; /**< map of audio stream route. */
 
-    std::map<std::string, AudioPort *> _portMap; /**< map of audio ports whose state may change. */
+    std::map<std::string, AudioPort *> mPortMap; /**< map of audio ports whose state may change. */
 
     /**
      * map of mutuel exclusive port groups.
      */
-    std::map<std::string, AudioPortGroup *> _portGroupMap;
+    std::map<std::string, AudioPortGroup *> mPortGroupMap;
 
-    CEventThread *_eventThread; /**< worker thread in which routing is running. */
+    CEventThread *mEventThread; /**< worker thread in which routing is running. */
 
-    bool _isStarted; /**< Started service flag. */
+    bool mIsStarted; /**< Started service flag. */
 
-    mutable android::RWLock _routingLock; /**< lock to protect the routing. */
+    mutable android::RWLock mRoutingLock; /**< lock to protect the routing. */
 
     struct
     {
@@ -779,7 +779,7 @@ private:
         uint32_t needRepath;  /**< Bitfield of routes that needs to be disabled / enabled. */
         uint32_t enabled;     /**< Bitfield of enabled routes. */
         uint32_t prevEnabled; /**< Bitfield of previously enabled routes. */
-    } _routes[audio_comms::utilities::Direction::_nbDirections];
+    } mRoutes[audio_comms::utilities::Direction::_nbDirections];
 
     /**
      * Get the need reflow routes mask.
@@ -790,7 +790,7 @@ private:
      */
     inline uint32_t needReflowRoutes(bool isOut) const
     {
-        return _routes[isOut].needReflow;
+        return mRoutes[isOut].needReflow;
     }
 
     /**
@@ -802,7 +802,7 @@ private:
      */
     inline uint32_t needRepathRoutes(bool isOut) const
     {
-        return _routes[isOut].needRepath;
+        return mRoutes[isOut].needRepath;
     }
 
     /**
@@ -814,7 +814,7 @@ private:
      */
     inline uint32_t enabledRoutes(bool isOut) const
     {
-        return _routes[isOut].enabled;
+        return mRoutes[isOut].enabled;
     }
 
     /**
@@ -826,7 +826,7 @@ private:
      */
     inline uint32_t prevEnabledRoutes(bool isOut) const
     {
-        return _routes[isOut].prevEnabled;
+        return mRoutes[isOut].prevEnabled;
     }
 
     /**
@@ -841,5 +841,5 @@ private:
     template <typename T>
     struct routingElementSupported;
 
-    static const uint16_t FORCE_RESYNC = 1; /**< resynchronization of audio parameters eventId. */
+    static const uint16_t mForceResync = 1; /**< resynchronization of audio parameters eventId. */
 };

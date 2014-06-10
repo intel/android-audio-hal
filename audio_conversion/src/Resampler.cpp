@@ -35,41 +35,41 @@ namespace android_audio_legacy
 
 Resampler::Resampler(SampleSpecItem sampleSpecItem)
     : AudioConverter(sampleSpecItem),
-      _maxFrameCnt(0),
-      _context(NULL), _floatInp(NULL), _floatOut(NULL)
+      mMaxFrameCnt(0),
+      mContext(NULL), mFloatInp(NULL), mFloatOut(NULL)
 {
 }
 
 Resampler::~Resampler()
 {
-    if (_context) {
-        iaresamplib_reset(_context);
-        iaresamplib_delete(&_context);
+    if (mContext) {
+        iaresamplib_reset(mContext);
+        iaresamplib_delete(&mContext);
     }
 
-    delete[] _floatInp;
-    delete[] _floatOut;
+    delete[] mFloatInp;
+    delete[] mFloatOut;
 }
 
 status_t Resampler::allocateBuffer()
 {
-    if (_maxFrameCnt == 0) {
-        _maxFrameCnt = _bufSize;
+    if (mMaxFrameCnt == 0) {
+        mMaxFrameCnt = mBufSize;
     } else {
-        _maxFrameCnt *= 2; // simply double the buf size
+        mMaxFrameCnt *= 2; // simply double the buf size
     }
 
-    delete[] _floatInp;
-    delete[] _floatOut;
+    delete[] mFloatInp;
+    delete[] mFloatOut;
 
-    _floatInp = new float[(_maxFrameCnt + 1) * _ssSrc.getChannelCount()];
-    _floatOut = new float[(_maxFrameCnt + 1) * _ssSrc.getChannelCount()];
+    mFloatInp = new float[(mMaxFrameCnt + 1) * mSsSrc.getChannelCount()];
+    mFloatOut = new float[(mMaxFrameCnt + 1) * mSsSrc.getChannelCount()];
 
-    if (!_floatInp || !_floatOut) {
+    if (!mFloatInp || !mFloatOut) {
 
         ALOGE("cannot allocate resampler tmp buffers.\n");
-        delete[] _floatInp;
-        delete[] _floatOut;
+        delete[] mFloatInp;
+        delete[] mFloatOut;
 
         return NO_MEMORY;
     }
@@ -83,8 +83,8 @@ status_t Resampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
     ALOGD("%s: DST rate=%d format=%d channels=%d", __FUNCTION__, ssDst.getSampleRate(),
           ssDst.getFormat(), ssDst.getChannelCount());
 
-    if ((ssSrc.getSampleRate() == _ssSrc.getSampleRate()) &&
-        (ssDst.getSampleRate() == _ssDst.getSampleRate()) && _context) {
+    if ((ssSrc.getSampleRate() == mSsSrc.getSampleRate()) &&
+        (ssDst.getSampleRate() == mSsDst.getSampleRate()) && mContext) {
 
         return NO_ERROR;
     }
@@ -95,10 +95,10 @@ status_t Resampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
         return status;
     }
 
-    if (_context) {
-        iaresamplib_reset(_context);
-        iaresamplib_delete(&_context);
-        _context = NULL;
+    if (mContext) {
+        iaresamplib_reset(mContext);
+        iaresamplib_delete(&mContext);
+        mContext = NULL;
     }
 
     if (!iaresamplib_supported_conversion(ssSrc.getSampleRate(), ssDst.getSampleRate())) {
@@ -107,14 +107,14 @@ status_t Resampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
         return INVALID_OPERATION;
     }
 
-    iaresamplib_new(&_context, ssSrc.getChannelCount(),
+    iaresamplib_new(&mContext, ssSrc.getChannelCount(),
                     ssSrc.getSampleRate(), ssDst.getSampleRate());
-    if (!_context) {
+    if (!mContext) {
         ALOGE("cannot create resampler handle for lacking of memory.\n");
         return BAD_VALUE;
     }
 
-    _convertSamplesFct = static_cast<SampleConverter>(&Resampler::resampleFrames);
+    mConvertSamplesFct = static_cast<SampleConverter>(&Resampler::resampleFrames);
     return NO_ERROR;
 }
 
@@ -148,7 +148,7 @@ status_t Resampler::resampleFrames(const void *src,
 {
     size_t outFrameCount = convertSrcToDstInFrames(inFrames);
 
-    while (outFrameCount > _maxFrameCnt) {
+    while (outFrameCount > mMaxFrameCnt) {
 
         status_t ret = allocateBuffer();
         if (ret != NO_ERROR) {
@@ -158,9 +158,9 @@ status_t Resampler::resampleFrames(const void *src,
         }
     }
     unsigned int outNbFrames;
-    convertShort2Float((short *)src, _floatInp, inFrames * _ssSrc.getChannelCount());
-    iaresamplib_process_float(_context, _floatInp, inFrames, _floatOut, &outNbFrames);
-    convertFloat2Short(_floatOut, (short *)dst, outNbFrames * _ssSrc.getChannelCount());
+    convertShort2Float((short *)src, mFloatInp, inFrames * mSsSrc.getChannelCount());
+    iaresamplib_process_float(mContext, mFloatInp, inFrames, mFloatOut, &outNbFrames);
+    convertFloat2Short(mFloatOut, (short *)dst, outNbFrames * mSsSrc.getChannelCount());
 
     *outFrames = outNbFrames;
 

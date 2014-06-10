@@ -45,10 +45,10 @@ namespace android_audio_legacy
 
 uint32_t AudioUtils::alignOn16(uint32_t u)
 {
-    AUDIOCOMMS_ASSERT((u / _frameAlignementOn16) <=
-                      (numeric_limits<uint32_t>::max() / _frameAlignementOn16),
+    AUDIOCOMMS_ASSERT((u / mFrameAlignementOn16) <=
+                      (numeric_limits<uint32_t>::max() / mFrameAlignementOn16),
                       "value to align exceeding limit");
-    return (u + (_frameAlignementOn16 - 1)) & ~(_frameAlignementOn16 - 1);
+    return (u + (mFrameAlignementOn16 - 1)) & ~(mFrameAlignementOn16 - 1);
 }
 
 size_t AudioUtils::convertSrcToDstInBytes(size_t bytes,
@@ -169,7 +169,7 @@ int AudioUtils::getCardIndexByName(const char *name)
 uint32_t AudioUtils::convertUsecToMsec(uint32_t timeUsec)
 {
     // Round up to the nearest Msec
-    return (static_cast<uint64_t>(timeUsec) + _usecPerMsec - 1) / _usecPerMsec;
+    return (static_cast<uint64_t>(timeUsec) + mUsecPerMsec - 1) / mUsecPerMsec;
 }
 
 bool AudioUtils::isAudioInputDevice(uint32_t devices)

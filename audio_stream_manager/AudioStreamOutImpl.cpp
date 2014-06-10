@@ -37,14 +37,14 @@
 namespace android_audio_legacy
 {
 
-const uint32_t AudioStreamOutImpl::_maxAgainRetry = 2;
-const uint32_t AudioStreamOutImpl::_waitBeforeRetryUs = 10000; // 10ms
-const uint32_t AudioStreamOutImpl::_usecPerMsec = 1000;
+const uint32_t AudioStreamOutImpl::mMaxAgainRetry = 2;
+const uint32_t AudioStreamOutImpl::mWaitBeforeRetryUs = 10000; // 10ms
+const uint32_t AudioStreamOutImpl::mUsecPerMsec = 1000;
 
-AudioStreamOutImpl::AudioStreamOutImpl(AudioIntelHAL *parent, uint32_t streamFlagsMask)
+AudioStreamOutImpl::AudioStreamOutImpl(AudioIntelHal *parent, uint32_t streamFlagsMask)
     : AudioStream(parent),
-      _frameCount(0),
-      _echoReference(NULL)
+      mFrameCount(0),
+      mEchoReference(NULL)
 {
     setApplicabilityMask(streamFlagsMask);
 }
@@ -68,7 +68,7 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
     AUDIOCOMMS_ASSERT(buffer != NULL, "NULL client buffer");
     setStandby(false);
 
-    AutoR lock(_streamLock);
+    AutoR lock(mStreamLock);
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
 
@@ -117,15 +117,15 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
                   srcFrames,
                   streamSampleSpec().convertFramesToBytes(srcFrames));
 
-            if (error.find(strerror(EIO)) !=  std::string::npos) {
+            if (error.find(strerror(EIO)) != std::string::npos) {
                 // Dump hw registers debug file info in console
-                _parent->printPlatformFwErrorInfo();
+                mParent->printPlatformFwErrorInfo();
             }
 
             AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
                               "Hardware not responding, restarting media server");
 
-           // Get the number of microseconds to sleep, inferred from the number of
+            // Get the number of microseconds to sleep, inferred from the number of
             // frames to write.
             size_t sleepUsecs = routeSampleSpec().convertFramesToUsec(dstFrames);
 
@@ -175,7 +175,7 @@ status_t AudioStreamOutImpl::attachRouteL()
     if (silenceMs) {
 
         // Allocate a 1Ms buffer in stack
-        uint32_t bufferSizeInFrames = routeSampleSpec().convertUsecToframes(1 * _usecPerMsec);
+        uint32_t bufferSizeInFrames = routeSampleSpec().convertUsecToframes(1 * mUsecPerMsec);
         void *silenceBuffer = alloca(routeSampleSpec().convertFramesToBytes(bufferSizeInFrames));
         memset(silenceBuffer, 0, routeSampleSpec().convertFramesToBytes(bufferSizeInFrames));
 
@@ -194,13 +194,13 @@ status_t AudioStreamOutImpl::attachRouteL()
 
 status_t AudioStreamOutImpl::detachRouteL()
 {
-    removeEchoReference(_echoReference);
+    removeEchoReference(mEchoReference);
     return AudioStream::detachRouteL();
 }
 
 status_t AudioStreamOutImpl::standby()
 {
-    _frameCount = 0;
+    mFrameCount = 0;
     return setStandby(true);
 }
 
@@ -216,13 +216,13 @@ size_t AudioStreamOutImpl::bufferSize() const
 
 status_t AudioStreamOutImpl::getRenderPosition(uint32_t *dspFrames)
 {
-    *dspFrames = _frameCount;
+    *dspFrames = mFrameCount;
     return NO_ERROR;
 }
 
 status_t AudioStreamOutImpl::flush()
 {
-    AutoR lock(_streamLock);
+    AutoR lock(mStreamLock);
     if (!isRoutedL()) {
 
         return NO_ERROR;
@@ -234,32 +234,32 @@ status_t AudioStreamOutImpl::flush()
 status_t  AudioStreamOutImpl::setParameters(const String8 &keyValuePairs)
 {
     // Give a chance to parent to handle the change
-    return _parent->setStreamParameters(this, keyValuePairs);
+    return mParent->setStreamParameters(this, keyValuePairs);
 }
 
 void AudioStreamOutImpl::addEchoReference(struct echo_reference_itfe *reference)
 {
     AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
-    AutoW lock(_preProcEffectLock);
-    ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, _echoReference);
+    AutoW lock(mPreProcEffectLock);
+    ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, mEchoReference);
 
     // Called from a WLocked context
-    _echoReference = reference;
+    mEchoReference = reference;
 }
 
 void AudioStreamOutImpl::removeEchoReference(struct echo_reference_itfe *reference)
 {
-    AutoW lock(_preProcEffectLock);
-    if (reference == NULL || _echoReference == NULL) {
+    AutoW lock(mPreProcEffectLock);
+    if (reference == NULL || mEchoReference == NULL) {
 
         return;
     }
 
-    ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, _echoReference);
-    if (_echoReference == reference) {
+    ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, mEchoReference);
+    if (mEchoReference == reference) {
 
-        _echoReference->write(_echoReference, NULL);
-        _echoReference = NULL;
+        mEchoReference->write(mEchoReference, NULL);
+        mEchoReference = NULL;
     } else {
 
         ALOGE("%s: reference requested was not attached to this stream...", __FUNCTION__);
@@ -301,13 +301,13 @@ int AudioStreamOutImpl::getPlaybackDelay(ssize_t frames, struct echo_reference_b
 
 void AudioStreamOutImpl::pushEchoReference(const void *buffer, ssize_t frames)
 {
-    AutoR lock(_preProcEffectLock);
-    if (_echoReference != NULL) {
+    AutoR lock(mPreProcEffectLock);
+    if (mEchoReference != NULL) {
         struct echo_reference_buffer b;
         b.raw = (void *)buffer;
         b.frame_count = frames;
         getPlaybackDelay(b.frame_count, &b);
-        _echoReference->write(_echoReference, &b);
+        mEchoReference->write(mEchoReference, &b);
     }
 }
 }       // namespace android

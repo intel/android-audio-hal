@@ -29,7 +29,7 @@ LOCAL_PATH := $(call my-dir)
 
 audio_stream_manager_src_files :=  \
     AudioStream.cpp \
-    AudioIntelHAL.cpp \
+    AudioIntelHal.cpp \
     AudioStreamInImpl.cpp \
     AudioStreamOutImpl.cpp \
     AudioParameterHandler.cpp \

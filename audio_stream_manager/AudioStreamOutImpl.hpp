@@ -22,7 +22,7 @@
  */
 #pragma once
 
-#include "AudioIntelHAL.hpp"
+#include "AudioIntelHal.hpp"
 #include "AudioStream.hpp"
 
 struct echo_reference_itfe;
@@ -33,7 +33,7 @@ namespace android_audio_legacy
 class AudioStreamOutImpl : public AudioStreamOut, public AudioStream
 {
 public:
-    AudioStreamOutImpl(AudioIntelHAL *parent, uint32_t streamFlagsMask);
+    AudioStreamOutImpl(AudioIntelHal *parent, uint32_t streamFlagsMask);
     virtual ~AudioStreamOutImpl();
 
     virtual uint32_t sampleRate() const
@@ -151,12 +151,12 @@ private:
      */
     int getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer);
 
-    uint32_t _frameCount; /**< number of audio frames written by AudioFlinger. */
+    uint32_t mFrameCount; /**< number of audio frames written by AudioFlinger. */
 
-    struct echo_reference_itfe *_echoReference; /**< echo reference pointer, for SW AEC effect. */
+    struct echo_reference_itfe *mEchoReference; /**< echo reference pointer, for SW AEC effect. */
 
-    static const uint32_t _maxAgainRetry; /**< Max retry for write operations before recovering. */
-    static const uint32_t _waitBeforeRetryUs; /**< Time to wait before retrial. */
-    static const uint32_t _usecPerMsec; /**< time conversion constant. */
+    static const uint32_t mMaxAgainRetry; /**< Max retry for write operations before recovering. */
+    static const uint32_t mWaitBeforeRetryUs; /**< Time to wait before retrial. */
+    static const uint32_t mUsecPerMsec; /**< time conversion constant. */
 };
 }         // namespace android

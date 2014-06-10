@@ -35,22 +35,22 @@ namespace android_audio_legacy
 
 AudioResampler::AudioResampler(SampleSpecItem sampleSpecItem)
     : AudioConverter(sampleSpecItem),
-      _resampler(new Resampler(RateSampleSpecItem)),
-      _pivotResampler(new Resampler(RateSampleSpecItem)),
-      _activeResamplerList()
+      mResampler(new Resampler(RateSampleSpecItem)),
+      mPivotResampler(new Resampler(RateSampleSpecItem)),
+      mActiveResamplerList()
 {
 }
 
 AudioResampler::~AudioResampler()
 {
-    _activeResamplerList.clear();
-    delete _resampler;
-    delete _pivotResampler;
+    mActiveResamplerList.clear();
+    delete mResampler;
+    delete mPivotResampler;
 }
 
 status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    _activeResamplerList.clear();
+    mActiveResamplerList.clear();
 
     status_t status = AudioConverter::configure(ssSrc, ssDst);
     if (status != NO_ERROR) {
@@ -58,7 +58,7 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         return status;
     }
 
-    status = _resampler->configure(ssSrc, ssDst);
+    status = mResampler->configure(ssSrc, ssDst);
     if (status != NO_ERROR) {
 
         //
@@ -67,19 +67,19 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         //
         ALOGD("%s: trying to use working sample rate @ 48kHz", __FUNCTION__);
         SampleSpec pivotSs = ssDst;
-        pivotSs.setSampleRate(_pivotSampleRate);
+        pivotSs.setSampleRate(mPivotSampleRate);
 
-        status = _pivotResampler->configure(ssSrc, pivotSs);
+        status = mPivotResampler->configure(ssSrc, pivotSs);
         if (status != NO_ERROR) {
 
             ALOGD("%s: trying to use pivot sample rate @ %dkHz: FAILED",
-                  __FUNCTION__, _pivotSampleRate);
+                  __FUNCTION__, mPivotSampleRate);
             return status;
         }
 
-        _activeResamplerList.push_back(_pivotResampler);
+        mActiveResamplerList.push_back(mPivotResampler);
 
-        status = _resampler->configure(pivotSs, ssDst);
+        status = mResampler->configure(pivotSs, ssDst);
         if (status != NO_ERROR) {
 
             ALOGD("%s: trying to use pivot sample rate @ 48kHz: FAILED", __FUNCTION__);
@@ -87,7 +87,7 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         }
     }
 
-    _activeResamplerList.push_back(_resampler);
+    mActiveResamplerList.push_back(mResampler);
 
     return NO_ERROR;
 }
@@ -104,12 +104,12 @@ status_t AudioResampler::convert(const void *src,
     size_t dstFrames = 0;
 
     ResamplerListIterator it;
-    for (it = _activeResamplerList.begin(); it != _activeResamplerList.end(); ++it) {
+    for (it = mActiveResamplerList.begin(); it != mActiveResamplerList.end(); ++it) {
 
         Resampler *conv = *it;
         dstFrames = 0;
 
-        if (*dst && (conv == _activeResamplerList.back())) {
+        if (*dst && (conv == mActiveResamplerList.back())) {
 
             // Last converter must output within the provided buffer (if provided!!!)
             dstBuf = *dst;

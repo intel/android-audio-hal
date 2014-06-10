@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -29,19 +29,19 @@
 namespace android_audio_legacy
 {
 
-const char *const VolumeKeys::_gpioKeysWakeupEnable =
+const char *const VolumeKeys::mGpioKeysWakeupEnable =
     "/sys/devices/platform/gpio-keys/enabled_wakeup";
-const char *const VolumeKeys::_gpioKeysWakeupDisable =
+const char *const VolumeKeys::mGpioKeysWakeupDisable =
     "/sys/devices/platform/gpio-keys/disabled_wakeup";
 
-const char *const VolumeKeys::_keyVolumeDown = "114";
-const char *const VolumeKeys::_keyVolumeUp = "115";
+const char *const VolumeKeys::mKeyVolumeDown = "114";
+const char *const VolumeKeys::mKeyVolumeUp = "115";
 
-bool VolumeKeys::_wakeupEnabled = false;
+bool VolumeKeys::mWakeupEnabled = false;
 
 int VolumeKeys::wakeup(bool isEnabled)
 {
-    if (_wakeupEnabled == isEnabled) {
+    if (mWakeupEnabled == isEnabled) {
 
         // Nothing to do, bailing out
         return 0;
@@ -52,21 +52,21 @@ int VolumeKeys::wakeup(bool isEnabled)
     int rc;
 
     const char *const gpioKeysWakeup =
-        isEnabled ? _gpioKeysWakeupEnable : _gpioKeysWakeupDisable;
+        isEnabled ? mGpioKeysWakeupEnable : mGpioKeysWakeupDisable;
     fd = open(gpioKeysWakeup, O_RDWR);
     if (fd < 0) {
         ALOGE("Cannot open sysfs gpio-keys interface (%d)", fd);
         goto return_error;
     }
-    rc = write(fd, _keyVolumeDown, sizeof(_keyVolumeDown));
-    rc += write(fd, _keyVolumeUp, sizeof(_keyVolumeUp));
+    rc = write(fd, mKeyVolumeDown, sizeof(mKeyVolumeDown));
+    rc += write(fd, mKeyVolumeUp, sizeof(mKeyVolumeUp));
     close(fd);
-    if (rc != (sizeof(_keyVolumeDown) + sizeof(_keyVolumeUp))) {
+    if (rc != (sizeof(mKeyVolumeDown) + sizeof(mKeyVolumeUp))) {
         ALOGE("sysfs gpio-keys write error");
         goto return_error;
     }
 
-    _wakeupEnabled = true;
+    mWakeupEnabled = true;
     ALOGD("Volume keys wakeup enable OK\n");
     return 0;
 

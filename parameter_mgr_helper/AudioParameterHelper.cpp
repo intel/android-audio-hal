@@ -1,4 +1,4 @@
-﻿/*
+/*
  * INTEL CONFIDENTIAL
  * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -42,11 +42,11 @@ AudioParameterHelper::~AudioParameterHelper()
 {
     ParameterHandleMapIterator it;
 
-    for (it = _parameterHandleMap.begin(); it != _parameterHandleMap.end(); ++it) {
+    for (it = mParameterHandleMap.begin(); it != mParameterHandleMap.end(); ++it) {
 
         delete it->second;
     }
-    _parameterHandleMap.clear();
+    mParameterHandleMap.clear();
 }
 
 uint32_t AudioParameterHelper::getIntegerParameterValue(const string &paramPath,
@@ -62,7 +62,7 @@ uint32_t AudioParameterHelper::getIntegerParameterValue(const string &paramPath,
     string error;
     // Get handle
     CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath,
-                                                                                  error);
+                                                                             error);
     if (!parameterHandle) {
 
         ALOGE("Unable to get parameter handle: '%s' '%s'", paramPath.c_str(), error.c_str());
@@ -219,10 +219,10 @@ CParameterHandle *AudioParameterHelper::getParameterHandle(const string &paramPa
 
 CParameterHandle *AudioParameterHelper::getDynamicParameterHandle(const string &dynamicParamPath)
 {
-    if (_parameterHandleMap.find(dynamicParamPath) == _parameterHandleMap.end()) {
+    if (mParameterHandleMap.find(dynamicParamPath) == mParameterHandleMap.end()) {
         ALOGD("Dynamic parameter %s not found in map, get a handle and push it in the map",
               dynamicParamPath.c_str());
-        _parameterHandleMap[dynamicParamPath] = getParameterHandle(dynamicParamPath);
+        mParameterHandleMap[dynamicParamPath] = getParameterHandle(dynamicParamPath);
     }
-    return _parameterHandleMap[dynamicParamPath];
+    return mParameterHandleMap[dynamicParamPath];
 }

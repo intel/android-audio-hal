@@ -46,22 +46,22 @@ using audio_comms::utilities::BitField;
 namespace android_audio_legacy
 {
 
-const std::string AudioStreamInImpl::_hwEffectImplementor = "IntelLPE";
+const std::string AudioStreamInImpl::mHwEffectImplementor = "IntelLPE";
 
-AudioStreamInImpl::AudioStreamInImpl(AudioIntelHAL *parent,
+AudioStreamInImpl::AudioStreamInImpl(AudioIntelHal *parent,
                                      AudioSystem::audio_in_acoustics audio_acoustics)
     : AudioStream(parent),
-      _framesLost(0),
-      _acoustics(audio_acoustics),
-      _framesIn(0),
-      _processingFramesIn(0),
-      _processingBuffer(NULL),
-      _processingBufferSizeInFrames(0),
-      _referenceFramesIn(0),
-      _referenceBuffer(NULL),
-      _referenceBufferSizeInFrames(0),
-      _preprocessorsHandlerList(),
-      _hwBuffer(NULL)
+      mFramesLost(0),
+      mAcoustics(audio_acoustics),
+      mFramesIn(0),
+      mProcessingFramesIn(0),
+      mProcessingBuffer(NULL),
+      mProcessingBufferSizeInFrames(0),
+      mReferenceFramesIn(0),
+      mReferenceBuffer(NULL),
+      mReferenceBufferSizeInFrames(0),
+      mPreprocessorsHandlerList(),
+      mHwBuffer(NULL)
 {
 }
 
@@ -84,12 +84,12 @@ status_t AudioStreamInImpl::getNextBuffer(AudioBufferProvider::Buffer *buffer,
     ssize_t hwFramesToRead = min(maxFrames, buffer->frameCount);
     ssize_t framesRead;
 
-    framesRead = readHwFrames(_hwBuffer, hwFramesToRead);
+    framesRead = readHwFrames(mHwBuffer, hwFramesToRead);
     if (framesRead < 0) {
 
         return NOT_ENOUGH_DATA;
     }
-    buffer->raw = _hwBuffer;
+    buffer->raw = mHwBuffer;
     buffer->frameCount = framesRead;
 
     return NO_ERROR;
@@ -112,7 +112,7 @@ ssize_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
 
         if (ret < 0) {
 
-           ALOGE("%s: read error: %s - requested %d (bytes=%d) frames",
+            ALOGE("%s: read error: %s - requested %d (bytes=%d) frames",
                   __FUNCTION__,
                   error.c_str(),
                   frames,
@@ -191,22 +191,22 @@ int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
     while ((*processedFrames < frames) && (*processingFramesIn > 0) && (ret == 0)) {
 
         Vector<AudioEffectHandle>::const_iterator it;
-        for (it = _preprocessorsHandlerList.begin(); it != _preprocessorsHandlerList.end(); ++it) {
+        for (it = mPreprocessorsHandlerList.begin(); it != mPreprocessorsHandlerList.end(); ++it) {
 
-            if (it->_echoReference != NULL) {
+            if (it->mEchoReference != NULL) {
 
-                pushEchoReference(*processingFramesIn, it->_preprocessor, it->_echoReference);
+                pushEchoReference(*processingFramesIn, it->mPreprocessor, it->mEchoReference);
             }
             // in_buf.frameCount and out_buf.frameCount indicate respectively
             // the maximum number of frames to be consumed and produced by process()
             inBuf.frameCount = *processingFramesIn;
-            inBuf.s16 = (int16_t *)((char *)_processingBuffer +
+            inBuf.s16 = (int16_t *)((char *)mProcessingBuffer +
                                     streamSampleSpec().convertFramesToBytes(*processedFrames));
             outBuf.frameCount = frames - *processedFrames;
             outBuf.s16 = (int16_t *)((char *)buffer +
                                      streamSampleSpec().convertFramesToBytes(*processedFrames));
 
-            ret = (*(it->_preprocessor))->process(it->_preprocessor, &inBuf, &outBuf);
+            ret = (*(it->mPreprocessor))->process(it->mPreprocessor, &inBuf, &outBuf);
             if (ret == 0) {
                 // Note: it is useless to recopy the output of effect processing as input
                 // for the next effect processing because it is done in webrtc::audio_processing
@@ -224,9 +224,9 @@ int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
 ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
 {
     // first reload enough frames at the end of process input buffer
-    if (_processingFramesIn < frames) {
+    if (mProcessingFramesIn < frames) {
 
-        if (_processingBufferSizeInFrames < frames) {
+        if (mProcessingBufferSizeInFrames < frames) {
 
             status_t ret = allocateProcessingMemory(frames);
             if (ret != OK) {
@@ -235,22 +235,22 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
             }
         }
 
-        ssize_t read_frames = readFrames((char *)_processingBuffer +
+        ssize_t read_frames = readFrames((char *)mProcessingBuffer +
                                          streamSampleSpec().convertFramesToBytes(
-                                             _processingFramesIn),
-                                         frames - _processingFramesIn);
+                                             mProcessingFramesIn),
+                                         frames - mProcessingFramesIn);
         if (read_frames < 0) {
 
             return read_frames;
         }
         /* OK, we have to process all read frames */
-        _processingFramesIn += read_frames;
-        AUDIOCOMMS_ASSERT(_processingFramesIn >= frames, "Not enough frames");
+        mProcessingFramesIn += read_frames;
+        AUDIOCOMMS_ASSERT(mProcessingFramesIn >= frames, "Not enough frames");
 
     }
 
     ssize_t processed_frames = 0;
-    ssize_t processingFramesIn = _processingFramesIn;
+    ssize_t processingFramesIn = mProcessingFramesIn;
     int processingReturn = 0;
 
     // Then process the frames
@@ -262,9 +262,9 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
         ALOGD("%s: unable to apply any effect; returned value is %d", __FUNCTION__,
               processingReturn);
         memcpy(buffer,
-               _processingBuffer,
-               streamSampleSpec().convertFramesToBytes(_processingFramesIn));
-        processed_frames = _processingFramesIn;
+               mProcessingBuffer,
+               streamSampleSpec().convertFramesToBytes(mProcessingFramesIn));
+        processed_frames = mProcessingFramesIn;
     } else {
 
         // move remaining frames to the beginning of mProccesingBuffer because currently,
@@ -276,15 +276,15 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
         if (processingFramesIn != 0) {
 
             AUDIOCOMMS_ASSERT(processingFramesIn > 0, "Not enough frames");
-            memmove(_processingBuffer,
-                    (char *)_processingBuffer +
-                    streamSampleSpec().convertFramesToBytes(_processingFramesIn -
+            memmove(mProcessingBuffer,
+                    (char *)mProcessingBuffer +
+                    streamSampleSpec().convertFramesToBytes(mProcessingFramesIn -
                                                             processingFramesIn),
                     streamSampleSpec().convertFramesToBytes(processingFramesIn));
         }
     }
     // at the end, we keep remainder frames not cosumed by effect processor.
-    _processingFramesIn = processingFramesIn;
+    mProcessingFramesIn = processingFramesIn;
 
     return processed_frames;
 }
@@ -293,7 +293,7 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
 {
     setStandby(false);
 
-    AutoR lock(_streamLock);
+    AutoR lock(mStreamLock);
 
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
@@ -307,15 +307,15 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
     ssize_t frames = streamSampleSpec().convertBytesToFrames(bytes);
 
     // Take the effect lock while processing
-    _preProcEffectLock.readLock();
-    if (!_preprocessorsHandlerList.empty()) {
+    mPreProcEffectLock.readLock();
+    if (!mPreprocessorsHandlerList.empty()) {
 
         received_frames = processFrames(buffer, frames);
     } else {
 
         received_frames = readFrames(buffer, frames);
     }
-    _preProcEffectLock.unlock();
+    mPreProcEffectLock.unlock();
 
 
     if (received_frames < 0) {
@@ -348,7 +348,7 @@ void AudioStreamInImpl::resetFramesLost()
 
 unsigned int AudioStreamInImpl::getInputFramesLost() const
 {
-    unsigned int count = _framesLost;   // set to 0 during construction
+    unsigned int count = mFramesLost;   // set to 0 during construction
 
     AudioStreamInImpl *mutable_this = const_cast<AudioStreamInImpl *>(this);
     // Requirement from AudioHardwareInterface.h:
@@ -361,17 +361,17 @@ unsigned int AudioStreamInImpl::getInputFramesLost() const
 status_t AudioStreamInImpl::setParameters(const String8 &keyValuePairs)
 {
     // Give a chance to parent to handle the change
-    return _parent->setStreamParameters(this, keyValuePairs);
+    return mParent->setStreamParameters(this, keyValuePairs);
 }
 
 status_t AudioStreamInImpl::allocateHwBuffer()
 {
     freeAllocatedBuffers();
 
-    _hwBufferSize = getBufferSizeInBytes();
+    mHwBufferSize = getBufferSizeInBytes();
 
-    _hwBuffer = new char[_hwBufferSize];
-    if (!_hwBuffer) {
+    mHwBuffer = new char[mHwBufferSize];
+    if (!mHwBuffer) {
 
         ALOGE("%s: cannot allocate resampler Hwbuffer", __FUNCTION__);
         return NO_MEMORY;
@@ -381,8 +381,8 @@ status_t AudioStreamInImpl::allocateHwBuffer()
 
 void AudioStreamInImpl::freeAllocatedBuffers()
 {
-    delete[] _hwBuffer;
-    _hwBuffer = NULL;
+    delete[] mHwBuffer;
+    mHwBuffer = NULL;
 }
 
 
@@ -423,7 +423,7 @@ bool AudioStreamInImpl::isHwEffectL(effect_handle_t effect)
 
         return false;
     }
-    return implementor == _hwEffectImplementor;
+    return implementor == mHwEffectImplementor;
 }
 
 status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
@@ -434,7 +434,7 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
 
     // Called from different context than the stream,
     // so effect Lock must be held
-    AutoW lock(_preProcEffectLock);
+    AutoW lock(mPreProcEffectLock);
 
     if (isHwEffectL(effect)) {
 
@@ -453,7 +453,7 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
 
             ALOGD("%s stream running, reconsider routing", __FUNCTION__);
             // If the stream is routed, force a reconsider routing to take effect into account
-            _parent->updateRequestedEffect();
+            mParent->updateRequestedEffect();
         }
     } else {
 
@@ -464,7 +464,7 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
         if (isAecEffect(effect)) {
 
             struct echo_reference_itfe *stReference = NULL;
-            stReference = _parent->getEchoReference(streamSampleSpec());
+            stReference = mParent->getEchoReference(streamSampleSpec());
             return addSwAudioEffectL(effect, stReference);
         }
         addSwAudioEffectL(effect);
@@ -479,7 +479,7 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
 
     // Called from different context than the stream,
     // so effect Lock must be held.
-    AutoW lock(_preProcEffectLock);
+    AutoW lock(mPreProcEffectLock);
 
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -502,7 +502,7 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
             ALOGD("%s stream running, reconsider routing", __FUNCTION__);
             // If the stream is routed,
             // force a reconsider routing to take effect removal into account
-            _parent->updateRequestedEffect();
+            mParent->updateRequestedEffect();
         }
     } else {
 
@@ -524,23 +524,23 @@ status_t AudioStreamInImpl::addSwAudioEffectL(effect_handle_t effect,
     // audio effects processing is very costy in term of CPU,
     // so useless to add the same effect more than one time
     Vector<AudioEffectHandle>::const_iterator it;
-    it = std::find_if(_preprocessorsHandlerList.begin(), _preprocessorsHandlerList.end(),
+    it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
-    if (it != _preprocessorsHandlerList.end()) {
+    if (it != mPreprocessorsHandlerList.end()) {
 
         ALOGW("%s (effect=%p): it is useless to add again the same effect",
               __FUNCTION__, effect);
         return NO_ERROR;
     }
 
-    status_t ret = _preprocessorsHandlerList.add(AudioEffectHandle(effect, reference));
+    status_t ret = mPreprocessorsHandlerList.add(AudioEffectHandle(effect, reference));
     if (ret < 0) {
 
         ALOGE("%s (effect=%p): unable to add effect!", __FUNCTION__, effect);
         return ret;
     }
     ALOGD("%s (effect=%p): effect added. number of stored effects is %d", __FUNCTION__,
-          effect, _preprocessorsHandlerList.size());
+          effect, mPreprocessorsHandlerList.size());
     return NO_ERROR;
 }
 
@@ -550,22 +550,22 @@ status_t AudioStreamInImpl::removeSwAudioEffectL(effect_handle_t effect)
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     Vector<AudioEffectHandle>::iterator it;
-    it = std::find_if(_preprocessorsHandlerList.begin(), _preprocessorsHandlerList.end(),
+    it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
-    if (it != _preprocessorsHandlerList.end()) {
+    if (it != mPreprocessorsHandlerList.end()) {
 
         ALOGD("%s (effect=%p): effect has been found. number of effects before erase %d",
-              __FUNCTION__, effect, _preprocessorsHandlerList.size());
-        if (it->_echoReference != NULL) {
+              __FUNCTION__, effect, mPreprocessorsHandlerList.size());
+        if (it->mEchoReference != NULL) {
 
             /* stop reading from echo reference */
-            it->_echoReference->read(it->_echoReference, NULL);
-            _parent->resetEchoReference(it->_echoReference);
-            it->_echoReference = NULL;
+            it->mEchoReference->read(it->mEchoReference, NULL);
+            mParent->resetEchoReference(it->mEchoReference);
+            it->mEchoReference = NULL;
         }
-        _preprocessorsHandlerList.erase(it);
+        mPreprocessorsHandlerList.erase(it);
         ALOGD("%s (effect=%p): number of effects after erase %d",
-              __FUNCTION__, effect, _preprocessorsHandlerList.size());
+              __FUNCTION__, effect, mPreprocessorsHandlerList.size());
 
         return NO_ERROR;
     }
@@ -642,7 +642,7 @@ void AudioStreamInImpl::getCaptureDelay(struct echo_reference_buffer *buffer)
     // read frames available in audio HAL input buffer
     // add number of frames being read as we want the capture time of first sample
     // in current buffer.
-    buf_delay = streamSampleSpec().convertFramesToUsec(_framesIn + _processingFramesIn);
+    buf_delay = streamSampleSpec().convertFramesToUsec(mFramesIn + mProcessingFramesIn);
 
     // add delay introduced by kernel
     kernel_delay = routeSampleSpec().convertFramesToUsec(kernel_frames);
@@ -666,32 +666,32 @@ int32_t AudioStreamInImpl::updateEchoReference(ssize_t frames,
 
     b.delay_ns = 0;
 
-    if (_referenceFramesIn < frames) {
+    if (mReferenceFramesIn < frames) {
 
-        if (_referenceBufferSizeInFrames < frames) {
+        if (mReferenceBufferSizeInFrames < frames) {
 
-            _referenceBufferSizeInFrames = frames;
-            int16_t *referenceBuffer = (int16_t *)realloc(_referenceBuffer,
+            mReferenceBufferSizeInFrames = frames;
+            int16_t *referenceBuffer = (int16_t *)realloc(mReferenceBuffer,
                                                           streamSampleSpec().convertFramesToBytes(
-                                                              _referenceBufferSizeInFrames));
+                                                              mReferenceBufferSizeInFrames));
             if (referenceBuffer == NULL) {
 
                 ALOGE(" %s(frames=%ld): realloc failed", __FUNCTION__,
                       static_cast<long int>(frames));
                 return NO_MEMORY;
             }
-            _referenceBuffer = referenceBuffer;
+            mReferenceBuffer = referenceBuffer;
         }
 
-        b.frame_count = frames - _referenceFramesIn;
-        b.raw = (void *)((char *)_referenceBuffer +
-                         streamSampleSpec().convertFramesToBytes(_referenceFramesIn));
+        b.frame_count = frames - mReferenceFramesIn;
+        b.raw = (void *)((char *)mReferenceBuffer +
+                         streamSampleSpec().convertFramesToBytes(mReferenceFramesIn));
 
         getCaptureDelay(&b);
 
         if (reference->read(reference, &b) == 0) {
 
-            _referenceFramesIn += b.frame_count;
+            mReferenceFramesIn += b.frame_count;
         } else {
 
             ALOGW("%s: NOT enough frames to read ref buffer", __FUNCTION__);
@@ -711,9 +711,9 @@ status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t pr
     AUDIOCOMMS_ASSERT(*preprocessor != NULL, "Null preproc");
     AUDIOCOMMS_ASSERT(reference != NULL, "Null eference");
 
-    if (_referenceFramesIn < frames) {
+    if (mReferenceFramesIn < frames) {
 
-        frames = _referenceFramesIn;
+        frames = mReferenceFramesIn;
     }
 
     if ((*preprocessor)->process_reverse == NULL) {
@@ -725,20 +725,20 @@ status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t pr
 
     audio_buffer_t buf;
 
-    buf.frameCount = _referenceFramesIn;
-    buf.s16 = _referenceBuffer;
+    buf.frameCount = mReferenceFramesIn;
+    buf.s16 = mReferenceBuffer;
 
     status_t processingReturn = (*preprocessor)->process_reverse(preprocessor,
                                                                  &buf,
                                                                  NULL);
     setPreprocessorEchoDelay(preprocessor, delay_us);
-    _referenceFramesIn -= buf.frameCount;
+    mReferenceFramesIn -= buf.frameCount;
 
-    if (_referenceFramesIn > 0) {
+    if (mReferenceFramesIn > 0) {
 
-        memcpy(_referenceBuffer,
-               (char *)_referenceBuffer + streamSampleSpec().convertFramesToBytes(buf.frameCount),
-               streamSampleSpec().convertFramesToBytes(_referenceFramesIn));
+        memcpy(mReferenceBuffer,
+               (char *)mReferenceBuffer + streamSampleSpec().convertFramesToBytes(buf.frameCount),
+               streamSampleSpec().convertFramesToBytes(mReferenceFramesIn));
     }
 
     return processingReturn;
@@ -796,24 +796,24 @@ status_t AudioStreamInImpl::setPreprocessorEchoDelay(effect_handle_t effect, int
 
 status_t AudioStreamInImpl::allocateProcessingMemory(ssize_t frames)
 {
-    _processingBufferSizeInFrames = frames;
+    mProcessingBufferSizeInFrames = frames;
 
-    int16_t *processingBuffer = (int16_t *)realloc(_processingBuffer,
+    int16_t *processingBuffer = (int16_t *)realloc(mProcessingBuffer,
                                                    streamSampleSpec().convertFramesToBytes(
-                                                       _processingBufferSizeInFrames));
+                                                       mProcessingBufferSizeInFrames));
     if (processingBuffer == NULL) {
 
         ALOGE(" %s(frames=%ld): realloc failed errno = %s!", __FUNCTION__,
               static_cast<long int>(frames), strerror(errno));
         return NO_MEMORY;
     }
-    _processingBuffer = processingBuffer;
+    mProcessingBuffer = processingBuffer;
     ALOGD("%s(frames=%ld): mProcessingBuffer=%p size extended to %ld frames (i.e. %d bytes)",
           __FUNCTION__,
           static_cast<long int>(frames),
-          _processingBuffer,
-          static_cast<long int>(_processingBufferSizeInFrames),
-          streamSampleSpec().convertFramesToBytes(_processingBufferSizeInFrames));
+          mProcessingBuffer,
+          static_cast<long int>(mProcessingBufferSizeInFrames),
+          streamSampleSpec().convertFramesToBytes(mProcessingBufferSizeInFrames));
 
     return NO_ERROR;
 }

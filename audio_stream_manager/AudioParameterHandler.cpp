@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -33,8 +33,8 @@ using namespace android;
 namespace android_audio_legacy
 {
 
-const char AudioParameterHandler::_filePath[] = "/mnt/asec/media/audio_param.dat";
-const int AudioParameterHandler::_readBufSize = 500;
+const char AudioParameterHandler::mFilePath[] = "/mnt/asec/media/audio_param.dat";
+const int AudioParameterHandler::mReadBufSize = 500;
 
 AudioParameterHandler::AudioParameterHandler()
 {
@@ -61,20 +61,20 @@ void AudioParameterHandler::add(const String8 &keyValuePairs)
         newParameters.getAt(parameter, key, value);
 
         // Add / merge it with stored ones
-        _audioParameter.add(key, value);
+        mAudioParameter.add(key, value);
     }
 }
 
 status_t AudioParameterHandler::save()
 {
-    FILE *fp = fopen(_filePath, "w+");
+    FILE *fp = fopen(mFilePath, "w+");
     if (!fp) {
 
         ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
         return UNKNOWN_ERROR;
     }
 
-    String8 param = _audioParameter.toString();
+    String8 param = mAudioParameter.toString();
 
     size_t ret = fwrite(param.string(), sizeof(char), param.length(), fp);
     fclose(fp);
@@ -84,14 +84,14 @@ status_t AudioParameterHandler::save()
 
 status_t AudioParameterHandler::restore()
 {
-    FILE *fp = fopen(_filePath, "r");
+    FILE *fp = fopen(mFilePath, "r");
     if (!fp) {
 
         ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
         return UNKNOWN_ERROR;
     }
-    char str[_readBufSize];
-    size_t readSize = fread(str, sizeof(char), _readBufSize - 1, fp);
+    char str[mReadBufSize];
+    size_t readSize = fread(str, sizeof(char), mReadBufSize - 1, fp);
     fclose(fp);
     if (readSize == 0) {
 
@@ -105,6 +105,6 @@ status_t AudioParameterHandler::restore()
 
 String8 AudioParameterHandler::getParameters() const
 {
-    return _audioParameter.toString();
+    return mAudioParameter.toString();
 }
 }

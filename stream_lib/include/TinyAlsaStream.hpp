@@ -33,7 +33,7 @@ class TinyAlsaStream : public Stream
 {
 public:
     TinyAlsaStream()
-        : Stream::Stream(), _device(NULL)
+        : Stream::Stream(), mDevice(NULL)
     {}
 
     virtual uint32_t getBufferSizeInBytes() const;
@@ -84,8 +84,8 @@ private:
      */
     pcm *getPcmDevice() const;
 
-    TinyAlsaAudioDevice *_device;
+    TinyAlsaAudioDevice *mDevice;
 
     /** Ratio between microseconds and milliseconds */
-    static const uint32_t _usecPerMsec = 1000;
+    static const uint32_t mUsecPerMsec = 1000;
 };

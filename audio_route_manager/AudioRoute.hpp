@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -89,7 +89,7 @@ public:
      */
     bool isUsed() const
     {
-        return _isUsed;
+        return mIsUsed;
     }
 
     /**
@@ -102,7 +102,7 @@ public:
      */
     bool previouslyUsed() const
     {
-        return _previouslyUsed;
+        return mPreviouslyUsed;
     }
 
     /**
@@ -134,7 +134,7 @@ public:
      */
     void setApplicable(bool isApplicable)
     {
-        _isApplicable = isApplicable;
+        mIsApplicable = isApplicable;
     }
 
     /**
@@ -147,8 +147,8 @@ public:
      */
     virtual bool needReflow() const
     {
-        return _previouslyUsed && _isUsed && (_routingStageRequested.test(Flow) ||
-                                              _routingStageRequested.test(Path));
+        return mPreviouslyUsed && mIsUsed && (mRoutingStageRequested.test(Flow) ||
+                                              mRoutingStageRequested.test(Path));
     }
 
     /**
@@ -161,7 +161,7 @@ public:
      */
     virtual bool needRepath() const
     {
-        return _previouslyUsed && _isUsed && _routingStageRequested.test(Path);
+        return mPreviouslyUsed && mIsUsed && mRoutingStageRequested.test(Path);
     }
 
     /**
@@ -174,7 +174,7 @@ public:
      */
     void setNeedReconfigure(bool needReconfigure)
     {
-        _routingStageRequested.set(Flow, needReconfigure);
+        mRoutingStageRequested.set(Flow, needReconfigure);
     }
 
     /**
@@ -187,7 +187,7 @@ public:
      */
     void setNeedReroute(bool needReroute)
     {
-        _routingStageRequested.set(Path, needReroute);
+        mRoutingStageRequested.set(Path, needReroute);
     }
 
     /**
@@ -204,7 +204,7 @@ public:
      */
     bool isBlocked() const
     {
-        return _blocked;
+        return mBlocked;
     }
 
     /**
@@ -214,7 +214,7 @@ public:
      */
     bool isOut() const
     {
-        return _isOut;
+        return mIsOut;
     }
 
     /**
@@ -226,26 +226,26 @@ public:
      */
     void setDirection(bool isOut)
     {
-        _isOut = isOut;
+        mIsOut = isOut;
     }
 
 private:
-    AudioPort *_port[ENbPorts]; /**< Route is connected to 2 ports. NULL if no mutual exclusion*/
+    AudioPort *mPort[ENbPorts]; /**< Route is connected to 2 ports. NULL if no mutual exclusion*/
 
-    bool _blocked; /**< Tells whether the route is blocked or not. */
+    bool mBlocked; /**< Tells whether the route is blocked or not. */
 
-    bool _isOut; /**< Tells whether the route is an output or not. */
+    bool mIsOut; /**< Tells whether the route is an output or not. */
 
 protected:
-    bool _isUsed; /**< Route will be used after reconsidering the routing. */
+    bool mIsUsed; /**< Route will be used after reconsidering the routing. */
 
-    bool _previouslyUsed; /**< Route was used before reconsidering the routing. */
+    bool mPreviouslyUsed; /**< Route was used before reconsidering the routing. */
 
-    bool _isApplicable; /**< Route is applicable according to Route Parameter Mgr settings. */
+    bool mIsApplicable; /**< Route is applicable according to Route Parameter Mgr settings. */
 
     /**
      * Routing stage(s) requested by Route Parameter Mgr
      * Bitfield definition from RoutingStage enum.
      */
-    std::bitset<_nbRoutingStages> _routingStageRequested;
+    std::bitset<gNbRoutingStages> mRoutingStageRequested;
 };

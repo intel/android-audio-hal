@@ -1,20 +1,27 @@
 /*
- * Copyright 2013 Intel Corporation
+ * INTEL CONFIDENTIAL
+ * Copyright (c) 2013-2014 Intel
+ * Corporation All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * The source code contained or described herein and all documents related to
+ * the source code ("Material") are owned by Intel Corporation or its suppliers
+ * or licensors. Title to the Material remains with Intel Corporation or its
+ * suppliers and licensors. The Material contains trade secrets and proprietary
+ * and confidential information of Intel or its suppliers and licensors. The
+ * Material is protected by worldwide copyright and trade secret laws and
+ * treaty provisions. No part of the Material may be used, copied, reproduced,
+ * modified, published, uploaded, posted, transmitted, distributed, or
+ * disclosed in any way without Intel's prior express written permission.
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * No license under any patent, copyright, trade secret or other intellectual
+ * property right is granted to or conferred upon you by disclosure or delivery
+ * of the Materials, either expressly, by implication, inducement, estoppel or
+ * otherwise. Any license under such intellectual property rights must be
+ * express and approved by Intel in writing.
  *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
 
-#include "HALAudioDump.hpp"
+#include "HalAudioDump.hpp"
 
 #define LOG_TAG "HALAudioDump"
 
@@ -28,30 +35,30 @@
 using namespace android;
 using namespace std;
 
-const char *HALAudioDump::_streamDirections[] = {
+const char *HalAudioDump::mStreamDirections[] = {
     "in", "out"
 };
-const char *HALAudioDump::_dumpDirPath = "/logs/audio_dumps";
-const uint32_t HALAudioDump::_maxNumberOfFiles = 4;
+const char *HalAudioDump::mDumpDirPath = "/logs/audio_dumps";
+const uint32_t HalAudioDump::mMaxNumberOfFiles = 4;
 
-HALAudioDump::HALAudioDump()
-    : _dumpFile(0), _fileCount(0)
+HalAudioDump::HalAudioDump()
+    : mDumpFile(0), mFileCount(0)
 {
-    if (mkdir(_dumpDirPath, S_IRWXU | S_IRGRP | S_IROTH) != 0) {
+    if (mkdir(mDumpDirPath, S_IRWXU | S_IRGRP | S_IROTH) != 0) {
 
         ALOGE("Cannot create audio dumps directory at %s : %s.",
-              _dumpDirPath, strerror(errno));
+              mDumpDirPath, strerror(errno));
     }
 }
 
-HALAudioDump::~HALAudioDump()
+HalAudioDump::~HalAudioDump()
 {
-    if (_dumpFile) {
+    if (mDumpFile) {
         close();
     }
 }
 
-void HALAudioDump::dumpAudioSamples(const void *buffer,
+void HalAudioDump::dumpAudioSamples(const void *buffer,
                                     ssize_t bytes,
                                     bool isOutput,
                                     uint32_t sRate,
@@ -60,7 +67,7 @@ void HALAudioDump::dumpAudioSamples(const void *buffer,
 {
     status_t write_status;
 
-    if (_dumpFile == NULL) {
+    if (mDumpFile == NULL) {
         char *audio_file_name;
 
         /**
@@ -68,20 +75,20 @@ void HALAudioDump::dumpAudioSamples(const void *buffer,
          */
         asprintf(&audio_file_name,
                  "%s/audio_%s_%dKhz_%dch_%s_%d.pcm",
-                 _dumpDirPath,
+                 mDumpDirPath,
                  streamDirectionStr(isOutput),
                  sRate,
                  chNb,
                  nameContext.c_str(),
-                 ++_fileCount);
+                 ++mFileCount);
 
         if (!audio_file_name) {
             return;
         }
 
-        _dumpFile = fopen(audio_file_name, "wb");
+        mDumpFile = fopen(audio_file_name, "wb");
 
-        if (_dumpFile == NULL) {
+        if (mDumpFile == NULL) {
             ALOGE("Cannot open dump file %s, errno %d, reason: %s",
                   audio_file_name,
                   errno,
@@ -92,7 +99,7 @@ void HALAudioDump::dumpAudioSamples(const void *buffer,
 
         ALOGI("Audio %put stream dump file %s, fh %p opened.", streamDirectionStr(isOutput),
               audio_file_name,
-              _dumpFile);
+              mDumpFile);
         free(audio_file_name);
     }
 
@@ -117,18 +124,18 @@ void HALAudioDump::dumpAudioSamples(const void *buffer,
 
         asprintf(&fileToRemove,
                  "%s/audio_%s_%dKhz_%dch_%s_%d.pcm",
-                 _dumpDirPath,
+                 mDumpDirPath,
                  streamDirectionStr(isOutput),
                  sRate,
                  chNb,
                  nameContext.c_str(),
-                 _fileCount);
+                 mFileCount);
 
         if (!fileToRemove) {
             return;
         }
 
-        _fileCount--;
+        mFileCount--;
 
         remove(fileToRemove);
         free(fileToRemove);
@@ -136,27 +143,27 @@ void HALAudioDump::dumpAudioSamples(const void *buffer,
     }
 }
 
-void HALAudioDump::close()
+void HalAudioDump::close()
 {
-    fclose(_dumpFile);
-    _dumpFile = NULL;
+    fclose(mDumpFile);
+    mDumpFile = NULL;
 }
 
-const char *HALAudioDump::streamDirectionStr(bool isOut) const
+const char *HalAudioDump::streamDirectionStr(bool isOut) const
 {
-    return _streamDirections[isOut];
+    return mStreamDirections[isOut];
 }
 
-status_t HALAudioDump::checkDumpFile(ssize_t bytes)
+status_t HalAudioDump::checkDumpFile(ssize_t bytes)
 {
     struct stat stDump;
-    if (_dumpFile && fstat(fileno(_dumpFile), &stDump) == 0
-        && (stDump.st_size + bytes) > _maxDumpFileSize) {
+    if (mDumpFile && fstat(fileno(mDumpFile), &stDump) == 0
+        && (stDump.st_size + bytes) > mMaxDumpFileSize) {
 
         ALOGE("%s: Max size reached", __FUNCTION__);
         return BAD_VALUE;
     }
-    if (_fileCount >= _maxNumberOfFiles) {
+    if (mFileCount >= mMaxNumberOfFiles) {
 
         ALOGE("%s: Max number of allowed files reached", __FUNCTION__);
         return INVALID_OPERATION;
@@ -164,7 +171,7 @@ status_t HALAudioDump::checkDumpFile(ssize_t bytes)
     return OK;
 }
 
-status_t HALAudioDump::writeDumpFile(const void *buffer, ssize_t bytes)
+status_t HalAudioDump::writeDumpFile(const void *buffer, ssize_t bytes)
 {
     status_t ret;
 
@@ -173,7 +180,7 @@ status_t HALAudioDump::writeDumpFile(const void *buffer, ssize_t bytes)
 
         return ret;
     }
-    if (fwrite(buffer, bytes, 1, _dumpFile) != 1) {
+    if (fwrite(buffer, bytes, 1, mDumpFile) != 1) {
 
         ALOGE("Error writing PCM in audio dump file : %s", strerror(errno));
         return BAD_VALUE;

@@ -39,5 +39,5 @@ private:
      * The effect descriptor contains necessary information to facilitate the enumeration of the
      * effect.
      */
-    static const effect_descriptor_t wnrDescriptor;
+    static const effect_descriptor_t mWnrDescriptor;
 };

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -31,13 +31,13 @@ using std::string;
 
 AudioRoute::AudioRoute(const string &name, uint32_t routeId)
     : RoutingElement(name, routeId),
-      _isUsed(false),
-      _previouslyUsed(false),
-      _isApplicable(false),
-      _routingStageRequested(0)
+      mIsUsed(false),
+      mPreviouslyUsed(false),
+      mIsApplicable(false),
+      mRoutingStageRequested(0)
 {
-    _port[EPortSource] = NULL;
-    _port[EPortDest] = NULL;
+    mPort[EPortSource] = NULL;
+    mPort[EPortDest] = NULL;
 }
 
 AudioRoute::~AudioRoute()
@@ -52,26 +52,26 @@ void AudioRoute::addPort(AudioPort *port)
     ALOGV("%s: %d to route %s", __FUNCTION__, port->getId(), getName().c_str());
 
     port->addRouteToPortUsers(this);
-    if (!_port[EPortSource]) {
+    if (!mPort[EPortSource]) {
 
-        _port[EPortSource] = port;
+        mPort[EPortSource] = port;
     } else {
-        _port[EPortDest] = port;
+        mPort[EPortDest] = port;
     }
 }
 
 void AudioRoute::resetAvailability()
 {
-    _blocked = false;
-    _previouslyUsed = _isUsed;
-    _isUsed = false;
+    mBlocked = false;
+    mPreviouslyUsed = mIsUsed;
+    mIsUsed = false;
 }
 
 bool AudioRoute::isApplicable() const
 {
     ALOGV("%s %s !isBlocked()=%d && _isApplicable=%d", __FUNCTION__,
-          getName().c_str(), !isBlocked(), _isApplicable);
-    return !isBlocked() && _isApplicable;
+          getName().c_str(), !isBlocked(), mIsApplicable);
+    return !isBlocked() && mIsApplicable;
 }
 
 void AudioRoute::setUsed(bool isUsed)
@@ -83,18 +83,18 @@ void AudioRoute::setUsed(bool isUsed)
 
     AUDIOCOMMS_ASSERT(isBlocked() != true, "Requested route blocked");
 
-    if (!_isUsed) {
+    if (!mIsUsed) {
         ALOGV("%s: route %s is now in use in %s", __FUNCTION__, getName().c_str(),
-              _isOut ? "PLAYBACK" : "CAPTURE");
-        _isUsed = true;
+              mIsOut ? "PLAYBACK" : "CAPTURE");
+        mIsUsed = true;
 
         // Propagate the in use attribute to the ports
         // used by this route
         for (int i = 0; i < ENbPorts; i++) {
 
-            if (_port[i]) {
+            if (mPort[i]) {
 
-                _port[i]->setUsed(this);
+                mPort[i]->setUsed(this);
             }
         }
     }
@@ -102,9 +102,9 @@ void AudioRoute::setUsed(bool isUsed)
 
 void AudioRoute::setBlocked()
 {
-    if (!_blocked) {
+    if (!mBlocked) {
 
         ALOGV("%s: route %s is now blocked", __FUNCTION__, getName().c_str());
-        _blocked = true;
+        mBlocked = true;
     }
 }

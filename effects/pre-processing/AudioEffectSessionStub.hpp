@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -81,16 +81,16 @@ public:
      *
      * @return IO handle.
      */
-    int getIoHandle() const { return _ioHandle; }
+    int getIoHandle() const { return mIoHandle; }
 
     /**
      * Get the effect session Id.
      *
      * @return session id.
      */
-    uint32_t getId() const { return _id; }
+    uint32_t getId() const { return mId; }
 
-    static const int _sessionNone = -1; /**< No session tag. */
+    static const int mSessionNone = -1; /**< No session tag. */
 
 private:
     /**
@@ -120,12 +120,12 @@ private:
      */
     AudioEffectStub *findEffectByUuid(const effect_uuid_t *uuid);
 
-    int _ioHandle; /**< handle of input stream this session is linked to. */
-    uint32_t _id; /**< Id of the sessions.*/
-    audio_source_t  _source; /**< Audio Source (ie Use Case) associated to this session. */
+    int mIoHandle; /**< handle of input stream this session is linked to. */
+    uint32_t mId; /**< Id of the sessions.*/
+    audio_source_t  mSource; /**< Audio Source (ie Use Case) associated to this session. */
 
-    std::list<AudioEffectStub *> _effectsCreatedList; /**< created pre processors. */
-    std::list<AudioEffectStub *> _effectsActiveList; /**< active pre processors - for later use?. */
-    std::list<AudioEffectStub *> _effectsList; /**< Effects in the sessions. */
+    std::list<AudioEffectStub *> mEffectsCreatedList; /**< created pre processors. */
+    std::list<AudioEffectStub *> mEffectsActiveList; /**< active pre processors - for later use?. */
+    std::list<AudioEffectStub *> mEffectsList; /**< Effects in the sessions. */
 
 };

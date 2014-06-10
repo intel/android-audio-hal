@@ -33,18 +33,18 @@ namespace android_audio_legacy
 {
 
 AudioConverter::AudioConverter(SampleSpecItem sampleSpecItem)
-    : _convertSamplesFct(NULL),
-      _ssSrc(),
-      _ssDst(),
-      _convertBuf(NULL),
-      _convertBufSize(0),
-      _sampleSpecItem(sampleSpecItem)
+    : mConvertSamplesFct(NULL),
+      mSsSrc(),
+      mSsDst(),
+      mConvertBuf(NULL),
+      mConvertBufSize(0),
+      mSampleSpecItem(sampleSpecItem)
 {
 }
 
 AudioConverter::~AudioConverter()
 {
-    delete[] _convertBuf;
+    delete[] mConvertBuf;
 }
 
 //
@@ -54,9 +54,9 @@ AudioConverter::~AudioConverter()
 void *AudioConverter::getOutputBuffer(ssize_t inFrames)
 {
     status_t ret = NO_ERROR;
-    size_t outBufSizeInBytes = _ssDst.convertFramesToBytes(convertSrcToDstInFrames(inFrames));
+    size_t outBufSizeInBytes = mSsDst.convertFramesToBytes(convertSrcToDstInFrames(inFrames));
 
-    if (outBufSizeInBytes > _convertBufSize) {
+    if (outBufSizeInBytes > mConvertBufSize) {
 
         ret = allocateConvertBuffer(outBufSizeInBytes);
         if (ret != NO_ERROR) {
@@ -66,7 +66,7 @@ void *AudioConverter::getOutputBuffer(ssize_t inFrames)
         }
     }
 
-    return (void *)_convertBuf;
+    return (void *)mConvertBuf;
 }
 
 status_t AudioConverter::allocateConvertBuffer(ssize_t bytes)
@@ -74,18 +74,18 @@ status_t AudioConverter::allocateConvertBuffer(ssize_t bytes)
     status_t ret = NO_ERROR;
 
     // Allocate one more frame for resampler
-    _convertBufSize = bytes +
-                      (audio_bytes_per_sample(_ssDst.getFormat()) * _ssDst.getChannelCount());
+    mConvertBufSize = bytes +
+                      (audio_bytes_per_sample(mSsDst.getFormat()) * mSsDst.getChannelCount());
 
-    free(_convertBuf);
-    _convertBuf = NULL;
+    free(mConvertBuf);
+    mConvertBuf = NULL;
 
-    _convertBuf = new char[_convertBufSize];
+    mConvertBuf = new char[mConvertBufSize];
 
-    if (!_convertBuf) {
+    if (!mConvertBuf) {
 
         ALOGE("cannot allocate resampler tmp buffers.\n");
-        _convertBufSize = 0;
+        mConvertBufSize = 0;
         ret = NO_MEMORY;
     }
     return ret;
@@ -93,12 +93,12 @@ status_t AudioConverter::allocateConvertBuffer(ssize_t bytes)
 
 status_t AudioConverter::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    _ssSrc = ssSrc;
-    _ssDst = ssDst;
+    mSsSrc = ssSrc;
+    mSsDst = ssDst;
 
     for (int i = 0; i < NbSampleSpecItems; i++) {
 
-        if (i == _sampleSpecItem) {
+        if (i == mSampleSpecItem) {
 
             if (SampleSpec::isSampleSpecItemEqual(static_cast<SampleSpecItem>(i), ssSrc, ssDst)) {
 
@@ -119,10 +119,10 @@ status_t AudioConverter::configure(const SampleSpec &ssSrc, const SampleSpec &ss
     }
 
     // Reset the convert function pointer
-    _convertSamplesFct = NULL;
+    mConvertSamplesFct = NULL;
 
     // force the size to 0 to clear the buffer
-    _convertBufSize = 0;
+    mConvertBufSize = 0;
 
     return NO_ERROR;
 }
@@ -142,9 +142,9 @@ status_t AudioConverter::convert(const void *src,
         return NO_MEMORY;
     }
 
-    if (_convertSamplesFct != NULL) {
+    if (mConvertSamplesFct != NULL) {
 
-        ret = (this->*_convertSamplesFct)(src, outBuf, inFrames, outFrames);
+        ret = (this->*mConvertSamplesFct)(src, outBuf, inFrames, outFrames);
     }
 
     *dst = outBuf;
@@ -154,11 +154,11 @@ status_t AudioConverter::convert(const void *src,
 
 size_t AudioConverter::convertSrcToDstInFrames(ssize_t frames) const
 {
-    return AudioUtils::convertSrcToDstInFrames(frames, _ssSrc, _ssDst);
+    return AudioUtils::convertSrcToDstInFrames(frames, mSsSrc, mSsDst);
 }
 
 size_t AudioConverter::convertSrcFromDstInFrames(ssize_t frames) const
 {
-    return AudioUtils::convertSrcToDstInFrames(frames, _ssDst, _ssSrc);
+    return AudioUtils::convertSrcToDstInFrames(frames, mSsDst, mSsSrc);
 }
 }  // namespace android

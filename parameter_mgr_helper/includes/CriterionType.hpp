@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -45,7 +45,7 @@ public:
      *
      * @return name of the criterion type.
      */
-    const std::string &getName() const { return _name; }
+    const std::string &getName() const { return mName; }
 
     /**
      * Adds a value pair for this criterion type to the parameter manager.
@@ -80,8 +80,8 @@ public:
      */
     ISelectionCriterionTypeInterface *getTypeInterface()
     {
-        LOG_ALWAYS_FATAL_IF(_criterionTypeInterface == NULL);
-        return _criterionTypeInterface;
+        LOG_ALWAYS_FATAL_IF(mCriterionTypeInterface == NULL);
+        return mCriterionTypeInterface;
     }
 
     /**
@@ -95,9 +95,9 @@ private:
     /**
      * criterion type interface for parameter manager operations.
      */
-    ISelectionCriterionTypeInterface *_criterionTypeInterface;
+    ISelectionCriterionTypeInterface *mCriterionTypeInterface;
 
-    std::string _name; /**< criterion type name. */
-    bool _isInclusive; /**< inclusive attribute. */
-    CParameterMgrPlatformConnector *_parameterMgrConnector; /**< parameter manager connector. */
+    std::string mName; /**< criterion type name. */
+    bool mIsInclusive; /**< inclusive attribute. */
+    CParameterMgrPlatformConnector *mParameterMgrConnector; /**< parameter manager connector. */
 };

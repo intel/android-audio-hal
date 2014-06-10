@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2013 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -198,42 +198,42 @@ private:
     /**
      * List of audio converter enabled.
      */
-    std::list<AudioConverter *> _activeAudioConvList;
+    std::list<AudioConverter *> mActiveAudioConvList;
 
     /**
      * List of Audio Converter objects available.
      * Each converter works on a dedicated sample spec item.
      */
-    AudioConverter *_audioConverter[NbSampleSpecItems];
+    AudioConverter *mAudioConverter[NbSampleSpecItems];
 
     /**
      * Source audio data sample specifications.
      */
-    SampleSpec _ssSrc;
+    SampleSpec mSsSrc;
 
     /**
      * Destination audio data sample specifications.
      */
-    SampleSpec _ssDst;
+    SampleSpec mSsDst;
 
     // Conversion is done into ConvOutBuffer
-    size_t _convOutBufferIndex; /**< Current position into the Converted buffer. */
-    size_t _convOutFrames; /**< Number of converted Frames. */
-    size_t _convOutBufferSizeInFrames; /**< Converted buffer size in Frames. */
-    int16_t *_convOutBuffer; /**< Converted buffer. */
+    size_t mConvOutBufferIndex; /**< Current position into the Converted buffer. */
+    size_t mConvOutFrames; /**< Number of converted Frames. */
+    size_t mConvOutBufferSizeInFrames; /**< Converted buffer size in Frames. */
+    int16_t *mConvOutBuffer; /**< Converted buffer. */
 
     /**
      * Buffer is acquired from the provider into ConvInBuffer.
      */
-    android::AudioBufferProvider::Buffer _convInBuffer;
+    android::AudioBufferProvider::Buffer mConvInBuffer;
 
-    static const uint32_t _maxRate; /**< Max rate supported by resampler converter. */
+    static const uint32_t mMaxRate; /**< Max rate supported by resampler converter. */
 
-    static const uint32_t _minRate; /**< Min rate supported by resampler converter. */
+    static const uint32_t mMinRate; /**< Min rate supported by resampler converter. */
 
     /**
      * Multiplication factor used to allocate a big enough conversion buffer.
      */
-    static const uint32_t _allocBufferMultFactor;
+    static const uint32_t mAllocBufferMultFactor;
 };
 }  // namespace android

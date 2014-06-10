@@ -44,7 +44,7 @@ using android::OK;
 using android::BAD_VALUE;
 using audio_comms::utilities::Mutex;
 
-const struct effect_interface_s LpePreProcessingStub::effectInterface = {
+const struct effect_interface_s LpePreProcessingStub::mEffectInterface = {
     NULL, /**< process. Not implemented as this lib deals with HW effects. */
     /**
      * Send a command and receive a response to/from effect engine.
@@ -266,7 +266,7 @@ status_t LpePreProcessingStub::createEffect(const effect_uuid_t *uuid,
         ALOGE("%s: invalue interface and/or uuid", __FUNCTION__);
         return BAD_VALUE;
     }
-    Mutex::Locker Locker(_lpeEffectsLock);
+    Mutex::Locker Locker(mLpeEffectsLock);
     AudioEffectSessionStub *session = getSession(ioId);
     if (session == NULL) {
 
@@ -283,7 +283,7 @@ status_t LpePreProcessingStub::createEffect(const effect_uuid_t *uuid,
 status_t LpePreProcessingStub::releaseEffect(effect_handle_t interface)
 {
     ALOGD("%s", __FUNCTION__);
-    Mutex::Locker Locker(_lpeEffectsLock);
+    Mutex::Locker Locker(mLpeEffectsLock);
     AudioEffectStub *effect = findEffectByInterface(interface);
     if (effect == NULL) {
 
@@ -301,29 +301,28 @@ status_t LpePreProcessingStub::releaseEffect(effect_handle_t interface)
 
 status_t LpePreProcessingStub::init()
 {
-    for (uint32_t i = 0; i < _maxEffectSessions; i++) {
+    for (uint32_t i = 0; i < mMaxEffectSessions; i++) {
 
         AudioEffectSessionStub *effectSession = new AudioEffectSessionStub(i);
 
         // Each session has an instance of effects provided by LPE
-        AgcAudioEffect *agc = new AgcAudioEffect(&effectInterface);
-        _effectsList.push_back(agc);
+        AgcAudioEffect *agc = new AgcAudioEffect(&mEffectInterface);
+        mEffectsList.push_back(agc);
         effectSession->addEffect(agc);
-        NsAudioEffect *ns = new NsAudioEffect(&effectInterface);
-        _effectsList.push_back(ns);
+        NsAudioEffect *ns = new NsAudioEffect(&mEffectInterface);
+        mEffectsList.push_back(ns);
         effectSession->addEffect(ns);
-        AecAudioEffect *aec = new AecAudioEffect(&effectInterface);
-        _effectsList.push_back(aec);
+        AecAudioEffect *aec = new AecAudioEffect(&mEffectInterface);
+        mEffectsList.push_back(aec);
         effectSession->addEffect(aec);
-
-        BmfAudioEffect *bmf = new BmfAudioEffect(&effectInterface);
-        _effectsList.push_back(bmf);
+        BmfAudioEffect *bmf = new BmfAudioEffect(&mEffectInterface);
+        mEffectsList.push_back(bmf);
         effectSession->addEffect(bmf);
-        WnrAudioEffect *wnr = new WnrAudioEffect(&effectInterface);
-        _effectsList.push_back(wnr);
+        WnrAudioEffect *wnr = new WnrAudioEffect(&mEffectInterface);
+        mEffectsList.push_back(wnr);
         effectSession->addEffect(wnr);
 
-        _effectSessionsList.push_back(effectSession);
+        mEffectSessionsList.push_back(effectSession);
     }
     return OK;
 }
@@ -343,9 +342,9 @@ struct MatchUuid : public std::binary_function<AudioEffectStub *, const effect_u
 AudioEffectStub *LpePreProcessingStub::findEffectByUuid(const effect_uuid_t *uuid)
 {
     EffectListIterator it;
-    it = std::find_if(_effectsList.begin(), _effectsList.end(), std::bind2nd(MatchUuid(), uuid));
+    it = std::find_if(mEffectsList.begin(), mEffectsList.end(), std::bind2nd(MatchUuid(), uuid));
 
-    return (it != _effectsList.end()) ? *it : NULL;
+    return (it != mEffectsList.end()) ? *it : NULL;
 }
 
 /**
@@ -365,10 +364,10 @@ struct MatchInterface : public std::binary_function<AudioEffectStub *, const eff
 AudioEffectStub *LpePreProcessingStub::findEffectByInterface(const effect_handle_t interface)
 {
     EffectListIterator it;
-    it = std::find_if(_effectsList.begin(), _effectsList.end(),
+    it = std::find_if(mEffectsList.begin(), mEffectsList.end(),
                       std::bind2nd(MatchInterface(), interface));
 
-    return (it != _effectsList.end()) ? *it : NULL;
+    return (it != mEffectsList.end()) ? *it : NULL;
 }
 
 /**
@@ -387,10 +386,10 @@ struct MatchSession : public std::binary_function<AudioEffectSessionStub *, int,
 AudioEffectSessionStub *LpePreProcessingStub::findSession(int ioId)
 {
     EffectSessionListIterator it;
-    it = std::find_if(_effectSessionsList.begin(), _effectSessionsList.end(),
+    it = std::find_if(mEffectSessionsList.begin(), mEffectSessionsList.end(),
                       std::bind2nd(MatchSession(), ioId));
 
-    return (it != _effectSessionsList.end()) ? *it : NULL;
+    return (it != mEffectSessionsList.end()) ? *it : NULL;
 }
 
 AudioEffectSessionStub *LpePreProcessingStub::getSession(uint32_t ioId)
@@ -399,7 +398,7 @@ AudioEffectSessionStub *LpePreProcessingStub::getSession(uint32_t ioId)
     if (session == NULL) {
 
         ALOGD("%s: no session assigned for io=%d, try to get one...", __FUNCTION__, ioId);
-        session = findSession(AudioEffectSessionStub::_sessionNone);
+        session = findSession(AudioEffectSessionStub::mSessionNone);
         if (session != NULL) {
 
             session->setIoHandle(ioId);
