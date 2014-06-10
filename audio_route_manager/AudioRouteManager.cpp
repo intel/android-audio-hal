@@ -230,7 +230,7 @@ status_t AudioRouteManager::startService()
 
 void AudioRouteManager::initRouting()
 {
-    mRoutingStageCriterion->setCriterionState(Configure | Path | Flow);
+    mRoutingStageCriterion->setCriterionState<int32_t>(Configure | Path | Flow);
     mAudioPfwConnector->applyConfigurations();
 }
 
@@ -405,7 +405,7 @@ void AudioRouteManager::executeMuteRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    mRoutingStageCriterion->setCriterionState(FlowMask);
+    mRoutingStageCriterion->setCriterionState<int32_t>(FlowMask);
     setRouteCriteriaForMute();
     mAudioPfwConnector->applyConfigurations();
 }
@@ -414,7 +414,7 @@ void AudioRouteManager::executeDisableRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    mRoutingStageCriterion->setCriterionState(PathMask);
+    mRoutingStageCriterion->setCriterionState<int32_t>(PathMask);
     setRouteCriteriaForDisable();
     doDisableRoutes();
     mAudioPfwConnector->applyConfigurations();
@@ -425,7 +425,7 @@ void AudioRouteManager::executeConfigureRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    mRoutingStageCriterion->setCriterionState(ConfigureMask);
+    mRoutingStageCriterion->setCriterionState<int32_t>(ConfigureMask);
 
     StreamRouteMapIterator routeIt;
     for (routeIt = mStreamRouteMap.begin(); routeIt != mStreamRouteMap.end(); ++routeIt) {
@@ -446,7 +446,7 @@ void AudioRouteManager::executeEnableRoutingStage()
 {
     ALOGD("\t\t-%s-", __FUNCTION__);
 
-    mRoutingStageCriterion->setCriterionState(PathMask | ConfigureMask);
+    mRoutingStageCriterion->setCriterionState<int32_t>(PathMask | ConfigureMask);
     doPreEnableRoutes();
     mAudioPfwConnector->applyConfigurations();
     doEnableRoutes();
@@ -456,7 +456,7 @@ void AudioRouteManager::executeUnmuteRoutingStage()
 {
     ALOGD("\t\t-%s", __FUNCTION__);
 
-    mRoutingStageCriterion->setCriterionState(ConfigureMask | PathMask | FlowMask);
+    mRoutingStageCriterion->setCriterionState<int32_t>(ConfigureMask | PathMask | FlowMask);
     mAudioPfwConnector->applyConfigurations();
 }
 
@@ -464,8 +464,8 @@ void AudioRouteManager::setRouteCriteriaForConfigure()
 {
     for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
 
-        mSelectedClosingRoutes[i]->setCriterionState(0);
-        mSelectedOpenedRoutes[i]->setCriterionState(enabledRoutes(i));
+        mSelectedClosingRoutes[i]->setCriterionState<int32_t>(0);
+        mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(enabledRoutes(i));
     }
 }
 
@@ -476,8 +476,8 @@ void AudioRouteManager::setRouteCriteriaForMute()
         uint32_t unmutedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needReflowRoutes(i);
         uint32_t routesToMute = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needReflowRoutes(i);
 
-        mSelectedClosingRoutes[i]->setCriterionState(routesToMute);
-        mSelectedOpenedRoutes[i]->setCriterionState(unmutedRoutes);
+        mSelectedClosingRoutes[i]->setCriterionState<int32_t>(routesToMute);
+        mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(unmutedRoutes);
     }
 }
 
@@ -488,8 +488,8 @@ void AudioRouteManager::setRouteCriteriaForDisable()
         uint32_t openedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needRepathRoutes(i);
         uint32_t routesToDisable = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needRepathRoutes(i);
 
-        mSelectedClosingRoutes[i]->setCriterionState(routesToDisable);
-        mSelectedOpenedRoutes[i]->setCriterionState(openedRoutes);
+        mSelectedClosingRoutes[i]->setCriterionState<int32_t>(routesToDisable);
+        mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(openedRoutes);
     }
 }
 

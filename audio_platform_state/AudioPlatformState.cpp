@@ -592,23 +592,20 @@ int AudioPlatformState::getValue(const char *stateName) const
 }
 
 
-void AudioPlatformState::printPlatformFwErrorInfo()
+void AudioPlatformState::printPlatformFwErrorInfo() const
 {
 
     ALOGE("^^^^  Print platform Audio firmware error info  ^^^^");
 
-    ParameterMgrHelper routeParamHelper(mRoutePfwConnector);
-
     string paramValue;
-    status_t getStringError;
 
     /**
      * Get the list of files path we wish to print. This list is represented as a
      * string defined in the route manager RouteDebugFs plugin.
      */
-    getStringError = routeParamHelper.getStringParameterValue(mHwDebugFilesPathList, paramValue);
-
-    if (getStringError != NO_ERROR) {
+    if (!ParameterMgrHelper::getParameterValue<std::string>(mRoutePfwConnector,
+                                                            mHwDebugFilesPathList,
+                                                            paramValue)) {
         ALOGE("Could not get path list from XML configuration");
         return;
     }

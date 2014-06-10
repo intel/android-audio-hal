@@ -26,7 +26,6 @@
 #include "ParameterMgrPlatformConnector.h"
 #include "SelectionCriterionInterface.h"
 #include <string>
-#include <utils/Log.h>
 
 using std::map;
 using std::string;
@@ -49,170 +48,105 @@ ParameterMgrHelper::~ParameterMgrHelper()
     mParameterHandleMap.clear();
 }
 
-uint32_t ParameterMgrHelper::getIntegerParameterValue(const string &paramPath,
-                                                      uint32_t defaultValue) const
+template <>
+bool ParameterMgrHelper::setAsTypedValue<uint32_t>(CParameterHandle *parameterHandle,
+                                                   const uint32_t &value, string &error)
 {
-    ALOGV("%s in", __FUNCTION__);
-
-    if (!mPfwConnector->isStarted()) {
-
-        return defaultValue;
-    }
-
-    string error;
-    // Get handle
-    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath,
-                                                                             error);
-    if (!parameterHandle) {
-
-        ALOGE("Unable to get parameter handle: '%s' '%s'", paramPath.c_str(), error.c_str());
-        ALOGV("%s returning %d", __FUNCTION__, defaultValue);
-
-        return defaultValue;
-    }
-
-    // Retrieve value
-    uint32_t value;
-    error.clear();
-    if (!parameterHandle->getAsInteger(value, error)) {
-
-        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(), paramPath.c_str());
-        ALOGV("%s returning %d", __FUNCTION__, defaultValue);
-        value = defaultValue;
-    }
-
-    // Remove handle
-    delete parameterHandle;
-
-    ALOGV("%s: %s is %d", __FUNCTION__, paramPath.c_str(), value);
-
-    return value;
-}
-
-status_t ParameterMgrHelper::getStringParameterValue(const string &paramPath,
-                                                     string &value) const
-{
-    if (!mPfwConnector->isStarted()) {
-
-        return DEAD_OBJECT;
-    }
-
-    string error;
-    // Get handle
-    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath, error);
-
-    if (!parameterHandle) {
-
-        ALOGE("Unable to get parameter handle: '%s' '%s'", paramPath.c_str(), error.c_str());
-
-        return DEAD_OBJECT;
-    }
-
-    // Retrieve value
-    status_t ret = OK;
-    error.clear();
-    if (!parameterHandle->getAsString(value, error)) {
-
-        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(), paramPath.c_str());
-        ret = BAD_VALUE;
-    }
-
-    // Remove handle
-    delete parameterHandle;
-
-    ALOGV_IF(!ret, "%s: %s is %s", __FUNCTION__, paramPath.c_str(), value.c_str());
-
-    return ret;
-}
-
-status_t ParameterMgrHelper::setIntegerParameterValue(const string &paramPath, uint32_t value)
-{
-    if (!mPfwConnector->isStarted()) {
-
-        return INVALID_OPERATION;
-    }
-
-    string error;
-    // Get handle
-    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath, error);
-
-    if (!parameterHandle) {
-
-        ALOGE("Unable to get parameter handle: '%s' '%s'", paramPath.c_str(), error.c_str());
-
-        return NAME_NOT_FOUND;
-    }
-
-    // set value
-    status_t ret = OK;
-    error.clear();
     if (!parameterHandle->setAsInteger(value, error)) {
 
-        ALOGE("Unable to set value: %s, from parameter path: %s", error.c_str(), paramPath.c_str());
-        ret = NAME_NOT_FOUND;
+        ALOGE("Unable to set value: %s, from parameter path: %s", error.c_str(),
+              parameterHandle->getPath().c_str());
+        return false;
     }
-
-    // Remove handle
-    delete parameterHandle;
-
-    ALOGV_IF(!ret, "%s:  %s set to %d", __FUNCTION__, paramPath.c_str(), value);
-
-    return ret;
+    return true;
 }
 
-status_t ParameterMgrHelper::setIntegerArrayParameterValue(const string &paramPath,
-                                                           vector<uint32_t> &array) const
+template <>
+bool ParameterMgrHelper::getAsTypedValue<uint32_t>(CParameterHandle *parameterHandle,
+                                                   uint32_t &value, string &error)
 {
-    if (!mPfwConnector->isStarted()) {
+    if (!parameterHandle->getAsInteger(value, error)) {
 
-        return INVALID_OPERATION;
+        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(),
+              parameterHandle->getPath().c_str());
+        return false;
     }
+    return true;
+}
 
+template <>
+bool ParameterMgrHelper::setAsTypedValue<vector<uint32_t> >(CParameterHandle *parameterHandle,
+                                                            const vector<uint32_t> &value,
+                                                            string &error)
+{
+    if (!parameterHandle->setAsIntegerArray(value, error)) {
+
+        ALOGE("Unable to set value: %s, from parameter path: %s", error.c_str(),
+              parameterHandle->getPath().c_str());
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::setAsTypedValue<string>(CParameterHandle *parameterHandle,
+                                                 const string &value, string &error)
+{
+    if (!parameterHandle->setAsString(value, error)) {
+
+        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(),
+              parameterHandle->getPath().c_str());
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::getAsTypedValue<string>(CParameterHandle *parameterHandle,
+                                                 string &value, string &error)
+{
+    if (!parameterHandle->getAsString(value, error)) {
+
+        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(),
+              parameterHandle->getPath().c_str());
+        return false;
+    }
+    return true;
+}
+
+bool ParameterMgrHelper::getParameterHandle(CParameterMgrPlatformConnector *pfwConnector,
+                                            CParameterHandle * &handle,
+                                            const string &path)
+{
+    if (pfwConnector == NULL || !pfwConnector->isStarted()) {
+        ALOGE("%s PFW connector is NULL or PFW is not started", __FUNCTION__);
+        return false;
+    }
     string error;
-    // Get handle
-    CParameterHandle *parameterHandle = mPfwConnector->createParameterHandle(paramPath, error);
-
-    if (!parameterHandle) {
-
-        ALOGE("Unable to get parameter handle: '%s' '%s'", paramPath.c_str(), error.c_str());
-
-        return NAME_NOT_FOUND;
+    handle = pfwConnector->createParameterHandle(path, error);
+    if (!handle) {
+        ALOGE("%s: Unable to get handle for '%s' '%s'", __FUNCTION__, path.c_str(), error.c_str());
+        return false;
     }
-
-    // set value
-    status_t ret = OK;
-    error.clear();
-    if (!parameterHandle->setAsIntegerArray(array, error)) {
-
-        ALOGE("Unable to set value: %s, from parameter path: %s", error.c_str(), paramPath.c_str());
-        ret = INVALID_OPERATION;
-    }
-
-    // Remove handle
-    delete parameterHandle;
-
-    return ret;
+    return true;
 }
 
-CParameterHandle *ParameterMgrHelper::getParameterHandle(const string &paramPath)
+CParameterHandle *ParameterMgrHelper::getPlatformParameterHandle(const string &paramPath) const
 {
-    string parameter;
+    string platformParamPath;
 
     // First retrieve the platform dependant parameter path
-    status_t ret = getStringParameterValue(paramPath, parameter);
-    if (ret != NO_ERROR) {
+    if (!getParameterValue<string>(mPfwConnector, paramPath, platformParamPath)) {
 
-        ALOGE("Could not retrieve parameter path handler err=%d", ret);
+        ALOGE("Could not retrieve parameter path handler");
         return NULL;
     }
-    ALOGD("%s  Platform specific parameter path=%s", __FUNCTION__, parameter.c_str());
+    ALOGD("%s  Platform specific parameter path=%s", __FUNCTION__, platformParamPath.c_str());
 
-    string error;
-    CParameterHandle *handle = mPfwConnector->createParameterHandle(parameter, error);
-    if (!handle) {
-
-        ALOGE("%s: Unable to get parameter handle: '%s' '%s'", __FUNCTION__,
-              paramPath.c_str(), error.c_str());
+    // Initialise handle to NULL to avoid KW "false-positive".
+    CParameterHandle *handle = NULL;
+    if (!getParameterHandle(mPfwConnector, handle, platformParamPath)) {
+        return NULL;
     }
     return handle;
 }
@@ -222,7 +156,7 @@ CParameterHandle *ParameterMgrHelper::getDynamicParameterHandle(const string &dy
     if (mParameterHandleMap.find(dynamicParamPath) == mParameterHandleMap.end()) {
         ALOGD("Dynamic parameter %s not found in map, get a handle and push it in the map",
               dynamicParamPath.c_str());
-        mParameterHandleMap[dynamicParamPath] = getParameterHandle(dynamicParamPath);
+        mParameterHandleMap[dynamicParamPath] = getPlatformParameterHandle(dynamicParamPath);
     }
     return mParameterHandleMap[dynamicParamPath];
 }

@@ -33,12 +33,29 @@ Criterion::Criterion(const string &name,
                      int32_t defaultValue)
     : mCriterionType(criterionType),
       mParameterMgrConnector(parameterMgrConnector),
-      mName(name),
-      mValue(defaultValue)
+      mName(name)
 {
-    mSelectionCriterionInterface =
-        mParameterMgrConnector->createSelectionCriterion(mName, criterionType->getTypeInterface());
+    init(defaultValue);
+}
 
+Criterion::Criterion(const string &name,
+                     CriterionType *criterionType,
+                     CParameterMgrPlatformConnector *parameterMgrConnector,
+                     const std::string &defaultLiteralValue)
+    : mCriterionType(criterionType),
+      mParameterMgrConnector(parameterMgrConnector),
+      mName(name)
+{
+    init(getNumericalFromLiteral(defaultLiteralValue));
+}
+
+void Criterion::init(int32_t defaultValue)
+{
+    AUDIOCOMMS_ASSERT(mCriterionType != NULL, "NULL criterion Type");
+    mSelectionCriterionInterface =
+        mParameterMgrConnector->createSelectionCriterion(mName,
+                                                         mCriterionType->getTypeInterface());
+    mValue = defaultValue;
     setCriterionState();
 }
 
@@ -46,7 +63,7 @@ Criterion::~Criterion()
 {
 }
 
-string Criterion::getFormattedValue()
+string Criterion::getFormattedValue() const
 {
     return mCriterionType->getTypeInterface()->getFormattedState(mValue);
 }
@@ -67,7 +84,8 @@ void Criterion::setCriterionState()
     mSelectionCriterionInterface->setCriterionState(mValue);
 }
 
-bool Criterion::setCriterionState(int32_t value)
+template <>
+bool Criterion::setCriterionState<int32_t>(const int32_t &value)
 {
     if (setValue(value)) {
 
@@ -76,4 +94,26 @@ bool Criterion::setCriterionState(int32_t value)
         return true;
     }
     return false;
+}
+
+template <>
+bool Criterion::setCriterionState<string>(const string &value)
+{
+    return setCriterionState<int32_t>(getNumericalFromLiteral(value));
+}
+
+int Criterion::getNumericalFromLiteral(const std::string &literalValue) const
+{
+    AUDIOCOMMS_ASSERT(mCriterionType != NULL, "NULL criterion interface");
+    int numericalValue = 0;
+    if (!literalValue.empty() &&
+        !mCriterionType->getTypeInterface()->getNumericalValue(literalValue,
+                                                               numericalValue)) {
+
+        ALOGE("%s: could not retrieve numerical value for criterion %s %s",
+              __FUNCTION__,
+              mName.c_str(),
+              literalValue.c_str());
+    }
+    return numericalValue;
 }

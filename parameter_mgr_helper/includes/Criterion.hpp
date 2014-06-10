@@ -37,6 +37,11 @@ public:
               CriterionType *criterionType,
               CParameterMgrPlatformConnector *parameterMgrConnector,
               int32_t defaultValue = 0);
+
+    Criterion(const std::string &name,
+              CriterionType *criterionType,
+              CParameterMgrPlatformConnector *parameterMgrConnector,
+              const std::string &defaultLiteralValue);
     virtual ~Criterion();
 
     /**
@@ -78,18 +83,20 @@ public:
     /**
      * Set the local value to the parameter manager.
      *
-     * @param[in] value numerical value to set to the parameter manager.
+     * @tparam[in] T type of the value to set.
+     * @param[in] value value to set to the criterion of the parameter manager.
      *
      * @return true if the value was changed, false if same value requested to be set.
      */
-    bool setCriterionState(int32_t value);
+    template <typename T>
+    bool setCriterionState(const T &value);
 
     /**
      * Get the literal value of the criterion.
      *
      * @return the literal value associated to the numerical local value.
      */
-    std::string getFormattedValue();
+    std::string getFormattedValue() const;
 
     /**
      * Get the criterion type handler.
@@ -102,6 +109,24 @@ public:
     }
 
 private:
+    /**
+     * Initialize the criterion, i.e. get the criterion interface and set the criterion
+     * init value.
+     *
+     * @param[in] defaultValue Default numerical value of the criterion.
+     */
+    void init(int32_t defaultValue);
+
+    /**
+     * Helper function to retrieve the numerical value from the literal representation of the
+     * criterion.
+     *
+     * @param[in] literalValue: literal representation of the criterion.
+     *
+     * @return numerical value of the criterion associated to this literal.
+     */
+    int getNumericalFromLiteral(const std::string &literalValue) const;
+
     /**
      * criterion interface for parameter manager operations.
      */

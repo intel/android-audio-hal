@@ -25,7 +25,9 @@
 #include <map>
 #include <string>
 #include <utils/Errors.h>
+#include "ParameterMgrPlatformConnector.h"
 #include <vector>
+#include <utils/Log.h>
 
 class CParameterMgrPlatformConnector;
 class CParameterHandle;
@@ -42,36 +44,82 @@ public:
     virtual ~ParameterMgrHelper();
 
     /**
-     * unsigned integer parameter value retrieval.
+     * Get a value from a parameter path.
+     * It returns the value stored in the parameter framework under the given path.
      *
-     * @param[in] parameterPath path of the parameter.
-     * @param[in] defaultValue default value to use if any error.
+     * @param[in] connector to Parameter Framework.
+     * @param[in] path of the parameter.
+     * @param[out] value stored under this path.
      *
-     * @return numerical value of the parameter as an unsigned integer.
+     * @return status_t OK if success, error code otherwise and value is kept unchanged.
      */
-    uint32_t getIntegerParameterValue(const std::string &parameterPath,
-                                      uint32_t defaultValue) const;
+    template <typename T>
+    static bool getParameterValue(CParameterMgrPlatformConnector *connector,
+                                  const std::string &path, T &value)
+    {
+        std::string error;
+        // Initialize handle to NULL to avoid KW "false-positive".
+        CParameterHandle *handle = NULL;
+        if (!getParameterHandle(connector, handle, path)) {
+            return false;
+        }
+        bool ret = getAsTypedValue<T>(handle, value, error);
+        delete handle;
+        return ret;
+    }
 
     /**
-     * unsigned integer parameter value set.
+     * Set a parameter with a typed value.
      *
-     * @param[in] paramPath path of the parameter.
+     * @param[in] connector to Parameter Framework.
+     * @param[in] path of the parameter.
      * @param[in] value default to set.
      *
      * @return OK if success, error code otherwise.
      */
-    android::status_t setIntegerParameterValue(const std::string &paramPath, uint32_t value);
+    template <typename T>
+    static bool setParameterValue(CParameterMgrPlatformConnector *connector,
+                                  const std::string &path, const T &value)
+    {
+        std::string error;
+        // Initialize handle to NULL to avoid KW "false-positive".
+        CParameterHandle *handle = NULL;
+        if (!getParameterHandle(connector, handle, path)) {
+            return false;
+        }
+        bool ret = setAsTypedValue<T>(handle, value, error);
+        delete handle;
+        return ret;
+    }
 
     /**
-     * unsigned integer parameter value setter.
+     * Get a typed value from a parameter path.
+     * It returns the value stored in the parameter framework under the given path.
      *
-     * @param[in] paramPath path of the parameter.
-     * @param[in] array value array to write.
+     * @tparam T type of the value to be retrieved
+     * @param[in] parameterHandle handle on the parameter.
+     * @param[out] value read from this path, valid only if true is returned.
+     * @param[out] error human readable error, set only if false is returned.
      *
-     * @return OK if success, error code otherwise.
+     * @return true if success, false otherwise and error is set.
      */
-    android::status_t setIntegerArrayParameterValue(const std::string &paramPath,
-                                                    std::vector<uint32_t> &array) const;
+    template <typename T>
+    static bool getAsTypedValue(CParameterHandle *parameterHandle, T &value,
+                                std::string &error);
+
+    /**
+     * Set a typed value to a parameter path.
+     *
+     * @tparam T type of the value to be retrieved
+     * @param[in] parameterHandle handle on the parameter.
+     * @param[in] value to set to this path.
+     * @param[out] error human readable error, set only if false is returned.
+     *
+     * @return true if success, false otherwise and error is set.
+     */
+    template <typename T>
+    static bool setAsTypedValue(CParameterHandle *parameterHandle, const T &value,
+                                std::string &error);
 
     /**
      * Get a handle on the platform dependent parameter.
@@ -85,27 +133,28 @@ public:
      */
     CParameterHandle *getDynamicParameterHandle(const std::string &dynamicParamPath);
 
-    /**
-     * Get a string value from a parameter path.
-     * It returns the value stored in the parameter framework under the given path.
-     *
-     * @param[in] paramPath path of the parameter.
-     * @param[out] value string value stored under this path.
-     *
-     * @return status_t OK if success, error code otherwise and strValue is kept unchanged.
-     */
-    android::status_t getStringParameterValue(const std::string &paramPath,
-                                              std::string &value) const;
-
 private:
     /**
-     * Get a handle on the platform dependent parameter.
+     * Helper function to retrieve a handle on a parameter.
      *
-     * @param[in] paramPath path of the parameter on which a handler is requested;
+     * @param[in] pfwConnector Parameter Manager Connector object.
+     * @param[out] handle on the parameter.
+     * @param[in] paramPath of the parameter on which a handler is requested;
      *
      * @return CParameterHandle handle on the parameter, NULL pointer if error.
      */
-    CParameterHandle *getParameterHandle(const std::string &paramPath);
+    static bool getParameterHandle(CParameterMgrPlatformConnector *pfwConnector,
+                                   CParameterHandle * &handle,
+                                   const std::string &paramPath);
+
+    /**
+     * Get a handle on the platform dependent parameter.
+     *
+     * @param[in] path of the parameter on which a handler is requested;
+     *
+     * @return CParameterHandle handle on the parameter, NULL pointer if error.
+     */
+    CParameterHandle *getPlatformParameterHandle(const std::string &path) const;
 
     CParameterMgrPlatformConnector *mPfwConnector; /** < PFW Connector */
 
