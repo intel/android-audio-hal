@@ -33,8 +33,8 @@ using std::string;
 using std::vector;
 using namespace android;
 
-ParameterMgrHelper::ParameterMgrHelper(CParameterMgrPlatformConnector *audioPFWConnector)
-    : mPfwConnector(audioPFWConnector)
+ParameterMgrHelper::ParameterMgrHelper(CParameterMgrPlatformConnector *pfwConnector)
+    : mPfwConnector(pfwConnector)
 {
 }
 

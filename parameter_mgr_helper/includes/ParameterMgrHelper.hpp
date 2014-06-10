@@ -37,7 +37,7 @@ private:
     typedef std::map<std::string, CParameterHandle *>::iterator ParameterHandleMapIterator;
 
 public:
-    ParameterMgrHelper(CParameterMgrPlatformConnector *audioPFWConnector);
+    ParameterMgrHelper(CParameterMgrPlatformConnector *pfwConnector);
 
     virtual ~ParameterMgrHelper();
 
