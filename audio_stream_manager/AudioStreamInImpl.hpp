@@ -257,7 +257,7 @@ private:
      * @param[out] buffer memory in which it will copy the frames.
      * @param[in] frames requested frames to read.
      *
-     * @return number of frames read if successfull operation, negative error code otherwise.
+     * @return number of frames read if successful operation, negative error code otherwise.
      */
     ssize_t readFrames(void *buffer, size_t frames);
 
@@ -271,14 +271,14 @@ private:
      *
      * @param[in] frames number of frame that we may process.
      *
-     * @return OK if successfull allocation, error code otherwise.
+     * @return OK if successful allocation, error code otherwise.
      */
     android::status_t allocateProcessingMemory(ssize_t frames);
 
     /**
      * Allocate the buffer in which it reads the samples from the audio device.
      *
-     * @return OK if successfull allocation, error code otherwise.
+     * @return OK if successful allocation, error code otherwise.
      */
     inline android::status_t allocateHwBuffer();
 
@@ -288,7 +288,7 @@ private:
      * @param[out] buffer memory in which it will copy the processed frames.
      * @param[in] frames requested frames to read.
      *
-     * @return number of frames processed if successfull operation, negative error code otherwise.
+     * @return number of frames processed if successful operation, negative error code otherwise.
      */
     ssize_t processFrames(void *buffer, ssize_t frames);
 
@@ -313,7 +313,7 @@ private:
      * @param[in] preprocessor handle on AEC preprocessor.
      * @param[in] reference echo reference structure.
      *
-     * @return OK if successfull operation, error code otherwise.
+     * @return OK if successful operation, error code otherwise.
      */
     status_t pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
                                struct echo_reference_itfe *reference);
@@ -324,7 +324,7 @@ private:
      * @param[in] frames number of frames ready to process by AEC.
      * @param[in] reference echo reference handle.
      *
-     * @return 0 if successfull operation, error code otherwise.
+     * @return 0 if successful operation, error code otherwise.
      */
     int32_t updateEchoReference(ssize_t frames, struct echo_reference_itfe *reference);
 
@@ -334,7 +334,7 @@ private:
      * @param[out] effect preprocessor handle.
      * @param[out] delay_us delay of the echo in micro seconds.
      *
-     * @return OK if successfull operation, error code otherwise.
+     * @return OK if successful operation, error code otherwise.
      */
     status_t setPreprocessorEchoDelay(effect_handle_t effect, int32_t delay_us);
 
@@ -344,7 +344,7 @@ private:
      * @param[out] effect preprocessor handle
      * @param[out] param parameters to send to the preprocessor.
      *
-     * @return OK if successfull operation, error code otherwise.
+     * @return OK if successful operation, error code otherwise.
      */
     status_t setPreprocessorParam(effect_handle_t effect, effect_param_t *param);
 

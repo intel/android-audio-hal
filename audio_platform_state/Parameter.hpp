@@ -91,13 +91,23 @@ public:
     void setMappingValuePair(const std::string &name, const std::string &value);
 
     /**
-     * Sets a value to an Android Parameter.
+     * Sets a value to the parameter.
      *
-     * @param[in] androidParamValue value set to the android parameter.
+     * @param[in] value to set (received from the keyValue pair).
      *
-     * @return true if set successfully, false otherwise.
+     * @return true if set is successful, false otherwise.
      */
-    virtual bool set(const std::string &androidParamValue) = 0;
+    virtual bool setValue(const std::string &value) = 0;
+
+    /**
+     * Gets the value from the Parameter. The value returned must be in the domain
+     * of the android parameter.
+     *
+     * @param[out] value to return (associated to the key of the android parameter).
+     *
+     * @return true if get is successful, false otherwise.
+     */
+    virtual bool getValue(std::string &value) const = 0;
 
 protected:
     /**

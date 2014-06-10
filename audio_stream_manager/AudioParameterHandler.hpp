@@ -39,7 +39,7 @@ public:
      *
      * @param[in] keyValuePairs parameters to backup
      *
-     * @return OK if backup is successfull, error code otherwise
+     * @return OK if backup is successful, error code otherwise
      */
     android::status_t saveParameters(const android::String8 &keyValuePairs);
 
@@ -54,14 +54,14 @@ private:
     /**
      * Save the AudioParameter into filesystem.
      *
-     * @return OK if saving is successfull, error code otherwise
+     * @return OK if saving is successful, error code otherwise
      */
     android::status_t save();
 
     /**
      * Read the parameters from filesystem and add into AudioParameters.
      *
-     * @return OK if restoring is successfull, error code otherwise
+     * @return OK if restoring is successful, error code otherwise
      */
     android::status_t restore();
 

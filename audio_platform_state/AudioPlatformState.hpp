@@ -92,10 +92,10 @@ private:
      * It will help checking if the key received in the AudioParameter structure is associated
      * to a Parameter object and if found, the value will be set to this parameter.
      */
-    class CheckAndSetAndroidParameterHelper
+    class SetFromAndroidParameterHelper
     {
     public:
-        CheckAndSetAndroidParameterHelper(AudioParameter *param, int *errorCount)
+        SetFromAndroidParameterHelper(AudioParameter *param, int *errorCount)
             : mParam(param),
               mErrorCount(errorCount)
         {}
@@ -106,8 +106,7 @@ private:
             String8 key(param->getKey().c_str());
             String8 value;
             if (mParam->get(key, value) == NO_ERROR) {
-
-                if (!param->set(value.string())) {
+                if (!param->setValue(value.string())) {
                     *mErrorCount += 1;
                 }
                 // Do not remove the key as nothing forbid to give the same key for 2
@@ -122,13 +121,48 @@ private:
     /**
      * This class defines a unary function to be used when looping on the vector of parameters
      * It will help checking if the key received in the AudioParameter structure is associated
+     * to a Parameter object and if found, the value will be get from this parameter.
+     */
+    class GetFromAndroidParameterHelper
+    {
+    public:
+        GetFromAndroidParameterHelper(AudioParameter *paramIn, AudioParameter *paramOut)
+            : mParamIn(paramIn), mParamOut(paramOut)
+        {}
+
+        void operator()(Parameter *param)
+        {
+
+            String8 key(param->getKey().c_str());
+            String8 value;
+            if (mParamIn->get(key, value) == NO_ERROR) {
+
+                std::string strValue;
+                if (param->getValue(strValue)) {
+
+                    mParamOut->add(key, String8(strValue.c_str()));
+
+                    // The key can be safely removed now. Even if the key appears twice in the
+                    // config file (meaning associated to more than one criterion/rogue), the value
+                    // of the android parameter will be the same.
+                    mParamIn->remove(key);
+                }
+            }
+        }
+        AudioParameter *mParamIn;
+        AudioParameter *mParamOut;
+    };
+
+    /**
+     * This class defines a unary function to be used when looping on the vector of parameters
+     * It will help checking if the key received in the AudioParameter structure is associated
      * to a Parameter object and if found, the key will be removed in order to be sure all keys
      * received have been taken into account.
      */
-    class CheckAndClearKeyAndroidParameterHelper
+    class ClearKeyAndroidParameterHelper
     {
     public:
-        CheckAndClearKeyAndroidParameterHelper(AudioParameter *param)
+        ClearKeyAndroidParameterHelper(AudioParameter *param)
             : mParam(param)
         {}
 
@@ -177,6 +211,15 @@ public:
      *
      */
     android::status_t setParameters(const android::String8 &keyValuePairs);
+
+    /**
+     * Get the global parameters of Audio HAL.
+     *
+     * @param[out] keys: one or more value pair "name=value", semicolon-separated.
+     *
+     * @return OK if set is successful, error code otherwise.
+     */
+    String8 getParameters(const String8 &keys);
 
     /**
      * Checks if the platform state was correctly started (ie the route parameter manager
@@ -435,7 +478,7 @@ private:
      *
      * @param[in] path Criterion conf file path.
      *
-     * @return OK is parsing successfull, error code otherwise.
+     * @return OK is parsing successful, error code otherwise.
      */
     android::status_t loadAudioHalConfig(const char *path);
 
@@ -599,7 +642,7 @@ private:
      * Parse and load the mapping table of a criterion from configuration file.
      * A mapping table associates the Android Parameter values to the criterion values.
      *
-     * @param[in] values string of the list of param value/criterion values coma separated to parse.
+     * @param[in] values string of the list of param value/criterion values comma separated to parse.
      *
      * @return vector of value pairs.
      */

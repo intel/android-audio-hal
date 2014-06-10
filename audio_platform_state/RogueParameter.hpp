@@ -110,12 +110,19 @@ public:
     {
     }
 
-    virtual bool set(const std::string &value)
+    virtual bool setValue(const std::string &value)
     {
         T typedValue;
         RogueParameter::convertAndroidParamValueToValue<T>(value, typedValue);
         return ParameterMgrHelper::setParameterValue<T>(mParameterMgrConnector,
                                                         getName(), typedValue);
+    }
+
+    virtual bool getValue(std::string &value) const
+    {
+        T typedValue;
+        ParameterMgrHelper::getParameterValue<T>(mParameterMgrConnector, getName(), typedValue);
+        return RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
     }
 
 private:
@@ -144,11 +151,18 @@ public:
     {
     }
 
-    virtual bool set(const std::string &value)
+    virtual bool setValue(const std::string &value)
     {
         T typedValue;
         RogueParameter::convertAndroidParamValueToValue<T>(value, typedValue);
         return mStreamInterface->setAudioParameter(getName(), typedValue);
+    }
+
+    virtual bool getValue(std::string &value) const
+    {
+        T typedValue;
+        mStreamInterface->getAudioParameter(getName(), typedValue);
+        return RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
     }
 
 private:

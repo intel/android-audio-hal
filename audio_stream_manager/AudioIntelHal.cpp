@@ -416,6 +416,14 @@ status_t AudioIntelHal::setParameters(const String8 &keyValuePairs)
     return NO_ERROR;
 }
 
+String8 AudioIntelHal::getParameters(const String8 &keys)
+{
+    ALOGD("%s: requested keys %s", __FUNCTION__, keys.string());
+    AutoR lock(mPfwLock);
+
+    return mPlatformState->getParameters(keys);
+}
+
 void AudioIntelHal::setDevices(AudioStream *stream, uint32_t devices)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");

@@ -48,18 +48,26 @@ RouteCriterionParameter::RouteCriterionParameter(ParameterChangedObserver *obser
     mCriterion->setCriterionState(defaultNumericalValue);
 }
 
-bool RouteCriterionParameter::set(const std::string &androidParamValue)
+bool RouteCriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
-    if (!getLiteralValueFromParam(androidParamValue, literalValue)) {
+    if (!getLiteralValueFromParam(value, literalValue)) {
 
         ALOGW("%s: unknown parameter value(%s) for %s",
-              __FUNCTION__, androidParamValue.c_str(), getKey().c_str());
+              __FUNCTION__, value.c_str(), getKey().c_str());
         return false;
     }
-    ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), androidParamValue.c_str(),
+    ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), value.c_str(),
           literalValue.c_str());
-    return mCriterion->setCriterionState(literalValue) && CriterionParameter::set(literalValue);
+    return mCriterion->setCriterionState<std::string>(literalValue) &&
+           CriterionParameter::set(literalValue);
+}
+
+bool RouteCriterionParameter::getValue(std::string &value) const
+{
+    std::string criterionLiteralValue = mCriterion->getFormattedValue();
+
+    return getParamFromLiteralValue(value, criterionLiteralValue);
 }
 
 AudioCriterionParameter::AudioCriterionParameter(ParameterChangedObserver *observer,
@@ -74,17 +82,26 @@ AudioCriterionParameter::AudioCriterionParameter(ParameterChangedObserver *obser
     mStreamInterface->addCriterion(name, typeName, defaultValue);
 }
 
-bool AudioCriterionParameter::set(const std::string &androidParamValue)
+bool AudioCriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
-    if (!getLiteralValueFromParam(androidParamValue, literalValue)) {
+    if (!getLiteralValueFromParam(value, literalValue)) {
 
         ALOGW("%s: unknown parameter value(%s) for %s",
-              __FUNCTION__, androidParamValue.c_str(), getKey().c_str());
+              __FUNCTION__, value.c_str(), getKey().c_str());
         return false;
     }
-    ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), androidParamValue.c_str(),
+    ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), value.c_str(),
           literalValue.c_str());
     return mStreamInterface->setAudioCriterion(getName(), literalValue) &&
            CriterionParameter::set(literalValue);
+}
+
+bool AudioCriterionParameter::getValue(std::string &value) const
+{
+    std::string criterionLiteralValue;
+    if (mStreamInterface->getAudioCriterion(getName(), criterionLiteralValue)) {
+        return false;
+    }
+    return getParamFromLiteralValue(value, criterionLiteralValue);
 }

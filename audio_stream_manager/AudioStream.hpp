@@ -63,9 +63,9 @@ public:
     /**
      * Get the parameters of the stream.
      *
-     * @param[out] keys: one or more value pair "name:value", coma separated
+     * @param[out] keys: one or more value pair "name=value", semicolon-separated
      *
-     * @return OK if set is successfull, error code otherwise.
+     * @return OK if set is successful, error code otherwise.
      */
     android::String8 getParameters(const android::String8 &keys);
 
@@ -172,7 +172,7 @@ protected:
      * @param[in] inFrames number of input frames.
      * @param[out] outFrames pointer on output frames processed.
      *
-     * @return status OK is conversion is successfull, error code otherwise.
+     * @return status OK is conversion is successful, error code otherwise.
      */
     android::status_t applyAudioConversion(const void *src, void **dst,
                                            uint32_t inFrames, uint32_t *outFrames);

@@ -139,7 +139,7 @@ private:
      *
      * @param[in] bytes memory required to output the converted samples.
      *
-     * @return OK if allocation is successfull, error code otherwise.
+     * @return OK if allocation is successful, error code otherwise.
      */
     android::status_t allocateConvertBuffer(ssize_t bytes);
 

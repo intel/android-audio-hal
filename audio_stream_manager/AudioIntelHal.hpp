@@ -104,7 +104,7 @@ public:
      *
      * @param[in] state: true to request mute, false to unmute.
      *
-     * @return OK if mute/unmute successfull, error code otherwise.
+     * @return OK if mute/unmute successful, error code otherwise.
      */
     virtual android::status_t setMicMute(bool state);
 
@@ -123,20 +123,20 @@ public:
      * HAC, etc...
      * It will backup the parameters given in order to restore them when AudioHAL is restarted.
      *
-     * @param[in] keyValuePairs: one or more value pair "name:value", coma separated.
+     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
      *
-     * @return OK if set is successfull, error code otherwise.
+     * @return OK if set is successful, error code otherwise.
      */
     virtual android::status_t setParameters(const String8 &keyValuePairs);
 
     /**
      * Get the global parameters of Audio HAL.
      *
-     * @param[out] keys: one or more value pair "name:value", coma separated.
+     * @param[out] keys: one or more value pair "name=value", semicolon-separated.
      *
-     * @return OK if set is successfull, error code otherwise.
+     * @return OK if set is successful, error code otherwise.
      */
-    // virtual String8 getParameters(const String8 &keys);
+    virtual String8 getParameters(const String8 &keys);
 
     /**
      * Get the input buffer size of Audio HAL.
@@ -342,9 +342,9 @@ private:
      * Set the global parameters on Audio HAL.
      * It may lead to a routing reconsideration.
      *
-     * @param[in] keyValuePairs: one or more value pair "name:value", coma separated.
+     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
      *
-     * @return OK if set is successfull, error code otherwise.
+     * @return OK if set is successful, error code otherwise.
      */
     android::status_t doSetParameters(const String8 &keyValuePairs);
 
@@ -353,7 +353,7 @@ private:
      * It may result in a routing reconsideration.
      *
      * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in] keyValuePairs: one or more value pair "name:value", coma separated.
+     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
      *
      * @return OK if parameters successfully taken into account, error code otherwise.
      */

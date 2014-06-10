@@ -167,7 +167,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @param[in] name: criterion name.
      * @param[in] literalValue: value to set.
      *
-     * @return true if operation successfull, false otherwise.
+     * @return true if operation successful, false otherwise.
      */
     virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue) = 0;
 
@@ -177,7 +177,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @param[in] name: criterion name.
      * @param[in] literalValue: the value is correctly set if return code is true.
      *
-     * @return true if operation successfull, false otherwise.
+     * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const = 0;
 
@@ -187,7 +187,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @param[in] path: parameter path.
      * @param[in] value: numerical value to set. Only String and Integer are supported until now.
      *
-     * @return true if operation successfull, false otherwise.
+     * @return true if operation successful, false otherwise.
      */
     virtual bool setAudioParameter(const std::string &path, const uint32_t &value) = 0;
 
@@ -197,7 +197,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @param[in] path: parameter path.
      * @param[in] value: literal value to set. Only String and Integer are supported until now.
      *
-     * @return true if operation successfull, false otherwise.
+     * @return true if operation successful, false otherwise.
      */
     virtual bool setAudioParameter(const std::string &path, const std::string &value) = 0;
 
@@ -208,7 +208,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @param[in] value: numerical value to get. Only String and Integer are supported until now.
      *                   The value is correctly set if return code is true.
      *
-     * @return true if operation successfull, false otherwise.
+     * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioParameter(const std::string &path, uint32_t &value) const = 0;
 
@@ -219,7 +219,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @param[in] value: literal value to get. Only String and Integer are supported until now.
      *                   The value is correctly set if return code is true.
      *
-     * @return true if operation successfull, false otherwise.
+     * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioParameter(const std::string &path, std::string &value) const = 0;
 };

@@ -600,7 +600,7 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 void AudioPlatformState::clearParamKeys(AudioParameter *param)
 {
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
-                  CheckAndClearKeyAndroidParameter(param));
+                  ClearKeyAndroidParameterHelper(param));
     if (param->size()) {
 
         ALOGW("%s: Unhandled argument: %s", __FUNCTION__, param->toString().string());
@@ -612,7 +612,7 @@ status_t AudioPlatformState::setParameters(const android::String8 &keyValuePairs
     AudioParameter param = AudioParameter(keyValuePairs);
     int errorCount = 0;
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
-                  CheckAndSetAndroidParameter(&param, &errorCount));
+                  SetFromAndroidParameterHelper(&param, &errorCount));
 
     clearParamKeys(&param);
     return errorCount == 0 ? OK : BAD_VALUE;
@@ -621,6 +621,17 @@ status_t AudioPlatformState::setParameters(const android::String8 &keyValuePairs
 void AudioPlatformState::parameterHasChanged(const std::string &event)
 {
     setPlatformStateEvent(event);
+}
+
+String8 AudioPlatformState::getParameters(const String8 &keys)
+{
+    AudioParameter param = AudioParameter(keys);
+    AudioParameter returnedParam = AudioParameter(keys);
+
+    std::for_each(mParameterVector.begin(), mParameterVector.end(),
+                  GetFromAndroidParameterHelper(&param, &returnedParam));
+
+    return returnedParam.toString();
 }
 
 bool AudioPlatformState::hasPlatformStateChanged(int iEvents) const

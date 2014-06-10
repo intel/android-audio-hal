@@ -59,7 +59,9 @@ public:
                             CParameterMgrPlatformConnector *parameterMgrConnector,
                             const std::string &defaultValue = "");
 
-    virtual bool set(const std::string &androidParamValue);
+    virtual bool setValue(const std::string &value);
+
+    virtual bool getValue(std::string &value) const;
 
     Criterion *getCriterion() { return mCriterion; }
 
@@ -83,7 +85,9 @@ public:
                             IStreamInterface *streamInterface,
                             const std::string &defaultValue = "");
 
-    virtual bool set(const std::string &androidParamValue);
+    virtual bool setValue(const std::string &value);
+
+    virtual bool getValue(std::string &value) const;
 
 private:
     IStreamInterface *mStreamInterface; /**< Handle on stream interface of Route Manager. */
