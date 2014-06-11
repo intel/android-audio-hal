@@ -29,25 +29,6 @@ bool CriterionParameter::set(const std::string &androidParamValue)
     return true;
 }
 
-RouteCriterionParameter::RouteCriterionParameter(ParameterChangedObserver *observer,
-                                                 const std::string &key,
-                                                 const std::string &name,
-                                                 CriterionType *criterionType,
-                                                 CParameterMgrPlatformConnector *connector,
-                                                 const std::string &defaultValue /* = "" */)
-    : CriterionParameter(observer, key, name, defaultValue),
-      mCriterion(new Criterion(name, criterionType, connector))
-{
-    int defaultNumericalValue = 0;
-    if (!mCriterion->getCriterionType()->getTypeInterface()->getNumericalValue(
-            defaultValue,
-            defaultNumericalValue)) {
-        ALOGE("%s: could not retrieve numerical value for %s", __FUNCTION__,
-              defaultValue.c_str());
-    }
-    mCriterion->setCriterionState(defaultNumericalValue);
-}
-
 bool RouteCriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
@@ -68,6 +49,11 @@ bool RouteCriterionParameter::getValue(std::string &value) const
     std::string criterionLiteralValue = mCriterion->getFormattedValue();
 
     return getParamFromLiteralValue(value, criterionLiteralValue);
+}
+
+bool RouteCriterionParameter::sync()
+{
+    return mCriterion->setCriterionState<std::string>(getDefaultLiteralValue());
 }
 
 AudioCriterionParameter::AudioCriterionParameter(ParameterChangedObserver *observer,
@@ -104,4 +90,9 @@ bool AudioCriterionParameter::getValue(std::string &value) const
         return false;
     }
     return getParamFromLiteralValue(value, criterionLiteralValue);
+}
+
+bool AudioCriterionParameter::sync()
+{
+    return mStreamInterface->setAudioCriterion(getName(), getDefaultLiteralValue());
 }

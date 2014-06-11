@@ -109,6 +109,13 @@ public:
      */
     virtual bool getValue(std::string &value) const = 0;
 
+    /**
+     * Synchronise the pfw Parameter associated to an android-parameter.
+     *
+     * @return true if sync is successful, false otherwise.
+     */
+    virtual bool sync() = 0;
+
 protected:
     /**
      * Checks the validity of an android parameter value.

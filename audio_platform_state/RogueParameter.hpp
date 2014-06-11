@@ -125,6 +125,14 @@ public:
         return RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
     }
 
+    virtual bool sync()
+    {
+        T typedValue;
+        return audio_comms::utilities::convertTo<T>(getDefaultLiteralValue(), typedValue) &&
+               ParameterMgrHelper::setParameterValue<T>(mParameterMgrConnector, getName(),
+                                                        typedValue);
+    }
+
 private:
     CParameterMgrPlatformConnector *mParameterMgrConnector; /**< Route PFW connector. */
 };
@@ -163,6 +171,13 @@ public:
         T typedValue;
         mStreamInterface->getAudioParameter(getName(), typedValue);
         return RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
+    }
+
+    virtual bool sync()
+    {
+        T typedValue;
+        return audio_comms::utilities::convertTo<T>(getDefaultLiteralValue(), typedValue) &&
+               mStreamInterface->setAudioParameter(getName(), typedValue);
     }
 
 private:

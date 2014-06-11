@@ -597,6 +597,12 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
     return NO_ERROR;
 }
 
+void AudioPlatformState::sync()
+{
+    std::for_each(mParameterVector.begin(), mParameterVector.end(), SyncParameterHelper());
+    applyPlatformConfiguration();
+}
+
 void AudioPlatformState::clearParamKeys(AudioParameter *param)
 {
     std::for_each(mParameterVector.begin(), mParameterVector.end(),

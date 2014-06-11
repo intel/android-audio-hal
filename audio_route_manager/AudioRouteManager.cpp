@@ -204,8 +204,10 @@ status_t AudioRouteManager::startService()
     routageStageCriterionType->addValuePairs(mRoutingStageValuePairs,
                                              sizeof(mRoutingStageValuePairs) /
                                              sizeof(mRoutingStageValuePairs[0]));
+    // Routing stage criterion is initialised to Configure | Path | Flow to apply all pending
+    // configuration for init and minimalize cold latency at first playback / capture
     mRoutingStageCriterion = new Criterion(mRoutingStage, routageStageCriterionType,
-                                           mAudioPfwConnector);
+                                           mAudioPfwConnector, Configure | Path | Flow);
     // Start Event thread
     bool started = mEventThread->start();
     AUDIOCOMMS_ASSERT(started, "failure when starting event thread!");
@@ -218,20 +220,12 @@ status_t AudioRouteManager::startService()
         mEventThread->stop();
         return NO_INIT;
     }
-    initRouting();
 
     mIsStarted = true;
 
     ALOGD("%s: parameter-manager successfully started!", __FUNCTION__);
 
     return NO_ERROR;
-}
-
-
-void AudioRouteManager::initRouting()
-{
-    mRoutingStageCriterion->setCriterionState<int32_t>(Configure | Path | Flow);
-    mAudioPfwConnector->applyConfigurations();
 }
 
 void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)

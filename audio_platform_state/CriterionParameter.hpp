@@ -56,12 +56,17 @@ public:
                             const std::string &key,
                             const std::string &name,
                             CriterionType *criterionType,
-                            CParameterMgrPlatformConnector *parameterMgrConnector,
-                            const std::string &defaultValue = "");
+                            CParameterMgrPlatformConnector *connector,
+                            const std::string &defaultValue = "")
+        : CriterionParameter(observer, key, name, defaultValue),
+          mCriterion(new Criterion(name, criterionType, connector, defaultValue))
+    {}
 
     virtual bool setValue(const std::string &value);
 
     virtual bool getValue(std::string &value) const;
+
+    virtual bool sync();
 
     Criterion *getCriterion() { return mCriterion; }
 
@@ -88,6 +93,8 @@ public:
     virtual bool setValue(const std::string &value);
 
     virtual bool getValue(std::string &value) const;
+
+    virtual bool sync();
 
 private:
     IStreamInterface *mStreamInterface; /**< Handle on stream interface of Route Manager. */

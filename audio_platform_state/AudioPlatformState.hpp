@@ -177,6 +177,21 @@ private:
         AudioParameter *mParam;
     };
 
+    /**
+     * This class defines a unary function to be used when looping on the vector of parameters
+     * It will help syncing all the parameters.
+     */
+    class SyncParameterHelper
+    {
+    public:
+        SyncParameterHelper() {}
+
+        void operator()(Parameter *param)
+        {
+            param->sync();
+        }
+    };
+
 public:
     AudioPlatformState(IStreamInterface *streamInterface);
     virtual ~AudioPlatformState();
@@ -187,6 +202,12 @@ public:
      * @return OK if success, error code otherwise.
      */
     android::status_t start();
+
+    /**
+     * Synchronise all parameters (rogue / criteria on Route and Audio PFW)
+     * and apply the configuration on Route PFW.
+     */
+    void sync();
 
     /**
      * Apply the configuration of the platform on the route parameter manager.

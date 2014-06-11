@@ -464,12 +464,6 @@ private:
     bool isStarted() const;
 
     /**
-     * Apply a mute configuration to fasten the first routing.
-     * So all default configurations are applied by the PFW at start-up.
-     */
-    void initRouting();
-
-    /**
      * Sets the voice volume.
      * Called from AudioSystem/Policy to apply the volume on the voice call stream which is
      * platform dependent.

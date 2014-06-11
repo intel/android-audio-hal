@@ -185,6 +185,10 @@ AudioIntelHal::AudioIntelHal()
         mPlatformState = NULL;
         return;
     }
+    mPlatformState->sync();
+
+    mStreamInterface->reconsiderRouting();
+
     ALOGD("%s Route Manager Service successfully started", __FUNCTION__);
 }
 
