@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -44,8 +44,8 @@ Criterion::Criterion(const string &mappingValue,
     _routeInterface = _routeSubsystem->getRouteInterface();
 
     // First checks if criterion Type has been already added, if no, populate value pairs
-    if (!_routeInterface->addCriterionType(_criterionType,
-                                           context.getItemAsInteger(MappingKeyInclusive))) {
+    if (!_routeInterface->addAudioCriterionType(_criterionType,
+                                                context.getItemAsInteger(MappingKeyInclusive))) {
 
         // If exists, get the children of element to retrieve Criterion type
         const CElement *elementToDiscover = instanceConfigurableElement->getTypeElement();
@@ -54,13 +54,13 @@ Criterion::Criterion(const string &mappingValue,
         uint32_t index;
         for (index = 0; index < nbChildren; index++) {
 
-            _routeInterface->addCriterionTypeValuePair(
+            _routeInterface->addAudioCriterionTypeValuePair(
                 _criterionType,
                 elementToDiscover->getChild(index)->getName(),
                 getIndex(elementToDiscover->getChild(index)));
         }
     }
-    _routeInterface->addCriterion(_criterionName, _criterionType);
+    _routeInterface->addAudioCriterion(_criterionName, _criterionType);
 }
 
 uint32_t Criterion::getIndex(const CElement *element) const

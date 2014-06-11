@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -58,10 +58,10 @@ AudioRoute::AudioRoute(const string &mappingValue,
     _routeName = getFormattedMappingValue();
 
     // Add Route criterion type value pair
-    _routeInterface->addCriterionType(ROUTE_CRITERION_TYPE, true);
-    _routeInterface->addCriterionTypeValuePair(ROUTE_CRITERION_TYPE,
-                                               context.getItem(MappingKeyAmend1),
-                                               1 << _routeId);
+    _routeInterface->addAudioCriterionType(ROUTE_CRITERION_TYPE, true);
+    _routeInterface->addAudioCriterionTypeValuePair(ROUTE_CRITERION_TYPE,
+                                                    context.getItem(MappingKeyAmend1),
+                                                    1 << _routeId);
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, PORT_DELIMITER);
