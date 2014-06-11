@@ -22,8 +22,26 @@
 
 ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)
 
-# Recursive call sub-folder Android.mk
-include $(call all-subdir-makefiles)
+LOCAL_PATH := $(call my-dir)
+include $(OPTIONAL_QUALITY_ENV_SETUP)
 
+define named-subdir-makefiles
+$(wildcard $(addsuffix /Android.mk, $(addprefix $(LOCAL_PATH)/,$(1))))
+endef
+
+SUBDIRS := audio_conversion \
+           audio_dump_lib \
+           audio_policy \
+           audio_route_manager \
+           audio_stream_manager \
+           effects \
+           parameter_mgr_helper \
+           sample_specifications \
+           stream_lib
+
+# Call sub-folders' Android.mk
+include $(call named-subdir-makefiles, $(SUBDIRS))
+
+include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
 endif #ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)
 

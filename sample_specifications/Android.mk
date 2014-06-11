@@ -23,6 +23,7 @@
 ifeq ($(BOARD_USES_ALSA_AUDIO),true)
 
 LOCAL_PATH := $(call my-dir)
+include $(OPTIONAL_QUALITY_ENV_SETUP)
 
 # Component build
 #######################################################################
@@ -74,6 +75,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_host
 LOCAL_MODULE_TAGS := tests
 $(call make_sample_specifications_lib,host)
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # Build for target
@@ -158,8 +160,12 @@ LOCAL_MODULE := samplespec_functional_test_host
 LOCAL_STATIC_LIBRARIES += libsamplespec_static_host
 $(call make_samplespec_functional_test,_host)
 LOCAL_LDFLAGS += -pthread
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files
 include $(BUILD_HOST_EXECUTABLE)
 
+include $(OPTIONAL_QUALITY_RUN_TEST)
+
+include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
 endif #ifeq ($(BOARD_USES_ALSA_AUDIO),true)
