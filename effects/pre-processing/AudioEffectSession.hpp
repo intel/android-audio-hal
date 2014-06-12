@@ -22,22 +22,22 @@
  */
 #pragma once
 
-#include "AudioEffectStub.hpp"
+#include "AudioEffect.hpp"
 #include <hardware/audio_effect.h>
 #include <NonCopyable.hpp>
 #include <list>
 #include <utils/Errors.h>
 
-class AudioEffectStub;
+class AudioEffect;
 
-class AudioEffectSessionStub : private audio_comms::utilities::NonCopyable
+class AudioEffectSession : private audio_comms::utilities::NonCopyable
 {
 private:
-    typedef std::list<AudioEffectStub *>::iterator EffectListIterator;
-    typedef std::list<AudioEffectStub *>::const_iterator EffectListConstIterator;
+    typedef std::list<AudioEffect *>::iterator EffectListIterator;
+    typedef std::list<AudioEffect *>::const_iterator EffectListConstIterator;
 
 public:
-    AudioEffectSessionStub(uint32_t sessionId);
+    AudioEffectSession(uint32_t sessionId);
 
     /**
      * Add an effect. It does not attach the effect to the session. It helps the session
@@ -48,7 +48,7 @@ public:
      *
      * @return OK is success, error code otherwise.
      */
-    android::status_t addEffect(AudioEffectStub *effect);
+    android::status_t addEffect(AudioEffect *effect);
 
     /**
      * Create an effect. It attaches the effect to the session
@@ -67,7 +67,7 @@ public:
      *
      * @return OK is success, error code otherwise.
      */
-    android::status_t removeEffect(AudioEffectStub *effect);
+    android::status_t removeEffect(AudioEffect *effect);
 
     /**
      * Set the IO handle attached to the session.
@@ -96,10 +96,10 @@ private:
     /**
      * Function to be used as the predicate in find_if call.
      */
-    struct MatchUuid : public std::binary_function<AudioEffectStub *, const effect_uuid_t *, bool>
+    struct MatchUuid : public std::binary_function<AudioEffect *, const effect_uuid_t *, bool>
     {
 
-        bool operator()(const AudioEffectStub *effect,
+        bool operator()(const AudioEffect *effect,
                         const effect_uuid_t *uuid) const
         {
             return memcmp(effect->getUuid(), uuid, sizeof(effect_uuid_t)) == 0;
@@ -118,14 +118,14 @@ private:
      *
      * @return valid effect pointer if found, NULL otherwise.
      */
-    AudioEffectStub *findEffectByUuid(const effect_uuid_t *uuid);
+    AudioEffect *findEffectByUuid(const effect_uuid_t *uuid);
 
     int mIoHandle; /**< handle of input stream this session is linked to. */
     uint32_t mId; /**< Id of the sessions.*/
     audio_source_t  mSource; /**< Audio Source (ie Use Case) associated to this session. */
 
-    std::list<AudioEffectStub *> mEffectsCreatedList; /**< created pre processors. */
-    std::list<AudioEffectStub *> mEffectsActiveList; /**< active pre processors - for later use?. */
-    std::list<AudioEffectStub *> mEffectsList; /**< Effects in the sessions. */
+    std::list<AudioEffect *> mEffectsCreatedList; /**< created pre processors. */
+    std::list<AudioEffect *> mEffectsActiveList; /**< active pre processors - for later use?. */
+    std::list<AudioEffect *> mEffectsList; /**< Effects in the sessions. */
 
 };

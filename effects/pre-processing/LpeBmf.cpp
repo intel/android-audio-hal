@@ -26,7 +26,7 @@
 #include "LpeBmf.hpp"
 
 BmfAudioEffect::BmfAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &mBmfDescriptor)
+    : AudioEffect(itfe, &mBmfDescriptor)
 {
 }
 

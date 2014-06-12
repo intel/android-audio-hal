@@ -31,10 +31,10 @@ effect_pre_proc_src_files :=  \
     LpeAec.cpp \
     LpeBmf.cpp \
     LpeWnr.cpp \
-    AudioEffectStub.cpp \
-    AudioEffectSessionStub.cpp \
+    AudioEffect.cpp \
+    AudioEffectSession.cpp \
     LpeEffectLibrary.cpp \
-    LpePreProcessingStub.cpp
+    LpePreProcessing.cpp
 
 effect_pre_proc_includes_dir := \
 
@@ -50,7 +50,9 @@ effect_pre_proc_includes_dir_target := \
     $(foreach inc, $(effect_pre_proc_includes_dir), $(TARGET_OUT_HEADERS)/$(inc))
 
 effect_pre_proc_static_lib += \
-    libaudio_comms_utilities
+    libaudio_comms_utilities \
+    libmedia_helper \
+    libaudio_comms_convert
 
 effect_pre_proc_static_lib_host += \
     $(foreach lib, $(effect_pre_proc_static_lib), $(lib)_host) \
@@ -63,6 +65,7 @@ effect_pre_proc_shared_lib_target += \
     libutils  \
     liblog \
     libcutils \
+    libmedia
 
 effect_pre_proc_cflags := -Wall -Werror -Wno-unused-parameter
 

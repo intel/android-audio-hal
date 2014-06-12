@@ -27,7 +27,7 @@
 #include <audio_effects/effect_agc.h>
 
 AgcAudioEffect::AgcAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &mAgcDescriptor)
+    : AudioEffect(itfe, &mAgcDescriptor)
 {
 
 }

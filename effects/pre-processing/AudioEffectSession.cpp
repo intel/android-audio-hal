@@ -23,8 +23,8 @@
 
 #define LOG_TAG "IntelPreProcessingFx/EffectSession"
 
-#include "AudioEffectSessionStub.hpp"
-#include "LpePreProcessingStub.hpp"
+#include "AudioEffectSession.hpp"
+#include "LpePreProcessing.hpp"
 #include <audio_effects/effect_aec.h>
 #include <audio_effects/effect_ns.h>
 #include <audio_effects/effect_agc.h>
@@ -38,25 +38,25 @@ using android::status_t;
 using android::OK;
 using android::BAD_VALUE;
 
-AudioEffectSessionStub::AudioEffectSessionStub(uint32_t sessionId)
+AudioEffectSession::AudioEffectSession(uint32_t sessionId)
     : mId(sessionId)
 {
     init();
 }
 
-void AudioEffectSessionStub::init()
+void AudioEffectSession::init()
 {
     mIoHandle = mSessionNone;
     mSource = AUDIO_SOURCE_DEFAULT;
 }
 
-void AudioEffectSessionStub::setIoHandle(int ioHandle)
+void AudioEffectSession::setIoHandle(int ioHandle)
 {
     ALOGD("%s: setting io=%d for session %d", __FUNCTION__, ioHandle, mId);
     mIoHandle = ioHandle;
 }
 
-status_t AudioEffectSessionStub::addEffect(AudioEffectStub *effect)
+status_t AudioEffectSession::addEffect(AudioEffect *effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "trying to add null Effect");
     effect->setSession(this);
@@ -64,7 +64,7 @@ status_t AudioEffectSessionStub::addEffect(AudioEffectStub *effect)
     return OK;
 }
 
-AudioEffectStub *AudioEffectSessionStub::findEffectByUuid(const effect_uuid_t *uuid)
+AudioEffect *AudioEffectSession::findEffectByUuid(const effect_uuid_t *uuid)
 {
     AUDIOCOMMS_ASSERT(uuid != NULL, "Invalid UUID");
     EffectListIterator it;
@@ -73,10 +73,10 @@ AudioEffectStub *AudioEffectSessionStub::findEffectByUuid(const effect_uuid_t *u
     return (it != mEffectsList.end()) ? *it : NULL;
 }
 
-status_t AudioEffectSessionStub::createEffect(const effect_uuid_t *uuid, effect_handle_t *interface)
+status_t AudioEffectSession::createEffect(const effect_uuid_t *uuid, effect_handle_t *interface)
 {
     AUDIOCOMMS_ASSERT(uuid != NULL, "Invalid UUID");
-    AudioEffectStub *effect = findEffectByUuid(uuid);
+    AudioEffect *effect = findEffectByUuid(uuid);
     if (effect == NULL) {
 
         ALOGE("%s: could not find effect for requested uuid", __FUNCTION__);
@@ -92,7 +92,7 @@ status_t AudioEffectSessionStub::createEffect(const effect_uuid_t *uuid, effect_
     return OK;
 }
 
-status_t AudioEffectSessionStub::removeEffect(AudioEffectStub *effect)
+status_t AudioEffectSession::removeEffect(AudioEffect *effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "trying to remove null Effect");
     ALOGD("%s: requesting to remove effect %s on session %d",

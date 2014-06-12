@@ -24,15 +24,17 @@
 
 #include <hardware/audio_effect.h>
 #include <NonCopyable.hpp>
+#include <utils/String8.h>
+#include <string>
 
-class AudioEffectSessionStub;
+class AudioEffectSession;
 
-class AudioEffectStub : private audio_comms::utilities::NonCopyable
+class AudioEffect : private audio_comms::utilities::NonCopyable
 {
 public:
-    AudioEffectStub(const struct effect_interface_s *itfe, const effect_descriptor_t *descriptor);
+    AudioEffect(const struct effect_interface_s *itfe, const effect_descriptor_t *descriptor);
 
-    virtual ~AudioEffectStub();
+    virtual ~AudioEffect();
 
     /**
      * Create the effect.
@@ -70,23 +72,20 @@ public:
     /**
      * Set Parameter to the effect.
      *
-     * @param[in] param parameter to set.
-     * @param[in] value to set.
+     * @param[in] param parameter effect structure
      *
      * @return 0 if success, error code otherwise.
      */
-    virtual int setParameter(void *param, void *value);
+    virtual int setParameter(const effect_param_t *param);
 
     /**
      * Get the effect parameter.
      *
-     * @param[in] param parameter to get.
-     * @param[out] size parameter + value size.
-     * @param[out] value parameter value read.
+     * @param[in,out] param parameter effect structure
      *
      * @return 0 if success, error code otherwise.
      */
-    virtual int getParameter(void *param, size_t *size, void *value);
+    virtual int getParameter(effect_param_t *param) const;
 
     /**
      * Set the effect rendering device.
@@ -116,14 +115,14 @@ public:
      *
      * @param[in] session to attach.
      */
-    void setSession(AudioEffectSessionStub *session);
+    void setSession(AudioEffectSession *session);
 
     /**
      * Get Session attached to this effect.
      *
      * @return session.
      */
-    AudioEffectSessionStub *getSession() const { return mSession; }
+    AudioEffectSession *getSession() const { return mSession; }
 
     /**
      * Get effect Handle.
@@ -136,6 +135,29 @@ public:
 
 private:
     /**
+     * Extract from the effect_param_t structure the parameter Id.
+     * It supports only single parameter. If more than one paramId is found in the structure,
+     * it will return an error code.
+     *
+     * @param[in] param: Effect Parameter structure
+     * @param[out] paramId: retrieve param Id, valid only if return code is 0.
+     *
+     * @return 0 if the paramId could be extracted, error code otherwise.
+     */
+    int getParamId(const effect_param_t *param, int32_t &paramId) const;
+
+    /**
+     * Format the Parameter key from the effect parameter structure.
+     * The followed formalism is:
+     *      <human readable type name>-<paramId>[-<subParamId1>-<subParamId2>-...]
+     *
+     * @param[in] param: Effect Parameter structure
+     *
+     * @return valid AudioParameter key if success, empty key if failure.
+     */
+    int formatParamKey(const effect_param_t *param, android::String8 &key) const;
+
+    /**
      * Effect Descriptor structure.
      * The effect descriptor contains necessary information to facilitate the enumeration of the
      * effect.
@@ -144,5 +166,6 @@ private:
     const struct effect_interface_s *mItfe; /**< Effect control interface structure. */
     uint32_t mPreProcessorId; /**< type of preprocessor. */
     uint32_t mState; /**< state of the effect. */
-    AudioEffectSessionStub *mSession; /**< Session on which the effect is on. */
+    AudioEffectSession *mSession; /**< Session on which the effect is on. */
+    static const std::string mParamKeyDelimiter; /**< Delimiter chosen to format the key. */
 };

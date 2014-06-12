@@ -26,7 +26,7 @@
 #include "LpeWnr.hpp"
 
 WnrAudioEffect::WnrAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &mWnrDescriptor)
+    : AudioEffect(itfe, &mWnrDescriptor)
 {
 }
 

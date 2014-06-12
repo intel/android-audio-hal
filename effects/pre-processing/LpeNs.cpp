@@ -25,7 +25,7 @@
 #include <audio_effects/effect_ns.h>
 
 NsAudioEffect::NsAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &mNsDescriptor)
+    : AudioEffect(itfe, &mNsDescriptor)
 {
 
 }

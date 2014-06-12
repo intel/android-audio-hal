@@ -21,9 +21,9 @@
  *
  */
 
-#include "AudioEffectStub.hpp"
+#include "AudioEffect.hpp"
 
-class NsAudioEffect : public AudioEffectStub
+class NsAudioEffect : public AudioEffect
 {
 public:
     /**

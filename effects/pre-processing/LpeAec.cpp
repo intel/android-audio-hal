@@ -27,7 +27,7 @@
 #include <audio_effects/effect_aec.h>
 
 AecAudioEffect::AecAudioEffect(const effect_interface_s *itfe)
-    : AudioEffectStub(itfe, &mAecDescriptor)
+    : AudioEffect(itfe, &mAecDescriptor)
 {
 }
 

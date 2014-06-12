@@ -28,19 +28,19 @@
 #include <utils/Errors.h>
 #include <Mutex.hpp>
 
-class AudioEffectStub;
-class AudioEffectSessionStub;
+class AudioEffect;
+class AudioEffectSession;
 
-class LpePreProcessingStub : private audio_comms::utilities::NonCopyable
+class LpePreProcessing : private audio_comms::utilities::NonCopyable
 {
 private:
-    typedef std::list<AudioEffectStub *>::iterator EffectListIterator;
-    typedef std::list<AudioEffectStub *>::const_iterator EffectListConstIterator;
-    typedef std::list<AudioEffectSessionStub *>::iterator EffectSessionListIterator;
-    typedef std::list<AudioEffectSessionStub *>::const_iterator EffectSessionListConstIterator;
+    typedef std::list<AudioEffect *>::iterator EffectListIterator;
+    typedef std::list<AudioEffect *>::const_iterator EffectListConstIterator;
+    typedef std::list<AudioEffectSession *>::iterator EffectSessionListIterator;
+    typedef std::list<AudioEffectSession *>::const_iterator EffectSessionListConstIterator;
 
 public:
-    LpePreProcessingStub();
+    LpePreProcessing();
 
     /**
      * Create an effect
@@ -98,7 +98,7 @@ public:
                                           effect_descriptor_t *descriptor);
 
 
-    static LpePreProcessingStub *getInstance();
+    static LpePreProcessing *getInstance();
 
 private:
     android::status_t init();
@@ -110,7 +110,7 @@ private:
      *
      * @return AudioEffect instance if interface is valid, NULL otherwise
      */
-    AudioEffectStub *findEffectByUuid(const effect_uuid_t *uuid);
+    AudioEffect *findEffectByUuid(const effect_uuid_t *uuid);
 
     /**
      * Retrieve the AudioEffect instance from the handle.
@@ -119,7 +119,7 @@ private:
      *
      * @return AudioEffect instance if interface is valid, NULL otherwise
      */
-    AudioEffectStub *findEffectByInterface(const effect_handle_t interface);
+    AudioEffect *findEffectByInterface(const effect_handle_t interface);
 
     /**
      * Return the session object for the request Id and IO handle Id
@@ -128,7 +128,7 @@ private:
      *
      * @return AudioEffectSession handle
      */
-    AudioEffectSessionStub *findSession(int ioId);
+    AudioEffectSession *findSession(int ioId);
 
     /**
      * Get a session for a ioHandle.
@@ -139,17 +139,17 @@ private:
      *
      * @return AudioEffectSession handle
      */
-    AudioEffectSessionStub *getSession(uint32_t ioId);
+    AudioEffectSession *getSession(uint32_t ioId);
 
     /**
      * List of Audio Effects available on LPE
      */
-    std::list<AudioEffectStub *> mEffectsList;
+    std::list<AudioEffect *> mEffectsList;
 
     /**
      * List of Audio Effect Sessions available on LPE
      */
-    std::list<AudioEffectSessionStub *> mEffectSessionsList;
+    std::list<AudioEffectSession *> mEffectSessionsList;
 
     static const uint32_t mMaxEffectSessions = 8; /**< Max number of sessions for effect bundle. */
 
