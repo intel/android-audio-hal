@@ -221,10 +221,6 @@ status_t AudioIntelHal::initCheck()
 
 status_t AudioIntelHal::setVoiceVolume(float volume)
 {
-    if (!mPlatformState->isModemEmbedded()) {
-
-        return NO_ERROR;
-    }
     return mStreamInterface->setVoiceVolume(volume);
 }
 
