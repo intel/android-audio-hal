@@ -47,7 +47,8 @@ public:
      * Interface query.
      * Inherited from IInterfaceProvider
      */
-    NInterfaceProvider::IInterface *queryInterface(const std::string &strInterfaceName) const;
+    virtual NInterfaceProvider::IInterface *queryInterface(
+        const std::string &strInterfaceName) const;
 
     /**
      * Get Interfaces list.
