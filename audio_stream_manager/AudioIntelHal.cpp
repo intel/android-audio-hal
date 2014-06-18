@@ -111,9 +111,8 @@ AudioIntelHal::AudioIntelHal()
     } else {
 
         // Retrieve the ModemAudioManager Interface
-        NInterfaceProvider::IInterface *iface;
-        iface = interfaceProvider->queryInterface(IModemAudioManagerInterface::getInterfaceName());
-        mModemAudioManagerInterface = static_cast<IModemAudioManagerInterface *>(iface);
+        mModemAudioManagerInterface =
+            interfaceProvider->queryInterface<IModemAudioManagerInterface>();
         if (mModemAudioManagerInterface == NULL) {
 
             ALOGE("Failed to get ModemAudioManager interface");
@@ -142,11 +141,8 @@ AudioIntelHal::AudioIntelHal()
                                                mRouteLibPropDefaultValue).getValue().c_str());
     if (interfaceProvider) {
 
-        NInterfaceProvider::IInterface *interface;
-
         // Retrieve the Stream Interface
-        interface = interfaceProvider->queryInterface(IStreamInterface::getInterfaceName());
-        mStreamInterface = static_cast<IStreamInterface *>(interface);
+        mStreamInterface = interfaceProvider->queryInterface<IStreamInterface>();
         if (mStreamInterface == NULL) {
 
             ALOGE("Failed to get Stream Interface on RouteMgr");
