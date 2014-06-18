@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -66,11 +66,8 @@ RouteSubsystem::RouteSubsystem(const string &strName) : CSubsystem(strName),
 
     if (interfaceProvider) {
 
-        IInterface *interface;
-
         // Retrieve the Route Interface
-        interface = interfaceProvider->queryInterface(IRouteInterface::getInterfaceName());
-        _routeInterface = static_cast<IRouteInterface *>(interface);
+        _routeInterface = interfaceProvider->queryInterface<IRouteInterface>();
     }
 
     // Provide mapping keys to upper layer
