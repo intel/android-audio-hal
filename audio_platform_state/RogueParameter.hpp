@@ -113,16 +113,17 @@ public:
     virtual bool setValue(const std::string &value)
     {
         T typedValue;
-        RogueParameter::convertAndroidParamValueToValue<T>(value, typedValue);
-        return ParameterMgrHelper::setParameterValue<T>(mParameterMgrConnector,
+        return RogueParameter::convertAndroidParamValueToValue<T>(value, typedValue) &&
+               ParameterMgrHelper::setParameterValue<T>(mParameterMgrConnector,
                                                         getName(), typedValue);
     }
 
     virtual bool getValue(std::string &value) const
     {
         T typedValue;
-        ParameterMgrHelper::getParameterValue<T>(mParameterMgrConnector, getName(), typedValue);
-        return RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
+        return ParameterMgrHelper::getParameterValue<T>(mParameterMgrConnector, getName(),
+                                                        typedValue) &&
+               RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
     }
 
     virtual bool sync()
@@ -162,15 +163,15 @@ public:
     virtual bool setValue(const std::string &value)
     {
         T typedValue;
-        RogueParameter::convertAndroidParamValueToValue<T>(value, typedValue);
-        return mStreamInterface->setAudioParameter(getName(), typedValue);
+        return RogueParameter::convertAndroidParamValueToValue<T>(value, typedValue) &&
+               mStreamInterface->setAudioParameter(getName(), typedValue);
     }
 
     virtual bool getValue(std::string &value) const
     {
         T typedValue;
-        mStreamInterface->getAudioParameter(getName(), typedValue);
-        return RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
+        return mStreamInterface->getAudioParameter(getName(), typedValue) &&
+               RogueParameter::convertValueToAndroidParamValue<T>(typedValue, value);
     }
 
     virtual bool sync()

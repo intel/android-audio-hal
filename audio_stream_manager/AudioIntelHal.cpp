@@ -388,11 +388,9 @@ status_t AudioIntelHal::setParameters(const String8 &keyValuePairs)
 {
     ALOGD("%s: key value pair %s", __FUNCTION__, keyValuePairs.string());
     AudioParameter param = AudioParameter(keyValuePairs);
-    status_t status;
     String8 restart;
-
     String8 key = String8(mRestartingKey);
-    status = param.get(key, restart);
+    status_t status = param.get(key, restart);
     if (status == NO_ERROR) {
 
         if (restart == mRestartingRequested) {
@@ -412,12 +410,9 @@ status_t AudioIntelHal::setParameters(const String8 &keyValuePairs)
             ALOGV("%s: saving %s", __FUNCTION__, keyValuePairs.string());
             // Save the audio parameters for recovering audio parameters in case of crash.
             mAudioParameterHandler->saveParameters(keyValuePairs);
-        } else {
-
-            return status;
         }
     }
-    return NO_ERROR;
+    return status;
 }
 
 String8 AudioIntelHal::getParameters(const String8 &keys)
@@ -575,7 +570,7 @@ status_t AudioIntelHal::doSetParameters(const String8 &keyValuePairs)
 {
     AutoW lock(mPfwLock);
 
-    mPlatformState->setParameters(keyValuePairs);
+    status_t status = mPlatformState->setParameters(keyValuePairs);
 
     if (mPlatformState->hasPlatformStateChanged()) {
 
@@ -593,8 +588,7 @@ status_t AudioIntelHal::doSetParameters(const String8 &keyValuePairs)
         // Relock (as using autolock)
         mPfwLock.writeLock();
     }
-
-    return NO_ERROR;
+    return status;
 }
 
 void AudioIntelHal::resetEchoReference(struct echo_reference_itfe *reference)
