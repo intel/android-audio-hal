@@ -189,14 +189,14 @@ int AudioEffect::getParameter(effect_param_t *param) const
     }
     int32_t *pValue = reinterpret_cast<int32_t *>(param->data + param->psize);
     if (param->vsize == sizeof(int16_t)) {
-        if (!convertTo<int16_t>(std::string(strValue.string()),
-                                *reinterpret_cast<int16_t *>(pValue))) {
+        if (!convertTo(std::string(strValue.string()),
+                       *reinterpret_cast<int16_t *>(pValue))) {
             ALOGE("%s: effect %s, could not get the read value as int16_t", __FUNCTION__,
                   getDescriptor()->name);
             return -EINVAL;
         }
     } else if (param->vsize == sizeof(int32_t)) {
-        if (!convertTo<int32_t>(std::string(strValue.string()), *pValue)) {
+        if (!convertTo(std::string(strValue.string()), *pValue)) {
             ALOGE("%s: effect %s, could not get the read value as int32_t", __FUNCTION__,
                   getDescriptor()->name);
             return -EINVAL;

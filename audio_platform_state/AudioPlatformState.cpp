@@ -242,7 +242,7 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
                                       (second != NULL) && (strlen(second) != 0),
                                       "invalid value pair");
 
-                    if (!convertTo<uint32_t>(first, index)) {
+                    if (!convertTo<string, uint32_t>(first, index)) {
 
                         ALOGE("%s: Invalid index(%s) found", __FUNCTION__, first);
                     }

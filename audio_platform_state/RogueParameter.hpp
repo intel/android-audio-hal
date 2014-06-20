@@ -65,7 +65,7 @@ protected:
         ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), androidParamValue.c_str(),
               literalParamValue.c_str());
 
-        return audio_comms::utilities::convertTo<T>(literalParamValue, rogueValue);
+        return audio_comms::utilities::convertTo(literalParamValue, rogueValue);
     }
 
     /**
@@ -83,7 +83,7 @@ protected:
     bool convertValueToAndroidParamValue(const T &rogueValue, std::string &androidParamValue) const
     {
         std::string literalValue = "";
-        return audio_comms::utilities::toString<T>(rogueValue, literalValue) &&
+        return audio_comms::utilities::convertTo(rogueValue, literalValue) &&
                getParamFromLiteralValue(androidParamValue, literalValue);
     }
 };
@@ -129,7 +129,7 @@ public:
     virtual bool sync()
     {
         T typedValue;
-        return audio_comms::utilities::convertTo<T>(getDefaultLiteralValue(), typedValue) &&
+        return audio_comms::utilities::convertTo(getDefaultLiteralValue(), typedValue) &&
                ParameterMgrHelper::setParameterValue<T>(mParameterMgrConnector, getName(),
                                                         typedValue);
     }
@@ -177,7 +177,7 @@ public:
     virtual bool sync()
     {
         T typedValue;
-        return audio_comms::utilities::convertTo<T>(getDefaultLiteralValue(), typedValue) &&
+        return audio_comms::utilities::convertTo(getDefaultLiteralValue(), typedValue) &&
                mStreamInterface->setAudioParameter(getName(), typedValue);
     }
 

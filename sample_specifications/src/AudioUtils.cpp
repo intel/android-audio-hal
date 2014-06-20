@@ -159,7 +159,7 @@ int AudioUtils::getCardIndexByName(const char *name)
     }
 
     uint32_t indexCard = 0;
-    if (!convertTo<uint32_t>(cardNameWithIndex + cardLen, indexCard)) {
+    if (!convertTo<string, uint32_t>(cardNameWithIndex + cardLen, indexCard)) {
 
         return -EINVAL;
     }
