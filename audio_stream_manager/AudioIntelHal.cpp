@@ -28,7 +28,8 @@
 #include "AudioStream.hpp"
 #include "AudioStreamInImpl.hpp"
 #include "AudioStreamOutImpl.hpp"
-#include <AudioPlatformState.hpp>
+#include "AudioPlatformState.hpp"
+#include <ModemCollection.hpp>
 #include <AudioCommsAssert.hpp>
 #include "ModemAudioManagerInterface.h"
 #include "Property.h"
@@ -104,7 +105,13 @@ AudioIntelHal::AudioIntelHal()
     /// MAMGR Interface
     // Try to connect a ModemAudioManager Interface
     NInterfaceProvider::IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<string>(mModemLibPropName).getValue().c_str());
+        audio_comms::mamgr::ModemCollection::getInstance().getModem(
+            // @todo Do not use android properties
+            // as they are not portable on host easily
+            TProperty<string>(mModemLibPropName).getValue(),
+            // @fixme Should not be hardcoded
+            "xmm1");
+
     if (interfaceProvider == NULL) {
 
         ALOGI("No MAMGR library.");

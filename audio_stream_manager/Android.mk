@@ -88,7 +88,8 @@ audio_stream_manager_shared_lib_target += \
     libaudioresample \
     libaudioutils \
     libproperty \
-    libinterface-provider-lib
+    libinterface-provider-lib \
+    libmodem-audio-collection \
 
 audio_stream_manager_include_dirs_from_static_libraries := \
     libevent-listener_static \
