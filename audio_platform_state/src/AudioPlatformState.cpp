@@ -60,10 +60,16 @@ typedef RWLock::AutoRLock AutoR;
 typedef RWLock::AutoWLock AutoW;
 
 const char *const AudioPlatformState::mRoutePfwConfFileNamePropName =
+    "AudioComms.RoutePFW.ConfName";
+
+const char *const AudioPlatformState::mRoutePfwConfFilePathPropName =
     "AudioComms.RoutePFW.ConfPath";
 
 const char *const AudioPlatformState::mRoutePfwDefaultConfFileName =
-    "/etc/parameter-framework/ParameterFrameworkConfigurationRoute.xml";
+    "ParameterFrameworkConfigurationRoute.xml";
+
+const char *const AudioPlatformState::mRoutePfwDefaultConfFilePath =
+    "/etc/parameter-framework/";
 
 const std::string AudioPlatformState::mHwDebugFilesPathList =
     "/Route/debug_fs/debug_files/path_list/";
@@ -116,13 +122,22 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
 {
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
-    // and can be different for each hardware
-    string routePfwConfFilePath = TProperty<string>(mRoutePfwConfFileNamePropName,
+    // and can be different for each hardware.
+    string routePfwConfFileName = TProperty<string>(mRoutePfwConfFileNamePropName,
                                                     mRoutePfwDefaultConfFileName);
-    Log::Info() << __FUNCTION__
-                << ": Route-PFW: using configuration file: " << routePfwConfFilePath;
 
-    mRoutePfwConnector = new CParameterMgrPlatformConnector(routePfwConfFilePath);
+    // Fetch the path of the PFW configuration file: this name is stored in an Android property
+    // and can be different for each hardware.
+    string routePfwConfFilePath = TProperty<string>(mRoutePfwConfFilePathPropName,
+                                                    mRoutePfwDefaultConfFilePath);
+
+    Log::Info() << __FUNCTION__
+                << ": Route-PFW: using configuration file: " << routePfwConfFilePath
+                << routePfwConfFileName;
+
+
+    mRoutePfwConnector = new CParameterMgrPlatformConnector(
+        routePfwConfFilePath + routePfwConfFileName);
 
     // Logger
     mRoutePfwConnector->setLogger(mRoutePfwConnectorLogger);
@@ -133,10 +148,14 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
                                                                  mRoutePfwConnector);
     mRouteCriterionTypeMap[mStateChangedCriterionName] = stateChangedCriterionType;
 
-    if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
-        (loadAudioHalConfig(gAudioHalConfFilePath) != android::OK)) {
-        Log::Error() << "Neither vendor conf file (" << gAudioHalVendorConfFilePath
-                     << ") nor system conf file (" << gAudioHalConfFilePath << ") could be found";
+    if ((loadAudioHalConfig(gAudioHalScalableConfFilePath) != android::OK) &&
+        (loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
+        (loadAudioHalConfig(gAudioHalFallbackConfFilePath) != android::OK)) {
+
+        Log::Error() << "route_criteria.conf: scalable conf file (" << gAudioHalScalableConfFilePath
+                     << ") or vendor conf file (" << gAudioHalVendorConfFilePath
+                     << ") or default system conf file (" << gAudioHalFallbackConfFilePath
+                     << ") cannot be found! ";
     }
 
     /// Creates hasChanged route criterion

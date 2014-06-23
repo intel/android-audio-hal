@@ -62,10 +62,14 @@ const char *const AudioRouteManager::mRouteCriterionType[Direction::_nbDirection
 };
 const char *const AudioRouteManager::mRoutingStage = "RoutageState";
 
-const char *const AudioRouteManager::mAudioPfwConfFilePropName = "AudioComms.PFW.ConfPath";
+const char *const AudioRouteManager::mAudioPfwConfPathPropName = "AudioComms.PFW.ConfPath";
+const char *const AudioRouteManager::mAudioPfwConfFilePropName = "AudioComms.PFW.ConfName";
+
+const char *const AudioRouteManager::mAudioPfwDefaultConfFilePath =
+    "/etc/parameter-framework/";
 
 const char *const AudioRouteManager::mAudioPfwDefaultConfFileName =
-    "/etc/parameter-framework/ParameterFrameworkConfiguration.xml";
+    "ParameterFrameworkConfiguration.xml";
 
 class CParameterMgrPlatformConnectorLogger : public CParameterMgrPlatformConnector::ILogger
 {
@@ -120,15 +124,21 @@ AudioRouteManager::AudioRouteManager()
 {
     memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::_nbDirections);
 
-    /// Connector
-    // Fetch the name of the PFW configuration file: this name is stored in an Android property
-    // and can be different for each hardware
-    string audioPfwConfigurationFilePath = TProperty<string>(mAudioPfwConfFilePropName,
+    Log::Verbose() << __FUNCTION__
+                   << ": audio PFW default configuration file: " << mAudioPfwDefaultConfFilePath
+                   << mAudioPfwDefaultConfFileName;
+
+    string audioPfwConfigurationFilePath = TProperty<string>(mAudioPfwConfPathPropName,
+                                                             mAudioPfwDefaultConfFilePath);
+
+    string audioPfwConfigurationFileName = TProperty<string>(mAudioPfwConfFilePropName,
                                                              mAudioPfwDefaultConfFileName);
     Log::Info() << __FUNCTION__
-                << ": audio PFW using configuration file: " << audioPfwConfigurationFilePath;
+                << ": audio PFW using configuration file: " << audioPfwConfigurationFilePath
+                << audioPfwConfigurationFileName;
 
-    mAudioPfwConnector = new CParameterMgrPlatformConnector(audioPfwConfigurationFilePath);
+    mAudioPfwConnector = new CParameterMgrPlatformConnector(audioPfwConfigurationFilePath +
+                                                            audioPfwConfigurationFileName);
 
     mParameterHelper = new ParameterMgrHelper(mAudioPfwConnector);
 

@@ -837,12 +837,11 @@ private:
 
     static const std::pair<int, const char *> mRoutingStageValuePairs[];
 
-    /**
-     * Defines the name of the Android property describing the name of the *
-     * audio PFW configuration file.
-     */
-    static const char *const mAudioPfwConfFilePropName;
-    static const char *const mAudioPfwDefaultConfFileName;
+    static const char *const mAudioPfwConfFilePropName; /**< PFW configuration file property */
+    static const char *const mAudioPfwConfPathPropName; /**< PFW configuration path property */
+    static const char *const mAudioPfwDefaultConfFileName; /**< PFW default conf. file name */
+    static const char *const mAudioPfwDefaultConfFilePath; /**< PFW default conf. file path */
+
     static const char *const
     mClosingRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
     static const char *const
