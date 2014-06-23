@@ -25,11 +25,11 @@
 
 #include "LpePreProcessing.hpp"
 #include "AudioEffectSession.hpp"
-#include <LpeAec.hpp>
-#include <LpeBmf.hpp>
-#include <LpeWnr.hpp>
-#include <LpeNs.hpp>
-#include <LpeAgc.hpp>
+#include "LpeAec.hpp"
+#include "LpeBmf.hpp"
+#include "LpeWnr.hpp"
+#include "LpeNs.hpp"
+#include "LpeAgc.hpp"
 #include <utils/Errors.h>
 #include <fcntl.h>
 #include <functional>

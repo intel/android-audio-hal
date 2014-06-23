@@ -26,15 +26,15 @@ LOCAL_PATH := $(call my-dir)
 # Common variables
 
 effect_pre_proc_src_files :=  \
-    LpeNs.cpp \
-    LpeAgc.cpp \
-    LpeAec.cpp \
-    LpeBmf.cpp \
-    LpeWnr.cpp \
-    AudioEffect.cpp \
-    AudioEffectSession.cpp \
-    LpeEffectLibrary.cpp \
-    LpePreProcessing.cpp
+    src/LpeNs.cpp \
+    src/LpeAgc.cpp \
+    src/LpeAec.cpp \
+    src/LpeBmf.cpp \
+    src/LpeWnr.cpp \
+    src/AudioEffect.cpp \
+    src/AudioEffectSession.cpp \
+    src/LpeEffectLibrary.cpp \
+    src/LpePreProcessing.cpp
 
 effect_pre_proc_includes_dir := \
 
@@ -109,7 +109,7 @@ include $(CLEAR_VARS)
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_SRC_FILES := EffectHelper.cpp
+LOCAL_SRC_FILES := src/EffectHelper.cpp
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := liblpepreprocessinghelper
@@ -126,7 +126,7 @@ include $(CLEAR_VARS)
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
-LOCAL_SRC_FILES := EffectHelper.cpp
+LOCAL_SRC_FILES := src/EffectHelper.cpp
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := liblpepreprocessinghelper_host
