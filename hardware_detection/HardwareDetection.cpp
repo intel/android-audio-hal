@@ -41,9 +41,9 @@ ConfigurationLocator::ConfigurationLocator()
         "/etc/parameter-framework/ParameterFrameworkConfiguration-bytcr-rt5642-t100.xml",
         "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5642-t100.xml");
 
-    mConfigurationFilePaths["bytcrrt5640mrd7"] = make_pair(
-        "/etc/parameter-framework/ParameterFrameworkConfiguration-bytcr-rt5640-mrd7.xml",
-        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5640-mrd7.xml");
+    mConfigurationFilePaths["bytcrrt5640"] = make_pair(
+        "/etc/parameter-framework/ParameterFrameworkConfiguration-bytcr-rt5640-default.xml",
+        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5640-default.xml");
     mSupportedCard = findSupportedCard();
 }
 
