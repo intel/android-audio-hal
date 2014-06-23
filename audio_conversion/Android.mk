@@ -129,7 +129,7 @@ audio_conversion_fcttest_static_lib_target += \
     $(audio_conversion_fcttest_static_lib)
 
 audio_conversion_fcttest_shared_lib_target += \
-    libstlport libcutils libaudiohalutils \
+    libstlport libcutils \
     libaudioresample
 
 # $(1): "_target" or "_host"
