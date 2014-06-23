@@ -22,6 +22,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
+# Component build
 #######################################################################
 # Common variables
 
@@ -134,7 +135,7 @@ LOCAL_MODULE := liblpepreprocessinghelper_host
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 #######################################################################
-# Build for liblpepreprocessing with and without gcov for host and target
+# Build for liblpepreprocessing with gcov for host and target
 
 # Compile macro
 define make_effect_pre_proc_lib
@@ -156,19 +157,14 @@ $( \
 endef
 
 # Build for host test with gcov
-ifeq ($(audiocomms_test_gcov_host),true)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := liblpepreprocessing_static_gcov_host
 $(call make_effect_pre_proc_lib,host)
 $(call add_gcov)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
 
 # Build for target test with gcov
-ifeq ($(audiocomms_test_gcov_target),true)
-
 include $(CLEAR_VARS)
 LOCAL_MODULE := liblpepreprocessing_static_gcov
 $(call make_effect_pre_proc_lib,target)
@@ -176,21 +172,45 @@ $(call add_gcov)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
-endif
 
-# Build for host test
-ifeq ($(audiocomms_test_host),true)
+# Component functional test
+#######################################################################
+
+audio_effects_functional_test_static_lib += \
+    libaudio_comms_utilities \
+    log_mock \
+    libgmock \
+    libgmock_main
+
+audio_effects_functional_test_src_files := \
+    test/AudioEffectsFcct.cpp
+
+audio_effects_functional_test_c_includes := \
+    $(call include-path-for, audio-effects) \
+    $(LOCAL_PATH)/../../../../external/gmock/include
+
+audio_effects_functional_test_static_lib_target := \
+    $(audio_effects_functional_test_static_lib)
+
+audio_effects_functional_test_shared_lib_target := \
+    libcutils \
+    libbinder \
+    libmedia \
+    libutils
+
+audio_effects_functional_test_defines += -Wall -Werror -ggdb -O0
+
+###############################
+# Functional test target
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := liblpepreprocessing_static_host
-$(call make_effect_pre_proc_lib,host)
-include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
+LOCAL_MODULE := audio_effects_functional_test
+LOCAL_SRC_FILES := $(audio_effects_functional_test_src_files)
+LOCAL_C_INCLUDES := $(audio_effects_functional_test_c_includes)
+LOCAL_CFLAGS := $(audio_effects_functional_test_defines)
+LOCAL_STATIC_LIBRARIES := $(audio_effects_functional_test_static_lib_target)
+LOCAL_SHARED_LIBRARIES := $(audio_effects_functional_test_shared_lib_target)
+LOCAL_MODULE_TAGS := tests
 
-# Build for target (inconditionnal)
-include $(CLEAR_VARS)
-LOCAL_MODULE := liblpepreprocessing_static
-$(call make_effect_pre_proc_lib,target)
-include external/stlport/libstlport.mk
-include $(BUILD_STATIC_LIBRARY)
+include $(BUILD_NATIVE_TEST)
