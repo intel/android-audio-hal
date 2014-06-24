@@ -21,6 +21,7 @@
 #
 
 LOCAL_PATH := $(call my-dir)
+include $(OPTIONAL_QUALITY_ENV_SETUP)
 
 # Component build
 #######################################################################
@@ -90,20 +91,30 @@ LOCAL_SHARED_LIBRARIES := \
     $(effect_pre_proc_shared_lib_target)
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/soundfx
 
-# gcov build
-ifeq ($($(LOCAL_MODULE).gcov),true)
-  LOCAL_CFLAGS += -O0 --coverage -include GcovFlushWithProp.h
-  LOCAL_LDFLAGS += -fprofile-arcs --coverage
-  LOCAL_STATIC_LIBRARIES += gcov_flush_with_prop
-endif
-
 include external/stlport/libstlport.mk
 
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
-###########################
-# helper static lib target
+# Build for host
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := liblpepreprocessing_static_gcov_host
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_C_INCLUDES := $(effect_pre_proc_includes_common)
+LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_host)
+LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
+LOCAL_CFLAGS := $(effect_pre_proc_cflags)
+LOCAL_STATIC_LIBRARIES := $(effect_pre_proc_static_lib_host)
+LOCAL_MODULE_TAGS := tests
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+
+# Helper Effect Lib
+#######################################################################
+# Build for target
 
 include $(CLEAR_VARS)
 
@@ -116,11 +127,11 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := liblpepreprocessinghelper
 
 include external/stlport/libstlport.mk
-
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_STATIC_LIBRARY)
 
-#########################
-# helper static lib host
+#######################################################################
+# Build for host
 
 include $(CLEAR_VARS)
 
@@ -128,50 +139,11 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
 LOCAL_SRC_FILES := src/EffectHelper.cpp
-LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE := liblpepreprocessinghelper_host
-
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
-
-#######################################################################
-# Build for liblpepreprocessing with gcov for host and target
-
-# Compile macro
-define make_effect_pre_proc_lib
-$( \
-    $(eval LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include) \
-    $(eval LOCAL_C_INCLUDES := $(effect_pre_proc_includes_common)) \
-    $(eval LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_$(1))) \
-    $(eval LOCAL_SRC_FILES := $(effect_pre_proc_src_files)) \
-    $(eval LOCAL_CFLAGS := $(effect_pre_proc_cflags)) \
-    $(eval LOCAL_STATIC_LIBRARIES := $(effect_pre_proc_static_lib_$(1))) \
-    $(eval LOCAL_MODULE_TAGS := optional) \
-)
-endef
-define add_gcov
-$( \
-    $(eval LOCAL_CFLAGS += -O0 --coverage) \
-    $(eval LOCAL_LDFLAGS += --coverage) \
-)
-endef
-
-# Build for host test with gcov
-include $(CLEAR_VARS)
-LOCAL_MODULE := liblpepreprocessing_static_gcov_host
-$(call make_effect_pre_proc_lib,host)
-$(call add_gcov)
-include $(BUILD_HOST_STATIC_LIBRARY)
-
-
-# Build for target test with gcov
-include $(CLEAR_VARS)
-LOCAL_MODULE := liblpepreprocessing_static_gcov
-$(call make_effect_pre_proc_lib,target)
-$(call add_gcov)
-include external/stlport/libstlport.mk
-include $(BUILD_STATIC_LIBRARY)
-
 
 # Component functional test
 #######################################################################
@@ -212,5 +184,9 @@ LOCAL_CFLAGS := $(audio_effects_functional_test_defines)
 LOCAL_STATIC_LIBRARIES := $(audio_effects_functional_test_static_lib_target)
 LOCAL_SHARED_LIBRARIES := $(audio_effects_functional_test_shared_lib_target)
 LOCAL_MODULE_TAGS := tests
-
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_NATIVE_TEST)
+
+include $(OPTIONAL_QUALITY_RUN_TEST)
+
+include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
