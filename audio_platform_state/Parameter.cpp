@@ -50,6 +50,7 @@ bool Parameter::getLiteralValueFromParam(const string &androidParam, string &lit
         return false;
     }
     MappingValuesMapConstIterator it = mMappingValuesMap.find(androidParam);
+    AUDIOCOMMS_ASSERT(it != mMappingValuesMap.end(), "Value not valid");
     literalValue = it->second;
     return true;
 }

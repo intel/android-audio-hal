@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2014 Intel
+ * Copyright (c) 2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -25,10 +25,13 @@
 #pragma once
 
 #include <media/AudioBufferProvider.h>
+#include <NonCopyable.hpp>
 #include <gtest/gtest.h>
 #include <stdint.h>
 
-class MyAudioBufferProvider : public android::AudioBufferProvider
+class MyAudioBufferProvider
+    : public android::AudioBufferProvider,
+      private audio_comms::utilities::NonCopyable
 {
 
 public:

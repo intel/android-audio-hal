@@ -29,6 +29,7 @@
 #include <audio_effects/effect_ns.h>
 #include <audio_effects/effect_visualizer.h>
 #include <audio_effects/effect_equalizer.h>
+#include <AudioCommsAssert.hpp>
 #include <utils/String16.h>
 
 using ::testing::Test;
@@ -99,10 +100,12 @@ void AudioEffectsFunctionalTest::getParameterForEffect(AudioEffect *effect,
                                                        const TestEffectParameterBase *effectTest,
                                                        bool compareWithOrigValue)
 {
+    ASSERT_TRUE(effectTest != NULL);
     /**
      * Get a copy of effect parameter structure
      */
     effect_param_t *effectParamCopy = (effect_param_t *)malloc(effectTest->getSize());
+    AUDIOCOMMS_ASSERT(effectParamCopy != NULL, "NULL effect param");
     memcpy(effectParamCopy, effectTest->getEffectParam(), effectTest->getSize());
 
     status_t status;
@@ -110,8 +113,7 @@ void AudioEffectsFunctionalTest::getParameterForEffect(AudioEffect *effect,
     status = effect->getParameter(effectParamCopy);
     ASSERT_EQ(status, NO_ERROR)
         << "add failed with error=" << status;
-
-    EXPECT_EQ(effectParamCopy->status, expectedGetResult) << "add failed with error=" <<
+    EXPECT_EQ(expectedGetResult, effectParamCopy->status) << "add failed with error=" <<
         effectParamCopy->status;
 
     if (effectParamCopy->status == NO_ERROR) {
@@ -132,10 +134,12 @@ void AudioEffectsFunctionalTest::getParameterForEffect(AudioEffect *effect,
 void AudioEffectsFunctionalTest::setParameterForEffect(AudioEffect *effect,
                                                        const TestEffectParameterBase *effectTest)
 {
+    ASSERT_TRUE(effectTest != NULL);
     /**
      * Get a copy of effect parameter structure
      */
     effect_param_t *effectParamCopy = (effect_param_t *)malloc(effectTest->getSize());
+    AUDIOCOMMS_ASSERT(effectParamCopy != NULL, "NULL effect param");
     memcpy(effectParamCopy, effectTest->getEffectParam(), effectTest->getSize());
 
     status_t status;

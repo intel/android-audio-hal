@@ -63,13 +63,18 @@ public:
      */
     TestEffectParameterBase(const TestEffectParameterBase &object)
         : audio_comms::utilities::NonCopyable(),
-                                  mEffectUuidType(object.mEffectUuidType),
+          mEffectUuidType(object.mEffectUuidType),
           mParam(NULL),
           mSize(object.mSize),
           mAccess(object.mAccess),
           mDirection(object.mDirection)
     {
         setEffectParam(object.mParam, object.mSize);
+    }
+    TestEffectParameterBase &operator=(const TestEffectParameterBase &object)
+    {
+        setEffectParam(object.mParam, object.mSize);
+        return *this;
     }
 
     virtual ~TestEffectParameterBase()

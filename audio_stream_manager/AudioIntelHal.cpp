@@ -133,6 +133,7 @@ AudioIntelHal::AudioIntelHal()
     if (!startModemAudioManager()) {
 
         ALOGI("%s: Note that this platform is MODEM-LESS", __FUNCTION__);
+        platformHasModem = false;
     }
 
     /// Get the Stream Interface of the Route manager
@@ -167,13 +168,15 @@ AudioIntelHal::AudioIntelHal()
     /// Initialize current modem status
     // Has Modem
     mPlatformState->setModemEmbedded(platformHasModem);
-    // Modem status
-    mPlatformState->setModemAlive(mModemAudioManagerInterface->isModemAlive());
-    // Modem audio availability
-    mPlatformState->setModemAudioAvailable(mModemAudioManagerInterface->isModemAudioAvailable());
-    // Modem band
-    mPlatformState->setCsvBandType(mModemAudioManagerInterface->getAudioBand());
-
+    if (platformHasModem) {
+        // Modem status
+        mPlatformState->setModemAlive(mModemAudioManagerInterface->isModemAlive());
+        // Modem audio availability
+        mPlatformState->setModemAudioAvailable
+            (mModemAudioManagerInterface->isModemAudioAvailable());
+        // Modem band
+        mPlatformState->setCsvBandType(mModemAudioManagerInterface->getAudioBand());
+    }
     /// Start Routing service
     if (mStreamInterface->startService() != OK) {
 
