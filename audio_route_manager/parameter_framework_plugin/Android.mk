@@ -55,7 +55,7 @@ LOCAL_STATIC_LIBRARIES := \
     libsamplespec_static \
     libpfw_utility \
 
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/parameter-framework-plugins/Route
+LOCAL_MODULE_RELATIVE_PATH := parameter-framework-plugins/Route
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libroute-subsystem
 LOCAL_MODULE_OWNER := intel
