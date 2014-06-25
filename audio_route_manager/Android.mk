@@ -21,7 +21,9 @@
 #
 
 LOCAL_PATH := $(call my-dir)
+include $(OPTIONAL_QUALITY_ENV_SETUP)
 
+# Component build
 #######################################################################
 # Common variables
 
@@ -121,86 +123,41 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_SHARED_LIBRARIES := \
     $(audio_route_manager_shared_lib_target)
 
-# gcov build
-ifeq ($($(LOCAL_MODULE).gcov),true)
-  LOCAL_CFLAGS += -O0 --coverage -include GcovFlushWithProp.h
-  LOCAL_LDFLAGS += -fprofile-arcs --coverage
-  LOCAL_STATIC_LIBRARIES += gcov_flush_with_prop
-endif
-
 include external/stlport/libstlport.mk
 
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
-# Build for test with and without gcov for host and target
+# Build for host
 
-# Compile macro
-define make_audio_route_manager_test_lib
-$( \
-    $(eval LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include) \
-    $(eval LOCAL_C_INCLUDES := $(audio_route_manager_includes_common)) \
-    $(eval LOCAL_C_INCLUDES += $(audio_route_manager_includes_dir_$(1))) \
-    $(eval LOCAL_STATIC_LIBRARIES := $(audio_route_manager_static_lib_$(1))) \
-    $(eval LOCAL_SRC_FILES := $(audio_route_manager_src_files)) \
-    $(eval LOCAL_CFLAGS := $(audio_route_manager_cflags)) \
-    $(eval LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := $(audio_route_manager_include_dirs_from_static_libraries_$(1)))
-    $(eval LOCAL_MODULE_TAGS := optional) \
-)
-endef
-
-define add_gcov
-$( \
-    $(eval LOCAL_CFLAGS += -O0 -fprofile-arcs -ftest-coverage) \
-    $(eval LOCAL_LDFLAGS += -lgcov) \
-)
-endef
-
-# Build for host test with gcov
 ifeq ($(audiocomms_test_gcov_host),true)
 
 include $(CLEAR_VARS)
-$(call make_audio_route_manager_test_lib,host)
-$(call add_gcov)
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include)
+LOCAL_C_INCLUDES := $(audio_route_manager_includes_common)
+LOCAL_C_INCLUDES += $(audio_route_manager_includes_dir_host)
+LOCAL_STATIC_LIBRARIES := $(audio_route_manager_static_lib_host)
+LOCAL_SRC_FILES := $(audio_route_manager_src_files)
+LOCAL_CFLAGS := $(audio_route_manager_cflags)
+LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
+    $(audio_route_manager_include_dirs_from_static_libraries_host)
+LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := libaudio_route_manager_static_gcov_host
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 endif
 
-# Build for target test with gcov
-ifeq ($(audiocomms_test_gcov_target),true)
 
-include $(CLEAR_VARS)
-LOCAL_MODULE := libaudio_route_manager_static_gcov
-$(call make_audio_route_manager_test_lib,target)
-$(call add_gcov)
-include external/stlport/libstlport.mk
-include $(BUILD_STATIC_LIBRARY)
-
-endif
-
-# Build for host test
-ifeq ($(audiocomms_test_host),true)
-
-include $(CLEAR_VARS)
-$(call make_audio_route_manager_test_lib,host)
-LOCAL_MODULE := libaudio_route_manager_static_host
-include $(BUILD_HOST_STATIC_LIBRARY)
-
-endif
-
-# Build for target test
-ifeq ($(audiocomms_test_target),true)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libaudio_route_manager_static
-$(call make_audio_route_manager_test_lib,target)
-include external/stlport/libstlport.mk
-include $(BUILD_STATIC_LIBRARY)
-
-endif
+#######################################################################
+# Build for target to export headers
 
 include $(CLEAR_VARS)
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(audio_route_manager_includes_common)
 LOCAL_MODULE := audio.routemanager.includes
 include $(BUILD_STATIC_LIBRARY)
+
+
+include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
