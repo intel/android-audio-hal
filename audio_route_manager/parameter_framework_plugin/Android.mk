@@ -39,7 +39,7 @@ common_static_libraries := \
 
 common_local_import_c_include_dirs_from_static_libraries := \
     libsamplespec_static \
-    libutility \
+    libpfw_utility \
     libparameter_includes \
     libxmlserializer
 
