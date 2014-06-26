@@ -125,7 +125,7 @@ int AudioUtils::getCardIndexByName(const char *name)
     const char *const card = "card";
     const int cardLen = strlen(card);
 
-    if (!strncmp(name, card, sizeof(card))) {
+    if (!strncmp(name, card, cardLen)) {
 
         /**
          * Checks first if the card name provided as "cardX". (Must start with 'card').
