@@ -328,6 +328,7 @@ void AudioRouteManager::resetRouting()
         _routes[i].prevEnabled = _routes[i].enabled;
         _routes[i].enabled = 0;
         _routes[i].needReflow = 0;
+        _routes[i].needRepath = 0;
     }
 
     resetAvailability<AudioRoute>(_routeMap);
