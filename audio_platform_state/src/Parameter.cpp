@@ -22,6 +22,7 @@
  */
 
 #include "Parameter.hpp"
+#include <AudioCommsAssert.hpp>
 
 using std::string;
 

@@ -24,6 +24,11 @@
 
 #include "Parameter.hpp"
 
+class CriterionType;
+class Criterion;
+class CParameterMgrPlatformConnector;
+class IStreamInterface;
+
 /**
  * This class intends to address the Android Parameters that are associated to a criterion.
  * Each time the key of these android parameters is detected, this class will wrap the accessor
@@ -57,10 +62,7 @@ public:
                             const std::string &name,
                             CriterionType *criterionType,
                             CParameterMgrPlatformConnector *connector,
-                            const std::string &defaultValue = "")
-        : CriterionParameter(observer, key, name, defaultValue),
-          mCriterion(new Criterion(name, criterionType, connector, defaultValue))
-    {}
+                            const std::string &defaultValue = "");
 
     virtual bool setValue(const std::string &value);
 

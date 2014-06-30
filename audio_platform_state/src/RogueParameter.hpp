@@ -23,6 +23,8 @@
 #pragma once
 
 #include "Parameter.hpp"
+#include <convert.hpp>
+#include <ParameterMgrHelper.hpp>
 
 /**
  * This class intends to address the Android Parameters that are associated to a Rogue Parameter.

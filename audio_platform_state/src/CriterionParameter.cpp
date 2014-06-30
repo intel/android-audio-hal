@@ -22,11 +22,26 @@
  */
 
 #include "CriterionParameter.hpp"
+#include <CriterionType.hpp>
+#include <Criterion.hpp>
+#include <ParameterMgrPlatformConnector.h>
+#include <StreamInterface.hpp>
 
 bool CriterionParameter::set(const std::string &androidParamValue)
 {
     mObserver->parameterHasChanged(getName());
     return true;
+}
+
+RouteCriterionParameter::RouteCriterionParameter(ParameterChangedObserver *observer,
+                                                 const std::string &key,
+                                                 const std::string &name,
+                                                 CriterionType *criterionType,
+                                                 CParameterMgrPlatformConnector *connector,
+                                                 const std::string &defaultValue /* = "" */)
+    : CriterionParameter(observer, key, name, defaultValue),
+      mCriterion(new Criterion(name, criterionType, connector, defaultValue))
+{
 }
 
 bool RouteCriterionParameter::setValue(const std::string &value)

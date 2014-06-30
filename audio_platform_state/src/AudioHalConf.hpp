@@ -24,45 +24,33 @@
 
 #include <string>
 
-static const char *const mAudioHalConfFilePath =
+static const char *const gAudioHalConfFilePath =
     "/system/etc/route_criteria.conf";
-static const char *const mAudioHalVendorConfFilePath =
+static const char *const gAudioHalVendorConfFilePath =
     "/vendor/etc/route_criteria.conf";
-
-typedef enum
-{
-    ParamCriterion,
-    ParamRogue
-} ParameterType;
-
-typedef enum
-{
-    Route,
-    Audio
-} PfwInstance;
 
 /**
  * PFW instances tag
  */
-static const std::string mAudioConfTag = "Audio";
-static const std::string mRouteConfTag = "Route";
+static const std::string gAudioConfTag = "Audio";
+static const std::string gRouteConfTag = "Route";
 
 /**
  * PFW elements tag
  */
-static const std::string mInclusiveCriterionTypeTag = "InclusiveCriterionType";
-static const std::string mExclusiveCriterionTypeTag = "ExclusiveCriterionType";
-static const std::string mCriterionTag = "Criterion";
-static const std::string mRogueParameterTag = "RogueParameter";
+static const std::string gInclusiveCriterionTypeTag = "InclusiveCriterionType";
+static const std::string gExclusiveCriterionTypeTag = "ExclusiveCriterionType";
+static const std::string gCriterionTag = "Criterion";
+static const std::string gRogueParameterTag = "RogueParameter";
 
 /**
  * PFW Elements specific tag
  */
-static const std::string mParameterDefaultTag = "Default";
-static const std::string mAndroidParameterTag = "Parameter";
-static const std::string mMappingTableTag = "Mapping";
-static const std::string mTypeTag = "Type";
-static const std::string mPathTag = "Path";
+static const std::string gParameterDefaultTag = "Default";
+static const std::string gAndroidParameterTag = "Parameter";
+static const std::string gMappingTableTag = "Mapping";
+static const std::string gTypeTag = "Type";
+static const std::string gPathTag = "Path";
 
-static const std::string mUnsignedIntegerTypeTag = "uint32_t";
-static const std::string mStringTypeTag = "string";
+static const std::string gUnsignedIntegerTypeTag = "uint32_t";
+static const std::string gStringTypeTag = "string";

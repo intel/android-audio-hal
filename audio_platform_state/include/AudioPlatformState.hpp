@@ -22,9 +22,9 @@
  */
 #pragma once
 
-#include "Parameter.hpp"
 #include "AudioBand.h"
-#include "VolumeKeys.hpp"
+#include "ParameterChangedObserver.hpp"
+#include "Parameter.hpp"
 #include <NonCopyable.hpp>
 #include <Direction.hpp>
 #include <hardware_legacy/AudioHardwareBase.h>
@@ -55,6 +55,18 @@ class AudioPlatformState
       private audio_comms::utilities::NonCopyable
 {
 private:
+    typedef enum
+    {
+        Route,
+        Audio
+    } PfwInstance;
+
+    typedef enum
+    {
+        ParamCriterion,
+        ParamRogue
+    } ParameterType;
+
     typedef std::pair<const char *, const char *> AndroidParamMappingValuePair;
     typedef std::pair<int, const char *> CriterionTypeValuePair;
     typedef std::vector<Parameter *>::iterator ParamIterator;
@@ -314,11 +326,7 @@ public:
      *
      * @param[in] mode android mode selected by the policy.
      */
-    void setMode(int mode)
-    {
-        VolumeKeys::wakeup(mode == AudioSystem::MODE_IN_CALL);
-        setValue(mode, mAndroidMode);
-    }
+    void setMode(int mode);
 
     /**
      * Get the android telephony mode.

@@ -23,19 +23,8 @@
 #pragma once
 
 #include "ParameterChangedObserver.hpp"
-#include "AudioHalConf.hpp"
-#include <Criterion.hpp>
-#include <CriterionType.hpp>
-#include "SelectionCriterionInterface.h"
-#include <ParameterMgrHelper.hpp>
-#include <StreamInterface.hpp>
-#include <AudioCommsAssert.hpp>
-#include <convert.hpp>
 #include <map>
-#include <stdint.h>
 #include <string>
-#include <utils/Errors.h>
-#include <utils/Log.h>
 
 /**
  * This class materialize a wrapping object between an android-parameter refered by its key

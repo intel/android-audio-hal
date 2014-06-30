@@ -26,7 +26,9 @@
 #include "AudioHalConf.hpp"
 #include "CriterionParameter.hpp"
 #include "RogueParameter.hpp"
+#include "Parameter.hpp"
 #include "ParameterMgrPlatformConnector.h"
+#include "VolumeKeys.hpp"
 #include <Stream.hpp>
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
@@ -148,11 +150,11 @@ AudioPlatformState::~AudioPlatformState()
 
 status_t AudioPlatformState::start()
 {
-    if ((loadAudioHalConfig(mAudioHalVendorConfFilePath) != OK) &&
-        (loadAudioHalConfig(mAudioHalConfFilePath) != OK)) {
+    if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != OK) &&
+        (loadAudioHalConfig(gAudioHalConfFilePath) != OK)) {
 
         ALOGE("Neither vendor conf file (%s) nor system conf file (%s) could be found",
-              mAudioHalVendorConfFilePath, mAudioHalConfFilePath);
+              gAudioHalVendorConfFilePath, gAudioHalConfFilePath);
         return NO_INIT;
     }
 
@@ -168,8 +170,8 @@ status_t AudioPlatformState::start()
 }
 
 template <>
-void AudioPlatformState::addCriterionType<Audio>(const string &typeName,
-                                                 bool isInclusive)
+void AudioPlatformState::addCriterionType<AudioPlatformState::Audio>(const string &typeName,
+                                                                     bool isInclusive)
 {
     if (mStreamInterface->addCriterionType(typeName, isInclusive)) {
         ALOGV("%s:criterionType %s already added in Audio PFW", __FUNCTION__, typeName.c_str());
@@ -177,8 +179,8 @@ void AudioPlatformState::addCriterionType<Audio>(const string &typeName,
 }
 
 template <>
-void AudioPlatformState::addCriterionType<Route>(const string &typeName,
-                                                 bool isInclusive)
+void AudioPlatformState::addCriterionType<AudioPlatformState::Route>(const string &typeName,
+                                                                     bool isInclusive)
 {
     AUDIOCOMMS_ASSERT(mCriterionTypeMap.find(typeName) == mCriterionTypeMap.end(),
                       "CriterionType " << typeName << " already added");
@@ -190,7 +192,7 @@ void AudioPlatformState::addCriterionType<Route>(const string &typeName,
 }
 
 template <>
-void AudioPlatformState::addCriterionTypeValuePair<Audio>(
+void AudioPlatformState::addCriterionTypeValuePair<AudioPlatformState::Audio>(
     const string &typeName,
     uint32_t numericValue,
     const string &literalValue)
@@ -199,7 +201,7 @@ void AudioPlatformState::addCriterionTypeValuePair<Audio>(
 }
 
 template <>
-void AudioPlatformState::addCriterionTypeValuePair<Route>(
+void AudioPlatformState::addCriterionTypeValuePair<AudioPlatformState::Route>(
     const string &typeName,
     uint32_t numericValue,
     const string &literalValue)
@@ -213,7 +215,7 @@ void AudioPlatformState::addCriterionTypeValuePair<Route>(
     criterionType->addValuePair(numericValue, literalValue);
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
@@ -265,22 +267,22 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
     }
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadInclusiveCriterionType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mInclusiveCriterionTypeTag.c_str());
+    cnode *node = config_find(root, gInclusiveCriterionTypeTag.c_str());
     if (node == NULL) {
         return;
     }
     loadCriterionType<pfw>(node, true);
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadExclusiveCriterionType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mExclusiveCriterionTypeTag.c_str());
+    cnode *node = config_find(root, gExclusiveCriterionTypeTag.c_str());
     if (node == NULL) {
         return;
     }
@@ -296,17 +298,17 @@ void AudioPlatformState::addParameter(Parameter *param,
 }
 
 template <>
-void AudioPlatformState::addParameter<Audio, ParamRogue>(
+void AudioPlatformState::addParameter<AudioPlatformState::Audio, AudioPlatformState::ParamRogue>(
     const std::string &typeName, const std::string &paramKey, const std::string &name,
     const std::string &defaultValue, const std::vector<AndroidParamMappingValuePair> &valuePairs)
 {
     Parameter *rogueParam;
-    if (typeName == mUnsignedIntegerTypeTag) {
+    if (typeName == gUnsignedIntegerTypeTag) {
         rogueParam = new AudioRogueParameter<uint32_t>(this, paramKey,
                                                        name,
                                                        mStreamInterface,
                                                        defaultValue);
-    } else if (typeName == mStringTypeTag) {
+    } else if (typeName == gStringTypeTag) {
         rogueParam = new AudioRogueParameter<string>(this, paramKey, name,
                                                      mStreamInterface,
                                                      defaultValue);
@@ -318,7 +320,8 @@ void AudioPlatformState::addParameter<Audio, ParamRogue>(
 }
 
 template <>
-void AudioPlatformState::addParameter<Audio, ParamCriterion>(
+void AudioPlatformState::addParameter<AudioPlatformState::Audio,
+                                      AudioPlatformState::ParamCriterion>(
     const std::string &typeName, const std::string &paramKey, const std::string &name,
     const std::string &defaultValue,
     const std::vector<AndroidParamMappingValuePair> &valuePairs)
@@ -329,7 +332,8 @@ void AudioPlatformState::addParameter<Audio, ParamCriterion>(
 }
 
 template <>
-void AudioPlatformState::addParameter<Route, ParamCriterion>(
+void AudioPlatformState::addParameter<AudioPlatformState::Route,
+                                      AudioPlatformState::ParamCriterion>(
     const std::string &typeName, const std::string &paramKey, const std::string &name,
     const std::string &defaultValue,
     const std::vector<AndroidParamMappingValuePair> &valuePairs)
@@ -343,16 +347,16 @@ void AudioPlatformState::addParameter<Route, ParamCriterion>(
 
 
 template <>
-void AudioPlatformState::addParameter<Route, ParamRogue>(
+void AudioPlatformState::addParameter<AudioPlatformState::Route, AudioPlatformState::ParamRogue>(
     const std::string &typeName, const std::string &paramKey, const std::string &name,
     const std::string &defaultValue,
     const std::vector<AndroidParamMappingValuePair> &valuePairs)
 {
     RogueParameter *paramRogue;
-    if (typeName == mUnsignedIntegerTypeTag) {
+    if (typeName == gUnsignedIntegerTypeTag) {
         paramRogue = new RouteRogueParameter<uint32_t>(this, paramKey, name, mRoutePfwConnector,
                                                        defaultValue);
-    } else if (typeName == mStringTypeTag) {
+    } else if (typeName == gStringTypeTag) {
         paramRogue = new RouteRogueParameter<string>(this, paramKey, name, mRoutePfwConnector,
                                                      defaultValue);
     } else {
@@ -374,15 +378,15 @@ void AudioPlatformState::parseChildren(cnode *root,
     for (node = root->first_child; node != NULL; node = node->next) {
         AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
 
-        if (string(node->name) == mPathTag) {
+        if (string(node->name) == gPathTag) {
             path = node->value;
-        } else if (string(node->name) == mParameterDefaultTag) {
+        } else if (string(node->name) == gParameterDefaultTag) {
             defaultValue = node->value;
-        } else if (string(node->name) == mAndroidParameterTag) {
+        } else if (string(node->name) == gAndroidParameterTag) {
             key = node->value;
-        } else if (string(node->name) == mMappingTableTag) {
+        } else if (string(node->name) == gMappingTableTag) {
             valuePairs = parseMappingTable(node->value);
-        } else if (string(node->name) == mTypeTag) {
+        } else if (string(node->name) == gTypeTag) {
             type = node->value;
         } else {
             ALOGE("%s: Unrecognized %s %s node ", __FUNCTION__, node->name, node->value);
@@ -392,7 +396,7 @@ void AudioPlatformState::parseChildren(cnode *root,
           __FUNCTION__, path.c_str(), key.c_str(), defaultValue.c_str(), type.c_str());
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadRogueParameterType(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
@@ -417,11 +421,11 @@ void AudioPlatformState::loadRogueParameterType(cnode *root)
                                   valuePairs);
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadRogueParameterTypeList(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mRogueParameterTag.c_str());
+    cnode *node = config_find(root, gRogueParameterTag.c_str());
     if (node == NULL) {
         ALOGW("%s: no rogue parameter type found", __FUNCTION__);
         return;
@@ -450,11 +454,11 @@ const T *AudioPlatformState::getElement(const string &name,
     return it->second;
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadCriteria(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, mCriterionTag.c_str());
+    cnode *node = config_find(root, gCriterionTag.c_str());
 
     if (node == NULL) {
         ALOGW("%s: no inclusive criteria found", __FUNCTION__);
@@ -491,17 +495,17 @@ vector<AudioPlatformState::AndroidParamMappingValuePair> AudioPlatformState::par
 }
 
 template <>
-void AudioPlatformState::addCriterion<Audio>(const string &name,
-                                             const string &typeName,
-                                             const string &defaultLiteralValue)
+void AudioPlatformState::addCriterion<AudioPlatformState::Audio>(const string &name,
+                                                                 const string &typeName,
+                                                                 const string &defaultLiteralValue)
 {
     mStreamInterface->addCriterion(name, typeName, defaultLiteralValue);
 }
 
 template <>
-void AudioPlatformState::addCriterion<Route>(const string &name,
-                                             const string &typeName,
-                                             const string &defaultLiteralValue)
+void AudioPlatformState::addCriterion<AudioPlatformState::Route>(const string &name,
+                                                                 const string &typeName,
+                                                                 const string &defaultLiteralValue)
 {
     CriterionType *criterionType = getElement<CriterionType>(typeName, mCriterionTypeMap);
     mCriterionMap[name] = new Criterion(name,
@@ -510,7 +514,7 @@ void AudioPlatformState::addCriterion<Route>(const string &name,
                                         defaultLiteralValue);
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadCriterion(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
@@ -543,18 +547,18 @@ void AudioPlatformState::loadCriterion(cnode *root)
 }
 
 template <>
-const string &AudioPlatformState::getPfwInstanceName<Audio>() const
+const string &AudioPlatformState::getPfwInstanceName<AudioPlatformState::Audio>() const
 {
-    return mAudioConfTag;
+    return gAudioConfTag;
 }
 
 template <>
-const string &AudioPlatformState::getPfwInstanceName<Route>() const
+const string &AudioPlatformState::getPfwInstanceName<AudioPlatformState::Route>() const
 {
-    return mRouteConfTag;
+    return gRouteConfTag;
 }
 
-template <PfwInstance pfw>
+template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadConfig(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
@@ -673,6 +677,12 @@ void AudioPlatformState::setVoipBandType(const Stream *activeStream)
         band = CAudioBand::ENarrow;
     }
     setValue(band, mVoipBand);
+}
+
+void AudioPlatformState::setMode(int mode)
+{
+    VolumeKeys::wakeup(mode == AudioSystem::MODE_IN_CALL);
+    setValue(mode, mAndroidMode);
 }
 
 void AudioPlatformState::updateParametersFromActiveInput()
