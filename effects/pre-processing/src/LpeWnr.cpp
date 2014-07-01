@@ -53,6 +53,6 @@ const effect_descriptor_t WnrAudioEffect::mWnrDescriptor = {
     flags:        (EFFECT_FLAG_TYPE_PRE_PROC | EFFECT_FLAG_DEVICE_IND),
     cpuLoad:      0,
     memoryUsage:  0,
-    "Beam Forming",                 /**< name. */
+    "Wind Noise Reduction",                 /**< name. */
     "IntelLPE"                 /**< implementor. */
 };
