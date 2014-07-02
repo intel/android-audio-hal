@@ -45,6 +45,7 @@ LOCAL_SRC_FILES := \
     src/CriterionParameter.cpp \
     src/AudioPlatformState.cpp \
     src/VolumeKeys.cpp \
+    src/ModemProxy.cpp \
 
 LOCAL_STATIC_LIBRARIES := \
     libsamplespec_static \
@@ -58,6 +59,8 @@ LOCAL_STATIC_LIBRARIES := \
     libproperty_static \
     audio.routemanager.includes \
     libmedia_helper \
+    libactive_value_set \
+    libevent-listener_static \
 
 LOCAL_CFLAGS := -Wall -Werror -Wextra -Wno-unused-parameter
 LOCAL_MODULE_TAGS := optional
