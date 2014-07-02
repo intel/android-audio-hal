@@ -797,21 +797,12 @@ private:
     void resetRouting();
 
     /// from IEventListener
-    virtual bool onEvent(int fd);
-    virtual bool onError(int fd);
-    virtual bool onHangup(int fd);
+    virtual bool onEvent(int);
+    virtual bool onError(int);
+    virtual bool onHangup(int);
     virtual void onAlarm();
     virtual void onPollError();
-    /**
-     * Process callback of the event thread.
-     * Only FORCE_RESYNC extra event type is supported, any other event including 0 is consider as a
-     * nominal routing request.
-     *
-     * @param[in] event Id of the event to be processed.
-     *
-     * @return true if file descriptor polled list by event thread has changed, false otherwise.
-     */
-    virtual bool onProcess(uint16_t event);
+    virtual bool onProcess(void *, uint32_t eventId);
 
     static const std::pair<int, const char *> mRoutingStageValuePairs[];
 

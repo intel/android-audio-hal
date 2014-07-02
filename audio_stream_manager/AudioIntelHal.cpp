@@ -656,19 +656,19 @@ struct echo_reference_itfe *AudioIntelHal::getEchoReference(const SampleSpec &in
 void AudioIntelHal::onModemAudioStatusChanged()
 {
     ALOGD("%s", __FUNCTION__);
-    mEventThread->trig(UpdateModemAudioStatus);
+    mEventThread->trig(NULL, UpdateModemAudioStatus);
 }
 
 void AudioIntelHal::onModemStateChanged()
 {
     ALOGD("%s", __FUNCTION__);
-    mEventThread->trig(UpdateModemState);
+    mEventThread->trig(NULL, UpdateModemState);
 }
 
 void AudioIntelHal::onModemAudioBandChanged()
 {
     ALOGD("%s", __FUNCTION__);
-    mEventThread->trig(UpdateModemAudioBand);
+    mEventThread->trig(NULL, UpdateModemAudioBand);
 }
 
 bool AudioIntelHal::onEvent(int fd)
@@ -694,13 +694,13 @@ void AudioIntelHal::onPollError()
 {
 }
 
-bool AudioIntelHal::onProcess(uint16_t event)
+bool AudioIntelHal::onProcess(void *context, uint32_t eventId)
 {
     AutoW lock(mPfwLock);
 
     bool forceResync = false;
 
-    switch (event) {
+    switch (eventId) {
     case UpdateModemAudioBand:
 
         ALOGD("%s: Modem Band change", __FUNCTION__);

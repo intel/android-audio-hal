@@ -98,7 +98,7 @@ audio_route_manager_include_dirs_from_static_libraries_target := \
 audio_route_manager_include_dirs_from_static_libraries_host := \
     $(foreach lib, $(audio_route_manager_include_dirs_from_static_libraries), $(lib)_host)
 
-audio_route_manager_cflags := -Wall -Werror -Wno-unused-parameter
+audio_route_manager_cflags := -Wall -Werror
 
 #######################################################################
 # Build for target

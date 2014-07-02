@@ -238,7 +238,7 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
     if (!isSynchronous) {
 
         // Trigs the processing of the list
-        mEventThread->trig(forceResync ? mForceResync : 0);
+        mEventThread->trig(NULL, forceResync ? mForceResync : 0);
     } else {
 
         // Create a route manager observer
@@ -248,7 +248,7 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
         addObserver(&obs);
 
         // Trig the processing of the list
-        mEventThread->trig(forceResync ? mForceResync : 0);
+        mEventThread->trig(NULL, forceResync ? mForceResync : 0);
 
         // Unlock to allow for sem wait
         mRoutingLock.unlock();
@@ -565,17 +565,17 @@ void AudioRouteManager::resetAvailability(map<string, T *> elementsMap)
     }
 }
 
-bool AudioRouteManager::onEvent(int fd)
+bool AudioRouteManager::onEvent(int)
 {
     return false;
 }
 
-bool AudioRouteManager::onError(int fd)
+bool AudioRouteManager::onError(int)
 {
     return false;
 }
 
-bool AudioRouteManager::onHangup(int fd)
+bool AudioRouteManager::onHangup(int)
 {
     return false;
 }
@@ -589,10 +589,10 @@ void AudioRouteManager::onPollError()
 {
 }
 
-bool AudioRouteManager::onProcess(uint16_t event)
+bool AudioRouteManager::onProcess(void *, uint32_t eventId)
 {
     AutoW lock(mRoutingLock);
-    doReconsiderRouting(event == mForceResync);
+    doReconsiderRouting(eventId == mForceResync);
 
     // Notify all potential observer of Route Manager Subject
     notify();

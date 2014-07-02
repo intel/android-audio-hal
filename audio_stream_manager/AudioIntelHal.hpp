@@ -319,12 +319,15 @@ private:
     /**
      * Event Thread callback to notify of a request to process an event.
      * Inherited from IEventListener.
+     * Note that the context is not used in the stream manager as it does not need to retrieve any
+     * context in the callback function.
      *
-     * @param[in] event event to treat.
+     * @param[in] context: unused parameter.
+     * @param[in] eventId id of the event to treat.
      *
      * @return true if the file descriptor state has changed.
      */
-    virtual bool onProcess(uint16_t event);
+    virtual bool onProcess(void *context, uint32_t eventId);
 
     /**
      * Checks if a device is only one input device.
