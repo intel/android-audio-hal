@@ -46,6 +46,7 @@ LOCAL_SRC_FILES := \
     src/AudioPlatformState.cpp \
     src/VolumeKeys.cpp \
     src/ModemProxy.cpp \
+    src/ParameterAdapter.cpp \
 
 LOCAL_STATIC_LIBRARIES := \
     libsamplespec_static \

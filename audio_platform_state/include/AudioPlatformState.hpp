@@ -42,6 +42,8 @@ class Criterion;
 class CriterionType;
 class cnode;
 class Stream;
+class ModemProxy;
+class ParameterAdapter;
 
 namespace android_audio_legacy
 {
@@ -644,6 +646,24 @@ private:
     void loadCriterionType(cnode *root, bool isInclusive);
 
     /**
+     * Parse and load the ValueSet and their respective attributes from configuration file.
+     *
+     * @tparam[in] valueSet class type.
+     * @param[in] root node of the configuration file
+     */
+    template <class valueSet>
+    void loadValueSet(cnode *root);
+
+    /**
+     * Parse and load the ValueSet list and their respective attributes from configuration file.
+     *
+     * @tparam[in] valueSet class type.
+     * @param[in] root node of the configuration file
+     */
+    template <class valueSet>
+    void loadValueSetList(cnode *root);
+
+    /**
      * Parse and load the chidren node from a given root node.
      *
      * @param[in] root node of the configuration file
@@ -804,5 +824,15 @@ private:
      * criteria.
      */
     bool mAudioPfwHasChanged;
+
+    /**
+     * Parameter Adapter handle to retrieve parameters from external interfaces (e.g. modem IF).
+     */
+    ParameterAdapter *mParameterAdapter;
+
+    /**
+     * Vector of modem proxies to handle start / stop of modem proxy services.
+     */
+    std::vector<ModemProxy *> mModemProxyVector;
 };
 }         // namespace android

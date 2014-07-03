@@ -30,13 +30,13 @@ static const char *const gAudioHalVendorConfFilePath =
     "/vendor/etc/route_criteria.conf";
 
 /**
- * PFW instances tag
+ * PFW instances tags
  */
 static const std::string gAudioConfTag = "Audio";
 static const std::string gRouteConfTag = "Route";
 
 /**
- * PFW elements tag
+ * PFW elements tags
  */
 static const std::string gInclusiveCriterionTypeTag = "InclusiveCriterionType";
 static const std::string gExclusiveCriterionTypeTag = "ExclusiveCriterionType";
@@ -44,13 +44,20 @@ static const std::string gCriterionTag = "Criterion";
 static const std::string gRogueParameterTag = "RogueParameter";
 
 /**
- * PFW Elements specific tag
+ * PFW Elements specific tags
  */
 static const std::string gParameterDefaultTag = "Default";
 static const std::string gAndroidParameterTag = "Parameter";
 static const std::string gMappingTableTag = "Mapping";
 static const std::string gTypeTag = "Type";
 static const std::string gPathTag = "Path";
-
 static const std::string gUnsignedIntegerTypeTag = "uint32_t";
 static const std::string gStringTypeTag = "string";
+
+/**
+ * ValueSet tags
+ */
+static const std::string gValueSet = "ValueSet";
+static const std::string gModemValueSet = "ModemValueSet";
+static const std::string gInterfaceLibraryName = "InterfaceLibrary";
+static const std::string gInterfaceLibraryInstance = "Instance";

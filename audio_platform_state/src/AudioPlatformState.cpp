@@ -26,7 +26,8 @@
 #include "AudioHalConf.hpp"
 #include "CriterionParameter.hpp"
 #include "RogueParameter.hpp"
-#include "Parameter.hpp"
+#include "ModemProxy.hpp"
+#include "ParameterAdapter.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "VolumeKeys.hpp"
 #include <Stream.hpp>
@@ -109,7 +110,8 @@ struct AudioPlatformState::parameterManagerElementSupported<CriterionType> {};
 AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     : mStreamInterface(streamInterface),
       mRoutePfwConnectorLogger(new ParameterMgrPlatformConnectorLogger),
-      mAudioPfwHasChanged(false)
+      mAudioPfwHasChanged(false),
+      mParameterAdapter(new ParameterAdapter(this))
 {
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
@@ -126,6 +128,14 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
 
 AudioPlatformState::~AudioPlatformState()
 {
+    /// Stop All Modem Proxies
+    for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
+        mModemProxyVector[index]->stop();
+    }
+
+    mParameterAdapter->stop();
+    delete mParameterAdapter;
+
     // Delete All criterion
     CriterionMapIterator it;
     for (it = mCriterionMap.begin(); it != mCriterionMap.end(); ++it) {
@@ -166,6 +176,15 @@ status_t AudioPlatformState::start()
         return NO_INIT;
     }
     ALOGD("%s: Route PFW successfully started!", __FUNCTION__);
+
+    /// Start All Modem Proxies
+    for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
+        mModemProxyVector[index]->start();
+    }
+
+    /// Start ParameterAdapter
+    mParameterAdapter->start();
+
     return OK;
 }
 
@@ -575,6 +594,55 @@ void AudioPlatformState::loadConfig(cnode *root)
     loadRogueParameterTypeList<pfw>(node);
 }
 
+/**
+ * ModemProxy loadValueSet specialization. Only this one is available until now.
+ */
+template <>
+void AudioPlatformState::loadValueSet<ModemProxy>(cnode *root)
+{
+    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
+    string libraryName;
+    string libraryInstance;
+    cnode *node;
+    for (node = root->first_child; node != NULL; node = node->next) {
+        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
+
+        if (string(node->name) == gInterfaceLibraryName) {
+            libraryName = node->value;
+        } else if (string(node->name) == gInterfaceLibraryInstance) {
+            libraryInstance = node->value;
+        } else {
+            ALOGE("%s: Unrecognized %s %s node ", __FUNCTION__, node->name, node->value);
+        }
+    }
+    ALOGV("%s: Instantiate (lib=%s, Instance=%s) ValueSet ", __FUNCTION__, libraryName.c_str(),
+          libraryInstance.c_str());
+    ModemProxy *modemProxy = new ModemProxy(libraryName,
+                                            libraryInstance,
+                                            mParameterAdapter,
+                                            mParameterAdapter);
+    mModemProxyVector.push_back(modemProxy);
+}
+
+/**
+ * ModemProxy loadValueSet specialization. Only this one is available until now.
+ */
+template <>
+void AudioPlatformState::loadValueSetList<ModemProxy>(cnode *root)
+{
+    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
+    cnode *node = config_find(root, gModemValueSet.c_str());
+    if (node == NULL) {
+        ALOGW("%s Could not find node for ValueSet=%s", __FUNCTION__, gModemValueSet.c_str());
+        return;
+    }
+    ALOGV("%s Loading conf for ValueSet=%s", __FUNCTION__, gModemValueSet.c_str());
+    for (node = node->first_child; node != NULL; node = node->next) {
+        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
+        loadValueSet<ModemProxy>(node);
+    }
+}
+
 status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 {
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
@@ -591,6 +659,7 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 
     loadConfig<Audio>(root);
     loadConfig<Route>(root);
+    loadValueSetList<ModemProxy>(root);
 
     config_free(root);
     free(root);
