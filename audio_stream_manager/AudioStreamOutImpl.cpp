@@ -249,10 +249,9 @@ status_t AudioStreamOutImpl::flush()
     return pcmStop();
 }
 
-status_t  AudioStreamOutImpl::setParameters(const String8 &keyValuePairs)
+status_t AudioStreamOutImpl::setParameters(const String8 &keyValuePairs)
 {
-    // Give a chance to parent to handle the change
-    return mParent->setStreamParameters(this, keyValuePairs);
+    return AudioStream::setParameters(keyValuePairs);
 }
 
 void AudioStreamOutImpl::addEchoReference(struct echo_reference_itfe *reference)

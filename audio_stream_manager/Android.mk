@@ -38,8 +38,6 @@ audio_stream_manager_src_files :=  \
 
 audio_stream_manager_includes_dir := \
     $(TARGET_OUT_HEADERS)/libaudioresample \
-    $(TARGET_OUT_HEADERS)/mamgr-interface \
-    $(TARGET_OUT_HEADERS)/mamgr-core \
     $(TARGET_OUT_HEADERS)/hal_audio_dump \
     $(TARGET_OUT_HEADERS)/hw \
     $(TARGET_OUT_HEADERS)/parameter \
@@ -59,7 +57,8 @@ audio_stream_manager_static_lib += \
     libsamplespec_static \
     libaudioconversion_static \
     libstream_static \
-    libaudioplatformstate_static \
+    libaudioplatformstate \
+    libactive_value_set \
     libparametermgr_static \
     libaudio_comms_utilities \
     libaudio_comms_convert \

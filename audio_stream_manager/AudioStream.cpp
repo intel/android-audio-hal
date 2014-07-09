@@ -27,7 +27,7 @@
 
 #include "AudioIntelHal.hpp"
 #include "AudioStream.hpp"
-
+#include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
 #include "Property.h"
 #include <AudioConversion.hpp>
@@ -181,6 +181,24 @@ status_t AudioStream::set(int *format, uint32_t *channels, uint32_t *rate)
 
     ALOGD("%s() -- OUT", __FUNCTION__);
     return NO_ERROR;
+}
+
+status_t AudioStream::setParameters(const String8 &keyValuePairs)
+{
+    AudioParameter param = AudioParameter(keyValuePairs);
+    int routingDevice;
+    String8 key = String8(AudioParameter::keyRouting);
+
+    if (param.getInt(key, routingDevice) == NO_ERROR) {
+        // Replace the routing key by the input / output device key
+        setDevices(routingDevice);
+        param.remove(key);
+        param.addInt(isOut() ? String8(AudioPlatformState::mKeyDeviceOut.c_str()) :
+                     String8(AudioPlatformState::mKeyDeviceIn.c_str()),
+                     routingDevice);
+    }
+    // Give a chance to parent to handle the change
+    return mParent->setStreamParameters(this, param.toString());
 }
 
 String8 AudioStream::getParameters(const String8 &keys)

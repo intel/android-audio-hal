@@ -68,7 +68,13 @@ public:
 
     virtual bool getValue(std::string &value) const;
 
-    virtual bool sync();
+    /**
+     * No need to sync route criterion parameter, as the default value is set at construction
+     * time.
+     *
+     * @return always true.
+     */
+    virtual bool sync() { return true; }
 
     Criterion *getCriterion() { return mCriterion; }
 

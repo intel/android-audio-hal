@@ -29,7 +29,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 #######################################################################
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libaudioplatformstate_static_gcov
+LOCAL_MODULE := libaudioplatformstate
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/include \

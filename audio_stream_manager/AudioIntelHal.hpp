@@ -22,8 +22,6 @@
  */
 #pragma once
 
-#include "ModemAudioManagerObserver.h"
-#include <EventListener.h>
 #include <InterfaceProviderImpl.h>
 #include <NonCopyable.hpp>
 #include <StreamInterface.hpp>
@@ -42,8 +40,6 @@
 #include <vector>
 
 struct echo_reference_itfe;
-struct IModemAudioManagerInterface;
-class CEventThread;
 
 namespace android_audio_legacy
 {
@@ -55,21 +51,9 @@ class AudioStream;
 class AudioPlatformState;
 class AudioParameterHandler;
 
-using android::RWLock;
-using android::Mutex;
-
-class AudioIntelHal : public AudioHardwareBase, private IModemAudioManagerObserver,
-                      public IEventListener,
-                      public audio_comms::utilities::NonCopyable
+class AudioIntelHal : public AudioHardwareBase,
+                      private audio_comms::utilities::NonCopyable
 {
-private:
-    enum EventType
-    {
-        UpdateModemAudioBand,   /**< Modem Audio Band change event. */
-        UpdateModemState,       /**< Modem State change event. */
-        UpdateModemAudioStatus  /**< Modem Audio status change event. */
-    };
-
 public:
     AudioIntelHal();
     virtual ~AudioIntelHal();
@@ -232,7 +216,8 @@ protected:
     friend class AudioStream;
 
     /**
-     * Print debug information from hw registers files
+     * Print debug information from hw registers files.
+     * Dump on console platform hw debug files.
      */
     void printPlatformFwErrorInfo();
 
@@ -249,87 +234,6 @@ private:
     }
 
     /**
-     * Starts the modem audio manager service. Once started, AudioHAL will be notified of
-     *      -state of the modem.
-     *      -status of audio in the modem.
-     *      -any change of band for CSV call.
-     *
-     * @return true if modem audio manager successfully started, false otherwise
-     */
-    bool startModemAudioManager();
-
-    /**
-     * Modem Audio Manager callback to notify of a change of the audio status on the modem.
-     * Inherited from IModemAudioManagerObserver.
-     */
-    virtual void onModemAudioStatusChanged();
-    /**
-     * Modem Audio Manager callback to notify of a change of the modem state.
-     * Inherited from IModemAudioManagerObserver.
-     */
-    virtual void onModemStateChanged();
-    /**
-     * Modem Audio Manager callback to notify of a change of the audio band of the CSV call.
-     * Inherited from IModemAudioManagerObserver.
-     */
-    virtual void onModemAudioBandChanged();
-
-    /**
-     * Event Thread callback to notify of an event.
-     * Inherited from IEventListener.
-     *
-     * @param[in] fd file descriptor from which event is originated.
-     *
-     * @return true if the file descriptor state has changed.
-     */
-    virtual bool onEvent(int fd);
-
-    /**
-     * Event Thread callback to notify of error.
-     * Inherited from IEventListener.
-     *
-     * @param[in] fd file descriptor from which error is originated.
-     *
-     * @return true if the file descriptor state has changed.
-     */
-    virtual bool onError(int fd);
-
-    /**
-     * Event Thread callback to notify of a hangup.
-     * Inherited from IEventListener.
-     *
-     * @param[in] fd file descriptor from which hangup is originated.
-     *
-     * @return true if the file descriptor state has changed.
-     */
-    virtual bool onHangup(int fd);
-
-    /**
-     * Event Thread callback to notify of an alarm.
-     * Inherited from IEventListener.
-     */
-    virtual void onAlarm();
-
-    /**
-     * Event Thread callback to notify of a polling error.
-     * Inherited from IEventListener.
-     */
-    virtual void onPollError();
-
-    /**
-     * Event Thread callback to notify of a request to process an event.
-     * Inherited from IEventListener.
-     * Note that the context is not used in the stream manager as it does not need to retrieve any
-     * context in the callback function.
-     *
-     * @param[in] context: unused parameter.
-     * @param[in] eventId id of the event to treat.
-     *
-     * @return true if the file descriptor state has changed.
-     */
-    virtual bool onProcess(void *context, uint32_t eventId);
-
-    /**
      * Checks if a device is only one input device.
      *
      * @param[in] device: device to check that conforms to HAL API REV 1.0.
@@ -342,16 +246,6 @@ private:
     }
 
     /**
-     * Set the global parameters on Audio HAL.
-     * It may lead to a routing reconsideration.
-     *
-     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
-     *
-     * @return OK if set is successful, error code otherwise.
-     */
-    android::status_t doSetParameters(const String8 &keyValuePairs);
-
-    /**
      * Handle any setParameters called from the streams.
      * It may result in a routing reconsideration.
      *
@@ -361,30 +255,6 @@ private:
      * @return OK if parameters successfully taken into account, error code otherwise.
      */
     status_t setStreamParameters(AudioStream *stream, const String8 &keyValuePairs);
-
-
-    /**
-     * Check and set the routing stream parameter (ie the devices).
-     * It checks if routing key is found in the parameters, read the value and set the platform
-     * state accordingly and removes the value pair from the parameter.
-     * It takes a chance to catch any change of android mode from the policy during any routing
-     * request of output stream. Audio Policy will always force a rerouting of the output upon mode
-     * change.
-     *
-     * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in,out] param: contains all the key value pairs to check.
-     */
-    void checkAndSetRoutingStreamParameter(AudioStream *stream, AudioParameter &param);
-
-    /**
-     * Check and set the input source stream parameters.
-     * It checks if input source key is found in the parameters, read the value and set the platform
-     * state accordingly and removes the value pair from the parameter
-     *
-     * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in,out] param: contains all the key value pairs to check.
-     */
-    void checkAndSetInputSourceStreamParameter(AudioStream *stream, AudioParameter &param);
 
     /**
      * Handle a stream start request.
@@ -413,22 +283,6 @@ private:
     void updateRequestedEffect();
 
     /**
-     * Update devices attribute of the stream.
-     *
-     * @param[in] stream: stream from which the new device[s] is[are] requested.
-     * @param[in] devices: mask of devices to be used.
-     */
-    void setDevices(AudioStream *stream, uint32_t devices);
-
-    /**
-     * Set input source attribute of an input stream.
-     *
-     * @param[in] streamIn: input stream on which the input source has to be set.
-     * @param[in] inputSource: input source to set.
-     */
-    void setInputSource(AudioStream *streamIn, uint32_t inputSource);
-
-    /**
      * Resets an echo reference.
      *
      * @param[in] reference: echo reference to reset.
@@ -454,26 +308,14 @@ private:
 
     IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */
 
-    /**
-     * PFW concurrency protection - to garantee atomic operation only.
-     */
-    android::RWLock mPfwLock;
-    CEventThread *mEventThread; /**< Worker Thread. */
-
-    IModemAudioManagerInterface *mModemAudioManagerInterface; /**< Audio AT Manager interface. */
-
-    bool _bluetoothHFPSupported; /**< track if platform supports Bluetooth HFP. */
+    bool mBluetoothHFPSupported; /**< track if platform supports Bluetooth HFP. */
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
     static const char *const mBluetoothHfpSupportedPropName; /**< BT HFP property name. */
     static const bool mBluetoothHfpSupportedDefaultValue; /**< Default BT HFP value. */
-
     static const char *const mRouteLibPropName;  /**< Route Manager name property. */
     static const char *const mRouteLibPropDefaultValue;  /**< Route Manager lib default value. */
-
-    static const char *const mModemLibPropName; /**< MAMGR library name property. */
-
     static const char *const mRestartingKey; /**< Restart key parameter. */
     static const char *const mRestartingRequested; /**< Restart key parameter value. */
 };

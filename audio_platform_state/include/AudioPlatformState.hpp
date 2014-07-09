@@ -36,6 +36,7 @@
 #include <utils/Errors.h>
 #include <utils/String8.h>
 #include <vector>
+#include <utils/RWLock.h>
 
 class CParameterMgrPlatformConnector;
 class Criterion;
@@ -49,8 +50,6 @@ namespace android_audio_legacy
 {
 
 class ParameterMgrPlatformConnectorLogger;
-
-
 
 class AudioPlatformState
     : public ParameterChangedObserver,
@@ -265,171 +264,11 @@ public:
     bool isStarted();
 
     /**
-     * Set the modem status.
-     *
-     * @param[in] isAlive true if modem is UP, false otherwise (DOWN or RESET).
-     */
-    void setModemAlive(bool isAlive)
-    {
-        setValue(isAlive, mModemState);
-    }
-    /**
-     * Get the modem status.
-     *
-     * @return true if modem is UP, false otherwise (DOWN or RESET).
-     */
-    bool isModemAlive() const
-    {
-        return getValue(mModemState);
-    }
-
-    /**
-     * Set the modem audio call status.
-     *
-     * @param[in] isAudioAvailable true if modem is ready for enabling audio link.
-     */
-    void setModemAudioAvailable(bool isAudioAvailable)
-    {
-        setValue(isAudioAvailable, mModemAudioStatus);
-    }
-    /**
-     * Get the modem audio call status.
-     *
-     * @return true if modem is ready for enabling audio link.
-     */
-    bool isModemAudioAvailable() const
-    {
-        return getValue(mModemAudioStatus);
-    }
-
-    /**
-     * Set the modem embedded status.
-     *
-     * @param[in] isPresent true if platform embeds a modem, false otherwise.
-     */
-    void setModemEmbedded(bool isPresent)
-    {
-        setValue(isPresent, mHasModem);
-    }
-
-    /**
      * Get the modem embedded status.
      *
      * @return true if platform embeds a modem, false otherwise.
      */
-    bool isModemEmbedded() const
-    {
-        return getValue(mHasModem);
-    }
-
-    /**
-     * Set the android telephony mode.
-     * Mode are defined by AudioSystem.
-     *
-     * @param[in] mode android mode selected by the policy.
-     */
-    void setMode(int mode);
-
-    /**
-     * Get the android telephony mode.
-     * Mode are defined by AudioSystem.
-     *
-     * @return android mode selected by the policy.
-     */
-    int getMode() const
-    {
-        return getValue(mAndroidMode);
-    }
-
-    /**
-     * Set the devices.
-     *
-     * @param[in] devices: devices enabled mask
-     * @param[in] isOut: true for output devices, false for input devices.
-     */
-    void setDevices(uint32_t devices, bool isOut)
-    {
-        setValue(devices, isOut ? mOutputDevice : mInputDevice);
-    }
-    /**
-     * Get the devices.
-     *
-     * @param[in] isOut: true for output devices, false for input devices.
-     * @return devices enabled mask.
-     */
-    uint32_t getDevices(bool isOut) const
-    {
-        return getValue(isOut ? mOutputDevice : mInputDevice);
-    }
-
-    /**
-     * Set the CSV Band Type.
-     * Voice Call Band Type is given by the modem itself.
-     *
-     * @param[in] bandType: the band type to be used for Voice Call.
-     */
-    void setCsvBandType(CAudioBand::Type bandType)
-    {
-        setValue(bandType, mCsvBand);
-    }
-    /**
-     * Get the CSV Band Type.
-     * Voice Call Band Type is given by the modem itself.
-     *
-     * @return the band type to be used for Voice Call.
-     */
-    CAudioBand::Type getCsvBandType() const
-    {
-        return static_cast<CAudioBand::Type>(getValue(mCsvBand));
-    }
-
-    /**
-     * Update Input Sources.
-     * It computes the input sources criteria as a mask of input source of all active input streams.
-     */
-    void updateActiveInputSources() { updateApplicabilityMask(false); }
-    /**
-     * Get Input Sources.
-     *
-     * @return computed input sources mask ie input source of all active input streams.
-     */
-    uint32_t getInputSource() const
-    {
-        return getValue(mInputSources);
-    }
-
-    /**
-     * Update Output flags.
-     * It computes the output flags criteria as a mask of output flags of all active output streams.
-     */
-    void updateActiveOutputFlags() { updateApplicabilityMask(true); }
-    /**
-     * Get Output flags.
-     * return computed output flags maks ie mask of output flags of all active output streams.
-     */
-    uint32_t getOutputFlags() const
-    {
-        return getValue(mOutputFlags);
-    }
-
-    /**
-     * Set the mic to muted/unmuted state.
-     *
-     * @param[in] muted: true to mute, false to unmute.
-     */
-    void setMicMute(bool muted)
-    {
-        setValue(muted, mMicMute);
-    }
-    /**
-     * Get the mic to muted/unmuted state.
-     *
-     * @return true if muted, false if unmuted.
-     */
-    bool isMicMuted() const
-    {
-        return getValue(mMicMute);
-    }
+    bool isModemEmbedded() const;
 
     /**
      * Informs that a stream is started.
@@ -451,30 +290,37 @@ public:
     void stopStream(const Stream *stoppedStream);
 
     /**
-     * Update all the parameters of the active input.
-     * It not only updates the requested preproc criterion but also the band type.
-     * Only one input stream may be active at one time.
-     * However, it does not mean that both are not started, but only one has a valid
-     * device given by the policy so that the other may not be routed.
-     * Find this active stream with valid device and set the parameters
-     * according to what was requested from this input.
+     * Update the requested effects.
      */
-    void updateParametersFromActiveInput();
+    void updateRequestedEffect();
 
     /**
-     * Set the BT headset negociated Band Type.
-     * Band Type results of the negociation between device and the BT HFP headset.
-     *
-     * @param[in] eBtHeadsetBandType: the band type to be set.
+     * Checks if Platform state has changed i.e. at leat one of the criterion of one of PFW instance
+     * has changed.
      */
-    bool hasPlatformStateChanged(int iEvents = -1) const;
+    bool hasPlatformStateChanged() const;
 
     /**
      * Print debug information from target debug files
      */
     void printPlatformFwErrorInfo() const;
 
+    static const std::string mKeyAndroidMode; /**< Android Mode Parameter Key. */
+    static const std::string mKeyDeviceOut; /**< Output Device Parameter Key. */
+    static const std::string mKeyDeviceIn; /**< Input Device Parameter Key. */
+    static const std::string mKeyMicMute; /**< Mic Mute Parameter Key. */
+
 private:
+    /**
+     * Adds a Route criterion to the map of criterion of the platform state.
+     * It also adds a pair UniqueId - Criterion name to the state change criterion type in order
+     * to be able to track a change on any route criterion into Settings file.
+     * It asserts if trying to add twice a criterion with the same name.
+     *
+     * @param[in] routeCriterion to add.
+     */
+    void addRouteCriterion(Criterion *routeCriterion);
+
     virtual void parameterHasChanged(const std::string &name);
 
     /**
@@ -494,15 +340,6 @@ private:
      *                          input device as per policy implementation.
      */
     void setVoipBandType(const Stream *activeStream);
-
-    /**
-     * Update the applicability mask.
-     * This function parses all active streams and concatenate their mask into a bit field.
-     *
-     * @param[in] isOut direction of streams.
-     *
-     */
-    void updateApplicabilityMask(bool isOut);
 
     /**
      * Load the criterion configuration file.
@@ -728,7 +565,7 @@ private:
      * @param[in] value new value to set to the component state.
      * @param[in] stateName of the component state.
      */
-    void setValue(int value, const char *stateName);
+    void setValue(int value, const std::string &stateName);
 
     /**
      * get the value of a component state.
@@ -737,7 +574,7 @@ private:
      *
      * @return value of the component state
      */
-    int getValue(const char *stateName) const;
+    int getValue(const std::string &stateName) const;
 
     /**
      * Resets the platform state events.
@@ -754,12 +591,17 @@ private:
     /**
      * Update the streams mask.
      * This function parses all active streams and concatenate their mask into a bit field.
+     * For input streams:
+     * It not only updates the requested preproc criterion but also the band type.
+     * Only one input stream may be active at one time.
+     * However, it does not mean that both are not started, but only one has a valid
+     * device given by the policy so that the other may not be routed.
+     * Find this active stream with valid device and set the parameters
+     * according to what was requested from this input.
      *
      * @param[in] isOut direction of streams.
-     *
-     * @return concatenated mask of active streams.
      */
-    uint32_t updateStreamsMask(bool isOut);
+    void updateActiveStreamsParameters(bool isOut);
 
     /**
      * Input/Output Streams list.
@@ -767,8 +609,8 @@ private:
     std::list<const Stream *>
     mActiveStreamsList[audio_comms::utilities::Direction::_nbDirections];
 
-    std::map<std::string, CriterionType *> mCriterionTypeMap;
-    std::map<std::string, Criterion *> mCriterionMap;
+    std::map<std::string, CriterionType *> mRouteCriterionTypeMap;
+    std::map<std::string, Criterion *> mRouteCriterionMap; /**< Route Criterion Map. */
     std::vector<Parameter *> mParameterVector; /**< Map of parameters. */
 
     CParameterMgrPlatformConnector *mRoutePfwConnector; /**< Route Parameter Manager connector. */
@@ -779,19 +621,18 @@ private:
      */
     static const char *const mRoutePfwConfFileNamePropName;
     static const char *const mRoutePfwDefaultConfFileName; /**< default PFW conf file name. */
-    static const char *const mOutputDevice; /**< Output device criterion name. */
-    static const char *const mInputDevice; /**< Input device criterion name. */
-    static const char *const mInputSources; /**< Input sources criterion name. */
-    static const char *const mOutputFlags; /**< Output flags criterion name. */
-    static const char *const mModemAudioStatus; /**< Modem audio status criterion name. */
-    static const char *const mAndroidMode; /**< Android Mode criterion name. */
-    static const char *const mHasModem; /**< has modem criterion name. */
-    static const char *const mModemState; /**< Modem State criterion name. */
-    static const char *const mStateChanged; /**< State Changed criterion name. */
-    static const char *const mCsvBand; /**< CSV Band criterion name. */
-    static const char *const mVoipBand; /**< VoIP band criterion name. */
-    static const char *const mMicMute; /**< Mic Mute criterion name. */
-    static const char *const mPreProcessorRequestedByActiveInput; /**< requested preproc. */
+    static const std::string mStateChangedCriterionName;  /**< StateChanged route criterion. */
+    static const std::string mVoipBandCriterionName; /**< VoIP band criterion name. */
+    static const std::string mOutputFlagsCriterionName; /**< Output flags criterion name. */
+    static const std::string mInputSourcesCriterionName; /**< Input sources criterion name. */
+    static const std::string mInputDevicesCriterionName; /**< Input sources criterion name. */
+    static const std::string mAndroidModeCriterionName; /**< Input sources criterion name. */
+
+    /**
+     * requested preprocessors criterion name
+     */
+    static const std::string mPreProcRequestedByActiveInputCriterionName;
+
     /**
      * Stream Rate associated with narrow band in case of VoIP.
      */
@@ -834,5 +675,10 @@ private:
      * Vector of modem proxies to handle start / stop of modem proxy services.
      */
     std::vector<ModemProxy *> mModemProxyVector;
+
+    /**
+     * PFW concurrency protection - to garantee atomic operation only.
+     */
+    mutable android::RWLock mPfwLock;
 };
 }         // namespace android

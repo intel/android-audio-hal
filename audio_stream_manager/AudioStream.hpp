@@ -61,6 +61,15 @@ public:
     android::status_t set(int *format, uint32_t *channels, uint32_t *rate);
 
     /**
+     * Set the parameters for this stream.
+     *
+     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
+     *
+     * @return OK if set is successful, error code otherwise.
+     */
+    android::status_t setParameters(const android::String8 &keyValuePairs);
+
+    /**
      * Get the parameters of the stream.
      *
      * @param[out] keys: one or more value pair "name=value", semicolon-separated

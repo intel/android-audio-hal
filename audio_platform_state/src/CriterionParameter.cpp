@@ -26,6 +26,7 @@
 #include <Criterion.hpp>
 #include <ParameterMgrPlatformConnector.h>
 #include <StreamInterface.hpp>
+#include <convert.hpp>
 
 bool CriterionParameter::set(const std::string &androidParamValue)
 {
@@ -42,6 +43,7 @@ RouteCriterionParameter::RouteCriterionParameter(ParameterChangedObserver *obser
     : CriterionParameter(observer, key, name, defaultValue),
       mCriterion(new Criterion(name, criterionType, connector, defaultValue))
 {
+    mCriterion->setCriterionState<std::string>(getDefaultLiteralValue());
 }
 
 bool RouteCriterionParameter::setValue(const std::string &value)
@@ -55,10 +57,20 @@ bool RouteCriterionParameter::setValue(const std::string &value)
     }
     ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), value.c_str(),
           literalValue.c_str());
-    if (mCriterion->setCriterionState<std::string>(literalValue)) {
-        // by construction, only "failing" case happens when the value of the criterion did not
-        // change. It is internal choice to report false in this case, no need to propagate to upper
-        // layer.
+
+    bool succeed = false;
+    int32_t numericValue;
+    // A criterion might either be sent as a numerical (converted to string) or a literal value.
+    // Try first to convert it into a numerical value, if it fails, consider it as a literal.
+    if (audio_comms::utilities::convertTo(literalValue, numericValue)) {
+        succeed = mCriterion->setCriterionState(numericValue);
+    } else {
+        succeed = mCriterion->setCriterionState(literalValue);
+    }
+    // by construction, only "failing" case happens when the value of the criterion did not
+    // change. It is internal choice to report false in this case, no need to propagate to upper
+    // layer.
+    if (succeed) {
         CriterionParameter::set(literalValue);
     }
     return true;
@@ -69,11 +81,6 @@ bool RouteCriterionParameter::getValue(std::string &value) const
     std::string criterionLiteralValue = mCriterion->getFormattedValue();
 
     return getParamFromLiteralValue(value, criterionLiteralValue);
-}
-
-bool RouteCriterionParameter::sync()
-{
-    return mCriterion->setCriterionState<std::string>(getDefaultLiteralValue());
 }
 
 AudioCriterionParameter::AudioCriterionParameter(ParameterChangedObserver *observer,

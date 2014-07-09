@@ -393,8 +393,15 @@ unsigned int AudioStreamInImpl::getInputFramesLost() const
 
 status_t AudioStreamInImpl::setParameters(const String8 &keyValuePairs)
 {
-    // Give a chance to parent to handle the change
-    return mParent->setStreamParameters(this, keyValuePairs);
+    AudioParameter param = AudioParameter(keyValuePairs);
+    int inputSource;
+    String8 key = String8(AudioParameter::keyInputSource);
+    if (param.getInt(key, inputSource) == NO_ERROR) {
+        setInputSource(inputSource);
+        // Removes this input stream specific key
+        param.remove(key);
+    }
+    return AudioStream::setParameters(param.toString());
 }
 
 status_t AudioStreamInImpl::allocateHwBuffer()

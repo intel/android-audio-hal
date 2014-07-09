@@ -29,9 +29,7 @@
 #include "AudioStreamInImpl.hpp"
 #include "AudioStreamOutImpl.hpp"
 #include "AudioPlatformState.hpp"
-#include <ModemCollection.hpp>
 #include <AudioCommsAssert.hpp>
-#include "ModemAudioManagerInterface.h"
 #include "Property.h"
 #include <InterfaceProviderLib.h>
 #include <hardware/audio_effect.h>
@@ -40,7 +38,6 @@
 #include <utils/Log.h>
 #include <utils/String8.h>
 
-#include "EventThread.h"
 #include <cutils/properties.h>
 #include <dlfcn.h>
 #include <errno.h>
@@ -53,10 +50,6 @@
 
 using namespace std;
 using namespace android;
-
-typedef RWLock::AutoRLock AutoR;
-typedef RWLock::AutoWLock AutoW;
-
 
 namespace android_audio_legacy
 {
@@ -79,7 +72,6 @@ AudioHardwareInterface *AudioIntelHal::create()
     return new AudioIntelHal();
 }
 
-const char *const AudioIntelHal::mModemLibPropName = "audiocomms.modemLib";
 const char *const AudioIntelHal::mBluetoothHfpSupportedPropName = "Audiocomms.BT.HFP.Supported";
 const bool AudioIntelHal::mBluetoothHfpSupportedDefaultValue = true;
 const char *const AudioIntelHal::mRouteLibPropName = "audiocomms.routeLib";
@@ -92,58 +84,11 @@ AudioIntelHal::AudioIntelHal()
       mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
-      mEventThread(new CEventThread(this)),
-      mModemAudioManagerInterface(NULL),
-      _bluetoothHFPSupported(TProperty<bool>(mBluetoothHfpSupportedPropName,
+      mBluetoothHFPSupported(TProperty<bool>(mBluetoothHfpSupportedPropName,
                                              mBluetoothHfpSupportedDefaultValue))
 {
-    // Prevents any access to PFW during whole construction of the Audio HAL.
-    AutoW lock(mPfwLock);
-
-    bool platformHasModem = false;
-
-    /// MAMGR Interface
-    // Try to connect a ModemAudioManager Interface
-    NInterfaceProvider::IInterfaceProvider *interfaceProvider =
-        audio_comms::mamgr::ModemCollection::getInstance().getModem(
-            // @todo Do not use android properties
-            // as they are not portable on host easily
-            TProperty<string>(mModemLibPropName).getValue(),
-            // @fixme Should not be hardcoded
-            "xmm1");
-
-    if (interfaceProvider == NULL) {
-
-        ALOGI("No MAMGR library.");
-    } else {
-
-        // Retrieve the ModemAudioManager Interface
-        mModemAudioManagerInterface =
-            interfaceProvider->queryInterface<IModemAudioManagerInterface>();
-        if (mModemAudioManagerInterface == NULL) {
-
-            ALOGE("Failed to get ModemAudioManager interface");
-        } else {
-
-            // Declare ourselves as observer
-            mModemAudioManagerInterface->setModemAudioManagerObserver(this);
-            platformHasModem = true;
-            ALOGI("Connected to a ModemAudioManager interface");
-        }
-    }
-
-    // Start Event thread
-    mEventThread->start();
-
-    // Start Modem Audio Manager
-    if (!startModemAudioManager()) {
-
-        ALOGI("%s: Note that this platform is MODEM-LESS", __FUNCTION__);
-        platformHasModem = false;
-    }
-
     /// Get the Stream Interface of the Route manager
-    interfaceProvider =
+    NInterfaceProvider::IInterfaceProvider *interfaceProvider =
         getInterfaceProvider(TProperty<string>(mRouteLibPropName,
                                                mRouteLibPropDefaultValue).getValue().c_str());
     if (interfaceProvider) {
@@ -168,18 +113,6 @@ AudioIntelHal::AudioIntelHal()
         return;
     }
 
-    /// Initialize current modem status
-    // Has Modem
-    mPlatformState->setModemEmbedded(platformHasModem);
-    if (platformHasModem) {
-        // Modem status
-        mPlatformState->setModemAlive(mModemAudioManagerInterface->isModemAlive());
-        // Modem audio availability
-        mPlatformState->setModemAudioAvailable
-            (mModemAudioManagerInterface->isModemAudioAvailable());
-        // Modem band
-        mPlatformState->setCsvBandType(mModemAudioManagerInterface->getAudioBand());
-    }
     /// Start Routing service
     if (mStreamInterface->startService() != OK) {
 
@@ -200,26 +133,15 @@ AudioIntelHal::AudioIntelHal()
 
 AudioIntelHal::~AudioIntelHal()
 {
-    mEventThread->stop();
-
     // Remove parameter handler
     delete mAudioParameterHandler;
     // Remove Platform State component
     delete mPlatformState;
-
-    delete mEventThread;
-
-    if (mModemAudioManagerInterface != NULL) {
-
-        // Unsuscribe & stop ModemAudioManager
-        mModemAudioManagerInterface->setModemAudioManagerObserver(NULL);
-        mModemAudioManagerInterface->stop();
-    }
 }
 
 status_t AudioIntelHal::initCheck()
 {
-    return (mStreamInterface && mPlatformState->isStarted()) ? OK : NO_INIT;
+    return (mStreamInterface && mPlatformState && mPlatformState->isStarted()) ? OK : NO_INIT;
 }
 
 status_t AudioIntelHal::setVoiceVolume(float volume)
@@ -331,22 +253,22 @@ void AudioIntelHal::closeInputStream(AudioStreamIn *in)
 status_t AudioIntelHal::setMicMute(bool state)
 {
     ALOGD("%s: %s", __FUNCTION__, state ? "true" : "false");
-    AutoW lock(mPfwLock);
-    mPlatformState->setMicMute(state);
-    mPlatformState->applyPlatformConfiguration();
-    getStreamInterface()->reconsiderRouting();
-    return NO_ERROR;
+    AudioParameter param = AudioParameter();
+    param.addInt(String8(AudioPlatformState::mKeyMicMute.c_str()), state);
+    return mPlatformState->setParameters(param.toString());
 }
 
 status_t AudioIntelHal::getMicMute(bool *state)
 {
-    if (state != NULL) {
-
-        AutoR lock(mPfwLock);
-        *state = mPlatformState->isMicMuted();
-        ALOGD("%s: %s", __FUNCTION__, *state ? "true" : "false");
+    if (state == NULL) {
+        return NO_ERROR;
     }
-    return NO_ERROR;
+    String8 keyMicMute = String8(AudioPlatformState::mKeyMicMute.c_str());
+    AudioParameter param(mPlatformState->getParameters(keyMicMute));
+    int micMute;
+    status_t res = param.getInt(keyMicMute, micMute);
+    *state = (micMute != 0);
+    return res;
 }
 
 size_t AudioIntelHal::getInputBufferSize(uint32_t sampleRate, int format, int channelCount)
@@ -400,13 +322,13 @@ status_t AudioIntelHal::setParameters(const String8 &keyValuePairs)
             // Restore the audio parameters when mediaserver is restarted in case of crash.
             ALOGI("Restore audio parameters as mediaserver is restarted param=%s",
                   mAudioParameterHandler->getParameters().string());
-            doSetParameters(mAudioParameterHandler->getParameters());
+            mPlatformState->setParameters(mAudioParameterHandler->getParameters());
         }
         param.remove(key);
     } else {
 
         // Set the audio parameters
-        status = doSetParameters(keyValuePairs);
+        status = mPlatformState->setParameters(keyValuePairs);
         if (status == NO_ERROR) {
 
             ALOGV("%s: saving %s", __FUNCTION__, keyValuePairs.string());
@@ -420,47 +342,14 @@ status_t AudioIntelHal::setParameters(const String8 &keyValuePairs)
 String8 AudioIntelHal::getParameters(const String8 &keys)
 {
     ALOGD("%s: requested keys %s", __FUNCTION__, keys.string());
-    AutoR lock(mPfwLock);
-
     return mPlatformState->getParameters(keys);
-}
-
-void AudioIntelHal::setDevices(AudioStream *stream, uint32_t devices)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    // Update Platform state: in/out devices
-    mPlatformState->setDevices(devices, stream->isOut());
-
-    // set the new device for this stream
-    stream->setDevices(devices);
-}
-
-void AudioIntelHal::setInputSource(AudioStream *streamIn, uint32_t inputSource)
-{
-    AUDIOCOMMS_ASSERT(streamIn != NULL, "Null stream");
-    AUDIOCOMMS_ASSERT(!streamIn->isOut(), "Input stream only");
-
-    ALOGV("%s: inputSource=%d", __FUNCTION__, inputSource);
-
-    AudioStreamInImpl *inputStream = static_cast<AudioStreamInImpl *>(streamIn);
-    inputStream->setInputSource(inputSource);
-
-    mPlatformState->updateActiveInputSources();
 }
 
 status_t AudioIntelHal::startStream(AudioStream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
     ALOGD("%s: %s stream", __FUNCTION__, stream->isOut() ? "output" : "input");
-
-    mPfwLock.writeLock();
     mPlatformState->startStream(stream);
-
-    // Set Criteria to meta PFW
-    mPlatformState->applyPlatformConfiguration();
-
-    mPfwLock.unlock();
-
     getStreamInterface()->startStream();
     return OK;
 }
@@ -469,128 +358,28 @@ status_t AudioIntelHal::stopStream(AudioStream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
     ALOGD("%s: %s stream", __FUNCTION__, stream->isOut() ? "output" : "input");
-
-    mPfwLock.writeLock();
     mPlatformState->stopStream(stream);
-
-    // Set Criteria to meta PFW
-    mPlatformState->applyPlatformConfiguration();
-
-    mPfwLock.unlock();
-
     getStreamInterface()->stopStream();
     return OK;
 }
 
 void AudioIntelHal::updateRequestedEffect()
 {
-    mPfwLock.writeLock();
-
-    mPlatformState->updateParametersFromActiveInput();
-
-    // Set Criteria to meta PFW
-    mPlatformState->applyPlatformConfiguration();
-
-    mPfwLock.unlock();
-
+    mPlatformState->updateRequestedEffect();
     getStreamInterface()->reconsiderRouting();
 }
 
-
-void AudioIntelHal::checkAndSetRoutingStreamParameter(AudioStream *stream, AudioParameter &param)
+status_t AudioIntelHal::setStreamParameters(AudioStream *stream, const String8 &keyValuePairs)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    int routingDevice;
-    String8 key = String8(AudioParameter::keyRouting);
-
-    if (param.getInt(key, routingDevice) == NO_ERROR) {
-
-        setDevices(stream, routingDevice);
-        param.remove(key);
-    }
-    if (stream->isOut()) {
-
-        // For output streams, latch Android Mode
-        mPlatformState->setMode(mode());
-    }
-}
-
-void AudioIntelHal::checkAndSetInputSourceStreamParameter(AudioStream *stream,
-                                                          AudioParameter &param)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    if (!stream->isOut()) {
-
-        int inputSource;
-        String8 key = String8(AudioParameter::keyInputSource);
-
-        if (param.getInt(key, inputSource) == NO_ERROR) {
-
-            setInputSource(stream, inputSource);
-            param.remove(key);
-        }
-    }
-}
-
-status_t AudioIntelHal::setStreamParameters(AudioStream *stream,
-                                            const String8 &keyValuePairs)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    ALOGD("%s: key value pair %s", __FUNCTION__, keyValuePairs.string());
     AudioParameter param = AudioParameter(keyValuePairs);
-    AutoW lock(mPfwLock);
-
-    checkAndSetRoutingStreamParameter(stream, param);
-
-    checkAndSetInputSourceStreamParameter(stream, param);
-
-    if (mPlatformState->hasPlatformStateChanged()) {
-
-        // Set Criteria to meta PFW
-        mPlatformState->applyPlatformConfiguration();
-
-        // Release PFW ressource
-        mPfwLock.unlock();
-
-        ALOGD("%s: {+++ RECONSIDER ROUTING +++} due to %s stream parameter change",
-              __FUNCTION__,
-              stream->isOut() ? "output" : "input");
-        getStreamInterface()->reconsiderRouting();
-
-        // Relock (as using autolock)
-        mPfwLock.writeLock();
+    if (stream->isOut()) {
+        // Appends the mode key only for output stream, as the policy may only reconsider
+        // the mode and selects a new parameter for output
+        param.addInt(String8(AudioPlatformState::mKeyAndroidMode.c_str()), mode());
     }
-    if (param.size()) {
-
-        // No more? Just log!
-        ALOGW("%s: Unhandled argument: %s", __FUNCTION__, keyValuePairs.string());
-    }
-    return NO_ERROR;
-}
-
-status_t AudioIntelHal::doSetParameters(const String8 &keyValuePairs)
-{
-    AutoW lock(mPfwLock);
-
-    status_t status = mPlatformState->setParameters(keyValuePairs);
-
-    if (mPlatformState->hasPlatformStateChanged()) {
-
-        ALOGD("%s: External parameter change", __FUNCTION__);
-
-        // Apply Configuration
-        mPlatformState->applyPlatformConfiguration();
-
-        // Release PFS ressource
-        mPfwLock.unlock();
-
-        // Trig the route manager
-        getStreamInterface()->reconsiderRouting();
-
-        // Relock (as using autolock)
-        mPfwLock.writeLock();
-    }
-    return status;
+    ALOGD("%s: key value pair %s", __FUNCTION__, param.toString().string());
+    return mPlatformState->setParameters(param.toString());
 }
 
 void AudioIntelHal::resetEchoReference(struct echo_reference_itfe *reference)
@@ -653,109 +442,9 @@ struct echo_reference_itfe *AudioIntelHal::getEchoReference(const SampleSpec &in
     return mEchoReference;
 }
 
-void AudioIntelHal::onModemAudioStatusChanged()
-{
-    ALOGD("%s", __FUNCTION__);
-    mEventThread->trig(NULL, UpdateModemAudioStatus);
-}
-
-void AudioIntelHal::onModemStateChanged()
-{
-    ALOGD("%s", __FUNCTION__);
-    mEventThread->trig(NULL, UpdateModemState);
-}
-
-void AudioIntelHal::onModemAudioBandChanged()
-{
-    ALOGD("%s", __FUNCTION__);
-    mEventThread->trig(NULL, UpdateModemAudioBand);
-}
-
-bool AudioIntelHal::onEvent(int fd)
-{
-    return false;
-}
-
-bool AudioIntelHal::onError(int fd)
-{
-    return false;
-}
-
-bool AudioIntelHal::onHangup(int fd)
-{
-    return false;
-}
-
-void AudioIntelHal::onAlarm()
-{
-}
-
-void AudioIntelHal::onPollError()
-{
-}
-
-bool AudioIntelHal::onProcess(void *context, uint32_t eventId)
-{
-    AutoW lock(mPfwLock);
-
-    bool forceResync = false;
-
-    switch (eventId) {
-    case UpdateModemAudioBand:
-
-        ALOGD("%s: Modem Band change", __FUNCTION__);
-        mPlatformState->setCsvBandType(mModemAudioManagerInterface->getAudioBand());
-        break;
-
-    case UpdateModemState:
-        ALOGD("%s: Modem State change", __FUNCTION__);
-        mPlatformState->setModemAlive(mModemAudioManagerInterface->isModemAlive());
-        forceResync = mPlatformState->isModemAlive();
-        break;
-
-    case UpdateModemAudioStatus:
-        ALOGD("%s: Modem Audio Status change", __FUNCTION__);
-        mPlatformState->setModemAudioAvailable(
-            mModemAudioManagerInterface->isModemAudioAvailable());
-        break;
-
-    default:
-        ALOGE("%s: Unhandled event.", __FUNCTION__);
-        break;
-    }
-    mPlatformState->applyPlatformConfiguration();
-
-    getStreamInterface()->reconsiderRouting(forceResync);
-    return false;
-}
-
-
-bool AudioIntelHal::startModemAudioManager()
-{
-    if (mModemAudioManagerInterface == NULL) {
-
-        return false;
-    }
-    if (!mModemAudioManagerInterface->start()) {
-
-        ALOGW("%s: could not start ModemAudioManager", __FUNCTION__);
-        mModemAudioManagerInterface->setModemAudioManagerObserver(NULL);
-        mModemAudioManagerInterface = NULL;
-        return false;
-    }
-    return true;
-}
-
 void AudioIntelHal::printPlatformFwErrorInfo()
 {
-    ALOGD("%s", __FUNCTION__);
-
-    mPfwLock.writeLock();
-
-    // Dump on console platform hw debug files
     mPlatformState->printPlatformFwErrorInfo();
-
-    mPfwLock.unlock();
 }
 
 }       // namespace android
