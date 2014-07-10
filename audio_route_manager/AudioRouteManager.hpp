@@ -215,9 +215,9 @@ private:
             return mRouteMgr->reconsiderRouting(true);
         }
 
-        virtual void reconsiderRouting(bool forceResync)
+        virtual void reconsiderRouting()
         {
-            return mRouteMgr->reconsiderRouting(false, forceResync);
+            return mRouteMgr->reconsiderRouting(false);
         }
 
         virtual android::status_t setVoiceVolume(float gain)
@@ -563,10 +563,8 @@ private:
      * Handle a routing reconsideration.
      *
      * @param[in] isSynchronous synchronous routing reconsideration requested.
-     * @param[in] forceResync resynchronization of audio parameter is requested whatever the routing
-     *                        map has changed or not.
      */
-    void reconsiderRouting(bool isSynchronous, bool forceResync = false);
+    void reconsiderRouting(bool isSynchronous);
 
     /**
      * Returns the voice output stream. Used by Input stream to identify the provider of
@@ -580,11 +578,8 @@ private:
      * From worker thread context
      * This function requests to evaluate the routing for all the streams
      * after a mode change, a modem event ...
-     *
-     * @param[in] forceResync resynchronization of audio parameter is requested whatever the routing
-     *                        map has changed or not.
      */
-    void doReconsiderRouting(bool forceResync);
+    void doReconsiderRouting();
 
     /**
      *
@@ -802,7 +797,7 @@ private:
     virtual bool onHangup(int);
     virtual void onAlarm();
     virtual void onPollError();
-    virtual bool onProcess(void *, uint32_t eventId);
+    virtual bool onProcess(void *, uint32_t);
 
     static const std::pair<int, const char *> mRoutingStageValuePairs[];
 
@@ -925,6 +920,4 @@ private:
      */
     template <typename T>
     struct routingElementSupported;
-
-    static const uint16_t mForceResync = 1; /**< resynchronization of audio parameters eventId. */
 };

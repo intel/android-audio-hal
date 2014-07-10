@@ -58,10 +58,8 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
 
     /**
      * Trigs a routing reconsideration.
-     *
-     * @param[in] forceResync set to true to resynchronise the HW even if routing has not changed
      */
-    virtual void reconsiderRouting(bool forceResync = false) = 0;
+    virtual void reconsiderRouting() = 0;
 
     /**
      * Informs that a new stream is started.

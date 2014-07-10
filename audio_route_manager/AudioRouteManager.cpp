@@ -228,7 +228,7 @@ status_t AudioRouteManager::startService()
     return NO_ERROR;
 }
 
-void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
+void AudioRouteManager::reconsiderRouting(bool isSynchronous)
 {
     AutoW lock(mRoutingLock);
 
@@ -238,7 +238,7 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
     if (!isSynchronous) {
 
         // Trigs the processing of the list
-        mEventThread->trig(NULL, forceResync ? mForceResync : 0);
+        mEventThread->trig(NULL);
     } else {
 
         // Create a route manager observer
@@ -248,7 +248,7 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
         addObserver(&obs);
 
         // Trig the processing of the list
-        mEventThread->trig(NULL, forceResync ? mForceResync : 0);
+        mEventThread->trig(NULL);
 
         // Unlock to allow for sem wait
         mRoutingLock.unlock();
@@ -264,9 +264,9 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous, bool forceResync)
     }
 }
 
-void AudioRouteManager::doReconsiderRouting(bool forceResync)
+void AudioRouteManager::doReconsiderRouting()
 {
-    if (!checkAndPrepareRouting() && !forceResync) {
+    if (!checkAndPrepareRouting()) {
 
         // No need to reroute. Some criterion might have changed, update all criteria and apply
         // the conf in order to take for example tuning configuration that are glitch free and do
@@ -589,10 +589,10 @@ void AudioRouteManager::onPollError()
 {
 }
 
-bool AudioRouteManager::onProcess(void *, uint32_t eventId)
+bool AudioRouteManager::onProcess(void *, uint32_t)
 {
     AutoW lock(mRoutingLock);
-    doReconsiderRouting(eventId == mForceResync);
+    doReconsiderRouting();
 
     // Notify all potential observer of Route Manager Subject
     notify();
