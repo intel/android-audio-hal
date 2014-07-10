@@ -115,7 +115,7 @@ LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_REQUIRED_MODULES := \
-    audio.primary.$(TARGET_DEVICE) \
+    audio.primary.$(TARGET_BOARD_PLATFORM) \
     audio.routemanager \
     liblpepreprocessing \
     route_criteria.conf
@@ -137,7 +137,7 @@ ifeq ($(BOARD_HAVE_BLUETOOTH),true)
   LOCAL_CFLAGS += -DWITH_A2DP
 endif
 
-LOCAL_MODULE := audio.primary.$(TARGET_DEVICE)
+LOCAL_MODULE := audio.primary.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/hw
 LOCAL_MODULE_TAGS := optional
