@@ -207,8 +207,10 @@ status_t AudioRouteManager::startService()
     }
 
     // Routes Criterion Type
-    AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(mRouteCriterionType) != mCriterionTypesMap.end(),
-                      "Route CriterionType not found");
+    if (mCriterionTypesMap.find(mRouteCriterionType) == mCriterionTypesMap.end()) {
+        Log::Error() << "Route CriterionType not found";
+        return android::NO_INIT;
+    }
 
     CriterionType *routeCriterionType = mCriterionTypesMap[mRouteCriterionType];
 
