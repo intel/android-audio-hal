@@ -83,15 +83,14 @@ status_t AudioStreamInImpl::getNextBuffer(AudioBufferProvider::Buffer *buffer,
 
 
     ssize_t hwFramesToRead = min(maxFrames, buffer->frameCount);
-    ssize_t framesRead;
 
-    framesRead = readHwFrames(mHwBuffer, hwFramesToRead);
-    if (framesRead < 0) {
+    status_t status = readHwFrames(mHwBuffer, hwFramesToRead);
+    if (status < 0) {
 
-        return NOT_ENOUGH_DATA;
+        return status;
     }
     buffer->raw = mHwBuffer;
-    buffer->frameCount = framesRead;
+    buffer->frameCount = hwFramesToRead;
 
     return NO_ERROR;
 }
@@ -101,10 +100,10 @@ void AudioStreamInImpl::releaseBuffer(AudioBufferProvider::Buffer *buffer)
     // Nothing special to do here...
 }
 
-ssize_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
+status_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
 {
     uint32_t retryCount = 0;
-    status_t ret = OK;
+    status_t ret;
 
     do {
         std::string error;
@@ -147,10 +146,10 @@ ssize_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
                                                     "before_conversion");
     }
 
-    return frames;
+    return ret;
 }
 
-ssize_t AudioStreamInImpl::readFrames(void *buffer, size_t frames)
+status_t AudioStreamInImpl::readFrames(void *buffer, size_t frames, ssize_t *processedFrames)
 {
     //
     // No conversion required, read HW frames directly
@@ -177,7 +176,9 @@ ssize_t AudioStreamInImpl::readFrames(void *buffer, size_t frames)
                                                    streamSampleSpec().getChannelCount(),
                                                    "after_conversion");
     }
-    return frames;
+
+    *processedFrames = frames;
+    return status;
 }
 
 int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
@@ -222,7 +223,7 @@ int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
     return ret;
 }
 
-ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
+status_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames, ssize_t *processedFrames)
 {
     // first reload enough frames at the end of process input buffer
     if (mProcessingFramesIn < frames) {
@@ -236,13 +237,15 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
             }
         }
 
-        ssize_t read_frames = readFrames((char *)mProcessingBuffer +
-                                         streamSampleSpec().convertFramesToBytes(
-                                             mProcessingFramesIn),
-                                         frames - mProcessingFramesIn);
-        if (read_frames < 0) {
+        ssize_t read_frames = frames - mProcessingFramesIn;
 
-            return read_frames;
+        status_t status = readFrames((char *)mProcessingBuffer +
+                                     streamSampleSpec().convertFramesToBytes(
+                                         mProcessingFramesIn),
+                                     read_frames, processedFrames);
+        if (status < 0) {
+
+            return status;
         }
         /* OK, we have to process all read frames */
         mProcessingFramesIn += read_frames;
@@ -250,12 +253,12 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
 
     }
 
-    ssize_t processed_frames = 0;
+    *processedFrames = 0;
     ssize_t processingFramesIn = mProcessingFramesIn;
     int processingReturn = 0;
 
     // Then process the frames
-    processingReturn = doProcessFrames(buffer, frames, &processed_frames, &processingFramesIn);
+    processingReturn = doProcessFrames(buffer, frames, processedFrames, &processingFramesIn);
     if (processingReturn != 0) {
 
         // Effects processing failed
@@ -265,7 +268,7 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
         memcpy(buffer,
                mProcessingBuffer,
                streamSampleSpec().convertFramesToBytes(mProcessingFramesIn));
-        processed_frames = mProcessingFramesIn;
+        *processedFrames = mProcessingFramesIn;
     } else {
 
         // move remaining frames to the beginning of mProccesingBuffer because currently,
@@ -287,7 +290,7 @@ ssize_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames)
     // at the end, we keep remainder frames not cosumed by effect processor.
     mProcessingFramesIn = processingFramesIn;
 
-    return processed_frames;
+    return OK;
 }
 
 ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
@@ -309,17 +312,20 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
 
     // Take the effect lock while processing
     mPreProcEffectLock.readLock();
+
+    status_t status;
+
     if (!mPreprocessorsHandlerList.empty()) {
 
-        received_frames = processFrames(buffer, frames);
+        status = processFrames(buffer, frames, &received_frames);
     } else {
 
-        received_frames = readFrames(buffer, frames);
+        status = readFrames(buffer, frames, &received_frames);
     }
     mPreProcEffectLock.unlock();
 
 
-    if (received_frames < 0) {
+    if (status < 0) {
 
         ALOGE("%s(buffer=%p, bytes=%ld) returns %ld. Generating silence for stream %p.",
               __FUNCTION__, buffer, static_cast<long int>(bytes),

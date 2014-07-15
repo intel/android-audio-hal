@@ -153,7 +153,7 @@ protected:
     virtual android::status_t detachRouteL();
 
 private:
-    ssize_t readHwFrames(void *buffer, size_t frames);
+    android::status_t readHwFrames(void *buffer, size_t frames);
 
     /**
      * Performs the removal of an effect.
@@ -256,10 +256,11 @@ private:
      *
      * @param[out] buffer memory in which it will copy the frames.
      * @param[in] frames requested frames to read.
+     * @param[out] processedFrames number of frames processed if successful.
      *
-     * @return number of frames read if successful operation, negative error code otherwise.
+     * @return 0 if success, negative error code otherwise.
      */
-    ssize_t readFrames(void *buffer, size_t frames);
+    android::status_t readFrames(void *buffer, size_t frames, ssize_t *processedFrames);
 
     /**
      * Free internal buffers allocated for read / processing operations.
@@ -287,10 +288,11 @@ private:
      *
      * @param[out] buffer memory in which it will copy the processed frames.
      * @param[in] frames requested frames to read.
+     * @param[out] processedFrames number of frames processed if successful.
      *
-     * @return number of frames processed if successful operation, negative error code otherwise.
+     * @return 0 if success, negative error code otherwise.
      */
-    ssize_t processFrames(void *buffer, ssize_t frames);
+    android::status_t processFrames(void *buffer, ssize_t frames, ssize_t *processedFrames);
 
     /**
      * Process audio frames into the buffer.
