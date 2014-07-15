@@ -118,6 +118,10 @@ status_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
                   frames,
                   streamSampleSpec().convertFramesToBytes(frames));
 
+            if (error.find(strerror(EBADFD)) != std::string::npos) {
+                return DEAD_OBJECT;
+            }
+
             AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
                               "Hardware not responding, restarting media server");
 
@@ -295,16 +299,21 @@ status_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames, ssize_t 
 
 ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
 {
+    ssize_t processedBytes;
+
     setStandby(false);
 
-    AutoR lock(mStreamLock);
+    mStreamLock.readLock();
 
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
 
         ALOGW("%s(buffer=%p, bytes=%ld) No route available. Generating silence for stream %p.",
               __FUNCTION__, buffer, static_cast<long int>(bytes), this);
-        return generateSilence(bytes, buffer);
+        processedBytes = generateSilence(bytes, buffer);
+
+        mStreamLock.unlock();
+        return processedBytes;
     }
 
     ssize_t received_frames = -1;
@@ -331,9 +340,20 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
               __FUNCTION__, buffer, static_cast<long int>(bytes),
               static_cast<long int>(received_frames), this);
         generateSilence(bytes, buffer);
-        return received_frames;
+
+        mStreamLock.unlock();
+
+        if (status == DEAD_OBJECT) {
+            ALOGE("%s: execute device recovery", __FUNCTION__);
+            setStandby(true);
+        }
+
+        return -EBADFD;
     }
-    return streamSampleSpec().convertFramesToBytes(received_frames);
+    processedBytes = streamSampleSpec().convertFramesToBytes(received_frames);
+
+    mStreamLock.unlock();
+    return processedBytes;
 }
 
 status_t AudioStreamInImpl::dump(int fd, const Vector<String16> &args)

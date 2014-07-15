@@ -66,16 +66,22 @@ status_t AudioStreamOutImpl::setVolume(float left, float right)
 
 ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
 {
+    ssize_t processedBytes;
+
     AUDIOCOMMS_ASSERT(buffer != NULL, "NULL client buffer");
     setStandby(false);
 
-    AutoR lock(mStreamLock);
+    mStreamLock.readLock();
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
 
         ALOGW("%s(buffer=%p, bytes=%d) No route available. Trashing samples for stream %p.",
               __FUNCTION__, buffer, bytes, this);
-        return generateSilence(bytes);
+
+        processedBytes = generateSilence(bytes);
+
+        mStreamLock.unlock();
+        return processedBytes;
     }
 
     ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
@@ -102,6 +108,7 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
 
     if (status != NO_ERROR) {
 
+        mStreamLock.unlock();
         return status;
     }
     ALOGV("%s: srcFrames=%zd, bytes=%d dstFrames=%d", __FUNCTION__, srcFrames, bytes, dstFrames);
@@ -121,6 +128,13 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
             if (error.find(strerror(EIO)) != std::string::npos) {
                 // Dump hw registers debug file info in console
                 mParent->printPlatformFwErrorInfo();
+
+            } else if (error.find(strerror(EBADFD)) != std::string::npos) {
+                mStreamLock.unlock();
+
+                ALOGE("%s: execute device recovery", __FUNCTION__);
+                setStandby(true);
+                return -EBADFD;
             }
 
             AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
@@ -154,9 +168,12 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
                                                    "after_conversion");
     }
 
-    return streamSampleSpec().convertFramesToBytes(AudioUtils::convertSrcToDstInFrames(dstFrames,
-                                                                                       routeSampleSpec(),
-                                                                                       streamSampleSpec()));
+    processedBytes = streamSampleSpec().convertFramesToBytes(
+        AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
+
+    mStreamLock.unlock();
+
+    return processedBytes;
 }
 
 status_t AudioStreamOutImpl::dump(int, const Vector<String16> &)
