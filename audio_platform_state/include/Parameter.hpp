@@ -23,6 +23,7 @@
 #pragma once
 
 #include "ParameterChangedObserver.hpp"
+#include <NonCopyable.hpp>
 #include <map>
 #include <string>
 
@@ -32,7 +33,7 @@
  * or path (for a rogue parameter). This object will allow to wrap setter and getter on this
  * android-parameter to the associated element in the Parameter Manager.
  */
-class Parameter
+class Parameter : private audio_comms::utilities::NonCopyable
 {
 public:
     typedef std::map<std::string, std::string>::const_iterator MappingValuesMapConstIterator;

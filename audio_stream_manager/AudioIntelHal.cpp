@@ -91,15 +91,16 @@ AudioIntelHal::AudioIntelHal()
     NInterfaceProvider::IInterfaceProvider *interfaceProvider =
         getInterfaceProvider(TProperty<string>(mRouteLibPropName,
                                                mRouteLibPropDefaultValue).getValue().c_str());
-    if (interfaceProvider) {
+    if (!interfaceProvider) {
+        ALOGE("%s: Could not connect to interface provider", __FUNCTION__);
+        return;
+    }
+    // Retrieve the Stream Interface
+    mStreamInterface = interfaceProvider->queryInterface<IStreamInterface>();
+    if (mStreamInterface == NULL) {
 
-        // Retrieve the Stream Interface
-        mStreamInterface = interfaceProvider->queryInterface<IStreamInterface>();
-        if (mStreamInterface == NULL) {
-
-            ALOGE("Failed to get Stream Interface on RouteMgr");
-            return;
-        }
+        ALOGE("Failed to get Stream Interface on RouteMgr");
+        return;
     }
 
     /// Construct the platform state component and start it

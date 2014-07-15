@@ -64,6 +64,8 @@ public:
                             CParameterMgrPlatformConnector *connector,
                             const std::string &defaultValue = "");
 
+    virtual ~RouteCriterionParameter();
+
     virtual bool setValue(const std::string &value);
 
     virtual bool getValue(std::string &value) const;

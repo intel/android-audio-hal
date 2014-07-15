@@ -46,6 +46,11 @@ RouteCriterionParameter::RouteCriterionParameter(ParameterChangedObserver *obser
     mCriterion->setCriterionState<std::string>(getDefaultLiteralValue());
 }
 
+RouteCriterionParameter::~RouteCriterionParameter()
+{
+    delete mCriterion;
+}
+
 bool RouteCriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
