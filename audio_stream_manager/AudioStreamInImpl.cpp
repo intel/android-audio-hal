@@ -160,7 +160,13 @@ status_t AudioStreamInImpl::readFrames(void *buffer, size_t frames, ssize_t *pro
     //
     if (streamSampleSpec() == routeSampleSpec()) {
 
-        return readHwFrames(buffer, frames);
+        status_t status = readHwFrames(buffer, frames);
+        if (status < 0) {
+
+            return status;
+        }
+        *processedFrames = frames;
+        return status;
     }
 
     //
