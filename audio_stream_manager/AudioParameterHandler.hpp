@@ -22,11 +22,11 @@
  */
 #pragma once
 
+#include <KeyValuePairs.hpp>
 #include <utils/Errors.h>
-#include <utils/String8.h>
-#include <media/AudioParameter.h>
+#include <string>
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class AudioParameterHandler
@@ -41,14 +41,14 @@ public:
      *
      * @return OK if backup is successful, error code otherwise
      */
-    android::status_t saveParameters(const android::String8 &keyValuePairs);
+    android::status_t saveParameters(const std::string &keyValuePairs);
 
     /**
      * Return the stored parameters from filesystem
      *
      * @return parameters backuped previously.
      */
-    android::String8 getParameters() const;
+    std::string getParameters() const;
 
 private:
     /**
@@ -70,11 +70,11 @@ private:
      *
      * @param[in] keyValuePairs parameters to backup
      */
-    void add(const android::String8 &keyValuePairs);
+    void add(const std::string &keyValuePairs);
 
-    mutable android::AudioParameter mAudioParameter; /**< parameters backuped. */
+    mutable KeyValuePairs mPairs; /**< parameters backuped. */
 
     static const char mFilePath[]; /**< path of the backup file. */
     static const int mReadBufSize; /**< size of the buffer to read the backup file. */
 };
-}
+} // namespace intel_audio

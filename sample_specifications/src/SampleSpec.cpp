@@ -31,7 +31,7 @@
 
 using namespace std;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 #define SAMPLE_SPEC_ITEM_IS_VALID(sampleSpecItem)                                    \
@@ -149,4 +149,4 @@ bool SampleSpec::isSampleSpecItemEqual(SampleSpecItem sampleSpecItem,
     return (sampleSpecItem != ChannelCountSampleSpecItem) ||
            ssSrc.getChannelsPolicy() == ssDst.getChannelsPolicy();
 }
-}  // namespace android
+}  // namespace intel_audio

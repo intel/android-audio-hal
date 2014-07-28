@@ -35,7 +35,11 @@
 #include <utils/threads.h>
 #include <vector>
 
+
 struct IModemAudioManagerInterface;
+
+namespace intel_audio
+{
 
 class ModemProxy
     : public ValueSet,
@@ -93,3 +97,5 @@ private:
     static const std::string &mLiteralFalseValue;
     const std::string mInstance;
 };
+
+} // namespace intel_audio

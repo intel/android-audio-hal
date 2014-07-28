@@ -29,6 +29,9 @@
 
 using std::string;
 
+namespace intel_audio
+{
+
 AudioRoute::AudioRoute(const string &name, uint32_t routeId)
     : RoutingElement(name, routeId),
       mIsUsed(false),
@@ -108,3 +111,5 @@ void AudioRoute::setBlocked()
         mBlocked = true;
     }
 }
+
+} // namespace intel_audio

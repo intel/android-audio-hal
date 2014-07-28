@@ -30,10 +30,10 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 # Common variables
 
 audio_stream_manager_src_files :=  \
-    AudioStream.cpp \
-    AudioIntelHal.cpp \
-    AudioStreamInImpl.cpp \
-    AudioStreamOutImpl.cpp \
+    Stream.cpp \
+    Device.cpp \
+    StreamIn.cpp \
+    StreamOut.cpp \
     AudioParameterHandler.cpp
 
 audio_stream_manager_includes_dir := \
@@ -59,6 +59,7 @@ audio_stream_manager_static_lib += \
     libstream_static \
     libaudioplatformstate \
     libactive_value_set \
+    libkeyvaluepairs \
     libparametermgr_static \
     libaudio_comms_utilities \
     libaudio_comms_convert \
@@ -99,12 +100,12 @@ audio_stream_manager_include_dirs_from_static_libraries_target := \
     $(audio_stream_manager_include_dirs_from_static_libraries)
 
 audio_stream_manager_whole_static_lib := \
-    libaudiohw_legacy
+    libaudiohw_intel
 
 audio_stream_manager_include_dirs_from_static_libraries_host := \
     $(foreach lib, $(audio_stream_manager_include_dirs_from_static_libraries), $(lib)_host)
 
-audio_stream_manager_cflags := -Wall -Werror -Wno-unused-parameter
+audio_stream_manager_cflags := -Wall -Werror -Wextra
 
 #######################################################################
 # Phony package definition

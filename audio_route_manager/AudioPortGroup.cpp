@@ -29,6 +29,9 @@
 
 using std::string;
 
+namespace intel_audio
+{
+
 AudioPortGroup::AudioPortGroup(const string &name, uint32_t groupId)
     : RoutingElement(name, groupId),
       mPortList(0)
@@ -69,3 +72,5 @@ void AudioPortGroup::blockMutualExclusivePort(const AudioPort *port)
         }
     }
 }
+
+} // namespace intel_audio

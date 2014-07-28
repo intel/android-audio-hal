@@ -24,7 +24,7 @@
 
 #include "AudioConverter.hpp"
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class Resampler : public AudioConverter
@@ -93,4 +93,4 @@ private:
     float *mFloatInp;     /* here sample size is 4 bytes */
     float *mFloatOut;     /* here sample size is 4 bytes */
 };
-}  // namespace android
+}  // namespace intel_audio

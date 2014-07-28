@@ -24,7 +24,7 @@
 
 #include "AudioConverter.hpp"
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class AudioReformatter : public AudioConverter
@@ -91,4 +91,4 @@ private:
      */
     static const uint32_t mReformatterShiftLeft16;
 };
-}  // namespace android
+}  // namespace intel_audio

@@ -28,7 +28,7 @@
 
 using audio_comms::utilities::NonCopyable;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class AudioConverter : public NonCopyable
@@ -148,4 +148,4 @@ private:
 
     SampleSpecItem mSampleSpecItem; /**< Sample spec item on which the converter is working. */
 };
-}  // namespace android
+}  // namespace intel_audio

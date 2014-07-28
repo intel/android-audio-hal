@@ -30,7 +30,7 @@
 #include "ParameterAdapter.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "VolumeKeys.hpp"
-#include <Stream.hpp>
+#include <IoStream.hpp>
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <ParameterMgrHelper.hpp>
@@ -41,8 +41,6 @@
 #include <cutils/bitops.h>
 #include <cutils/config_utils.h>
 #include <cutils/misc.h>
-#include <hardware_legacy/AudioHardwareBase.h>
-#include <media/AudioParameter.h>
 #include <utils/Log.h>
 #include <fstream>
 
@@ -50,8 +48,9 @@
 
 using std::string;
 using audio_comms::utilities::convertTo;
+using android::status_t;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 using android::RWLock;
@@ -134,8 +133,8 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
                                                                  mRoutePfwConnector);
     mRouteCriterionTypeMap[mStateChangedCriterionName] = stateChangedCriterionType;
 
-    if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != OK) &&
-        (loadAudioHalConfig(gAudioHalConfFilePath) != OK)) {
+    if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
+        (loadAudioHalConfig(gAudioHalConfFilePath) != android::OK)) {
 
         ALOGE("Neither vendor conf file (%s) nor system conf file (%s) could be found",
               gAudioHalVendorConfFilePath, gAudioHalConfFilePath);
@@ -187,7 +186,7 @@ status_t AudioPlatformState::start()
     if (!mRoutePfwConnector->start(strError)) {
 
         ALOGE("Route PFW start error: %s", strError.c_str());
-        return NO_INIT;
+        return android::NO_INIT;
     }
     ALOGD("%s: Route PFW successfully started!", __FUNCTION__);
 
@@ -198,7 +197,7 @@ status_t AudioPlatformState::start()
     /// Start ParameterAdapter
     mParameterAdapter->start();
 
-    return OK;
+    return android::OK;
 }
 
 template <>
@@ -687,7 +686,7 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 
     ALOGD("%s: loaded %s", __FUNCTION__, path);
 
-    return NO_ERROR;
+    return android::OK;
 }
 
 void AudioPlatformState::sync()
@@ -696,27 +695,27 @@ void AudioPlatformState::sync()
     applyPlatformConfiguration();
 }
 
-void AudioPlatformState::clearParamKeys(AudioParameter *param)
+void AudioPlatformState::clearKeys(KeyValuePairs *pairs)
 {
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
-                  ClearKeyAndroidParameterHelper(param));
-    if (param->size()) {
+                  ClearKeyAndroidParameterHelper(pairs));
+    if (pairs->size()) {
 
-        ALOGW("%s: Unhandled argument: %s", __FUNCTION__, param->toString().string());
+        ALOGW("%s: Unhandled argument: %s", __FUNCTION__, pairs->toString().c_str());
     }
 }
 
-status_t AudioPlatformState::setParameters(const android::String8 &keyValuePairs)
+status_t AudioPlatformState::setParameters(const string &keyValuePairs)
 {
     mPfwLock.writeLock();
 
-    ALOGD("%s: key value pair %s", __FUNCTION__, keyValuePairs.string());
-    AudioParameter param = AudioParameter(keyValuePairs);
+    ALOGD("%s: key value pair %s", __FUNCTION__, keyValuePairs.c_str());
+    KeyValuePairs pairs(keyValuePairs);
     int errorCount = 0;
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
-                  SetFromAndroidParameterHelper(&param, &errorCount));
-    status_t status = errorCount == 0 ? OK : BAD_VALUE;
-    clearParamKeys(&param);
+                  SetFromAndroidParameterHelper(&pairs, &errorCount));
+    status_t status = errorCount == 0 ? android::OK : android::BAD_VALUE;
+    clearKeys(&pairs);
 
     if (!hasPlatformStateChanged()) {
         mPfwLock.unlock();
@@ -738,23 +737,23 @@ void AudioPlatformState::parameterHasChanged(const std::string &event)
 {
     // Handle particular cases, event is the criterion name, not the key
     if (event == mAndroidModeCriterionName) {
-        VolumeKeys::wakeup(getValue(mAndroidModeCriterionName) == AudioSystem::MODE_IN_CALL);
+        VolumeKeys::wakeup(getValue(mAndroidModeCriterionName) == AUDIO_MODE_IN_CALL);
     } else if (event == mInputDevicesCriterionName) {
         updateActiveStreamsParameters(false);
     }
     setPlatformStateEvent(event);
 }
 
-String8 AudioPlatformState::getParameters(const String8 &keys)
+string AudioPlatformState::getParameters(const string &keys)
 {
     AutoR lock(mPfwLock);
-    AudioParameter param = AudioParameter(keys);
-    AudioParameter returnedParam = AudioParameter(keys);
+    KeyValuePairs pairs(keys);
+    KeyValuePairs returnedPairs(keys);
 
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
-                  GetFromAndroidParameterHelper(&param, &returnedParam));
+                  GetFromAndroidParameterHelper(&pairs, &returnedPairs));
 
-    return returnedParam.toString();
+    return returnedPairs.toString();
 }
 
 bool AudioPlatformState::hasPlatformStateChanged() const
@@ -783,10 +782,10 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
     stateChange->setValue<uint32_t>(platformEventChanged);
 }
 
-void AudioPlatformState::setVoipBandType(const Stream *activeStream)
+void AudioPlatformState::setVoipBandType(const IoStream *activeStream)
 {
     CAudioBand::Type band = CAudioBand::EWide;
-    if (activeStream->sampleRate() == mVoiceStreamRateForNarrowBandProcessing) {
+    if (activeStream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing) {
 
         band = CAudioBand::ENarrow;
     }
@@ -806,8 +805,8 @@ void AudioPlatformState::updateActiveStreamsParameters(bool isOut)
     uint32_t effectRequested = 0;
 
     for (it = mActiveStreamsList[isOut].begin(); it != mActiveStreamsList[isOut].end(); ++it) {
-        const Stream *stream = *it;
-        if (stream->getDevices() != 0) {
+        const IoStream *stream = *it;
+        if (stream->isRoutedByPolicy()) {
             streamsMask |= stream->getApplicabilityMask();
             if (!isOut) {
                 // Set the requested effect from this active input.
@@ -826,7 +825,7 @@ void AudioPlatformState::updateActiveStreamsParameters(bool isOut)
     applyPlatformConfiguration();
 }
 
-void AudioPlatformState::startStream(const Stream *startedStream)
+void AudioPlatformState::startStream(const IoStream *startedStream)
 {
     AUDIOCOMMS_ASSERT(startedStream != NULL, "NULL stream");
     AutoW lock(mPfwLock);
@@ -835,7 +834,7 @@ void AudioPlatformState::startStream(const Stream *startedStream)
     updateActiveStreamsParameters(isOut);
 }
 
-void AudioPlatformState::stopStream(const Stream *stoppedStream)
+void AudioPlatformState::stopStream(const IoStream *stoppedStream)
 {
     AUDIOCOMMS_ASSERT(stoppedStream != NULL, "NULL stream");
     AutoW lock(mPfwLock);
@@ -937,4 +936,4 @@ void AudioPlatformState::printPlatformFwErrorInfo() const
     }
 }
 
-}       // namespace android
+} // namespace intel_audio

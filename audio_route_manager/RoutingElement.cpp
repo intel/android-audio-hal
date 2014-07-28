@@ -24,6 +24,9 @@
 
 using std::string;
 
+namespace intel_audio
+{
+
 RoutingElement::RoutingElement(const string &name, uint32_t index)
     : mName(name),
       mId(index)
@@ -33,3 +36,5 @@ RoutingElement::RoutingElement(const string &name, uint32_t index)
 RoutingElement::~RoutingElement()
 {
 }
+
+} // namespace intel_audio

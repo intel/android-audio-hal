@@ -20,7 +20,7 @@
  * express and approved by Intel in writing.
  *
  */
-#include "Stream.hpp"
+#include "IoStream.hpp"
 #include "AudioDevice.hpp"
 #include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
@@ -28,40 +28,42 @@
 #include <utils/RWLock.h>
 #include <cutils/log.h>
 
-using android_audio_legacy::SampleSpec;
 using std::string;
 
-bool Stream::isRouted() const
+namespace intel_audio
+{
+
+bool IoStream::isRouted() const
 {
     AutoR lock(mStreamLock);
     return isRoutedL();
 }
 
-bool Stream::isRoutedL() const
+bool IoStream::isRoutedL() const
 {
     return mCurrentStreamRoute != NULL;
 }
 
-bool Stream::isNewRouteAvailable() const
+bool IoStream::isNewRouteAvailable() const
 {
     AutoR lock(mStreamLock);
     return mNewStreamRoute != NULL;
 }
 
-android::status_t Stream::attachRoute()
+android::status_t IoStream::attachRoute()
 {
     AutoW lock(mStreamLock);
     return attachRouteL();
 }
 
 
-android::status_t Stream::detachRoute()
+android::status_t IoStream::detachRoute()
 {
     AutoW lock(mStreamLock);
     return detachRouteL();
 }
 
-android::status_t Stream::attachRouteL()
+android::status_t IoStream::attachRouteL()
 {
     AUDIOCOMMS_ASSERT(mNewStreamRoute != NULL, "NULL route pointer");
     setCurrentStreamRouteL(mNewStreamRoute);
@@ -71,44 +73,46 @@ android::status_t Stream::attachRouteL()
 }
 
 
-android::status_t Stream::detachRouteL()
+android::status_t IoStream::detachRouteL()
 {
     mCurrentStreamRoute = NULL;
     return android::OK;
 }
 
-void Stream::addRequestedEffect(uint32_t effectId)
+void IoStream::addRequestedEffect(uint32_t effectId)
 {
     mEffectsRequestedMask |= effectId;
 }
 
-void Stream::removeRequestedEffect(uint32_t effectId)
+void IoStream::removeRequestedEffect(uint32_t effectId)
 {
     mEffectsRequestedMask &= ~effectId;
 }
 
-uint32_t Stream::getOutputSilencePrologMs() const
+uint32_t IoStream::getOutputSilencePrologMs() const
 {
     AUDIOCOMMS_ASSERT(mCurrentStreamRoute != NULL, "NULL route pointer");
     return mCurrentStreamRoute->getOutputSilencePrologMs();
 }
 
-void Stream::resetNewStreamRoute()
+void IoStream::resetNewStreamRoute()
 {
     mNewStreamRoute = NULL;
 }
 
-void Stream::setNewStreamRoute(IStreamRoute *newStreamRoute)
+void IoStream::setNewStreamRoute(IStreamRoute *newStreamRoute)
 {
     mNewStreamRoute = newStreamRoute;
 }
 
-void Stream::setCurrentStreamRouteL(IStreamRoute *currentStreamRoute)
+void IoStream::setCurrentStreamRouteL(IStreamRoute *currentStreamRoute)
 {
     mCurrentStreamRoute = currentStreamRoute;
 }
 
-void Stream::setRouteSampleSpecL(SampleSpec sampleSpec)
+void IoStream::setRouteSampleSpecL(SampleSpec sampleSpec)
 {
     mRouteSampleSpec = sampleSpec;
 }
+
+} // namespace intel_audio

@@ -25,6 +25,9 @@
 using namespace std;
 using namespace NInterfaceProvider;
 
+namespace intel_audio
+{
+
 RouteManagerInstance::RouteManagerInstance()
     : mAudioRouteManager(new AudioRouteManager())
 {
@@ -59,3 +62,5 @@ string RouteManagerInstance::getInterfaceList() const
 {
     return mInterfaceProvider.getInterfaceList();
 }
+
+} // namespace intel_audio

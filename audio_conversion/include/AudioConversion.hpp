@@ -27,7 +27,7 @@
 #include <NonCopyable.hpp>
 #include <list>
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class AudioConverter;
@@ -236,4 +236,4 @@ private:
      */
     static const uint32_t mAllocBufferMultFactor;
 };
-}  // namespace android
+}  // namespace intel_audio

@@ -36,6 +36,9 @@ using namespace std;
 using namespace android;
 using audio_comms::utilities::convertTo;
 
+namespace intel_audio
+{
+
 const std::string &ModemProxy::mKeyState = "modem_state_";
 const std::string &ModemProxy::mKeyCallStatus = "call_status_";
 const std::string &ModemProxy::mKeyBandType = "csv_band_type_";
@@ -168,3 +171,5 @@ void ModemProxy::stop()
         mModemAudioManagerInterface->stop();
     }
 }
+
+} // namespace intel_audio

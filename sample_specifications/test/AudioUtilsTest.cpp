@@ -25,18 +25,16 @@
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <mock/UnistdMock.hpp>
-#include <hardware_legacy/AudioSystemLegacy.h>
 #include <limits>
 #include <gtest/gtest.h>
 
-using ::android_audio_legacy::AudioSystem;
-using ::android_audio_legacy::AudioUtils;
-using ::android_audio_legacy::SampleSpec;
-using ::android_audio_legacy::SampleSpecItem;
 using ::testing::_;
 using ::testing::EndsWith;
 using ::testing::Return;
 using ::testing::SetErrnoAndReturn;
+
+namespace intel_audio
+{
 
 TEST(AudioUtils, alignOn16)
 {
@@ -192,34 +190,4 @@ TEST(AudioUtils, cardNameToIndexLinkDoesNotExist)
     .WillOnce(SetErrnoAndReturn(EACCES, -1));
     EXPECT_EQ(-EACCES, AudioUtils::getCardIndexByName(""));
 }
-
-
-TEST(AudioUtils, isInputDevice)
-{
-    // Valid Input device (API REV1.0)
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_COMMUNICATION));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_AMBIENT));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_BUILTIN_MIC));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_BLUETOOTH_SCO_HEADSET));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_WIRED_HEADSET));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_AUX_DIGITAL));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_COMMUNICATION));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_VOICE_CALL));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_BACK_MIC));
-    EXPECT_TRUE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_DEFAULT));
-
-    // Invalid input devices
-    // Output device
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_OUT_SPEAKER));
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_OUT_BLUETOOTH_SCO));
-
-    // Multiple input device
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_ALL));
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AudioSystem::DEVICE_IN_COMMUNICATION |
-                                                AudioSystem::DEVICE_IN_BACK_MIC));
-
-    // REV2.0 input device
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AUDIO_DEVICE_IN_COMMUNICATION));
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AUDIO_DEVICE_IN_BUILTIN_MIC));
-    EXPECT_FALSE(AudioUtils::isAudioInputDevice(AUDIO_DEVICE_IN_ALL));
-}
+} // namespace intel_audio

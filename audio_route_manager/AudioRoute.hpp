@@ -26,6 +26,9 @@
 #include "RoutingStage.hpp"
 #include <bitset>
 
+namespace intel_audio
+{
+
 class AudioPort;
 
 class AudioRoute : public RoutingElement
@@ -249,3 +252,5 @@ protected:
      */
     std::bitset<gNbRoutingStages> mRoutingStageRequested;
 };
+
+} // namespace intel_audio

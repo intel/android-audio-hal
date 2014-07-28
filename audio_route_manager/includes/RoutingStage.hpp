@@ -22,6 +22,9 @@
  */
 #pragma once
 
+namespace intel_audio
+{
+
 /**
  * Routing stage bits description.
  * It is used to feed the criteria of the Parameter Framework.
@@ -48,3 +51,5 @@ enum RoutingStageMask
 };
 
 static const uint32_t gNbRoutingStages = 3;
+
+} // namespace intel_audio

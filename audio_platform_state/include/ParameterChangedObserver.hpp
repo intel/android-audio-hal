@@ -24,6 +24,9 @@
 
 #include <string>
 
+namespace intel_audio
+{
+
 class ParameterChangedObserver
 {
 public:
@@ -36,3 +39,5 @@ public:
      */
     virtual void parameterHasChanged(const std::string &name) = 0;
 };
+
+} // namespace intel_audio

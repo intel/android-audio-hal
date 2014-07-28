@@ -27,6 +27,10 @@
 class CriterionType;
 class Criterion;
 class CParameterMgrPlatformConnector;
+
+namespace intel_audio
+{
+
 class IStreamInterface;
 
 /**
@@ -109,3 +113,5 @@ public:
 private:
     IStreamInterface *mStreamInterface; /**< Handle on stream interface of Route Manager. */
 };
+
+} // namespace intel_audio

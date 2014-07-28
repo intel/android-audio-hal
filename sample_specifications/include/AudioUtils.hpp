@@ -28,7 +28,7 @@
 #include <sys/types.h>
 
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class AudioUtils
@@ -124,18 +124,6 @@ public:
      */
     static uint32_t convertUsecToMsec(uint32_t timeUsec);
 
-    /**
-     * Checks the device is an input device.
-     * This function works with AudioSystem REV1.0 API.
-     * REV2.0 introduced the sign bit to refer to input devices, breaking the cardinality of
-     * one bit in the mask - one device.
-     *
-     * @param[in] devices mask of the device to check.
-     *
-     * @return true if input device, false otherwise.
-     */
-    static bool isAudioInputDevice(uint32_t devices);
-
     static const uint32_t mUsecToSec = 1000000; /**< Constant used or delays computation */
 
 private:
@@ -143,4 +131,4 @@ private:
 
     static const uint32_t mUsecPerMsec = 1000;
 };
-}  // namespace android
+}  // namespace intel_audio

@@ -26,10 +26,10 @@
 #include <NonCopyable.hpp>
 
 
-namespace android_audio_legacy
+namespace intel_audio
 {
+
 class AudioPlatformState;
-}
 
 /**
  * This class allows to report events from ActiveValueSet to the AudioPlatform State component
@@ -38,7 +38,7 @@ class AudioPlatformState;
 class ParameterAdapter : public ActiveValueSet
 {
 public:
-    ParameterAdapter(android_audio_legacy::AudioPlatformState *client);
+    ParameterAdapter(AudioPlatformState *client);
 
     virtual void onValueChanged(const std::string &key, const std::string &value);
 
@@ -46,7 +46,9 @@ private:
     /**
      * handler on targeted platform state to set Parameters.
      */
-    android_audio_legacy::AudioPlatformState *mClient;
+    AudioPlatformState *mClient;
 
     static const std::string mKeyValueSeparatorToken;
 };
+
+} // namespace intel_audio

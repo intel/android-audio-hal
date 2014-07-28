@@ -26,6 +26,9 @@
 #include <convert.hpp>
 #include <ParameterMgrHelper.hpp>
 
+namespace intel_audio
+{
+
 /**
  * This class intends to address the Android Parameters that are associated to a Rogue Parameter.
  * Each time the key of this android parameters is detected, this class will wrap the accessor
@@ -186,3 +189,5 @@ public:
 private:
     IStreamInterface *mStreamInterface; /**< Handle on stream interface of Route Manager. */
 };
+
+} // namespace intel_audio

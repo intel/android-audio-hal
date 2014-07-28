@@ -26,6 +26,9 @@
 #include "StreamRouteConfig.hpp"
 #include <string>
 
+namespace intel_audio
+{
+
 class StreamRouteConfig;
 
 struct IRouteInterface : public NInterfaceProvider::IInterface
@@ -196,3 +199,5 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
      */
     virtual void setParameter(const std::string &name, uint32_t value) = 0;
 };
+
+} // namespace intel_audio

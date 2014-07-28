@@ -25,6 +25,9 @@
 #include "AudioDevice.hpp"
 #include <tinyalsa/asoundlib.h>
 
+namespace intel_audio
+{
+
 class StreamRouteConfig;
 
 class TinyAlsaAudioDevice : public IAudioDevice
@@ -52,3 +55,5 @@ public:
 private:
     pcm *mPcmDevice; /**< Handle on tiny alsa PCM device. */
 };
+
+} // namespace intel_audio

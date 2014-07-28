@@ -30,7 +30,10 @@
 #include <list>
 #include <utils/Errors.h>
 
-class Stream;
+namespace intel_audio
+{
+
+class IoStream;
 class IAudioDevice;
 
 class AudioStreamRoute : public AudioRoute, private IStreamRoute
@@ -46,7 +49,7 @@ public:
      *
      * @return sample specifications supported by the stream route.
      */
-    virtual const android_audio_legacy::SampleSpec getSampleSpec() const
+    virtual const SampleSpec getSampleSpec() const
     {
         return mSampleSpec;
     }
@@ -98,7 +101,7 @@ public:
      *
      * @param stream Stream to be attached to this route during routing process.
      */
-    void setStream(Stream *stream);
+    void setStream(IoStream *stream);
 
     /**
      * route hook point.
@@ -132,7 +135,7 @@ public:
      *
      * @return true if the route is applicable, false otherwise.
      */
-    virtual bool isApplicable(const Stream *stream = NULL) const;
+    virtual bool isApplicable(const IoStream *stream = NULL) const;
 
     /**
      * Returns the applicable mask of the route
@@ -215,8 +218,8 @@ public:
     uint32_t getPeriodInUs() const;
 
 protected:
-    Stream *mCurrentStream; /**< Current stream attached to this route. */
-    Stream *mNewStream; /**< New stream that will be attached to this route after rerouting. */
+    IoStream *mCurrentStream; /**< Current stream attached to this route. */
+    IoStream *mNewStream; /**< New stream that will be attached to this route after rerouting. */
 
     std::list<std::string> mEffectSupported; /**< list of name of supported effects. */
     uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
@@ -269,7 +272,9 @@ private:
 
     StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 
-    android_audio_legacy::SampleSpec mSampleSpec; /**< Sample specification of the stream route. */
+    SampleSpec mSampleSpec; /**< Sample specification of the stream route. */
 
     IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
 };
+
+} // namespace intel_audio

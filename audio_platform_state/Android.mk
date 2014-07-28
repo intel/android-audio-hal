@@ -61,6 +61,7 @@ LOCAL_STATIC_LIBRARIES := \
     audio.routemanager.includes \
     libmedia_helper \
     libactive_value_set \
+    libkeyvaluepairs \
     libevent-listener_static \
 
 LOCAL_CFLAGS := -Wall -Werror -Wextra -Wno-unused-parameter

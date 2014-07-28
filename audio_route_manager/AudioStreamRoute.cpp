@@ -25,20 +25,16 @@
 #include "AudioStreamRoute.hpp"
 #include <AudioDevice.hpp>
 #include <AudioUtils.hpp>
-#include <Stream.hpp>
+#include <IoStream.hpp>
 #include <StreamLib.hpp>
 #include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utils/Log.h>
 
-using android_audio_legacy::AudioUtils;
-using android_audio_legacy::SampleSpec;
-using android::status_t;
-using android::NO_ERROR;
-using android::NO_MEMORY;
-using android::NO_INIT;
-using android::OK;
 using std::string;
+
+namespace intel_audio
+{
 
 AudioStreamRoute::AudioStreamRoute(const string &name, uint32_t routeIndex)
     : AudioRoute(name, routeIndex),
@@ -81,12 +77,12 @@ bool AudioStreamRoute::needReflow() const
             mCurrentStream != mNewStream);
 }
 
-status_t AudioStreamRoute::route(bool isPreEnable)
+android::status_t AudioStreamRoute::route(bool isPreEnable)
 {
     if (isPreEnable == isPreEnableRequired()) {
 
-        status_t err = mAudioDevice->open(getCardName(), getPcmDeviceId(),
-                                          getRouteConfig(), isOut());
+        android::status_t err = mAudioDevice->open(getCardName(), getPcmDeviceId(),
+                                                   getRouteConfig(), isOut());
         if (err) {
 
             // Failed to open PCM device -> bailing out
@@ -99,7 +95,7 @@ status_t AudioStreamRoute::route(bool isPreEnable)
         if (!mAudioDevice->isOpened()) {
 
             ALOGE("%s: error opening audio device, cannot route new stream", __FUNCTION__);
-            return NO_INIT;
+            return android::NO_INIT;
         }
 
         /**
@@ -107,14 +103,14 @@ status_t AudioStreamRoute::route(bool isPreEnable)
          * to let the audio-parameter-manager performing the required configuration of the
          * audio path.
          */
-        status_t err = attachNewStream();
+        android::status_t err = attachNewStream();
         if (err) {
 
             // Failed to open PCM device -> bailing out
             return err;
         }
     }
-    return OK;
+    return android::OK;
 }
 
 void AudioStreamRoute::unroute(bool isPostDisable)
@@ -137,7 +133,7 @@ void AudioStreamRoute::unroute(bool isPostDisable)
 
     if (isPostDisable == isPostDisableRequired()) {
 
-        status_t err = mAudioDevice->close();
+        android::status_t err = mAudioDevice->close();
         if (err) {
 
             return;
@@ -176,7 +172,7 @@ void AudioStreamRoute::resetAvailability()
     AudioRoute::resetAvailability();
 }
 
-void AudioStreamRoute::setStream(Stream *stream)
+void AudioStreamRoute::setStream(IoStream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Fatal: invalid stream parameter!");
 
@@ -189,7 +185,7 @@ void AudioStreamRoute::setStream(Stream *stream)
     mNewStream->setNewStreamRoute(this);
 }
 
-bool AudioStreamRoute::isApplicable(const Stream *stream) const
+bool AudioStreamRoute::isApplicable(const IoStream *stream) const
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
     uint32_t mask = stream->getApplicabilityMask();
@@ -209,20 +205,20 @@ bool AudioStreamRoute::implementsEffects(uint32_t effectsMask) const
     return (mEffectSupportedMask & effectsMask) == effectsMask;
 }
 
-status_t AudioStreamRoute::attachNewStream()
+android::status_t AudioStreamRoute::attachNewStream()
 {
     AUDIOCOMMS_ASSERT(mNewStream != NULL, "Fatal: invalid stream value!");
 
-    status_t err = mNewStream->attachRoute();
+    android::status_t err = mNewStream->attachRoute();
 
-    if (err != NO_ERROR) {
+    if (err != android::OK) {
         ALOGE("Failing to attach route for new stream : %d", err);
         return err;
     }
 
     mCurrentStream = mNewStream;
 
-    return NO_ERROR;
+    return android::OK;
 }
 
 void AudioStreamRoute::detachCurrentStream()
@@ -247,3 +243,5 @@ uint32_t AudioStreamRoute::getPeriodInUs() const
 {
     return getSampleSpec().convertFramesToUsec(mConfig.periodSize);
 }
+
+} // namespace intel_audio

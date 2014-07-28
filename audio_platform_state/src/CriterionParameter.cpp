@@ -25,8 +25,11 @@
 #include <CriterionType.hpp>
 #include <Criterion.hpp>
 #include <ParameterMgrPlatformConnector.h>
-#include <StreamInterface.hpp>
+#include <IStreamInterface.hpp>
 #include <convert.hpp>
+
+namespace intel_audio
+{
 
 bool CriterionParameter::set(const std::string &androidParamValue)
 {
@@ -127,3 +130,5 @@ bool AudioCriterionParameter::sync()
 {
     return mStreamInterface->setAudioCriterion(getName(), getDefaultLiteralValue());
 }
+
+} // namespace intel_audio

@@ -22,18 +22,21 @@
  */
 #pragma once
 
-#include "Stream.hpp"
+#include "IoStream.hpp"
 #include <SampleSpec.hpp>
 #include <cutils/log.h>
 #include <utils/RWLock.h>
 
+namespace intel_audio
+{
+
 class TinyAlsaAudioDevice;
 
-class TinyAlsaStream : public Stream
+class TinyAlsaIoStream : public IoStream
 {
 public:
-    TinyAlsaStream()
-        : Stream::Stream(), mDevice(NULL)
+    TinyAlsaIoStream()
+        : IoStream::IoStream(), mDevice(NULL)
     {}
 
     virtual uint32_t getBufferSizeInBytes() const;
@@ -89,3 +92,5 @@ private:
     /** Ratio between microseconds and milliseconds */
     static const uint32_t mUsecPerMsec = 1000;
 };
+
+} // namespace intel_audio

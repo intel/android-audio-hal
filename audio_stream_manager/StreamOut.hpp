@@ -22,68 +22,45 @@
  */
 #pragma once
 
-#include "AudioIntelHal.hpp"
-#include "AudioStream.hpp"
+#include "Stream.hpp"
+#include "Device.hpp"
+#include <StreamInterface.hpp>
 
 struct echo_reference_itfe;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
-class AudioStreamOutImpl : public AudioStreamOut, public AudioStream
+class StreamOut : public StreamOutInterface, public Stream
 {
 public:
-    AudioStreamOutImpl(AudioIntelHal *parent, uint32_t streamFlagsMask);
-    virtual ~AudioStreamOutImpl();
+    StreamOut(Device *parent, uint32_t streamFlagsMask);
+    virtual ~StreamOut();
 
-    virtual uint32_t sampleRate() const
+
+    // From AudioStreamOut
+    virtual uint32_t getLatency();
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t setVolume(float, float) { return android::OK; }
+    virtual android::status_t write(const void *buffer, size_t &bytes);
+    virtual android::status_t getRenderPosition(uint32_t &dspFrames) const;
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t getNextWriteTimestamp(int64_t & /*ts*/) const { return android::OK; }
+    virtual android::status_t flush();
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t setCallback(stream_callback_t, void *) { return android::OK; }
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t pause() { return android::OK; }
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t resume() { return android::OK; }
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t drain(audio_drain_type_t) { return android::OK; }
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t getPresentationPosition(uint64_t &, struct timespec &) const
     {
-        return AudioStream::sampleRate();
+        return android::OK;
     }
-
-    virtual size_t bufferSize() const;
-
-    virtual uint32_t channels() const;
-
-    virtual int format() const
-    {
-        return AudioStream::format();
-    }
-
-    /**
-     * Get the latency of the output stream.
-     * Android wants latency in milliseconds. It must match the latency introduced by
-     * driver buffering (Size of ring buffer). Audio Flinger will use this value to
-     * calculate each track buffer depth.
-     *
-     * @return latency in ms
-     */
-    virtual uint32_t latency() const;
-
-    virtual ssize_t write(const void *buffer, size_t bytes);
-    virtual status_t dump(int fd, const Vector<String16> &args);
-
-    virtual status_t setVolume(float left, float right);
-
-    virtual status_t standby();
-
-    virtual status_t setParameters(const String8 &keyValuePairs);
-
-    virtual String8 getParameters(const String8 &keys)
-    {
-        return AudioStream::getParameters(keys);
-    }
-
-    /**
-     * Get the render position.
-     *
-     * @param[out] dspFrames: the number of audio frames written by AudioFlinger to audio HAL to
-     * to Audio Codec since the output on which the specified stream is playing
-     * has exited standby.
-     *
-     * @return NO_ERROR if successfyll operation, error code otherwise.
-     */
-    virtual status_t getRenderPosition(uint32_t *dspFrames);
+    virtual android::status_t setDevice(audio_devices_t device);
 
     /**
      * Request to provide Echo Reference.
@@ -100,11 +77,7 @@ public:
      */
     void removeEchoReference(struct echo_reference_itfe *reference);
 
-    /**
-     * flush the data down the flow. It is similar to drop.
-     */
-    virtual status_t flush();
-
+    // From IoStream
     /**
      * Get stream direction. From Stream class.
      *
@@ -119,7 +92,7 @@ protected:
      *
      * @return OK if streams attached successfully to the route, error code otherwise.
      */
-    virtual status_t attachRouteL();
+    virtual android::status_t attachRouteL();
 
     /**
      * Callback of route detachement called by the stream lib. (and so route manager)
@@ -127,7 +100,7 @@ protected:
      *
      * @return OK if streams detached successfully from the route, error code otherwise.
      */
-    virtual status_t detachRouteL();
+    virtual android::status_t detachRouteL();
 
 private:
     /**
@@ -159,4 +132,4 @@ private:
     static const uint32_t mWaitBeforeRetryUs; /**< Time to wait before retrial. */
     static const uint32_t mUsecPerMsec; /**< time conversion constant. */
 };
-}         // namespace android
+} // namespace intel_audio

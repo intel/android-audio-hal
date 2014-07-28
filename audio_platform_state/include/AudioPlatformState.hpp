@@ -27,14 +27,14 @@
 #include "Parameter.hpp"
 #include <NonCopyable.hpp>
 #include <Direction.hpp>
-#include <hardware_legacy/AudioHardwareBase.h>
-#include <StreamInterface.hpp>
+#include <KeyValuePairs.hpp>
+#include <IStreamInterface.hpp>
 #include <AudioCommsAssert.hpp>
 #include <list>
 #include <map>
 #include <string>
 #include <utils/Errors.h>
-#include <utils/String8.h>
+#include <string>
 #include <vector>
 #include <utils/RWLock.h>
 
@@ -42,12 +42,13 @@ class CParameterMgrPlatformConnector;
 class Criterion;
 class CriterionType;
 class cnode;
-class Stream;
+
+namespace intel_audio
+{
+
+class IoStream;
 class ModemProxy;
 class ParameterAdapter;
-
-namespace android_audio_legacy
-{
 
 class ParameterMgrPlatformConnectorLogger;
 
@@ -76,8 +77,8 @@ private:
     typedef std::map<std::string, CriterionType *>::iterator CriterionTypeMapIterator;
     typedef std::map<std::string, CriterionType *>::const_iterator CriteriaTypeMapConstIterator;
 
-    typedef std::list<Stream *>::iterator StreamListIterator;
-    typedef std::list<const Stream *>::const_iterator StreamListConstIterator;
+    typedef std::list<IoStream *>::iterator StreamListIterator;
+    typedef std::list<const IoStream *>::const_iterator StreamListConstIterator;
 
     /**
      * This class defines a unary function to be used when looping on the vector of value pairs
@@ -108,18 +109,18 @@ private:
     class SetFromAndroidParameterHelper
     {
     public:
-        SetFromAndroidParameterHelper(AudioParameter *param, int *errorCount)
-            : mParam(param),
+        SetFromAndroidParameterHelper(KeyValuePairs *pairs, int *errorCount)
+            : mPairs(pairs),
               mErrorCount(errorCount)
         {}
 
         void operator()(Parameter *param)
         {
 
-            String8 key(param->getKey().c_str());
-            String8 value;
-            if (mParam->get(key, value) == NO_ERROR) {
-                if (!param->setValue(value.string())) {
+            std::string key(param->getKey());
+            std::string value;
+            if (mPairs->get(key, value) == android::OK) {
+                if (!param->setValue(value)) {
                     *mErrorCount += 1;
                 }
                 // Do not remove the key as nothing forbid to give the same key for 2
@@ -127,7 +128,7 @@ private:
             }
         }
 
-        AudioParameter *mParam;
+        KeyValuePairs *mPairs;
         int *mErrorCount;
     };
 
@@ -139,31 +140,32 @@ private:
     class GetFromAndroidParameterHelper
     {
     public:
-        GetFromAndroidParameterHelper(AudioParameter *paramIn, AudioParameter *paramOut)
-            : mParamIn(paramIn), mParamOut(paramOut)
+        GetFromAndroidParameterHelper(KeyValuePairs *pairsIn,
+                                      KeyValuePairs *pairsOut)
+            : mPairsIn(pairsIn), mPairsOut(pairsOut)
         {}
 
         void operator()(Parameter *param)
         {
 
-            String8 key(param->getKey().c_str());
-            String8 value;
-            if (mParamIn->get(key, value) == NO_ERROR) {
+            std::string key(param->getKey());
+            std::string value;
+            if (mPairsIn->get(key, value) == android::OK) {
 
-                std::string strValue;
-                if (param->getValue(strValue)) {
+                std::string literalValue;
+                if (param->getValue(literalValue)) {
 
-                    mParamOut->add(key, String8(strValue.c_str()));
+                    mPairsOut->add(key, literalValue);
 
                     // The key can be safely removed now. Even if the key appears twice in the
                     // config file (meaning associated to more than one criterion/rogue), the value
                     // of the android parameter will be the same.
-                    mParamIn->remove(key);
+                    mPairsIn->remove(key);
                 }
             }
         }
-        AudioParameter *mParamIn;
-        AudioParameter *mParamOut;
+        KeyValuePairs *mPairsIn;
+        KeyValuePairs *mPairsOut;
     };
 
     /**
@@ -175,19 +177,19 @@ private:
     class ClearKeyAndroidParameterHelper
     {
     public:
-        ClearKeyAndroidParameterHelper(AudioParameter *param)
-            : mParam(param)
+        ClearKeyAndroidParameterHelper(KeyValuePairs *pairs)
+            : mPairs(pairs)
         {}
 
         void operator()(Parameter *param)
         {
-            String8 key(param->getKey().c_str());
-            String8 value;
-            if (mParam->get(key, value) == NO_ERROR) {
-                mParam->remove(key);
+            std::string key(param->getKey());
+            std::string value;
+            if (mPairs->get(key, value) == android::OK) {
+                mPairs->remove(key);
             }
         }
-        AudioParameter *mParam;
+        KeyValuePairs *mPairs;
     };
 
     /**
@@ -244,7 +246,7 @@ public:
      *      - Set the screen state.
      *
      */
-    android::status_t setParameters(const android::String8 &keyValuePairs);
+    android::status_t setParameters(const std::string &keyValuePairs);
 
     /**
      * Get the global parameters of Audio HAL.
@@ -253,7 +255,7 @@ public:
      *
      * @return OK if set is successful, error code otherwise.
      */
-    String8 getParameters(const String8 &keys);
+    std::string getParameters(const std::string &keys);
 
     /**
      * Checks if the platform state was correctly started (ie the route parameter manager
@@ -278,7 +280,7 @@ public:
      *
      * @param startedStream stream to be added to the list.
      */
-    void startStream(const Stream *startedStream);
+    void startStream(const IoStream *startedStream);
 
     /**
      * Informs that a stream is stopped.
@@ -287,7 +289,7 @@ public:
      *
      * @param startedStream stream to be added to the list.
      */
-    void stopStream(const Stream *stoppedStream);
+    void stopStream(const IoStream *stoppedStream);
 
     /**
      * Update the requested effects.
@@ -327,9 +329,9 @@ private:
      * Clear all the keys found into AudioParameter and in the configuration file.
      * If unknown keys remain, it prints a warn log.
      *
-     * @param[in,out] param: AudioParameter structure.
+     * @param[in,out] pairs: {key, value} collection.
      */
-    void clearParamKeys(AudioParameter *param);
+    void clearKeys(KeyValuePairs *pairs);
 
     /**
      * Set the Voice Band Type.
@@ -339,7 +341,7 @@ private:
      * @param[in] activeStream: current active input stream (i.e. input stream that has a valid
      *                          input device as per policy implementation.
      */
-    void setVoipBandType(const Stream *activeStream);
+    void setVoipBandType(const IoStream *activeStream);
 
     /**
      * Load the criterion configuration file.
@@ -606,7 +608,7 @@ private:
     /**
      * Input/Output Streams list.
      */
-    std::list<const Stream *>
+    std::list<const IoStream *>
     mActiveStreamsList[audio_comms::utilities::Direction::_nbDirections];
 
     std::map<std::string, CriterionType *> mRouteCriterionTypeMap;
@@ -681,4 +683,5 @@ private:
      */
     mutable android::RWLock mPfwLock;
 };
-}         // namespace android
+
+} // namespace intel_audio

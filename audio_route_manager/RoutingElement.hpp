@@ -26,6 +26,9 @@
 #include <stdint.h>
 #include <string>
 
+namespace intel_audio
+{
+
 class RoutingElement : public audio_comms::utilities::NonCopyable
 {
 public:
@@ -55,3 +58,5 @@ private:
     /** More than one routing element can share the same id (full duplex route for example)*/
     uint32_t mId;
 };
+
+} // namespace intel_audio

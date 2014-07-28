@@ -34,15 +34,13 @@
 #include <Observer.hpp>
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
-#include <Stream.hpp>
+#include <IoStream.hpp>
 #include <BitField.hpp>
 #include <cutils/bitops.h>
-#include <hardware_legacy/AudioSystemLegacy.h>
 #include <string>
 #include <utils/Log.h>
 
-using namespace android;
-using android_audio_legacy::AudioSystem;
+using android::status_t;
 using namespace std;
 using NInterfaceProvider::CInterfaceProviderImpl;
 using audio_comms::utilities::BitField;
@@ -50,6 +48,9 @@ using audio_comms::utilities::Direction;
 
 typedef android::RWLock::AutoRLock AutoR;
 typedef android::RWLock::AutoWLock AutoW;
+
+namespace intel_audio
+{
 
 const char *const AudioRouteManager::mVoiceVolume =
     "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
@@ -218,14 +219,14 @@ status_t AudioRouteManager::startService()
 
         ALOGE("parameter-manager start error: %s", strError.c_str());
         mEventThread->stop();
-        return NO_INIT;
+        return android::NO_INIT;
     }
 
     mIsStarted = true;
 
     ALOGD("%s: parameter-manager successfully started!", __FUNCTION__);
 
-    return NO_ERROR;
+    return android::OK;
 }
 
 void AudioRouteManager::reconsiderRouting(bool isSynchronous)
@@ -332,7 +333,7 @@ void AudioRouteManager::resetRouting()
     resetAvailability<AudioPort>(mPortMap);
 }
 
-void AudioRouteManager::addStream(Stream *stream)
+void AudioRouteManager::addStream(IoStream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Failure, invalid stream parameter");
 
@@ -340,7 +341,7 @@ void AudioRouteManager::addStream(Stream *stream)
     mStreamsList[stream->isOut()].push_back(stream);
 }
 
-void AudioRouteManager::removeStream(Stream *streamToRemove)
+void AudioRouteManager::removeStream(IoStream *streamToRemove)
 {
     AUDIOCOMMS_ASSERT(streamToRemove != NULL, "Failure, invalid stream parameter");
 
@@ -384,7 +385,7 @@ bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
     StreamListIterator it;
     for (it = mStreamsList[isOut].begin(); it != mStreamsList[isOut].end(); ++it) {
 
-        Stream *stream = *it;
+        IoStream *stream = *it;
         if (stream->isStarted() && !stream->isNewRouteAvailable()) {
 
             if (route->isApplicable(stream)) {
@@ -518,7 +519,7 @@ void AudioRouteManager::doEnableRoutes(bool isPreEnable)
             streamRoute->needRepath()) {
 
             ALOGV("%s: Route %s to be enabled", __FUNCTION__, streamRoute->getName().c_str());
-            if (streamRoute->route(isPreEnable) != OK) {
+            if (streamRoute->route(isPreEnable) != android::OK) {
 
                 ALOGE("\t error while routing %s", streamRoute->getName().c_str());
             }
@@ -622,7 +623,7 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
     if (!voiceVolumeHandle) {
 
         ALOGE("Could not retrieve volume path handle");
-        return INVALID_OPERATION;
+        return android::INVALID_OPERATION;
     }
 
     if (voiceVolumeHandle->isArray()) {
@@ -639,12 +640,12 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
     if (!ret) {
         ALOGE("%s: Unable to set value %f, from parameter path: %s, error=%s",
               __FUNCTION__, gain, voiceVolumeHandle->getPath().c_str(), error.c_str());
-        return INVALID_OPERATION;
+        return android::INVALID_OPERATION;
     }
-    return OK;
+    return android::OK;
 }
 
-Stream *AudioRouteManager::getVoiceOutputStream()
+IoStream *AudioRouteManager::getVoiceOutputStream()
 {
     AutoW lock(mRoutingLock);
 
@@ -898,3 +899,5 @@ void AudioRouteManager::addPortGroup(const string &name, int32_t groupId, const 
     AudioPort *port = findElementByName<AudioPort>(portMember, mPortMap);
     portGroup->addPortToGroup(port);
 }
+
+} // namespace intel_audio
