@@ -20,40 +20,33 @@
  * express and approved by Intel in writing.
  *
  */
-#define LOG_TAG "AudioStreamInImpl"
+#define LOG_TAG "AudioStreamIn"
 
-#include "AudioStreamInImpl.hpp"
+#include "StreamIn.hpp"
 #include <AudioCommsAssert.hpp>
 #include <HalAudioDump.hpp>
+#include <KeyValuePairs.hpp>
 #include <BitField.hpp>
 #include <EffectHelper.hpp>
 #include <algorithm>
 #include <cutils/properties.h>
-#include <dlfcn.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <media/AudioRecord.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <utils/Log.h>
-#include <utils/String8.h>
 
+#include <media/AudioRecord.h>
+
+#include <utils/Log.h>
 
 using namespace std;
 using audio_comms::utilities::BitField;
+using android::status_t;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
-const std::string AudioStreamInImpl::mHwEffectImplementor = "IntelLPE";
+const std::string StreamIn::mHwEffectImplementor = "IntelLPE";
 
-AudioStreamInImpl::AudioStreamInImpl(AudioIntelHal *parent,
-                                     AudioSystem::audio_in_acoustics audio_acoustics)
-    : AudioStream(parent),
+StreamIn::StreamIn(Device *parent)
+    : Stream(parent),
       mFramesLost(0),
-      mAcoustics(audio_acoustics),
       mFramesIn(0),
       mProcessingFramesIn(0),
       mProcessingBuffer(NULL),
@@ -66,18 +59,13 @@ AudioStreamInImpl::AudioStreamInImpl(AudioIntelHal *parent,
 {
 }
 
-AudioStreamInImpl::~AudioStreamInImpl()
+StreamIn::~StreamIn()
 {
     freeAllocatedBuffers();
 }
 
-status_t AudioStreamInImpl::setGain(float gain)
-{
-    return NO_ERROR;
-}
-
-status_t AudioStreamInImpl::getNextBuffer(AudioBufferProvider::Buffer *buffer,
-                                          int64_t pts)
+status_t StreamIn::getNextBuffer(AudioBufferProvider::Buffer *buffer,
+                                 int64_t /* presentationTimeStamp */)
 {
     size_t maxFrames = getBufferSizeInFrames();
 
@@ -92,15 +80,10 @@ status_t AudioStreamInImpl::getNextBuffer(AudioBufferProvider::Buffer *buffer,
     buffer->raw = mHwBuffer;
     buffer->frameCount = hwFramesToRead;
 
-    return NO_ERROR;
+    return android::OK;
 }
 
-void AudioStreamInImpl::releaseBuffer(AudioBufferProvider::Buffer *buffer)
-{
-    // Nothing special to do here...
-}
-
-status_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
+status_t StreamIn::readHwFrames(void *buffer, size_t frames)
 {
     uint32_t retryCount = 0;
     status_t ret;
@@ -119,7 +102,7 @@ status_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
                   streamSampleSpec().convertFramesToBytes(frames));
 
             if (error.find(strerror(EBADFD)) != std::string::npos) {
-                return DEAD_OBJECT;
+                return android::DEAD_OBJECT;
             }
 
             AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
@@ -153,7 +136,7 @@ status_t AudioStreamInImpl::readHwFrames(void *buffer, size_t frames)
     return ret;
 }
 
-status_t AudioStreamInImpl::readFrames(void *buffer, size_t frames, ssize_t *processedFrames)
+status_t StreamIn::readFrames(void *buffer, size_t frames, ssize_t *processedFrames)
 {
     //
     // No conversion required, read HW frames directly
@@ -161,11 +144,9 @@ status_t AudioStreamInImpl::readFrames(void *buffer, size_t frames, ssize_t *pro
     if (streamSampleSpec() == routeSampleSpec()) {
 
         status_t status = readHwFrames(buffer, frames);
-        if (status < 0) {
-
-            return status;
+        if (status == android::OK) {
+            *processedFrames = frames;
         }
-        *processedFrames = frames;
         return status;
     }
 
@@ -173,7 +154,7 @@ status_t AudioStreamInImpl::readFrames(void *buffer, size_t frames, ssize_t *pro
     // Otherwise, request for a converted buffer
     //
     status_t status = getConvertedBuffer(buffer, frames, this);
-    if (status != NO_ERROR) {
+    if (status != android::OK) {
 
         return status;
     }
@@ -191,9 +172,9 @@ status_t AudioStreamInImpl::readFrames(void *buffer, size_t frames, ssize_t *pro
     return status;
 }
 
-int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
-                                       ssize_t *processedFrames,
-                                       ssize_t *processingFramesIn)
+int StreamIn::doProcessFrames(const void *buffer, ssize_t frames,
+                              ssize_t *processedFrames,
+                              ssize_t *processingFramesIn)
 {
     int ret = 0;
 
@@ -202,7 +183,7 @@ int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
 
     while ((*processedFrames < frames) && (*processingFramesIn > 0) && (ret == 0)) {
 
-        Vector<AudioEffectHandle>::const_iterator it;
+        vector<AudioEffectHandle>::const_iterator it;
         for (it = mPreprocessorsHandlerList.begin(); it != mPreprocessorsHandlerList.end(); ++it) {
 
             if (it->mEchoReference != NULL) {
@@ -233,7 +214,7 @@ int AudioStreamInImpl::doProcessFrames(const void *buffer, ssize_t frames,
     return ret;
 }
 
-status_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames, ssize_t *processedFrames)
+status_t StreamIn::processFrames(void *buffer, ssize_t frames, ssize_t *processedFrames)
 {
     // first reload enough frames at the end of process input buffer
     if (mProcessingFramesIn < frames) {
@@ -241,7 +222,7 @@ status_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames, ssize_t 
         if (mProcessingBufferSizeInFrames < frames) {
 
             status_t ret = allocateProcessingMemory(frames);
-            if (ret != OK) {
+            if (ret != android::OK) {
 
                 return ret;
             }
@@ -300,26 +281,24 @@ status_t AudioStreamInImpl::processFrames(void *buffer, ssize_t frames, ssize_t 
     // at the end, we keep remainder frames not cosumed by effect processor.
     mProcessingFramesIn = processingFramesIn;
 
-    return OK;
+    return android::OK;
 }
 
-ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
+status_t StreamIn::read(void *buffer, size_t &bytes)
 {
-    ssize_t processedBytes;
-
     setStandby(false);
 
     mStreamLock.readLock();
 
+    status_t status;
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
-
         ALOGW("%s(buffer=%p, bytes=%ld) No route available. Generating silence for stream %p.",
               __FUNCTION__, buffer, static_cast<long int>(bytes), this);
-        processedBytes = generateSilence(bytes, buffer);
+        status = generateSilence(bytes, buffer);
 
         mStreamLock.unlock();
-        return processedBytes;
+        return status;
     }
 
     ssize_t received_frames = -1;
@@ -327,8 +306,6 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
 
     // Take the effect lock while processing
     mPreProcEffectLock.readLock();
-
-    status_t status;
 
     if (!mPreprocessorsHandlerList.empty()) {
 
@@ -339,7 +316,6 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
     }
     mPreProcEffectLock.unlock();
 
-
     if (status < 0) {
 
         ALOGE("%s(buffer=%p, bytes=%ld) returns %ld. Generating silence for stream %p.",
@@ -349,41 +325,30 @@ ssize_t AudioStreamInImpl::read(void *buffer, ssize_t bytes)
 
         mStreamLock.unlock();
 
-        if (status == DEAD_OBJECT) {
+        if (status == android::DEAD_OBJECT) {
             ALOGE("%s: execute device recovery", __FUNCTION__);
             setStandby(true);
         }
-
         return -EBADFD;
     }
-    processedBytes = streamSampleSpec().convertFramesToBytes(received_frames);
+    bytes = streamSampleSpec().convertFramesToBytes(received_frames);
 
     mStreamLock.unlock();
-    return processedBytes;
+    return android::OK;
 }
 
-status_t AudioStreamInImpl::dump(int fd, const Vector<String16> &args)
-{
-    return NO_ERROR;
-}
-
-status_t AudioStreamInImpl::standby()
-{
-    return setStandby(true);
-}
-
-void AudioStreamInImpl::resetFramesLost()
+void StreamIn::resetFramesLost()
 {
     // setVoiceVolume and mixing during voice call cannot happen together
     // need a lock; but deadlock may appear during simultaneous R or W
     // so remove lock and the reset of mFramesLost which is never updated btw
 }
 
-unsigned int AudioStreamInImpl::getInputFramesLost() const
+unsigned int StreamIn::getInputFramesLost() const
 {
     unsigned int count = mFramesLost;   // set to 0 during construction
 
-    AudioStreamInImpl *mutable_this = const_cast<AudioStreamInImpl *>(this);
+    StreamIn *mutable_this = const_cast<StreamIn *>(this);
     // Requirement from AudioHardwareInterface.h:
     // Audio driver is expected to reset the value to 0 and restart counting upon
     // returning the current value by this function call.
@@ -391,20 +356,8 @@ unsigned int AudioStreamInImpl::getInputFramesLost() const
     return count;
 }
 
-status_t AudioStreamInImpl::setParameters(const String8 &keyValuePairs)
-{
-    AudioParameter param = AudioParameter(keyValuePairs);
-    int inputSource;
-    String8 key = String8(AudioParameter::keyInputSource);
-    if (param.getInt(key, inputSource) == NO_ERROR) {
-        setInputSource(inputSource);
-        // Removes this input stream specific key
-        param.remove(key);
-    }
-    return AudioStream::setParameters(param.toString());
-}
 
-status_t AudioStreamInImpl::allocateHwBuffer()
+status_t StreamIn::allocateHwBuffer()
 {
     freeAllocatedBuffers();
 
@@ -414,59 +367,76 @@ status_t AudioStreamInImpl::allocateHwBuffer()
     if (!mHwBuffer) {
 
         ALOGE("%s: cannot allocate resampler Hwbuffer", __FUNCTION__);
-        return NO_MEMORY;
+        return android::NO_MEMORY;
     }
-    return NO_ERROR;
+    return android::OK;
 }
 
-void AudioStreamInImpl::freeAllocatedBuffers()
+void StreamIn::freeAllocatedBuffers()
 {
     delete[] mHwBuffer;
     mHwBuffer = NULL;
 }
 
-
-void AudioStreamInImpl::setInputSource(uint32_t inputSource)
+status_t StreamIn::attachRouteL()
 {
-    setApplicabilityMask(BitField::indexToMask(inputSource));
-}
-
-status_t AudioStreamInImpl::attachRouteL()
-{
-    status_t status = AudioStream::attachRouteL();
-    if (status != NO_ERROR) {
+    status_t status = Stream::attachRouteL();
+    if (status != android::OK) {
 
         return status;
     }
     return allocateHwBuffer();
 }
 
-status_t AudioStreamInImpl::detachRouteL()
+status_t StreamIn::detachRouteL()
 {
     freeAllocatedBuffers();
-    return AudioStream::detachRouteL();
+    return Stream::detachRouteL();
 }
 
-size_t AudioStreamInImpl::bufferSize() const
-{
-    return getBufferSize();
-}
 
-bool AudioStreamInImpl::isHwEffectL(effect_handle_t effect)
+bool StreamIn::isHwEffectL(effect_handle_t effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     string implementor;
     status_t err = getAudioEffectImplementorFromHandle(effect, implementor);
-    if (err != NO_ERROR) {
+    if (err != android::OK) {
 
         return false;
     }
     return implementor == mHwEffectImplementor;
 }
 
-status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
+status_t StreamIn::setParameters(const string &keyValuePairs)
+{
+    KeyValuePairs pairs(keyValuePairs);
+    int inputSource;
+    string key(AUDIO_PARAMETER_STREAM_INPUT_SOURCE);
+    if (pairs.get(key, inputSource) == android::OK) {
+        setInputSource(static_cast<audio_source_t>(inputSource));
+        // Removes this input stream specific key
+        pairs.remove(key);
+    }
+    return Stream::setParameters(pairs.toString());
+}
+
+status_t StreamIn::setDevice(audio_devices_t device)
+{
+    if (!audio_is_input_device(device)) {
+        ALOGE("%s: invalid input device 0x%X", __FUNCTION__, device);
+        return android::BAD_VALUE;
+    }
+    return Stream::setDevice(device & ~AUDIO_DEVICE_BIT_IN);
+}
+
+void StreamIn::setInputSource(audio_source_t inputSource)
+{
+    setApplicabilityMask(BitField::indexToMask(inputSource));
+}
+
+status_t StreamIn::addAudioEffect(effect_handle_t effect)
 {
     ALOGD("%s (effect=%p)", __FUNCTION__, effect);
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
@@ -484,9 +454,9 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
          */
         string name;
         status_t err = getAudioEffectNameFromHandle(effect, name);
-        if (err != NO_ERROR) {
+        if (err != android::OK) {
 
-            return BAD_VALUE;
+            return android::BAD_VALUE;
         }
         addRequestedEffect(EffectHelper::convertEffectNameToProcId(name));
         if (isStarted()) {
@@ -510,10 +480,10 @@ status_t AudioStreamInImpl::addAudioEffect(effect_handle_t effect)
         addSwAudioEffectL(effect);
     }
 
-    return NO_ERROR;
+    return android::OK;
 }
 
-status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
+status_t StreamIn::removeAudioEffect(effect_handle_t effect)
 {
     ALOGD("%s (effect=%p)", __FUNCTION__, effect);
 
@@ -532,9 +502,9 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
          */
         string name;
         status_t err = getAudioEffectNameFromHandle(effect, name);
-        if (err != NO_ERROR) {
+        if (err != android::OK) {
 
-            return BAD_VALUE;
+            return android::BAD_VALUE;
         }
         removeRequestedEffect(EffectHelper::convertEffectNameToProcId(name));
         if (isStarted()) {
@@ -552,44 +522,38 @@ status_t AudioStreamInImpl::removeAudioEffect(effect_handle_t effect)
          */
         removeSwAudioEffectL(effect);
     }
-    return NO_ERROR;
+    return android::OK;
 }
 
-status_t AudioStreamInImpl::addSwAudioEffectL(effect_handle_t effect,
-                                              echo_reference_itfe *reference)
+status_t StreamIn::addSwAudioEffectL(effect_handle_t effect,
+                                     echo_reference_itfe *reference)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     // audio effects processing is very costy in term of CPU,
     // so useless to add the same effect more than one time
-    Vector<AudioEffectHandle>::const_iterator it;
+    vector<AudioEffectHandle>::const_iterator it;
     it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
     if (it != mPreprocessorsHandlerList.end()) {
 
         ALOGW("%s (effect=%p): it is useless to add again the same effect",
               __FUNCTION__, effect);
-        return NO_ERROR;
+        return android::OK;
     }
-
-    status_t ret = mPreprocessorsHandlerList.add(AudioEffectHandle(effect, reference));
-    if (ret < 0) {
-
-        ALOGE("%s (effect=%p): unable to add effect!", __FUNCTION__, effect);
-        return ret;
-    }
+    mPreprocessorsHandlerList.push_back(AudioEffectHandle(effect, reference));
     ALOGD("%s (effect=%p): effect added. number of stored effects is %d", __FUNCTION__,
           effect, mPreprocessorsHandlerList.size());
-    return NO_ERROR;
+    return android::OK;
 }
 
-status_t AudioStreamInImpl::removeSwAudioEffectL(effect_handle_t effect)
+status_t StreamIn::removeSwAudioEffectL(effect_handle_t effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
-    Vector<AudioEffectHandle>::iterator it;
+    vector<AudioEffectHandle>::iterator it;
     it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
     if (it != mPreprocessorsHandlerList.end()) {
@@ -607,13 +571,13 @@ status_t AudioStreamInImpl::removeSwAudioEffectL(effect_handle_t effect)
         ALOGD("%s (effect=%p): number of effects after erase %d",
               __FUNCTION__, effect, mPreprocessorsHandlerList.size());
 
-        return NO_ERROR;
+        return android::OK;
     }
-    return BAD_VALUE;
+    return android::BAD_VALUE;
 }
 
-status_t AudioStreamInImpl::getAudioEffectNameFromHandle(effect_handle_t effect,
-                                                         string &name) const
+status_t StreamIn::getAudioEffectNameFromHandle(effect_handle_t effect,
+                                                string &name) const
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -621,15 +585,15 @@ status_t AudioStreamInImpl::getAudioEffectNameFromHandle(effect_handle_t effect,
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
 
         ALOGE("%s: could not get effect descriptor", __FUNCTION__);
-        return BAD_VALUE;
+        return android::BAD_VALUE;
     }
-    ALOGE("%s: Name=%s", __FUNCTION__, desc.name);
+    ALOGV("%s: Name=%s", __FUNCTION__, desc.name);
     name = string(desc.name);
-    return NO_ERROR;
+    return android::OK;
 }
 
-status_t AudioStreamInImpl::getAudioEffectImplementorFromHandle(effect_handle_t effect,
-                                                                string &implementor) const
+status_t StreamIn::getAudioEffectImplementorFromHandle(effect_handle_t effect,
+                                                       string &implementor) const
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -637,14 +601,14 @@ status_t AudioStreamInImpl::getAudioEffectImplementorFromHandle(effect_handle_t 
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
 
         ALOGE("%s: could not get effect descriptor", __FUNCTION__);
-        return BAD_VALUE;
+        return android::BAD_VALUE;
     }
-    ALOGE("%s: Name=%s", __FUNCTION__, desc.implementor);
+    ALOGV("%s: Name=%s", __FUNCTION__, desc.implementor);
     implementor = string(desc.implementor);
-    return NO_ERROR;
+    return android::OK;
 }
 
-bool AudioStreamInImpl::isAecEffect(effect_handle_t effect)
+bool StreamIn::isAecEffect(effect_handle_t effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -662,7 +626,7 @@ bool AudioStreamInImpl::isAecEffect(effect_handle_t effect)
     return false;
 }
 
-void AudioStreamInImpl::getCaptureDelay(struct echo_reference_buffer *buffer)
+void StreamIn::getCaptureDelay(struct echo_reference_buffer *buffer)
 {
     /* read frames available in kernel driver buffer */
     size_t kernel_frames;
@@ -671,7 +635,7 @@ void AudioStreamInImpl::getCaptureDelay(struct echo_reference_buffer *buffer)
     long kernel_delay;
     long delay_ns;
 
-    if (getFramesAvailable(kernel_frames, tstamp) != OK) {
+    if (getFramesAvailable(kernel_frames, tstamp) != android::OK) {
 
         buffer->time_stamp.tv_sec = 0;
         buffer->time_stamp.tv_nsec = 0;
@@ -697,8 +661,8 @@ void AudioStreamInImpl::getCaptureDelay(struct echo_reference_buffer *buffer)
           kernel_delay, buf_delay, kernel_frames);
 }
 
-int32_t AudioStreamInImpl::updateEchoReference(ssize_t frames,
-                                               struct echo_reference_itfe *reference)
+int32_t StreamIn::updateEchoReference(ssize_t frames,
+                                      struct echo_reference_itfe *reference)
 {
     struct echo_reference_buffer b;
 
@@ -718,7 +682,7 @@ int32_t AudioStreamInImpl::updateEchoReference(ssize_t frames,
 
                 ALOGE(" %s(frames=%ld): realloc failed", __FUNCTION__,
                       static_cast<long int>(frames));
-                return NO_MEMORY;
+                return android::NO_MEMORY;
             }
             mReferenceBuffer = referenceBuffer;
         }
@@ -740,8 +704,8 @@ int32_t AudioStreamInImpl::updateEchoReference(ssize_t frames,
     return b.delay_ns;
 }
 
-status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
-                                              struct echo_reference_itfe *reference)
+status_t StreamIn::pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
+                                     struct echo_reference_itfe *reference)
 {
     /* read frames from echo reference buffer and update echo delay
      * mReferenceFramesIn is updated with frames available in mReferenceBuffer */
@@ -760,7 +724,7 @@ status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t pr
 
         ALOGW(" %s(frames %ld): process_reverse is NULL", __FUNCTION__,
               static_cast<long int>(frames));
-        return BAD_VALUE;
+        return android::BAD_VALUE;
     }
 
     audio_buffer_t buf;
@@ -784,7 +748,7 @@ status_t AudioStreamInImpl::pushEchoReference(ssize_t frames, effect_handle_t pr
     return processingReturn;
 }
 
-status_t AudioStreamInImpl::setPreprocessorParam(effect_handle_t effect, effect_param_t *param)
+status_t StreamIn::setPreprocessorParam(effect_handle_t effect, effect_param_t *param)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -805,7 +769,7 @@ status_t AudioStreamInImpl::setPreprocessorParam(effect_handle_t effect, effect_
     return ret == 0 ? param->status : ret;
 }
 
-status_t AudioStreamInImpl::setPreprocessorEchoDelay(effect_handle_t effect, int32_t delayInUs)
+status_t StreamIn::setPreprocessorEchoDelay(effect_handle_t effect, int32_t delayInUs)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
@@ -834,7 +798,7 @@ status_t AudioStreamInImpl::setPreprocessorEchoDelay(effect_handle_t effect, int
     return setPreprocessorParam(effect, param);
 }
 
-status_t AudioStreamInImpl::allocateProcessingMemory(ssize_t frames)
+status_t StreamIn::allocateProcessingMemory(ssize_t frames)
 {
     mProcessingBufferSizeInFrames = frames;
 
@@ -845,7 +809,7 @@ status_t AudioStreamInImpl::allocateProcessingMemory(ssize_t frames)
 
         ALOGE(" %s(frames=%ld): realloc failed errno = %s!", __FUNCTION__,
               static_cast<long int>(frames), strerror(errno));
-        return NO_MEMORY;
+        return android::NO_MEMORY;
     }
     mProcessingBuffer = processingBuffer;
     ALOGD("%s(frames=%ld): mProcessingBuffer=%p size extended to %ld frames (i.e. %d bytes)",
@@ -855,7 +819,7 @@ status_t AudioStreamInImpl::allocateProcessingMemory(ssize_t frames)
           static_cast<long int>(mProcessingBufferSizeInFrames),
           streamSampleSpec().convertFramesToBytes(mProcessingBufferSizeInFrames));
 
-    return NO_ERROR;
+    return android::OK;
 }
 
-}       // namespace android
+} // namespace intel_audio

@@ -27,6 +27,9 @@
 #include <map>
 #include <string>
 
+namespace intel_audio
+{
+
 /**
  * This class materialize a wrapping object between an android-parameter refered by its key
  * and a Parameter Manager element (criterion or rogue) refered by its name (for a criterion)
@@ -163,3 +166,5 @@ private:
 
     const std::string mAndroidParameter; /**< Name of the parameter. */
 };
+
+} // namespace intel_audio

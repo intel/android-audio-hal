@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright © 2012 Intel
+ * Copyright (c) 2012-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -11,7 +11,7 @@
  * Material is protected by worldwide copyright and trade secret laws and
  * treaty provisions. No part of the Material may be used, copied, reproduced,
  * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel’s prior express written permission.
+ * disclosed in any way without Intel's prior express written permission.
  *
  * No license under any patent, copyright, trade secret or other intellectual
  * property right is granted to or conferred upon you by disclosure or delivery
@@ -24,20 +24,17 @@
 #include "SampleSpecTest.hpp"
 #include <SampleSpec.hpp>
 
-#include <system/audio.h>
-#include <hardware_legacy/AudioSystemLegacy.h>
+#include <hardware/audio.h>
 #include <limits.h>
 #include <limits>
 #include <signal.h>
 #include <errno.h>
 #include <gtest/gtest.h>
 
-using ::android_audio_legacy::SampleSpec;
-using ::android_audio_legacy::SampleSpecItem;
-using ::android_audio_legacy::ChannelCountSampleSpecItem;
-using ::android_audio_legacy::FormatSampleSpecItem;
-using ::android_audio_legacy::RateSampleSpecItem;
 using ::testing::Test;
+
+namespace intel_audio
+{
 
 TEST(SampleSpec, setGet)
 {
@@ -372,3 +369,5 @@ TEST(SampleSpec, convertUsecToframes)
     EXPECT_EQ(0u, sampleSpec.convertUsecToframes(0));
     EXPECT_EQ(44000 * 1 / 1000000u, sampleSpec.convertUsecToframes(1));
 }
+
+} // namespace intel_audio

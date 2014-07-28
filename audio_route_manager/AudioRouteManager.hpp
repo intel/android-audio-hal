@@ -26,7 +26,7 @@
 #include "AudioRoute.hpp"
 #include "RoutingStage.hpp"
 #include "RouteInterface.hpp"
-#include "StreamInterface.hpp"
+#include "IStreamInterface.hpp"
 #include <AudioCommsAssert.hpp>
 #include <ParameterMgrHelper.hpp>
 #include <Direction.hpp>
@@ -42,16 +42,20 @@
 
 class CEventThread;
 class CParameterMgrPlatformConnector;
-class CParameterMgrPlatformConnectorLogger;
-class Stream;
+class Criterion;
+class CriterionType;
+class ParameterMgrHelper;
+
+namespace intel_audio
+{
+
+class IoStream;
 class AudioRoute;
 class AudioPortGroup;
 class AudioPort;
 class AudioStreamRoute;
-class Criterion;
-class CriterionType;
-class ParameterMgrHelper;
 struct pcm_config;
+class CParameterMgrPlatformConnectorLogger;
 
 class AudioRouteManager : public NInterfaceProvider::IInterfaceImplementer,
                           public IEventListener,
@@ -67,8 +71,8 @@ private:
     typedef std::map<std::string, AudioPort *>::const_iterator PortMapConstIterator;
     typedef std::map<std::string, AudioPortGroup *>::iterator PortGroupMapIterator;
     typedef std::map<std::string, AudioPortGroup *>::const_iterator PortGroupMapConstIterator;
-    typedef std::list<Stream *>::iterator StreamListIterator;
-    typedef std::list<Stream *>::const_iterator StreamListConstIterator;
+    typedef std::list<IoStream *>::iterator StreamListIterator;
+    typedef std::list<IoStream *>::const_iterator StreamListConstIterator;
     typedef std::map<std::string, Criterion *>::iterator CriteriaMapIterator;
     typedef std::map<std::string, Criterion *>::const_iterator CriteriaMapConstIterator;
     typedef std::map<std::string, CriterionType *>::iterator CriteriaTypeMapIterator;
@@ -195,12 +199,12 @@ private:
             return android::OK;
         }
 
-        virtual void addStream(Stream *stream)
+        virtual void addStream(IoStream *stream)
         {
             return mRouteMgr->addStream(stream);
         }
 
-        virtual void removeStream(Stream *stream)
+        virtual void removeStream(IoStream *stream)
         {
             return mRouteMgr->removeStream(stream);
         }
@@ -225,7 +229,7 @@ private:
             return mRouteMgr->setVoiceVolume(gain);
         }
 
-        virtual Stream *getVoiceOutputStream()
+        virtual IoStream *getVoiceOutputStream()
         {
             return mRouteMgr->getVoiceOutputStream();
         }
@@ -444,7 +448,7 @@ private:
      *
      * @param[in] stream stream to be added (for future routing purpose).
      */
-    void addStream(Stream *stream);
+    void addStream(IoStream *stream);
 
     /**
      * Remove a stream from route manager.
@@ -452,7 +456,7 @@ private:
      *
      * @param[in] stream to be removed.
      */
-    void removeStream(Stream *streamToRemove);
+    void removeStream(IoStream *streamToRemove);
 
     /**
      * Starts the route manager service.
@@ -572,7 +576,7 @@ private:
      *
      * @return valid stream pointer if found, NULL otherwise.
      */
-    Stream *getVoiceOutputStream();
+    IoStream *getVoiceOutputStream();
 
     /**
      * From worker thread context
@@ -832,7 +836,7 @@ private:
     /**
      * array of list of streams opened.
      */
-    std::list<Stream *> mStreamsList[audio_comms::utilities::Direction::_nbDirections];
+    std::list<IoStream *> mStreamsList[audio_comms::utilities::Direction::_nbDirections];
 
     std::map<std::string, CriterionType *> mCriterionTypesMap; /**< criterion types map. */
 
@@ -921,3 +925,5 @@ private:
     template <typename T>
     struct routingElementSupported;
 };
+
+} // namespace intel_audio

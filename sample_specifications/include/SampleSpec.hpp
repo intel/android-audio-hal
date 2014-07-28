@@ -23,12 +23,12 @@
 #pragma once
 
 
-#include <system/audio.h>
+#include <hardware/audio.h>
 #include <tinyalsa/asoundlib.h>
 #include <string.h>
 #include <vector>
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 //
@@ -133,14 +133,13 @@ public:
     }
     audio_format_t getFormat() const
     {
-
         return static_cast<audio_format_t>(getSampleSpecItem(FormatSampleSpecItem));
     }
-    void setChannelMask(uint32_t channelMask)
+    void setChannelMask(audio_channel_mask_t channelMask)
     {
         mChannelMask = channelMask;
     }
-    uint32_t getChannelMask() const
+    audio_channel_mask_t getChannelMask() const
     {
         return mChannelMask;
     }
@@ -244,7 +243,7 @@ private:
                                               *         -format
                                               *         -sample rate. */
 
-    uint32_t mChannelMask; /**< Bit field that defines the channels used. */
+    audio_channel_mask_t mChannelMask; /**< Bit field that defines the channels used. */
 
     std::vector<ChannelsPolicy> mChannelsPolicy; /**< channels policy array. */
 
@@ -254,4 +253,5 @@ private:
     static const uint32_t mDefaultRate = 48000; /**< default rate is 48 kHz. */
     static const uint32_t mMaxChannels = 32; /**< supports until 32 channels. */
 };
-}  // namespace android
+
+} // namespace intel_audio

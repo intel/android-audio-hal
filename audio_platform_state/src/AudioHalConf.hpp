@@ -24,6 +24,9 @@
 
 #include <string>
 
+namespace intel_audio
+{
+
 static const char *const gAudioHalConfFilePath =
     "/system/etc/route_criteria.conf";
 static const char *const gAudioHalVendorConfFilePath =
@@ -61,3 +64,5 @@ static const std::string gValueSet = "ValueSet";
 static const std::string gModemValueSet = "ModemValueSet";
 static const std::string gInterfaceLibraryName = "InterfaceLibrary";
 static const std::string gInterfaceLibraryInstance = "Instance";
+
+} // namespace intel_audio

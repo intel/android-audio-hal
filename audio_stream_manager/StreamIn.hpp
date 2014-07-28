@@ -22,101 +22,43 @@
  */
 #pragma once
 
-#include "AudioIntelHal.hpp"
-#include "AudioStream.hpp"
+#include "Device.hpp"
+#include "Stream.hpp"
+#include <StreamInterface.hpp>
 #include <media/AudioBufferProvider.h>
+#include <vector>
 
-
-namespace android_audio_legacy
+namespace intel_audio
 {
 
-class AudioStreamInImpl : public AudioStreamIn, public AudioStream,
-                          public android::AudioBufferProvider
+class StreamIn : public StreamInInterface, public Stream,
+                 public android::AudioBufferProvider
 {
 private:
     typedef std::list<effect_handle_t>::iterator AudioEffectsListIterator;
 
 public:
-    AudioStreamInImpl(AudioIntelHal *parent,
-                      AudioSystem::audio_in_acoustics audio_acoustics);
+    StreamIn(Device *parentn);
+    virtual ~StreamIn();
 
-    /**
-     * Destructor.
-     * Might be called while another thread of Audio Flinger tries not remove audio effect in the
-     * meanwhile. Must garantee thread safe access.
-     * Note that memory allocated will be freed upon doClose callback from route manager.
-     */
-    virtual ~AudioStreamInImpl();
-
-    virtual uint32_t sampleRate() const
-    {
-        return AudioStream::sampleRate();
-    }
-
-    virtual size_t bufferSize() const;
-
-    virtual uint32_t channels() const
-    {
-        return AudioStream::channels();
-    }
-
-    virtual int format() const
-    {
-        return AudioStream::format();
-    }
-
-    virtual ssize_t read(void *buffer, ssize_t bytes);
-    virtual android::status_t dump(int fd, const android::Vector<String16> &args);
-
-    virtual android::status_t setGain(float gain);
-
-    virtual android::status_t standby();
-
-    virtual android::status_t setParameters(const android::String8 &keyValuePairs);
-
-    virtual android::String8 getParameters(const android::String8 &keys)
-    {
-        return AudioStream::getParameters(keys);
-    }
-
-    /**
-     * Return the amount of input frames lost in the audio driver since the last call
-     * of this function.
-     * Audio driver is expected to reset the value to 0 and restart counting upon returning
-     * the current value by this function call.
-     * Such loss typically occurs when the user space process is blocked longer than the
-     * capacity of audio driver buffers.
-     * Unit: the number of input audio frames.
-     */
-    virtual unsigned int getInputFramesLost() const;
-
-    /**
-     * Called by an input stream in to add an effect.
-     * When calling this function, the stream must be already attached to an audio route.
-     *
-     * @param[in] pStream input stream pointer.
-     * @param[in] effect structure of the effect to add.
-     *
-     * @return status_t OK upon succes, error code otherwise.
-     */
+    // From AudioStreamIn
     virtual android::status_t addAudioEffect(effect_handle_t effect);
-
-    /**
-     * Called by an input stream in to remove an effect.
-     * When calling this function, the stream must be still attached to an audio route.
-     *
-     * @param[in] pStream input stream pointer.
-     * @param[in] effect structure of the effect to add.
-     *
-     * @return status_t OK upon succes, error code otherwise.
-     */
     virtual android::status_t removeAudioEffect(effect_handle_t effect);
+
+    virtual int setGain(float /* gain */) { return android::OK; }
+    virtual android::status_t read(void *buffer, size_t &bytes);
+    virtual uint32_t getInputFramesLost() const;
+    virtual android::status_t setParameters(const std::string &keyValuePairs);
+    virtual android::status_t setDevice(audio_devices_t device);
 
     // From AudioBufferProvider
     virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer,
-                                            int64_t pts = kInvalidPTS);
-    virtual void releaseBuffer(android::AudioBufferProvider::Buffer *buffer);
+                                            int64_t presentationTimeStamp = kInvalidPTS);
 
+    /** @note API not implemented in input stream*/
+    virtual void releaseBuffer(android::AudioBufferProvider::Buffer */* buffer */) {}
+
+    // From IoStream
     /**
      * Get stream direction.
      * From Stream class.
@@ -126,14 +68,6 @@ public:
     {
         return false;
     }
-
-    /**
-     * Set the input source.
-     * This function is non-reetrant.
-     *
-     * @param[in] inputSource: input source to be used by this stream.
-     */
-    void setInputSource(uint32_t inputSource);
 
 protected:
     /**
@@ -153,6 +87,14 @@ protected:
     virtual android::status_t detachRouteL();
 
 private:
+    /**
+     * Set the input source.
+     * This function is non-reetrant.
+     *
+     * @param[in] inputSource: input source to be used by this stream.
+     */
+    void setInputSource(audio_source_t inputSource);
+
     android::status_t readHwFrames(void *buffer, size_t frames);
 
     /**
@@ -164,7 +106,7 @@ private:
      *
      * @return status_t OK upon succes, error code otherwise.
      */
-    status_t removeSwAudioEffectL(effect_handle_t effect);
+    android::status_t removeSwAudioEffectL(effect_handle_t effect);
 
     /**
      * Add effect on the stream in routing locked context.
@@ -174,8 +116,8 @@ private:
      *
      * @return status_t OK upon succes, error code otherwise.
      */
-    status_t addSwAudioEffectL(effect_handle_t effect,
-                               struct echo_reference_itfe *reference = NULL);
+    android::status_t addSwAudioEffectL(effect_handle_t effect,
+                                        struct echo_reference_itfe *reference = NULL);
 
     /**
      * Retrieve audio effect name from effect handle.
@@ -185,7 +127,7 @@ private:
      *
      * @return OK if name retrieved, error code otherwise.
      */
-    status_t getAudioEffectNameFromHandle(effect_handle_t effect, std::string &name) const;
+    android::status_t getAudioEffectNameFromHandle(effect_handle_t effect, std::string &name) const;
 
     /**
      * Retrieve audio effect implementor name from effect handle.
@@ -195,8 +137,8 @@ private:
      *
      * @return OK if implementor retrieved, error code otherwise.
      */
-    status_t getAudioEffectImplementorFromHandle(effect_handle_t effect,
-                                                 std::string &implementor) const;
+    android::status_t getAudioEffectImplementorFromHandle(effect_handle_t effect,
+                                                          std::string &implementor) const;
 
     /**
      * Checks if the requested effect is a HW supported effect.
@@ -317,8 +259,8 @@ private:
      *
      * @return OK if successful operation, error code otherwise.
      */
-    status_t pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
-                               struct echo_reference_itfe *reference);
+    android::status_t pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
+                                        struct echo_reference_itfe *reference);
 
     /**
      * Update the echo reference with the frames read from the audio device.
@@ -338,7 +280,7 @@ private:
      *
      * @return OK if successful operation, error code otherwise.
      */
-    status_t setPreprocessorEchoDelay(effect_handle_t effect, int32_t delay_us);
+    android::status_t setPreprocessorEchoDelay(effect_handle_t effect, int32_t delay_us);
 
     /**
      * Set preprocessor parameters.
@@ -348,7 +290,7 @@ private:
      *
      * @return OK if successful operation, error code otherwise.
      */
-    status_t setPreprocessorParam(effect_handle_t effect, effect_param_t *param);
+    android::status_t setPreprocessorParam(effect_handle_t effect, effect_param_t *param);
 
     /**
      * Get the capture delay.
@@ -363,7 +305,6 @@ private:
      * amount of input frames lost in the audio driver (i.e. not provided on time to client).
      */
     unsigned int mFramesLost;
-    AudioSystem::audio_in_acoustics mAcoustics; /**< acoustic effects status. */
 
     ssize_t mFramesIn; /**< frames available in stream input buffer. */
 
@@ -402,11 +343,11 @@ private:
     /**
      * It is vector which contains the handlers to accoustics SW effects.
      */
-    Vector<AudioEffectHandle> mPreprocessorsHandlerList;
+    std::vector<AudioEffectHandle> mPreprocessorsHandlerList;
 
     char *mHwBuffer; /**< buffer in which samples are read from audio device. */
     ssize_t mHwBufferSize; /**< Size of the buffer in which samples are read from audio device. */
 
     static const std::string mHwEffectImplementor; /**< Implementor name for HW effects. */
 };
-}         // namespace android
+} // namespace intel_audio

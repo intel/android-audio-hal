@@ -29,8 +29,9 @@
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
 
-using android_audio_legacy::SampleSpec;
-using android_audio_legacy::AudioUtils;
+
+namespace intel_audio
+{
 
 pcm *TinyAlsaAudioDevice::getPcmDevice()
 {
@@ -95,7 +96,7 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
              __FUNCTION__, pcm_get_buffer_size(mPcmDevice),
              config.period_count * config.period_size);
 
-    return android::NO_ERROR;
+    return android::OK;
 
 close_device:
 
@@ -120,3 +121,5 @@ android::status_t TinyAlsaAudioDevice::close()
 
     return android::OK;
 }
+
+} // namespace intel_audio

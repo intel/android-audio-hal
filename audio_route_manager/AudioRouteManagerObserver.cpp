@@ -26,6 +26,9 @@
 #include <AudioCommsAssert.hpp>
 #include <utils/Log.h>
 
+namespace intel_audio
+{
+
 AudioRouteManagerObserver::AudioRouteManagerObserver()
 {
     AUDIOCOMMS_ASSERT(sem_init(&mSyncSem, 0, 0) == 0, "failed to create semaphore");
@@ -45,3 +48,5 @@ void AudioRouteManagerObserver::notify()
 {
     AUDIOCOMMS_ASSERT(sem_post(&mSyncSem) == 0, "failed to post semaphore");
 }
+
+} // namespace intel_audio

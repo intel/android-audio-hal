@@ -22,12 +22,14 @@
  */
 #include "ParameterAdapter.hpp"
 #include "AudioPlatformState.hpp"
-#include <utils/String8.h>
+#include <string>
 #include <AudioCommsAssert.hpp>
 
 using namespace android;
 using namespace std;
-using android_audio_legacy::AudioPlatformState;
+
+namespace intel_audio
+{
 
 const std::string ParameterAdapter::mKeyValueSeparatorToken = "=";
 
@@ -40,7 +42,8 @@ ParameterAdapter::ParameterAdapter(AudioPlatformState *client)
 void ParameterAdapter::onValueChanged(const string &key, const string &value)
 {
     AUDIOCOMMS_ASSERT(mClient != NULL, "invalid platform state handler");
-    string param(key + mKeyValueSeparatorToken + value);
-    mClient->setParameters(String8(param.c_str()));
+    mClient->setParameters(key + mKeyValueSeparatorToken + value);
 
 }
+
+} // namespace intel_audio

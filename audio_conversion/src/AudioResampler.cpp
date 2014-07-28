@@ -30,7 +30,7 @@
 
 using namespace android;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 AudioResampler::AudioResampler(SampleSpecItem sampleSpecItem)
@@ -130,4 +130,4 @@ status_t AudioResampler::convert(const void *src,
 
     return NO_ERROR;
 }
-}  // namespace android
+}  // namespace intel_audio

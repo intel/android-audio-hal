@@ -32,7 +32,7 @@ namespace intel_audio
 {
 
 /**
- * Helper class to parse / retrieve a semi-colon separated string of key=value pairs.
+ * Helper class to parse / retrieve a semi-colon separated string of {key, value} pairs.
  */
 class KeyValuePairs
 {
@@ -47,19 +47,19 @@ public:
     virtual ~KeyValuePairs();
 
     /**
-     * Convert the AudioParameter into a semi-colon separated string of key=value pairs.
+     * Convert the AudioParameter into a semi-colon separated string of {key, value} pairs.
      *
-     * @return semi-colon separated string of key=value pairs
+     * @return semi-colon separated string of {key, value} pairs
      */
     std::string toString();
 
     /**
-     * Add all pairs contained in a semi-colon separated string of key=value to the collection.
+     * Add all pairs contained in a semi-colon separated string of {key, value} to the collection.
      * The collection may contains keys and/or keys-value pairs.
      * If the key is found, it will just update the value.
      * If the key is not found, it will add the new key and its associated value.
      *
-     * @param[in] keyValuePairs semi-colon separated string of key=value pairs.
+     * @param[in] keyValuePairs semi-colon separated string of {key, value} pairs.
      *
      * @return OK if all key / value pairs were added correctly.
      * @return error code otherwise, at least one pair addition failed.
@@ -122,7 +122,7 @@ public:
     }
 
     /**
-     * @return the number of key=value pairs found in the collection.
+     * @return the number of {key, value} pairs found in the collection.
      */
     size_t size()
     {
@@ -154,7 +154,7 @@ private:
 
     std::map<std::string, std::string> mMap; /**< value pair collection Map indexed by the key. */
 
-    static const char *const mPairDelimiter; /**< Delimiter between key=value pairs. */
+    static const char *const mPairDelimiter; /**< Delimiter between {key, value} pairs. */
     static const char *const mPairAssociator; /**< key value Pair token. */
 };
 

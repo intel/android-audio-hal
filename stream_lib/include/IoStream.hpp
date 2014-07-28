@@ -30,13 +30,16 @@
 typedef android::RWLock::AutoRLock AutoR;
 typedef android::RWLock::AutoWLock AutoW;
 
+namespace intel_audio
+{
+
 class IStreamRoute;
 class IAudioDevice;
 
-class Stream
+class IoStream
 {
 public:
-    Stream()
+    IoStream()
         : mCurrentStreamRoute(NULL),
           mNewStreamRoute(NULL),
           mEffectsRequestedMask(0),
@@ -81,11 +84,11 @@ public:
     virtual bool isStarted() const = 0;
 
     /**
-     * Get the device(s) assigned to the stream.
+     * Checks if a stream has been routed from a policy point of view..
      *
-     * @return device mask.
+     * @return true if the stream is routed by policy, false otherwise.
      */
-    virtual uint32_t getDevices() const = 0;
+    virtual bool isRoutedByPolicy() const = 0;
 
     /**
      * Applicability mask.
@@ -133,7 +136,7 @@ public:
      *
      * @return sample specifications.
      */
-    android_audio_legacy::SampleSpec routeSampleSpec() const { return mRouteSampleSpec; }
+    SampleSpec routeSampleSpec() const { return mRouteSampleSpec; }
 
     /**
      * Get the stream sample specification.
@@ -141,7 +144,7 @@ public:
      *
      * @return sample specifications.
      */
-    android_audio_legacy::SampleSpec streamSampleSpec() const
+    SampleSpec streamSampleSpec() const
     {
         return mSampleSpec;
     }
@@ -151,9 +154,19 @@ public:
      *
      * @return sample rate of the stream.
      */
-    inline uint32_t sampleRate() const
+    inline uint32_t getSampleRate() const
     {
         return mSampleSpec.getSampleRate();
+    }
+
+    /**
+     * Set the sample rate of the stream.
+     *
+     * @param[in] rate of the stream.
+     */
+    inline void setSampleRate(uint32_t rate)
+    {
+        mSampleSpec.setSampleRate(rate);
     }
 
     /**
@@ -161,9 +174,19 @@ public:
      *
      * @return format of the stream.
      */
-    inline int format() const
+    inline audio_format_t getFormat() const
     {
         return mSampleSpec.getFormat();
+    }
+
+    /**
+     * Set the format of the stream.
+     *
+     * @param[in] format of the stream.
+     */
+    inline void setFormat(audio_format_t format)
+    {
+        mSampleSpec.setFormat(format);
     }
 
     /**
@@ -171,10 +194,21 @@ public:
      *
      * @return channel count of the stream.
      */
-    inline uint32_t channelCount() const
+    inline uint32_t getChannelCount() const
     {
         return mSampleSpec.getChannelCount();
     }
+
+    /**
+     * Get the channel count of the stream.
+     *
+     * @return channel count of the stream.
+     */
+    inline void setChannelCount(uint32_t channels)
+    {
+        return mSampleSpec.setChannelCount(channels);
+    }
+
 
     /**
      * Get the channels of the stream.
@@ -182,9 +216,20 @@ public:
      *
      * @return channel mask of the stream.
      */
-    inline uint32_t channels() const
+    inline audio_channel_mask_t getChannels() const
     {
         return mSampleSpec.getChannelMask();
+    }
+
+    /**
+     * Set the channels of the stream.
+     * Channels is a mask, each bit represents a specific channel.
+     *
+     * @param[in] channel mask of the stream.
+     */
+    inline void setChannels(audio_channel_mask_t mask)
+    {
+        mSampleSpec.setChannelMask(mask);
     }
 
     /**
@@ -288,9 +333,9 @@ protected:
      */
     mutable android::RWLock mStreamLock;
 
-    virtual ~Stream() {}
+    virtual ~IoStream() {}
 
-    android_audio_legacy::SampleSpec mSampleSpec; /**< stream sample specifications. */
+    SampleSpec mSampleSpec; /**< stream sample specifications. */
 
 private:
     void setCurrentStreamRouteL(IStreamRoute *currentStreamRoute);
@@ -301,7 +346,7 @@ private:
      *
      * @param[in] sampleSpec specifications of the route attached to the stream.
      */
-    void setRouteSampleSpecL(android_audio_legacy::SampleSpec sampleSpec);
+    void setRouteSampleSpecL(SampleSpec sampleSpec);
 
     IStreamRoute *mCurrentStreamRoute; /**< route assigned to the stream (routed yet). */
     IStreamRoute *mNewStreamRoute; /**< New route assigned to the stream (not routed yet). */
@@ -309,9 +354,11 @@ private:
     /**
      * Sample specifications of the route assigned to the stream.
      */
-    android_audio_legacy::SampleSpec mRouteSampleSpec;
+    SampleSpec mRouteSampleSpec;
 
     uint32_t mEffectsRequestedMask; /**< Mask of requested effects. */
 
     bool mIsRouted; /**< flag indicating the stream is routed and device is ready to use. */
 };
+
+} // namespace intel_audio

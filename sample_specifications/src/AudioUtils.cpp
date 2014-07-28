@@ -27,20 +27,19 @@
 #include <AudioCommsAssert.hpp>
 #include <cerrno>
 #include <convert.hpp>
-#include <hardware_legacy/AudioSystemLegacy.h>
 #include <AudioCommsAssert.hpp>
 #include <limits.h>
 #include <limits>
 #include <stdint.h>
 #include <stdlib.h>
-#include <system/audio.h>
+#include <hardware/audio.h>
 #include <utils/Log.h>
 
 using namespace android;
 using namespace std;
 using audio_comms::utilities::convertTo;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 uint32_t AudioUtils::alignOn16(uint32_t u)
@@ -172,8 +171,4 @@ uint32_t AudioUtils::convertUsecToMsec(uint32_t timeUsec)
     return (static_cast<uint64_t>(timeUsec) + mUsecPerMsec - 1) / mUsecPerMsec;
 }
 
-bool AudioUtils::isAudioInputDevice(uint32_t devices)
-{
-    return (popcount(devices) == 1) && ((devices & ~AudioSystem::DEVICE_IN_ALL) == 0);
-}
-}  // namespace android
+}  // namespace intel_audio

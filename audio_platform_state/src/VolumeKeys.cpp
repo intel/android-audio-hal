@@ -26,7 +26,7 @@
 #include <utils/Log.h>
 #include <fcntl.h>
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 const char *const VolumeKeys::mGpioKeysWakeupEnable =
@@ -75,4 +75,5 @@ return_error:
     ALOGE("Volume keys wakeup enable failed\n");
     return -1;
 }
-}
+
+} // namespace intel_audio

@@ -25,7 +25,7 @@
 #include "AudioConverter.hpp"
 #include <list>
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class Resampler;
@@ -103,4 +103,4 @@ private:
      */
     static const uint32_t mPivotSampleRate = 48000;
 };
-}  // namespace android
+}  // namespace intel_audio

@@ -27,6 +27,8 @@
 #include <list>
 #include <string>
 
+namespace intel_audio
+{
 
 class AudioPort;
 
@@ -63,3 +65,5 @@ public:
 private:
     std::list<AudioPort *> mPortList; /**< mutual exlusive ports belonging to this PortGroup. */
 };
+
+} // namespace intel_audio

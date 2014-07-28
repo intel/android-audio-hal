@@ -27,6 +27,9 @@
 
 #pragma once
 
+namespace intel_audio
+{
+
 class RouteManagerInstance : public NInterfaceProvider::IInterfaceProvider,
                              public audio_comms::utilities::NonCopyable
 {
@@ -69,3 +72,5 @@ private:
     /**< Audio route manager singleton */
     AudioRouteManager *mAudioRouteManager;
 };
+
+} // namespace intel_audio

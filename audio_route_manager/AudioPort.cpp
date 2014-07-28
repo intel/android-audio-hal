@@ -31,6 +31,9 @@
 using std::string;
 using audio_comms::utilities::Direction;
 
+namespace intel_audio
+{
+
 AudioPort::AudioPort(const string &name, uint32_t portIndex)
     : RoutingElement(name, portIndex),
       mPortGroupList(0),
@@ -143,4 +146,5 @@ void AudioPort::addRouteToPortUsers(AudioRoute *route)
     ALOGV("%s: added %s route to %s port users", __FUNCTION__, route->getName().c_str(),
           getName().c_str());
 }
-// namespace android
+
+} // namespace intel_audio

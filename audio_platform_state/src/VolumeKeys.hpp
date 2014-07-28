@@ -22,7 +22,7 @@
  */
 #pragma once
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 class VolumeKeys
@@ -53,4 +53,5 @@ private:
     /**< id of volume up key */
     static const char *const mKeyVolumeUp;
 };
-}
+
+} // namespace intel_audio

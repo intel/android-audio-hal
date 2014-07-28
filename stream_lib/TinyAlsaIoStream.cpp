@@ -23,7 +23,7 @@
 #define LOG_TAG "TinyAlsaStream"
 
 #include "TinyAlsaAudioDevice.hpp"
-#include "TinyAlsaStream.hpp"
+#include "TinyAlsaIoStream.hpp"
 #include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
 #include <cutils/log.h>
@@ -32,27 +32,30 @@ using std::string;
 using android::status_t;
 using android::OK;
 
-pcm *TinyAlsaStream::getPcmDevice() const
+namespace intel_audio
+{
+
+pcm *TinyAlsaIoStream::getPcmDevice() const
 {
     AUDIOCOMMS_ASSERT(mDevice != NULL, "Null audio device attached to stream");
     return mDevice->getPcmDevice();
 }
 
-android::status_t TinyAlsaStream::attachRouteL()
+android::status_t TinyAlsaIoStream::attachRouteL()
 {
     mDevice = static_cast<TinyAlsaAudioDevice *>(getNewStreamRoute()->getAudioDevice());
-    Stream::attachRouteL();
+    IoStream::attachRouteL();
     return OK;
 }
 
-android::status_t TinyAlsaStream::detachRouteL()
+android::status_t TinyAlsaIoStream::detachRouteL()
 {
-    Stream::detachRouteL();
+    IoStream::detachRouteL();
     mDevice = NULL;
     return OK;
 }
 
-status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &error) const
+status_t TinyAlsaIoStream::pcmReadFrames(void *buffer, size_t frames, string &error) const
 {
     status_t ret;
 
@@ -68,7 +71,7 @@ status_t TinyAlsaStream::pcmReadFrames(void *buffer, size_t frames, string &erro
     return OK;
 }
 
-status_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames, string &error) const
+status_t TinyAlsaIoStream::pcmWriteFrames(void *buffer, ssize_t frames, string &error) const
 {
     status_t ret;
 
@@ -84,22 +87,24 @@ status_t TinyAlsaStream::pcmWriteFrames(void *buffer, ssize_t frames, string &er
     return OK;
 }
 
-uint32_t TinyAlsaStream::getBufferSizeInBytes() const
+uint32_t TinyAlsaIoStream::getBufferSizeInBytes() const
 {
     return pcm_frames_to_bytes(getPcmDevice(), getBufferSizeInFrames());
 }
 
-size_t TinyAlsaStream::getBufferSizeInFrames() const
+size_t TinyAlsaIoStream::getBufferSizeInFrames() const
 {
     return pcm_get_buffer_size(getPcmDevice());
 }
 
-status_t TinyAlsaStream::getFramesAvailable(uint32_t &avail, struct timespec &tStamp) const
+status_t TinyAlsaIoStream::getFramesAvailable(uint32_t &avail, struct timespec &tStamp) const
 {
     return pcm_get_htimestamp(getPcmDevice(), &avail, &tStamp);
 }
 
-status_t TinyAlsaStream::pcmStop() const
+status_t TinyAlsaIoStream::pcmStop() const
 {
     return pcm_stop(getPcmDevice());
 }
+
+} // namespace intel_audio

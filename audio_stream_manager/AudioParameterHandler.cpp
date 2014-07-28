@@ -23,14 +23,13 @@
 #define LOG_TAG "StreamManager/ParameterHandler"
 
 #include "AudioParameterHandler.hpp"
-#include <media/AudioParameter.h>
 #include <utils/Log.h>
-#include <utils/String8.h>
 #include <utils/Errors.h>
 
-using namespace android;
+using android::status_t;
+using namespace std;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 const char AudioParameterHandler::mFilePath[] = "/mnt/asec/media/audio_param.dat";
@@ -41,28 +40,15 @@ AudioParameterHandler::AudioParameterHandler()
     restore();
 }
 
-status_t AudioParameterHandler::saveParameters(const String8 &keyValuePairs)
+status_t AudioParameterHandler::saveParameters(const string &keyValuePairs)
 {
     add(keyValuePairs);
-
     return save();
 }
 
-void AudioParameterHandler::add(const String8 &keyValuePairs)
+void AudioParameterHandler::add(const string &keyValuePairs)
 {
-    AudioParameter newParameters(keyValuePairs);
-    uint32_t parameter;
-
-    for (parameter = 0; parameter < newParameters.size(); parameter++) {
-
-        String8 key, value;
-
-        // Retrieve new parameter
-        newParameters.getAt(parameter, key, value);
-
-        // Add / merge it with stored ones
-        mAudioParameter.add(key, value);
-    }
+    mPairs.add(keyValuePairs);
 }
 
 status_t AudioParameterHandler::save()
@@ -71,15 +57,15 @@ status_t AudioParameterHandler::save()
     if (!fp) {
 
         ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
-        return UNKNOWN_ERROR;
+        return android::UNKNOWN_ERROR;
     }
 
-    String8 param = mAudioParameter.toString();
+    string param = mPairs.toString();
 
-    size_t ret = fwrite(param.string(), sizeof(char), param.length(), fp);
+    size_t ret = fwrite(param.c_str(), sizeof(char), param.length(), fp);
     fclose(fp);
 
-    return ret != param.length() ? UNKNOWN_ERROR : NO_ERROR;
+    return ret != param.length() ? android::UNKNOWN_ERROR : android::OK;
 }
 
 status_t AudioParameterHandler::restore()
@@ -88,23 +74,23 @@ status_t AudioParameterHandler::restore()
     if (!fp) {
 
         ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
-        return UNKNOWN_ERROR;
+        return android::UNKNOWN_ERROR;
     }
     char str[mReadBufSize];
     size_t readSize = fread(str, sizeof(char), mReadBufSize - 1, fp);
     fclose(fp);
     if (readSize == 0) {
 
-        return UNKNOWN_ERROR;
+        return android::UNKNOWN_ERROR;
     }
     str[readSize] = '\0';
 
-    add(String8(str));
-    return NO_ERROR;
+    add(str);
+    return android::OK;
 }
 
-String8 AudioParameterHandler::getParameters() const
+string AudioParameterHandler::getParameters() const
 {
-    return mAudioParameter.toString();
+    return mPairs.toString();
 }
 }

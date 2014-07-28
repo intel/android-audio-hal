@@ -29,6 +29,9 @@
 #include <gtest/gtest.h>
 #include <stdint.h>
 
+namespace intel_audio
+{
+
 class MyAudioBufferProvider
     : public android::AudioBufferProvider,
       private audio_comms::utilities::NonCopyable
@@ -57,12 +60,11 @@ public:
      *                    Buffer shall not be taken into account by the client if
      *                    error code is returned.
      * @param[in] pts local time when the next sample yielded by getNextBuffer will be rendered.
-     *            Pass kInvalidPTS if the PTS is unknown or not applicable.
      *
      * @return status_t OK if buffer provided, error code otherwise.
      */
     virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer,
-                                            int64_t pts = kInvalidPTS)
+                                            int64_t /*pts*/)
     {
 
         buffer->raw = &sourceBuffer[readPos];
@@ -77,10 +79,12 @@ public:
      * @param[out] buffer client buffer to be released. Audio data have been consumed by the client
      *                    and the provider memory can now be released.
      */
-    virtual void releaseBuffer(Buffer *buffer) {}
+    virtual void releaseBuffer(Buffer */*buffer*/) {}
 
 private:
     uint32_t readPos; /**< Position within the source buffer. */
     uint16_t *sourceBuffer; /**< Source buffer to convert. */
 
 };
+
+}  // namespace intel_audio

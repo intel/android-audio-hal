@@ -27,7 +27,7 @@
 
 using namespace android;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 template <>
@@ -228,4 +228,4 @@ type AudioRemapper::getAveragedSrcFrame(const type *src) const
 
     return dst;
 }
-}  // namespace android
+}  // namespace intel_audio

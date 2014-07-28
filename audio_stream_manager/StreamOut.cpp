@@ -24,72 +24,59 @@
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
-#define LOG_TAG "AudioStreamOutImplAlsa"
+#define LOG_TAG "AudioStreamOut"
 
-#include "AudioStreamOutImpl.hpp"
+#include "StreamOut.hpp"
 
 #include <AudioCommsAssert.hpp>
 #include <HalAudioDump.hpp>
 #include <cutils/properties.h>
 #include <media/AudioRecord.h>
-#include <utils/String8.h>
 
+using namespace std;
+using android::status_t;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
-const uint32_t AudioStreamOutImpl::mMaxAgainRetry = 2;
-const uint32_t AudioStreamOutImpl::mWaitBeforeRetryUs = 10000; // 10ms
-const uint32_t AudioStreamOutImpl::mUsecPerMsec = 1000;
+const uint32_t StreamOut::mMaxAgainRetry = 2;
+const uint32_t StreamOut::mWaitBeforeRetryUs = 10000; // 10ms
+const uint32_t StreamOut::mUsecPerMsec = 1000;
 
-AudioStreamOutImpl::AudioStreamOutImpl(AudioIntelHal *parent, uint32_t streamFlagsMask)
-    : AudioStream(parent),
+StreamOut::StreamOut(Device *parent, uint32_t streamFlagsMask)
+    : Stream(parent),
       mFrameCount(0),
       mEchoReference(NULL)
 {
     setApplicabilityMask(streamFlagsMask);
 }
 
-AudioStreamOutImpl::~AudioStreamOutImpl()
+StreamOut::~StreamOut()
 {
 }
 
-uint32_t AudioStreamOutImpl::channels() const
+status_t StreamOut::write(const void *buffer, size_t &bytes)
 {
-    return AudioStream::channels();
-}
-
-status_t AudioStreamOutImpl::setVolume(float left, float right)
-{
-    return NO_ERROR;
-}
-
-ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
-{
-    ssize_t processedBytes;
-
     AUDIOCOMMS_ASSERT(buffer != NULL, "NULL client buffer");
     setStandby(false);
 
     mStreamLock.readLock();
+    status_t status;
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
 
         ALOGW("%s(buffer=%p, bytes=%d) No route available. Trashing samples for stream %p.",
               __FUNCTION__, buffer, bytes, this);
 
-        processedBytes = generateSilence(bytes);
-
+        status = generateSilence(bytes);
         mStreamLock.unlock();
-        return processedBytes;
+        return status;
     }
 
     ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
     size_t dstFrames = 0;
     char *dstBuf = NULL;
-    status_t ret = OK;
     uint32_t retryCount = 0;
-    status_t status;
 
     pushEchoReference(buffer, srcFrames);
 
@@ -106,8 +93,7 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
 
     status = applyAudioConversion(buffer, (void **)&dstBuf, srcFrames, &dstFrames);
 
-    if (status != NO_ERROR) {
-
+    if (status != android::OK) {
         mStreamLock.unlock();
         return status;
     }
@@ -116,9 +102,9 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
     do {
         std::string error;
 
-        ret = pcmWriteFrames(dstBuf, dstFrames, error);
+        status = pcmWriteFrames(dstBuf, dstFrames, error);
 
-        if (ret < 0) {
+        if (status < 0) {
             ALOGE("%s: write error: %s - requested %d (bytes=%d) frames",
                   __FUNCTION__,
                   error.c_str(),
@@ -151,10 +137,10 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
                 ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
             }
         }
-    } while (ret < 0);
+    } while (status < 0);
 
     ALOGV("%s: returns %u", __FUNCTION__, streamSampleSpec().convertFramesToBytes(
-              AudioUtils::convertSrcToDstInFrames(ret, routeSampleSpec(), streamSampleSpec())));
+              AudioUtils::convertSrcToDstInFrames(status, routeSampleSpec(), streamSampleSpec())));
 
     // Dump audio output after eventual conversions
     // FOR DEBUG PURPOSE ONLY
@@ -167,24 +153,22 @@ ssize_t AudioStreamOutImpl::write(const void *buffer, size_t bytes)
                                                    routeSampleSpec().getChannelCount(),
                                                    "after_conversion");
     }
-
-    processedBytes = streamSampleSpec().convertFramesToBytes(
+    bytes = streamSampleSpec().convertFramesToBytes(
         AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
 
     mStreamLock.unlock();
-
-    return processedBytes;
+    return status;
 }
 
-status_t AudioStreamOutImpl::dump(int, const Vector<String16> &)
+uint32_t StreamOut::getLatency()
 {
-    return NO_ERROR;
+    return getLatencyMs();
 }
 
-status_t AudioStreamOutImpl::attachRouteL()
+status_t StreamOut::attachRouteL()
 {
-    status_t status = AudioStream::attachRouteL();
-    if (status != NO_ERROR) {
+    status_t status = Stream::attachRouteL();
+    if (status != android::OK) {
 
         return status;
     }
@@ -207,54 +191,33 @@ status_t AudioStreamOutImpl::attachRouteL()
         }
     }
 
-    return NO_ERROR;
+    return android::OK;
 }
 
-status_t AudioStreamOutImpl::detachRouteL()
+status_t StreamOut::detachRouteL()
 {
     removeEchoReference(mEchoReference);
-    return AudioStream::detachRouteL();
+    return Stream::detachRouteL();
 }
 
-status_t AudioStreamOutImpl::standby()
+status_t StreamOut::getRenderPosition(uint32_t &dspFrames) const
 {
-    mFrameCount = 0;
-    return setStandby(true);
+    dspFrames = mFrameCount;
+    return android::OK;
 }
 
-uint32_t AudioStreamOutImpl::latency() const
-{
-    return AudioStream::latencyMs();
-}
-
-size_t AudioStreamOutImpl::bufferSize() const
-{
-    return getBufferSize();
-}
-
-status_t AudioStreamOutImpl::getRenderPosition(uint32_t *dspFrames)
-{
-    *dspFrames = mFrameCount;
-    return NO_ERROR;
-}
-
-status_t AudioStreamOutImpl::flush()
+status_t StreamOut::flush()
 {
     AutoR lock(mStreamLock);
     if (!isRoutedL()) {
 
-        return NO_ERROR;
+        return android::OK;
     }
 
     return pcmStop();
 }
 
-status_t AudioStreamOutImpl::setParameters(const String8 &keyValuePairs)
-{
-    return AudioStream::setParameters(keyValuePairs);
-}
-
-void AudioStreamOutImpl::addEchoReference(struct echo_reference_itfe *reference)
+void StreamOut::addEchoReference(struct echo_reference_itfe *reference)
 {
     AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
     AutoW lock(mPreProcEffectLock);
@@ -264,7 +227,7 @@ void AudioStreamOutImpl::addEchoReference(struct echo_reference_itfe *reference)
     mEchoReference = reference;
 }
 
-void AudioStreamOutImpl::removeEchoReference(struct echo_reference_itfe *reference)
+void StreamOut::removeEchoReference(struct echo_reference_itfe *reference)
 {
     AutoW lock(mPreProcEffectLock);
     if (reference == NULL || mEchoReference == NULL) {
@@ -283,12 +246,12 @@ void AudioStreamOutImpl::removeEchoReference(struct echo_reference_itfe *referen
     }
 }
 
-int AudioStreamOutImpl::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer)
+int StreamOut::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer)
 {
     size_t kernelFrames;
     int status;
     status = getFramesAvailable(kernelFrames, buffer->time_stamp);
-    if (status != OK) {
+    if (status != android::OK) {
 
         buffer->time_stamp.tv_sec = 0;
         buffer->time_stamp.tv_nsec = 0;
@@ -316,7 +279,7 @@ int AudioStreamOutImpl::getPlaybackDelay(ssize_t frames, struct echo_reference_b
     return 0;
 }
 
-void AudioStreamOutImpl::pushEchoReference(const void *buffer, ssize_t frames)
+void StreamOut::pushEchoReference(const void *buffer, ssize_t frames)
 {
     AutoR lock(mPreProcEffectLock);
     if (mEchoReference != NULL) {
@@ -327,4 +290,14 @@ void AudioStreamOutImpl::pushEchoReference(const void *buffer, ssize_t frames)
         mEchoReference->write(mEchoReference, &b);
     }
 }
-}       // namespace android
+
+status_t StreamOut::setDevice(audio_devices_t device)
+{
+    if (!audio_is_output_devices(device)) {
+        ALOGE("%s: invalid output device 0x%X", __FUNCTION__, device);
+        return android::BAD_VALUE;
+    }
+    return Stream::setDevice(device);
+}
+
+} // namespace intel_audio

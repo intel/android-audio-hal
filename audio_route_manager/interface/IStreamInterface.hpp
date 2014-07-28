@@ -26,7 +26,10 @@
 #include "StreamRouteConfig.hpp"
 #include <utils/Errors.h>
 
-class Stream;
+namespace intel_audio
+{
+
+class IoStream;
 
 struct IStreamInterface : public NInterfaceProvider::IInterface
 {
@@ -47,14 +50,14 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      *
      * @param[in] stream: opened stream to be appended.
      */
-    virtual void addStream(Stream *stream) = 0;
+    virtual void addStream(IoStream *stream) = 0;
 
     /**
      * Removes a streams from the list of opened streams.
      *
      * @param[in] stream: closed stream to be removed.
      */
-    virtual void removeStream(Stream *stream) = 0;
+    virtual void removeStream(IoStream *stream) = 0;
 
     /**
      * Trigs a routing reconsideration.
@@ -92,7 +95,7 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      *
      * @return voice output stream
      */
-    virtual Stream *getVoiceOutputStream() = 0;
+    virtual IoStream *getVoiceOutputStream() = 0;
 
     /**
      * Get the latency.
@@ -221,3 +224,5 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      */
     virtual bool getAudioParameter(const std::string &path, std::string &value) const = 0;
 };
+
+} // namespace intel_audio

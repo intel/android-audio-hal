@@ -25,6 +25,9 @@
 #include <Observer.hpp>
 #include <semaphore.h>
 
+namespace intel_audio
+{
+
 class AudioPort;
 
 class AudioRouteManagerObserver : public audio_comms::utilities::Observer
@@ -46,3 +49,5 @@ public:
 private:
     sem_t mSyncSem; /**< actual semaphore. */
 };
+
+} // namespace intel_audio

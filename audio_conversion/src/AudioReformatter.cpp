@@ -27,7 +27,7 @@
 
 using namespace android;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
 const uint32_t AudioReformatter::mReformatterShiftLeft16 = 16;
@@ -109,4 +109,4 @@ status_t AudioReformatter::convertS24over32toS16(const void *src,
 
     return NO_ERROR;
 }
-}  // namespace android
+}  // namespace intel_audio

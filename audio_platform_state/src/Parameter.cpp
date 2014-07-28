@@ -26,6 +26,9 @@
 
 using std::string;
 
+namespace intel_audio
+{
+
 void Parameter::setMappingValuePair(const string &name, const string &value)
 {
     if (mMappingValuesMap.find(name) != mMappingValuesMap.end()) {
@@ -76,3 +79,5 @@ bool Parameter::getParamFromLiteralValue(string &androidParam, const string &lit
     }
     return false;
 }
+
+} // namespace intel_audio

@@ -26,10 +26,10 @@ LOCAL_PATH := $(call my-dir)
 # Common variables
 
 stream_lib_src_files :=  \
-    Stream.cpp \
+    IoStream.cpp \
     TinyAlsaAudioDevice.cpp \
     StreamLib.cpp \
-    TinyAlsaStream.cpp
+    TinyAlsaIoStream.cpp
 
 stream_lib_includes_common := \
     $(LOCAL_PATH)/include

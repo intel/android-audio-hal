@@ -27,6 +27,9 @@
 #include <list>
 #include <stdint.h>
 
+namespace intel_audio
+{
+
 class AudioPortGroup;
 class AudioRoute;
 
@@ -109,3 +112,5 @@ private:
     bool mIsBlocked; /**< blocked attribute, exclusive access to route parameter manager plugin. */
     bool mIsUsed; /**< used attribute. */
 };
+
+} // namespace intel_audio

@@ -22,85 +22,69 @@
  */
 #pragma once
 
-
 #include "SampleSpec.hpp"
+#include <StreamInterface.hpp>
 #include <NonCopyable.hpp>
 #include <Direction.hpp>
-#include <TinyAlsaStream.hpp>
+#include <TinyAlsaIoStream.hpp>
 #include <media/AudioBufferProvider.h>
-#include <utils/String8.h>
+#include <hardware/audio.h>
+#include <string>
 #include <utils/RWLock.h>
 
 class HalAudioDump;
 
-namespace android_audio_legacy
+namespace intel_audio
 {
 
-class AudioIntelHal;
+class Device;
 class AudioConversion;
 
 
-class AudioStream : public TinyAlsaStream,
-                    private audio_comms::utilities::NonCopyable
+class Stream
+    : public virtual StreamInterface,
+      public TinyAlsaIoStream,
+      private audio_comms::utilities::NonCopyable
 {
 public:
-    virtual ~AudioStream();
+    virtual ~Stream();
 
     /**
      * Sets the sample specifications of the stream.
      *
-     * @param[in,out] format: format of the samples of the playback client.
-     *                        If not set, stream returns format it supports.
-     * @param[in,out] channels: mask of channels of the samples of the playback client.
-     *                          If not set, stream returns channels it supports.
-     * @param[in,out] sampleRate: sample rate of the samples of the playback client.
-     *                            If not set, stream returns sample rate it supports.
+     * @param[in,out] config: audio configuration of the stream (i.e. sample specifications).
      *
      * @return status: error code to set if parameters given by playback client not supported.
      */
-    android::status_t set(int *format, uint32_t *channels, uint32_t *rate);
+    android::status_t set(audio_config_t &config);
 
-    /**
-     * Set the parameters for this stream.
-     *
-     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
-     *
-     * @return OK if set is successful, error code otherwise.
-     */
-    android::status_t setParameters(const android::String8 &keyValuePairs);
+    // From StreamInterface
+    virtual uint32_t getSampleRate() const;
+    virtual android::status_t setSampleRate(uint32_t rate);
+    virtual size_t getBufferSize() const;
+    virtual audio_channel_mask_t getChannels() const;
+    virtual audio_format_t getFormat() const;
+    virtual android::status_t setFormat(audio_format_t format);
+    virtual android::status_t standby();
+    /** @note API not implemented in our Audio HAL */
+    virtual android::status_t dump(int) const { return android::OK; }
+    virtual audio_devices_t getDevice() const;
+    virtual android::status_t setDevice(audio_devices_t device);
+    /** @note API not implemented in stream base class, input specific implementation only. */
+    virtual android::status_t addAudioEffect(effect_handle_t /*effect*/) { return android::OK; }
+    /** @note API not implemented in stream base class, input specific implementation only. */
+    virtual android::status_t removeAudioEffect(effect_handle_t /*effect*/) { return android::OK; }
+    virtual android::status_t setParameters(const std::string &keyValuePairs);
+    virtual std::string getParameters(const std::string &keys) const;
 
-    /**
-     * Get the parameters of the stream.
-     *
-     * @param[out] keys: one or more value pair "name=value", semicolon-separated
-     *
-     * @return OK if set is successful, error code otherwise.
-     */
-    android::String8 getParameters(const android::String8 &keys);
-
-    /**
-     * Get the size of the buffer.
-     * It calibrates the transfert size between audio flinger and the stream.
-     *
-     * @return size of the buffer in bytes
-     */
-    size_t getBufferSize() const;
-
-    /**
-     * Check the stream status.
-     * Inherited from Stream class
-     *
-     * @return true if stream is started, false if stream is in standby.
-     */
+    // From TinyAlsaIoStream
+    virtual bool isRoutedByPolicy() const;
+    virtual uint32_t getApplicabilityMask() const;
     virtual bool isStarted() const;
-
-    /**
-     * Get the stream direction.
-     * Inherited from Stream class
-     *
-     * @return true if output, false if input.
-     */
     virtual bool isOut() const = 0;
+
+protected:
+    Stream(Device *parent);
 
     /**
      * Set the stream state.
@@ -110,39 +94,6 @@ public:
      * @return OK if stream started/standbyed successfully, error code otherwise.
      */
     android::status_t setStandby(bool isSet);
-
-    /**
-     * Get the stream devices mask.
-     * Stream Sample specification is the sample spec in which the client gives/receives samples
-     *
-     * @return _devices specifications.
-     */
-    virtual uint32_t getDevices() const
-    {
-        return mDevices;
-    }
-
-    /**
-     * Set the stream devices.
-     *
-     * @param[in] devices: mask in which each bit represents a device.
-     */
-    void setDevices(uint32_t devices);
-
-    /**
-     * Applicability mask.
-     * From Stream class
-     *
-     * @return ID of input source if input, stream flags if output
-     */
-    virtual uint32_t getApplicabilityMask() const
-    {
-        AutoR lock(mStreamLock);
-        return mApplicabilityMask;
-    }
-
-protected:
-    AudioStream(AudioIntelHal *parent);
 
     /**
      * Set the Applicability mask.
@@ -208,12 +159,12 @@ protected:
      * To emulate the behavior of the HW and to keep time sync, this function will sleep the time
      * the HW would have used to read/write the amount of requested bytes.
      *
-     * @param[in] bytes amount of byte to set to 0 within the buffer.
+     * @param[in,out] bytes amount of byte to set to 0 within the buffer.
      * @param[in,out] buffer: if provided, need to fill with 0 (expected for input)
      *
      * @return size of the sample trashed / filled with 0.
      */
-    size_t generateSilence(size_t bytes, void *buffer = NULL);
+    android::status_t generateSilence(size_t &bytes, void *buffer = NULL);
 
     /**
      * Get the latency of the stream.
@@ -221,7 +172,7 @@ protected:
      *
      * @return latency in milliseconds.
      */
-    uint32_t latencyMs() const;
+    uint32_t getLatencyMs() const;
 
     /**
      * Update the latency according to the flag.
@@ -247,7 +198,6 @@ protected:
     {
         return mDumpBeforeConv;
     }
-
 
     /**
      * Get audio dump objects after conversion for debug purposes
@@ -278,7 +228,7 @@ protected:
      */
     bool safeSleep(uint32_t sleepTimeUs);
 
-    AudioIntelHal *mParent; /**< Audio HAL singleton handler. */
+    Device *mParent; /**< Audio HAL singleton handler. */
 
     /**
      * Lock to protect preprocessing effects accessed from multiple contexts.
@@ -339,7 +289,7 @@ private:
 
     static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
     static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */
-    static const uint32_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format. */
+    static const audio_format_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format.*/
 
     /**
      * Audio dump object used if one of the dump property before
@@ -369,4 +319,4 @@ private:
     /** Ratio between nanoseconds and microseconds */
     static const uint32_t mNsecPerUsec = 1000;
 };
-}         // namespace android
+} // namespace intel_audio

@@ -100,11 +100,11 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
         // Clear wired headset/headphone device, if any already available, as only
         // one wired headset/headphone device can be connected at a time
         if (device &
-            (AudioSystem::DEVICE_OUT_WIRED_HEADSET | AudioSystem::DEVICE_OUT_WIRED_HEADPHONE)) {
+            (AUDIO_DEVICE_OUT_WIRED_HEADSET | AUDIO_DEVICE_OUT_WIRED_HEADPHONE)) {
             mAvailableOutputDevices =
                 (audio_devices_t)(mAvailableOutputDevices &
-                                  ~(AudioSystem::DEVICE_OUT_WIRED_HEADSET |
-                                    AudioSystem::DEVICE_OUT_WIRED_HEADPHONE));
+                                  ~(AUDIO_DEVICE_OUT_WIRED_HEADSET |
+                                    AUDIO_DEVICE_OUT_WIRED_HEADPHONE));
         }
     }
 
@@ -123,8 +123,8 @@ status_t AudioPolicyManagerALSA::startOutput(audio_io_handle_t output,
 
 audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
                                                    uint32_t samplingRate,
-                                                   audio_format_t format,
-                                                   audio_channel_mask_t channelMask,
+                                                   uint32_t format,
+                                                   uint32_t channelMask,
                                                    AudioSystem::audio_in_acoustics /*acoustics*/)
 {
     audio_devices_t device = getDeviceForInputSource(inputSource);
@@ -502,22 +502,22 @@ float AudioPolicyManagerALSA::computeVolume(int stream,
 audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy strategy,
                                                              bool fromCache)
 {
-    uint32_t device = 0;
-    uint32_t currentDevice = 0;
+    audio_devices_t device = AUDIO_DEVICE_NONE;
+    audio_devices_t currentDevice = AUDIO_DEVICE_NONE;
 
     device = AudioPolicyManagerBase::getDeviceForStrategy(strategy, fromCache);
     AudioOutputDescriptor *hwOutputDesc = mOutputs.valueFor(mPrimaryOutput);
     AUDIOCOMMS_ASSERT(hwOutputDesc != NULL,
                       "Invalid primary audio output device or no audio output device found");
-    currentDevice = static_cast<uint32_t>(hwOutputDesc->device());
+    currentDevice = hwOutputDesc->device();
 
     switch (strategy) {
     case STRATEGY_PHONE:
         // in voice call, the ouput device can not be DGTL_DOCK_HEADSET, AUX_DIGITAL (i.e. HDMI) or  ANLG_DOCK_HEADSET
-        if ((device == AudioSystem::DEVICE_OUT_AUX_DIGITAL) ||
-            (device == AudioSystem::DEVICE_OUT_ANLG_DOCK_HEADSET) ||
-            (device == AudioSystem::DEVICE_OUT_DGTL_DOCK_HEADSET) ||
-            (device == AudioSystem::DEVICE_OUT_WIDI) ||
+        if ((device == AUDIO_DEVICE_OUT_AUX_DIGITAL) ||
+            (device == AUDIO_DEVICE_OUT_ANLG_DOCK_HEADSET) ||
+            (device == AUDIO_DEVICE_OUT_DGTL_DOCK_HEADSET) ||
+            (device == AUDIO_DEVICE_OUT_WIDI) ||
             (device == AUDIO_DEVICE_OUT_REMOTE_SUBMIX) ||
             (device == AUDIO_DEVICE_OUT_USB_ACCESSORY) ||
             (device == AUDIO_DEVICE_OUT_USB_DEVICE)) {
@@ -525,7 +525,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
             switch (forceUseInComm) {
 
             case AudioSystem::FORCE_SPEAKER:
-                device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
+                device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER;
                 if (device != 0) {
                     ALOGD("%s- Unsupported device in STRATEGY_PHONE: set Speaker as ouput",
                           __FUNCTION__);
@@ -535,13 +535,13 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
                 break;
 
             default:
-                device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_EARPIECE;
+                device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_EARPIECE;
                 if (device != 0) {
                     ALOGD("%s- Unsupported device in STRATEGY_PHONE: set Earpiece as ouput",
                           __FUNCTION__);
                 } else {
                     ALOGE("%s- Earpiece device not found: set speaker as output", __FUNCTION__);
-                    device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_SPEAKER;
+                    device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER;
                 }
                 break;
             }
@@ -553,7 +553,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
         if (isInCall() &&
             !mStreams[AUDIO_STREAM_ENFORCED_AUDIBLE].mCanBeMuted &&
             ((getForceUse(AudioSystem::FOR_COMMUNICATION) == AudioSystem::FORCE_BT_SCO) ||
-             (currentDevice == AudioSystem::DEVICE_OUT_EARPIECE))) {
+             (currentDevice == AUDIO_DEVICE_OUT_EARPIECE))) {
             // Set 2 devices for ALSA module : so the mode will be set as normal
             //  - the BT SCO will be unrouted for instance during a shutter sound
             //  during CSV call.
@@ -562,17 +562,17 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
                 "%s- Current device(0x%x) and speaker stream output for an enforced audible stream",
                 __FUNCTION__,
                 currentDevice);
-            device = (mAvailableOutputDevices &AudioSystem::DEVICE_OUT_SPEAKER) | currentDevice;
+            device = (mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER) | currentDevice;
         }
         break;
     case STRATEGY_SONIFICATION_LOCAL:
         // Check if the phone state has already passed from MODE_RINGTONE to
         //  MODE_IN_COMMUNICATION or IN_CALL. In this case the output device is Earpiece and not IHF.
-        if ((device == AudioSystem::DEVICE_OUT_SPEAKER)
+        if ((device == AUDIO_DEVICE_OUT_SPEAKER)
             && (isInCall())
             && (getForceUse(AudioSystem::FOR_COMMUNICATION) != AudioSystem::FORCE_SPEAKER)) {
             ALOGV("%s- Force the device to earpiece and not IHF", __FUNCTION__);
-            device = mAvailableOutputDevices & AudioSystem::DEVICE_OUT_EARPIECE;
+            device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_EARPIECE;
         }
         break;
 
@@ -588,7 +588,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
 
     ALOGV("getDeviceForStrategy() strategy %d, device 0x%x", strategy, device);
 
-    return (audio_devices_t)device;
+    return device;
 }
 
 status_t AudioPolicyManagerALSA::stopInput(audio_io_handle_t input)
