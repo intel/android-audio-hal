@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -27,7 +27,10 @@
 #include "Subsystem.h"
 #include <NonCopyable.hpp>
 
+namespace intel_audio
+{
 class IRouteInterface;
+}
 
 class RouteSubsystem : public CSubsystem, private audio_comms::utilities::NonCopyable
 {
@@ -39,10 +42,10 @@ public:
      *
      * @return RouteManager interface for the route plugin.
      */
-    IRouteInterface *getRouteInterface() const;
+    intel_audio::IRouteInterface *getRouteInterface() const;
 
 private:
-    IRouteInterface *_routeInterface; /**< Route Interface. */
+    intel_audio::IRouteInterface *_routeInterface; /**< Route Interface. */
 
     static const char *const ROUTE_LIB_PROP_NAME; /**< Route Manager name property. */
     static const char *const ROUTE_LIBRARY_NAME; /**< Route Manager library name. */

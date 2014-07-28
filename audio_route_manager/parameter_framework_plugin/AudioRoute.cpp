@@ -28,6 +28,8 @@
 #include "RouteSubsystem.hpp"
 #include <AudioCommsAssert.hpp>
 
+using intel_audio::IRouteInterface;
+
 const string AudioRoute::OUTPUT_DIRECTION = "out";
 const string AudioRoute::STREAM_TYPE = "streamRoute";
 const string AudioRoute::PORT_DELIMITER = "-";

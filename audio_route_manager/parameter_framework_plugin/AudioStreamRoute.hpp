@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -57,10 +57,12 @@ private:
         uint32_t applicabilityMask; /**< applicability mask, either input source or output flags. */
         char effectSupported[MAX_STRING_SIZE]; /**< effects supported by the stream route. */
     } __attribute__((packed));
+
 public:
     AudioStreamRoute(const string &mappingValue,
                      CInstanceConfigurableElement *instanceConfigurableElement,
                      const CMappingContext &context);
+
 protected:
     /**
      * Sync from HW.
@@ -83,6 +85,7 @@ protected:
      * @return true if success, false otherwise.
      */
     virtual bool sendToHW(string &error);
+
 private:
     /**
      * Parse a concatenated list of channel policy separated by a coma.
@@ -91,11 +94,11 @@ private:
      *
      * @return vector of channel policy.
      */
-    std::vector<android_audio_legacy::SampleSpec::ChannelsPolicy>
+    std::vector<intel_audio::SampleSpec::ChannelsPolicy>
     parseChannelPolicyString(const std::string &channelPolicy);
 
     const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    IRouteInterface *_routeInterface; /**< Route Interface to communicate with Route Mgr. */
+    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
 
     static const Config _defaultConfig; /**< default route stream configuration at construction. */
     Config _config; /**< stream route configuration. */

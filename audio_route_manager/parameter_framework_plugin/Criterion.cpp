@@ -29,6 +29,8 @@
 #include "BitParameter.h"
 #include "RouteSubsystem.hpp"
 
+using intel_audio::IRouteInterface;
+
 const string Criterion::VALUE_PAIR_CRITERION_TYPE = "ValuePair";
 const string Criterion::BIT_PARAM_CRITERION_TYPE = "BitParameter";
 

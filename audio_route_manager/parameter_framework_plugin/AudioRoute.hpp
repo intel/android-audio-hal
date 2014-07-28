@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -44,10 +44,12 @@ private:
         bool needReconfigure; /**< route needs to be reconfigured in a glitch free way. */
         bool needReroute; /**< route needs to be closed/reopened. */
     } __attribute__((packed));
+
 public:
     AudioRoute(const string &mappingValue,
                CInstanceConfigurableElement *instanceConfigurableElement,
                const CMappingContext &context);
+
 protected:
     /**
      * Sync from HW.
@@ -70,9 +72,10 @@ protected:
      * @return true if success, false otherwise.
      */
     virtual bool sendToHW(string &error);
+
 private:
     const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    IRouteInterface *_routeInterface; /**< Route Interface to communicate with Route Mgr. */
+    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
 
     static const Status DEFAULT_STATUS; /**< default status at object creation. */
 

@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -29,6 +29,7 @@
 #include <AudioCommsAssert.hpp>
 
 using std::memcmp;
+using namespace intel_audio;
 
 const string AudioStreamRoute::OUTPUT_DIRECTION = "out";
 const string AudioStreamRoute::STREAM_TYPE = "streamRoute";
@@ -111,25 +112,25 @@ AudioStreamRoute::AudioStreamRoute(const string &mappingValue,
     _routeInterface->updateStreamRouteConfig(_routeName, config);
 }
 
-std::vector<android_audio_legacy::SampleSpec::ChannelsPolicy>
+std::vector<SampleSpec::ChannelsPolicy>
 AudioStreamRoute::parseChannelPolicyString(const std::string &channelPolicy)
 {
-    std::vector<android_audio_legacy::SampleSpec::ChannelsPolicy> channelPolicyVector;
+    std::vector<SampleSpec::ChannelsPolicy> channelPolicyVector;
     Tokenizer mappingTok(channelPolicy, STRING_DELIMITER);
     vector<string> subStrings = mappingTok.split();
 
     for (size_t i = 0; i < subStrings.size(); i++) {
 
-        android_audio_legacy::SampleSpec::ChannelsPolicy policy;
+        SampleSpec::ChannelsPolicy policy;
         if (subStrings[i] == CHANNEL_POLICY_COPY) {
 
-            policy = android_audio_legacy::SampleSpec::Copy;
+            policy = SampleSpec::Copy;
         } else if (subStrings[i] == CHANNEL_POLICY_AVERAGE) {
 
-            policy = android_audio_legacy::SampleSpec::Average;
+            policy = SampleSpec::Average;
         } else if (subStrings[i] == CHANNEL_POLICY_IGNORE) {
 
-            policy = android_audio_legacy::SampleSpec::Ignore;
+            policy = SampleSpec::Ignore;
         } else {
 
             // Not valid channel policy

@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -39,6 +39,7 @@ public:
     Criterion(const string &mappingValue,
               CInstanceConfigurableElement *instanceConfigurableElement,
               const CMappingContext &context);
+
 protected:
     /**
      * Sync from HW.
@@ -61,6 +62,7 @@ protected:
      * @return true if success, false otherwise.
      */
     virtual bool sendToHW(string &error);
+
 private:
     /**
      * Returns the index of an element.
@@ -76,7 +78,7 @@ private:
     uint32_t getIndex(const CElement *element) const;
 
     const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    IRouteInterface *_routeInterface; /**< Route Interface to communicate with Route Mgr. */
+    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
 
     static const uint32_t DEFAULT_VALUE = 0; /**< default numerical value of the criterion. */
     string _criterionName; /**< Name of the criterion. */

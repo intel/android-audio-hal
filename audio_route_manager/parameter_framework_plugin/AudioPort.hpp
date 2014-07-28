@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -38,6 +38,7 @@ public:
     AudioPort(const string &mappingValue,
               CInstanceConfigurableElement *pInstanceConfigurableElement,
               const CMappingContext &context);
+
 protected:
     /**
      * Sync from HW.
@@ -60,13 +61,14 @@ protected:
      * @return true if success, false otherwise.
      */
     virtual bool sendToHW(string &error);
+
 private:
     string _name; /**< Name of an audio port. */
     uint32_t _id; /**< Identifier of an audio port. */
     bool _isBlocked; /**< Blocked attribute of the port, ie, port must not be used. */
 
     const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    IRouteInterface *_routeInterface; /**< Route Interface to communicate with Route Mgr. */
+    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
 
     static const std::string DELIMITER; /**< Delimiter to parse a concatenated list of ports. */
 };

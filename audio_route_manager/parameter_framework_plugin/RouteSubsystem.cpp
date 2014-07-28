@@ -34,6 +34,7 @@
 #include <RouteInterface.hpp>
 
 using namespace NInterfaceProvider;
+using intel_audio::IRouteInterface;
 
 const char *const RouteSubsystem::ROUTE_LIB_PROP_NAME = "audiocomms.routeLib";
 const char *const RouteSubsystem::ROUTE_LIBRARY_NAME = "audio.routemanager.so";
