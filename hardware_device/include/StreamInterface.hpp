@@ -41,6 +41,8 @@ namespace details
 class StreamInterface
 {
 public:
+    virtual ~StreamInterface() {}
+
     /**
      * @return the sampling rate in Hz - eg. 44100.
      */
@@ -146,9 +148,6 @@ public:
      * @return OK if succeed, error code else.
      */
     virtual android::status_t removeAudioEffect(effect_handle_t effect) = 0;
-
-protected:
-    virtual ~StreamInterface() {}
 
 public:
     /* This section should have been private as they declared for internal use only.
@@ -339,9 +338,6 @@ public:
     virtual android::status_t getPresentationPosition(uint64_t *frames,
                                                       struct timespec *timestamp) const = 0;
 
-protected:
-    virtual ~StreamOutInterface() {}
-
 public:
     /* This section should have been private as they declared for internal use only.
      * It has to be declared public to allow access from C code. */
@@ -394,9 +390,6 @@ public:
      *         last call of this function.
      */
     virtual uint32_t getInputFramesLost() const = 0;
-
-protected:
-    virtual ~StreamInInterface() {}
 
 public:
     /* This section should have been private as they declared for internal use only.
