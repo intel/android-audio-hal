@@ -25,12 +25,12 @@
 #pragma once
 
 #include <gmock/gmock.h>
-#include <AudioHwDevice.hpp>
+#include <DeviceInterface.hpp>
 
 namespace intel_audio
 {
 
-class HwDeviceMock : public AudioHwDevice
+class DeviceMock : public DeviceInterface
 {
 public:
     MOCK_METHOD5(openOutputStream,
@@ -38,16 +38,16 @@ public:
                                    audio_devices_t devices,
                                    audio_output_flags_t flags,
                                    audio_config_t * config,
-                                   AudioStreamOut * *stream));
+                                   StreamOutInterface * *stream));
     MOCK_METHOD1(closeOutputStream,
-                 void(AudioStreamOut * stream));
+                 void(StreamOutInterface * stream));
     MOCK_METHOD4(openInputStream,
                  android::status_t(audio_io_handle_t handle,
                                    audio_devices_t devices,
                                    audio_config_t * config,
-                                   AudioStreamIn * *stream));
+                                   StreamInInterface * *stream));
     MOCK_METHOD1(closeInputStream,
-                 void(AudioStreamIn * stream));
+                 void(StreamInInterface * stream));
     MOCK_CONST_METHOD0(initCheck,
                        android::status_t());
     MOCK_METHOD1(setVoiceVolume,

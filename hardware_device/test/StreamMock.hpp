@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include <AudioStream.hpp>
+#include <StreamInterface.hpp>
 #include <gmock/gmock.h>
 
 
 namespace intel_audio
 {
 
-class StreamOutMock : public AudioStreamOut
+class StreamOutMock : public StreamOutInterface
 {
 public:
     MOCK_CONST_METHOD0(getSampleRate,
@@ -84,7 +84,7 @@ public:
                        android::status_t(uint64_t * frames, struct timespec *timestamp));
 };
 
-class StreamInMock : public AudioStreamIn
+class StreamInMock : public StreamInInterface
 {
 public:
     StreamInMock() {}
