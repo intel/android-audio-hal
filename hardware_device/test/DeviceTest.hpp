@@ -22,12 +22,12 @@
 
 #pragma once
 
-#include <HwDeviceMock.hpp>
+#include <DeviceMock.hpp>
 #include <hardware/audio.h>
 #include <gtest/gtest.h>
 
 
-class HwDeviceTest : public ::testing::Test
+class DeviceTest : public ::testing::Test
 {
 private:
     virtual void SetUp();
@@ -35,5 +35,5 @@ private:
 
 public:
     audio_hw_device_t *mDevice;
-    intel_audio::HwDeviceMock *mDeviceMock;
+    intel_audio::DeviceMock *mDeviceMock;
 };

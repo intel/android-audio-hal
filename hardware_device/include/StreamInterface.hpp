@@ -30,15 +30,15 @@
 namespace intel_audio
 {
 
-/* Forward declarations needed for AudioStream::ext struct declaration */
-class AudioStreamOut;
-class AudioStreamIn;
+/* Forward declarations needed for StreamInterface::ext struct declaration */
+class StreamOutInterface;
+class StreamInInterface;
 
 namespace details
 {
 
-/** Audio stream interface common to input and output streams. */
-class AudioStream
+/** Stream interface common to input and output streams. */
+class StreamInterface
 {
 public:
     /**
@@ -57,7 +57,7 @@ public:
     /**
      * @return size of input/output buffer in bytes for this stream - eg. 4800.
      *         It should be a multiple of the frame size.
-     *         @see also AudioHwDevice::getInputBufferSize.
+     *         @see also DeviceInterface::getInputBufferSize.
      */
     virtual size_t getBufferSize() const = 0;
 
@@ -148,7 +148,7 @@ public:
     virtual android::status_t removeAudioEffect(effect_handle_t effect) = 0;
 
 protected:
-    virtual ~AudioStream() {}
+    virtual ~StreamInterface() {}
 
 public:
     /* This section should have been private as they declared for internal use only.
@@ -173,8 +173,8 @@ public:
         } stream;
         union
         {
-            AudioStreamOut *out;    /**< C++ output stream object */
-            AudioStreamIn *in;      /**< C++ input stream object */
+            StreamOutInterface *out;    /**< C++ output stream object */
+            StreamInInterface *in;      /**< C++ input stream object */
         } obj;
         stream_direction dir;       /**< Direction */
     };
@@ -202,7 +202,7 @@ public:
 
 
 /** Audio output stream interface. */
-class AudioStreamOut : public details::AudioStream
+class StreamOutInterface : public details::StreamInterface
 {
 public:
     /**
@@ -340,7 +340,7 @@ public:
                                                       struct timespec *timestamp) const = 0;
 
 protected:
-    virtual ~AudioStreamOut() {}
+    virtual ~StreamOutInterface() {}
 
 public:
     /* This section should have been private as they declared for internal use only.
@@ -364,7 +364,7 @@ public:
 
 
 /** Audio input stream interface. */
-class AudioStreamIn : public details::AudioStream
+class StreamInInterface : public details::StreamInterface
 {
 public:
     /** Set the input gain for the audio driver.
@@ -396,7 +396,7 @@ public:
     virtual uint32_t getInputFramesLost() const = 0;
 
 protected:
-    virtual ~AudioStreamIn() {}
+    virtual ~StreamInInterface() {}
 
 public:
     /* This section should have been private as they declared for internal use only.

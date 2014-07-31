@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include <AudioStream.hpp>
+#include <StreamInterface.hpp>
 #include <hardware/audio.h>
 #include <utils/Errors.h>
 #include <string>
@@ -45,10 +45,10 @@ extern struct audio_module HAL_MODULE_INFO_SYM;
  * Important note: Implementation must define an "extern "C" createAudioHardware(void)" function
  *                 that constructs a HAL instance.
  */
-class AudioHwDevice
+class DeviceInterface
 {
 public:
-    virtual ~AudioHwDevice() {}
+    virtual ~DeviceInterface() {}
 
     /** Creates and opens the audio hardware output stream.
      *
@@ -64,13 +64,13 @@ public:
                                                audio_devices_t devices,
                                                audio_output_flags_t flags,
                                                audio_config_t *config,
-                                               AudioStreamOut **stream) = 0;
+                                               StreamOutInterface **stream) = 0;
 
     /** Closes and frees the audio hardware output stream.
      *
      * @param[in] stream to be closed.
      */
-    virtual void closeOutputStream(AudioStreamOut *stream) = 0;
+    virtual void closeOutputStream(StreamOutInterface *stream) = 0;
 
     /** Creates and opens the audio hardware input stream.
      *
@@ -83,13 +83,13 @@ public:
     virtual android::status_t openInputStream(audio_io_handle_t handle,
                                               audio_devices_t devices,
                                               audio_config_t *config,
-                                              AudioStreamIn **stream) = 0;
+                                              StreamInInterface **stream) = 0;
 
     /** Closes and frees the audio hardware input stream.
      *
      * @param[in] stream to be closed.
      */
-    virtual void closeInputStream(AudioStreamIn *stream) = 0;
+    virtual void closeInputStream(StreamInInterface *stream) = 0;
 
     /** Check to see if the audio hardware interface has been initialized.
      *
@@ -182,7 +182,7 @@ public:
     virtual std::string getParameters(const std::string &keys) const = 0;
 
     /** Retrieve audio input buffer size.
-     * @see also AudioStream::getBufferSize which is for a particular stream.
+     * @see also StreamInterface::getBufferSize which is for a particular stream.
      *
      * @param[in] config
      * @return audio input buffer size according to parameters passed or
@@ -207,7 +207,7 @@ public:
     struct ext
     {
         audio_hw_device_t device; /**< C device struct */
-        struct AudioHwDevice *obj;  /**< C++ device interface */
+        struct DeviceInterface *obj;  /**< C++ device interface */
     };
 
     /* Helpers that convert C calls into C++ calls */

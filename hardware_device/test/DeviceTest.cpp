@@ -20,7 +20,7 @@
  * express and approved by Intel in writing.
  */
 
-#include "HwDeviceTest.hpp"
+#include "DeviceTest.hpp"
 #include <StreamMock.hpp>
 
 
@@ -36,13 +36,13 @@ using std::string;
 // Hw module related
 extern "C"
 {
-AudioHwDevice *createAudioHardware(void)
+DeviceInterface *createAudioHardware(void)
 {
-    return new HwDeviceMock();
+    return new DeviceMock();
 }
 }
 
-void HwDeviceTest::SetUp()
+void DeviceTest::SetUp()
 {
     hw_device_t *dev;
     const char *name = AUDIO_HARDWARE_INTERFACE;
@@ -50,18 +50,18 @@ void HwDeviceTest::SetUp()
     ASSERT_EQ(HAL_MODULE_INFO_SYM.common.methods->open(NULL, name, &dev), 0);
     ASSERT_TRUE(dev != NULL);
     mDevice = reinterpret_cast<audio_hw_device_t *>(dev);
-    mDeviceMock = reinterpret_cast<intel_audio::HwDeviceMock *>(
-        reinterpret_cast<intel_audio::AudioHwDevice::ext *>(dev)->obj);
+    mDeviceMock = reinterpret_cast<intel_audio::DeviceMock *>(
+        reinterpret_cast<intel_audio::DeviceInterface::ext *>(dev)->obj);
 }
 
-void HwDeviceTest::TearDown()
+void DeviceTest::TearDown()
 {
     EXPECT_EQ(mDevice->common.close(&mDevice->common), 0);
 }
 
 
 /** Check audio hardware device API wrapping. */
-TEST_F(HwDeviceTest, Device)
+TEST_F(DeviceTest, Device)
 {
     EXPECT_CALL(*mDeviceMock, initCheck())
     .WillOnce(Return(1));
@@ -124,7 +124,7 @@ TEST_F(HwDeviceTest, Device)
     EXPECT_EQ(mDevice->dump(mDevice, 246), 11);
 }
 
-/** Helper to handle HwDeviceMock::openOutputStream mock call.
+/** Helper to handle DeviceMock::openOutputStream mock call.
  * Check that arguments are the expected ones and return a new StreamOutMock.
  */
 ACTION_P4(ActionOpenStreamOut, expHandle, expDevices, expFlags, expConfig)
@@ -147,12 +147,12 @@ ACTION_P4(ActionOpenStreamOut, expHandle, expDevices, expFlags, expConfig)
         return -1;
     }
 
-    AudioStreamOut **out = static_cast<intel_audio::AudioStreamOut **>(arg4);
+    StreamOutInterface **out = static_cast<intel_audio::StreamOutInterface **>(arg4);
     *out = new StreamOutMock();
     return 0;
 }
 
-/** Helper to handle HwDeviceMock::closeOutputStream mock call.
+/** Helper to handle DeviceMock::closeOutputStream mock call.
  * Free the associated StreamOutMock object.
  */
 ACTION(ActionCloseStreamOut)
@@ -167,7 +167,7 @@ int empty_callback(stream_callback_event_t, void *, void *)
 }
 
 /** Check audio output stream API wrapping. */
-TEST_F(HwDeviceTest, StreamOut)
+TEST_F(DeviceTest, StreamOut)
 {
     audio_io_handle_t handle = static_cast<audio_io_handle_t>(0);
     audio_devices_t devices = static_cast<audio_devices_t>(0);
@@ -181,7 +181,7 @@ TEST_F(HwDeviceTest, StreamOut)
                                           &stream_out), 0);
 
     StreamOutMock *out = reinterpret_cast<intel_audio::StreamOutMock *>(
-        reinterpret_cast<intel_audio::details::AudioStream::ext *>(stream_out)->obj.out);
+        reinterpret_cast<intel_audio::details::StreamInterface::ext *>(stream_out)->obj.out);
 
     // Common API check
     audio_stream *stream = reinterpret_cast<audio_stream *>(stream_out);
@@ -313,7 +313,7 @@ TEST_F(HwDeviceTest, StreamOut)
 }
 
 
-/** Helper to handle HwDeviceMock::openInputStream mock call.
+/** Helper to handle DeviceMock::openInputStream mock call.
  * Check that arguments are the expected ones and return a new StreamInMock.
  */
 ACTION_P3(ActionOpenStreamIn, expHandle, expDevices, expConfig)
@@ -333,12 +333,12 @@ ACTION_P3(ActionOpenStreamIn, expHandle, expDevices, expConfig)
         return -1;
     }
 
-    AudioStreamIn **in = static_cast<intel_audio::AudioStreamIn **>(arg3);
+    StreamInInterface **in = static_cast<intel_audio::StreamInInterface **>(arg3);
     *in = new StreamInMock();
     return 0;
 }
 
-/** Helper to handle HwDeviceMock::closeOutputStream mock call.
+/** Helper to handle DeviceMock::closeOutputStream mock call.
  * Free the associated StreamInMock object.
  */
 ACTION(ActionCloseStreamIn)
@@ -348,7 +348,7 @@ ACTION(ActionCloseStreamIn)
 }
 
 /** Check audio input stream API wrapping. */
-TEST_F(HwDeviceTest, StreamIn)
+TEST_F(DeviceTest, StreamIn)
 {
     audio_io_handle_t handle = static_cast<audio_io_handle_t>(0);
     audio_devices_t devices = static_cast<audio_devices_t>(0);
@@ -360,7 +360,7 @@ TEST_F(HwDeviceTest, StreamIn)
     ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, &config, &stream_in), 0);
 
     StreamInMock *in = reinterpret_cast<intel_audio::StreamInMock *>(
-        reinterpret_cast<intel_audio::details::AudioStream::ext *>(stream_in)->obj.in);
+        reinterpret_cast<intel_audio::details::StreamInterface::ext *>(stream_in)->obj.in);
 
     // Common API check
     audio_stream *stream = reinterpret_cast<audio_stream *>(stream_in);

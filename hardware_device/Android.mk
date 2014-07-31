@@ -30,8 +30,8 @@ include $(CLEAR_VARS)
 #######################################################################
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := \
-    src/AudioHwDevice.cpp \
-    src/AudioStream.cpp
+    src/DeviceInterface.cpp \
+    src/StreamInterface.cpp
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
 
@@ -49,8 +49,8 @@ include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := \
-    src/AudioHwDevice.cpp \
-    src/AudioStream.cpp
+    src/DeviceInterface.cpp \
+    src/StreamInterface.cpp
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities_host
 
@@ -71,7 +71,7 @@ LOCAL_C_INCLUDES := \
     vendor/intel/hardware/PRIVATE/audiocomms/tests/external/gmock/include
 
 LOCAL_SRC_FILES := \
-    test/HwDeviceTest.cpp
+    test/DeviceTest.cpp
 
 LOCAL_STATIC_LIBRARIES += \
     libaudiohw_intel_host \
