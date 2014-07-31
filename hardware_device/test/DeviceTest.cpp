@@ -181,7 +181,7 @@ TEST_F(DeviceTest, StreamOut)
                                           &stream_out), 0);
 
     StreamOutMock *out = reinterpret_cast<intel_audio::StreamOutMock *>(
-        reinterpret_cast<intel_audio::details::StreamInterface::ext *>(stream_out)->obj.out);
+        reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_out)->obj.out);
 
     // Common API check
     audio_stream *stream = reinterpret_cast<audio_stream *>(stream_out);
@@ -360,7 +360,7 @@ TEST_F(DeviceTest, StreamIn)
     ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, &config, &stream_in), 0);
 
     StreamInMock *in = reinterpret_cast<intel_audio::StreamInMock *>(
-        reinterpret_cast<intel_audio::details::StreamInterface::ext *>(stream_in)->obj.in);
+        reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_in)->obj.in);
 
     // Common API check
     audio_stream *stream = reinterpret_cast<audio_stream *>(stream_in);

@@ -26,9 +26,6 @@
 
 namespace intel_audio
 {
-namespace details
-{
-
 //
 // Helper macros
 //
@@ -135,9 +132,6 @@ int StreamInterface::wrapRemoveAudioEffect(const audio_stream_t *stream, effect_
     return static_cast<int>(FORWARD_CALL_TO_STREAM_INSTANCE(const, stream,
                                                             removeAudioEffect(effect)));
 }
-
-} // namespace details
-
 
 //
 // StreamOutInterface class C/C++ wrapping
