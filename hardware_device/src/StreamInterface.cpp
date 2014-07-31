@@ -155,15 +155,21 @@ ssize_t StreamOutInterface::wrapWrite(audio_stream_out_t *stream, const void *bu
 int StreamOutInterface::wrapGetRenderPosition(const audio_stream_out_t *stream,
                                               uint32_t *dspFrames)
 {
+    if (dspFrames == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
     return static_cast<int>(FORWARD_CALL_TO_STREAM_OUT_INSTANCE(const, stream,
-                                                                getRenderPosition(dspFrames)));
+                                                                getRenderPosition(*dspFrames)));
 }
 
 int StreamOutInterface::wrapGetNextWriteTimestamp(const audio_stream_out_t *stream,
                                                   int64_t *timestamp)
 {
+    if (timestamp == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
     return static_cast<int>(FORWARD_CALL_TO_STREAM_OUT_INSTANCE(const, stream,
-                                                                getNextWriteTimestamp(timestamp)));
+                                                                getNextWriteTimestamp(*timestamp)));
 }
 
 int StreamOutInterface::wrapFlush(const audio_stream_out_t *stream)
@@ -196,9 +202,12 @@ int StreamOutInterface::wrapDrain(audio_stream_out_t *stream, audio_drain_type_t
 int StreamOutInterface::wrapGetPresentationPosition(const audio_stream_out_t *stream,
                                                     uint64_t *frames, struct timespec *timestamp)
 {
+    if (frames == NULL || timestamp == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
     return static_cast<int>(
         FORWARD_CALL_TO_STREAM_OUT_INSTANCE(const, stream,
-                                            getPresentationPosition(frames, timestamp)));
+                                            getPresentationPosition(*frames, *timestamp)));
 }
 
 

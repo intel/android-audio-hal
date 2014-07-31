@@ -53,9 +53,9 @@ public:
     MOCK_METHOD1(setDevice,
                  android::status_t(audio_devices_t device));
     MOCK_CONST_METHOD1(getParameters,
-                       std::string(const std::string & keys));
+                       std::string(const std::string &keys));
     MOCK_METHOD1(setParameters,
-                 android::status_t(const std::string & keyValuePairs));
+                 android::status_t(const std::string &keyValuePairs));
     MOCK_METHOD1(addAudioEffect,
                  android::status_t(effect_handle_t effect));
     MOCK_METHOD1(removeAudioEffect,
@@ -65,11 +65,11 @@ public:
     MOCK_METHOD2(setVolume,
                  android::status_t(float left, float right));
     MOCK_METHOD2(write,
-                 android::status_t(const void *buffer, size_t & bytes));
+                 android::status_t(const void *buffer, size_t &bytes));
     MOCK_CONST_METHOD1(getRenderPosition,
-                       android::status_t(uint32_t * dspFrames));
+                       android::status_t(uint32_t &dspFrames));
     MOCK_CONST_METHOD1(getNextWriteTimestamp,
-                       android::status_t(int64_t * timestamp));
+                       android::status_t(int64_t &timestamp));
     MOCK_METHOD0(flush,
                  android::status_t());
     MOCK_METHOD2(setCallback,
@@ -81,7 +81,7 @@ public:
     MOCK_METHOD1(drain,
                  android::status_t(audio_drain_type_t type));
     MOCK_CONST_METHOD2(getPresentationPosition,
-                       android::status_t(uint64_t * frames, struct timespec *timestamp));
+                       android::status_t(uint64_t &frames, struct timespec &timestamp));
 };
 
 class StreamInMock : public StreamInInterface
@@ -111,9 +111,9 @@ public:
     MOCK_METHOD1(setDevice,
                  android::status_t(audio_devices_t device));
     MOCK_CONST_METHOD1(getParameters,
-                       std::string(const std::string & keys));
+                       std::string(const std::string &keys));
     MOCK_METHOD1(setParameters,
-                 android::status_t(const std::string & keyValuePairs));
+                 android::status_t(const std::string &keyValuePairs));
     MOCK_METHOD1(addAudioEffect,
                  android::status_t(effect_handle_t effect));
     MOCK_METHOD1(removeAudioEffect,
@@ -122,7 +122,7 @@ public:
     MOCK_METHOD1(setGain,
                  android::status_t(float gain));
     MOCK_METHOD2(read,
-                 android::status_t(void *buffer, size_t & bytes));
+                 android::status_t(void *buffer, size_t &bytes));
     MOCK_CONST_METHOD0(getInputFramesLost,
                        uint32_t());
 };

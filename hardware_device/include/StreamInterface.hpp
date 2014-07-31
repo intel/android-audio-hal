@@ -236,14 +236,14 @@ public:
      *             the output has exited standby.
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t getRenderPosition(uint32_t *dspFrames) const = 0;
+    virtual android::status_t getRenderPosition(uint32_t &dspFrames) const = 0;
 
     /** Get the local time at which the next write to the audio driver will be presented.
      *
      * @param timestamp in microseconds (where the epoch is decided by the local audio HAL)
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t getNextWriteTimestamp(int64_t *timestamp) const = 0;
+    virtual android::status_t getNextWriteTimestamp(int64_t &timestamp) const = 0;
 
 
     /** Notifies to the audio driver to flush the queued data.
@@ -329,8 +329,8 @@ public:
      *
      * NOTE: 3.0 and higher only.
      */
-    virtual android::status_t getPresentationPosition(uint64_t *frames,
-                                                      struct timespec *timestamp) const = 0;
+    virtual android::status_t getPresentationPosition(uint64_t &frames,
+                                                      struct timespec &timestamp) const = 0;
 
 public:
     /* This section should have been private as they declared for internal use only.

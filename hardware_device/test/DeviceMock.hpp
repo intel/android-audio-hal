@@ -37,17 +37,17 @@ public:
                  android::status_t(audio_io_handle_t handle,
                                    audio_devices_t devices,
                                    audio_output_flags_t flags,
-                                   audio_config_t * config,
-                                   StreamOutInterface * *stream));
+                                   audio_config_t &config,
+                                   StreamOutInterface *&stream));
     MOCK_METHOD1(closeOutputStream,
-                 void(StreamOutInterface * stream));
+                 void(StreamOutInterface *stream));
     MOCK_METHOD4(openInputStream,
                  android::status_t(audio_io_handle_t handle,
                                    audio_devices_t devices,
-                                   audio_config_t * config,
-                                   StreamInInterface * *stream));
+                                   audio_config_t &config,
+                                   StreamInInterface *&stream));
     MOCK_METHOD1(closeInputStream,
-                 void(StreamInInterface * stream));
+                 void(StreamInInterface *stream));
     MOCK_CONST_METHOD0(initCheck,
                        android::status_t());
     MOCK_METHOD1(setVoiceVolume,
@@ -55,23 +55,23 @@ public:
     MOCK_METHOD1(setMasterVolume,
                  android::status_t(float volume));
     MOCK_CONST_METHOD1(getMasterVolume,
-                       android::status_t(float *volume));
+                       android::status_t(float &volume));
     MOCK_METHOD1(setMasterMute,
                  android::status_t(bool mute));
     MOCK_CONST_METHOD1(getMasterMute,
-                       android::status_t(bool *muted));
+                       android::status_t(bool &muted));
     MOCK_METHOD1(setMode,
                  android::status_t(audio_mode_t mode));
     MOCK_METHOD1(setMicMute,
                  android::status_t(bool state));
     MOCK_CONST_METHOD1(getMicMute,
-                       android::status_t(bool *state));
+                       android::status_t(bool &state));
     MOCK_METHOD1(setParameters,
-                 android::status_t(const std::string & keyValuePairs));
+                 android::status_t(const std::string &keyValuePairs));
     MOCK_CONST_METHOD1(getParameters,
-                       std::string(const std::string & keys));
+                       std::string(const std::string &keys));
     MOCK_CONST_METHOD1(getInputBufferSize,
-                       size_t(const audio_config_t * config));
+                       size_t(const audio_config_t &config));
     MOCK_CONST_METHOD1(dump,
                        android::status_t(const int fd));
 };

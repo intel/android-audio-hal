@@ -76,18 +76,22 @@ TEST_F(DeviceTest, Device)
     EXPECT_EQ(mDevice->set_master_volume(mDevice, 1.2), 3);
 
     float volume;
-    EXPECT_CALL(*mDeviceMock, getMasterVolume(&volume))
-    .WillOnce(Return(4));
+    EXPECT_CALL(*mDeviceMock, getMasterVolume(volume))
+    .WillOnce(DoAll(SetArgReferee<0>(1.5f),
+                    Return(4)));
     EXPECT_EQ(mDevice->get_master_volume(mDevice, &volume), 4);
+    EXPECT_FLOAT_EQ(volume, 1.5f);
 
     EXPECT_CALL(*mDeviceMock, setMasterMute(false))
     .WillOnce(Return(43));
     EXPECT_EQ(mDevice->set_master_mute(mDevice, false), 43);
 
     bool muted;
-    EXPECT_CALL(*mDeviceMock, getMasterMute(&muted))
-    .WillOnce(Return(8));
+    EXPECT_CALL(*mDeviceMock, getMasterMute(muted))
+    .WillOnce(DoAll(SetArgReferee<0>(true),
+                    Return(8)));
     EXPECT_EQ(mDevice->get_master_mute(mDevice, &muted), 8);
+    EXPECT_EQ(muted, true);
 
     EXPECT_CALL(*mDeviceMock, setMode(AUDIO_MODE_INVALID))
     .WillOnce(Return(5));
@@ -97,9 +101,11 @@ TEST_F(DeviceTest, Device)
     .WillOnce(Return(7));
     EXPECT_EQ(mDevice->set_mic_mute(mDevice, true), 7);
 
-    EXPECT_CALL(*mDeviceMock, getMicMute(&muted))
-    .WillOnce(Return(8));
+    EXPECT_CALL(*mDeviceMock, getMicMute(muted))
+    .WillOnce(DoAll(SetArgReferee<0>(false),
+                    Return(8)));
     EXPECT_EQ(mDevice->get_mic_mute(mDevice, &muted), 8);
+    EXPECT_EQ(muted, false);
 
     string kvpairs("ohhh yeahhhh");
     EXPECT_CALL(*mDeviceMock, setParameters(kvpairs))
@@ -115,7 +121,7 @@ TEST_F(DeviceTest, Device)
     free(read_values);
 
     audio_config_t config;
-    EXPECT_CALL(*mDeviceMock, getInputBufferSize(&config))
+    EXPECT_CALL(*mDeviceMock, getInputBufferSize(_))
     .WillOnce(Return(10));
     EXPECT_EQ(mDevice->get_input_buffer_size(mDevice, &config), static_cast<size_t>(10));
 
@@ -132,23 +138,22 @@ ACTION_P4(ActionOpenStreamOut, expHandle, expDevices, expFlags, expConfig)
     audio_io_handle_t checkHandle = static_cast<audio_io_handle_t>(expHandle);
     audio_devices_t checkDevices = static_cast<audio_devices_t>(expDevices);
     audio_output_flags_t checkFlags = static_cast<audio_output_flags_t>(expFlags);
-    audio_config_t *checkConfig = static_cast<audio_config_t *>(expConfig);
+    audio_config_t checkConfig = static_cast<audio_config_t>(expConfig);
 
     audio_io_handle_t handle = static_cast<audio_io_handle_t>(arg0);
     audio_devices_t devices = static_cast<audio_devices_t>(arg1);
     audio_output_flags_t flags = static_cast<audio_output_flags_t>(arg2);
-    audio_config_t *config = static_cast<audio_config_t *>(arg3);
+    audio_config_t config = static_cast<audio_config_t>(arg3);
 
     if (checkHandle != handle
         || checkDevices != devices
         || checkFlags != flags
-        || checkConfig != config
+        || checkConfig.sample_rate != config.sample_rate
+        || checkConfig.format != config.format
+        || checkConfig.channel_mask != config.channel_mask
         ) {
         return -1;
     }
-
-    StreamOutInterface **out = static_cast<intel_audio::StreamOutInterface **>(arg4);
-    *out = new StreamOutMock();
     return 0;
 }
 
@@ -176,7 +181,8 @@ TEST_F(DeviceTest, StreamOut)
     audio_stream_out *stream_out;
 
     EXPECT_CALL(*mDeviceMock, openOutputStream(_, _, _, _, _))
-    .WillOnce(ActionOpenStreamOut(handle, devices, flags, &config));
+    .WillOnce(DoAll(SetArgReferee<4>(new StreamOutMock()),
+                    ActionOpenStreamOut(handle, devices, flags, config)));
     ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, &config,
                                           &stream_out), 0);
 
@@ -270,15 +276,19 @@ TEST_F(DeviceTest, StreamOut)
                     Return(static_cast<android::status_t>(android::BAD_VALUE))));
     EXPECT_EQ(stream_out->write(stream_out, buffer, 1024), android::BAD_VALUE);
 
-    uint32_t frames[1];
+    uint32_t frames;
     EXPECT_CALL(*out, getRenderPosition(frames))
-    .WillOnce(Return(8));
-    EXPECT_EQ(stream_out->get_render_position(stream_out, frames), 8);
+    .WillOnce(DoAll(SetArgReferee<0>(666u),
+                    Return(8)));
+    EXPECT_EQ(stream_out->get_render_position(stream_out, &frames), 8);
+    EXPECT_EQ(frames, 666u);
 
-    int64_t stamp[1];
+    int64_t stamp;
     EXPECT_CALL(*out, getNextWriteTimestamp(stamp))
-    .WillOnce(Return(9));
-    EXPECT_EQ(stream_out->get_next_write_timestamp(stream_out, stamp), 9);
+    .WillOnce(DoAll(SetArgReferee<0>(123456789),
+                    Return(9)));
+    EXPECT_EQ(stream_out->get_next_write_timestamp(stream_out, &stamp), 9);
+    EXPECT_EQ(stamp, 123456789);
 
     EXPECT_CALL(*out, flush())
     .WillOnce(Return(10));
@@ -302,10 +312,18 @@ TEST_F(DeviceTest, StreamOut)
     EXPECT_EQ(stream_out->drain(stream_out, AUDIO_DRAIN_EARLY_NOTIFY), 14);
 
     uint64_t frame;
-    struct timespec time;
-    EXPECT_CALL(*out, getPresentationPosition(&frame, &time))
-    .WillOnce(Return(14));
+    struct timespec time = {
+        0, 0
+    };
+    struct timespec timeReturned = {
+        1234, 5647
+    };
+    EXPECT_CALL(*out, getPresentationPosition(frame, _))
+    .WillOnce(DoAll(SetArgReferee<1>(timeReturned),
+                    Return(14)));
     EXPECT_EQ(stream_out->get_presentation_position(stream_out, &frame, &time), 14);
+    EXPECT_EQ(time.tv_nsec, timeReturned.tv_nsec);
+    EXPECT_EQ(time.tv_sec, timeReturned.tv_sec);
 
     EXPECT_CALL(*mDeviceMock, closeOutputStream(out))
     .WillOnce(ActionCloseStreamOut());
@@ -320,21 +338,20 @@ ACTION_P3(ActionOpenStreamIn, expHandle, expDevices, expConfig)
 {
     audio_io_handle_t checkHandle = static_cast<audio_io_handle_t>(expHandle);
     audio_devices_t checkDevices = static_cast<audio_devices_t>(expDevices);
-    audio_config_t *checkConfig = static_cast<audio_config_t *>(expConfig);
+    audio_config_t checkConfig = static_cast<audio_config_t>(expConfig);
 
     audio_io_handle_t handle = static_cast<audio_io_handle_t>(arg0);
     audio_devices_t devices = static_cast<audio_devices_t>(arg1);
-    audio_config_t *config = static_cast<audio_config_t *>(arg2);
+    audio_config_t config = static_cast<audio_config_t>(arg2);
 
     if (checkHandle != handle
         || checkDevices != devices
-        || checkConfig != config
+        || checkConfig.sample_rate != config.sample_rate
+        || checkConfig.format != config.format
+        || checkConfig.channel_mask != config.channel_mask
         ) {
         return -1;
     }
-
-    StreamInInterface **in = static_cast<intel_audio::StreamInInterface **>(arg3);
-    *in = new StreamInMock();
     return 0;
 }
 
@@ -356,7 +373,8 @@ TEST_F(DeviceTest, StreamIn)
     audio_stream_in *stream_in;
 
     EXPECT_CALL(*mDeviceMock, openInputStream(_, _, _, _))
-    .WillOnce(ActionOpenStreamIn(handle, devices, &config));
+    .WillOnce(DoAll(SetArgReferee<3>(new StreamInMock()),
+                    ActionOpenStreamIn(handle, devices, config)));
     ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, &config, &stream_in), 0);
 
     StreamInMock *in = reinterpret_cast<intel_audio::StreamInMock *>(
@@ -453,4 +471,88 @@ TEST_F(DeviceTest, StreamIn)
     EXPECT_CALL(*mDeviceMock, closeInputStream(in))
     .WillOnce(ActionCloseStreamIn());
     mDevice->close_input_stream(mDevice, stream_in);
+}
+
+TEST_F(DeviceTest, DeviceErrorHandling)
+{
+    /** Check audio input stream error handling. */
+    audio_io_handle_t handle = static_cast<audio_io_handle_t>(0);
+    audio_devices_t devices = static_cast<audio_devices_t>(0);
+    audio_config_t *nullConfig = NULL;
+    audio_stream_in *stream_in;
+
+    // Input Stream creation with a NULL configuration structure pointer
+    ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, nullConfig, &stream_in),
+              android::BAD_VALUE);
+
+    /** Check audio output stream error handling. */
+    audio_output_flags_t flags = static_cast<audio_output_flags_t>(0);
+    audio_stream_out *stream_out;
+
+    // Output Stream creation with a NULL configuration structure pointer
+    ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, nullConfig, &stream_out),
+              android::BAD_VALUE);
+
+    /** Check Get Master volume with NULL pointer error handling. */
+    float *volume = NULL;
+    EXPECT_EQ(mDevice->get_master_volume(mDevice, volume), android::BAD_VALUE);
+
+    /** Check Get Master mute with NULL pointer error handling. */
+    bool *muted = NULL;
+    EXPECT_EQ(mDevice->get_master_mute(mDevice, muted), android::BAD_VALUE);
+
+    /** Check Get Mic mute with NULL pointer error handling. */
+    EXPECT_EQ(mDevice->get_mic_mute(mDevice, muted), android::BAD_VALUE);
+
+    /** Check Get Input Buffer Size with NULL configuration structure pointer error handling. */
+    EXPECT_EQ(mDevice->get_input_buffer_size(mDevice, nullConfig),
+              static_cast<size_t>(android::BAD_VALUE));
+}
+
+TEST_F(DeviceTest, OutputStreamErrorHandling)
+{
+    audio_io_handle_t handle = static_cast<audio_io_handle_t>(0);
+    audio_devices_t devices = static_cast<audio_devices_t>(0);
+    audio_output_flags_t flags = static_cast<audio_output_flags_t>(0);
+    audio_config_t config;
+    audio_stream_out *stream_out;
+
+    EXPECT_CALL(*mDeviceMock, openOutputStream(_, _, _, _, _))
+    .WillOnce(DoAll(SetArgReferee<4>(new StreamOutMock()),
+                    ActionOpenStreamOut(handle, devices, flags, config)));
+    ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, &config,
+                                          &stream_out), 0);
+
+    StreamOutMock *out = reinterpret_cast<intel_audio::StreamOutMock *>(
+        reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_out)->obj.out);
+
+    // Common API check
+    audio_stream *stream = reinterpret_cast<audio_stream *>(stream_out);
+
+    /** Check get render position with NULL pointer error handling. */
+    uint32_t *nullFrames = NULL;
+    EXPECT_EQ(stream_out->get_render_position(stream_out, nullFrames), android::BAD_VALUE);
+
+    /** Check get next write timestamp with NULL pointer error handling. */
+    int64_t *nullStamp = NULL;
+    EXPECT_EQ(stream_out->get_next_write_timestamp(stream_out, nullStamp), android::BAD_VALUE);
+
+    /** Check get next presentation position with NULL pointer error handling. */
+    struct timespec *nullTime = NULL;
+    uint64_t validFrame;
+    EXPECT_EQ(stream_out->get_presentation_position(stream_out, &validFrame, nullTime),
+              android::BAD_VALUE);
+
+    struct timespec validTime;
+    uint64_t *nullFrame = NULL;
+    EXPECT_EQ(stream_out->get_presentation_position(stream_out, nullFrame, &validTime),
+              android::BAD_VALUE);
+
+    EXPECT_EQ(stream_out->get_presentation_position(stream_out, nullFrame, nullTime),
+              android::BAD_VALUE);
+
+
+    EXPECT_CALL(*mDeviceMock, closeOutputStream(out))
+    .WillOnce(ActionCloseStreamOut());
+    mDevice->close_output_stream(mDevice, stream_out);
 }
