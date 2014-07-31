@@ -74,7 +74,7 @@ int DeviceInterface::wrapOpen(const hw_module_t *module, const char *name, hw_de
     struct ext *ext_dev;
 
     if (strcmp(name, AUDIO_HARDWARE_INTERFACE) != 0) {
-        return -EINVAL;
+        return static_cast<int>(android::BAD_VALUE);
     }
 
     ext_dev = (struct ext *)calloc(1, sizeof(*ext_dev));
@@ -135,6 +135,10 @@ int DeviceInterface::wrapOpenOutputStream(struct audio_hw_device *dev,
                                           audio_config_t *config,
                                           audio_stream_out_t **stream_out)
 {
+    if (config == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+
     struct StreamInterface::ext *ext_stream =
         (struct StreamInterface::ext *)calloc(1, sizeof(*ext_stream));
     if (!ext_stream) {
@@ -145,7 +149,7 @@ int DeviceInterface::wrapOpenOutputStream(struct audio_hw_device *dev,
     AUDIOCOMMS_ASSERT(ext_dev != NULL, "Invalid device");
 
     int error = static_cast<int>(
-        ext_dev->obj->openOutputStream(handle, devices, flags, config, &ext_stream->obj.out));
+        ext_dev->obj->openOutputStream(handle, devices, flags, *config, ext_stream->obj.out));
     if (error || ext_stream->obj.out == NULL) {
         free(ext_stream);
         *stream_out = NULL;
@@ -205,6 +209,10 @@ int DeviceInterface::wrapOpenInputStream(struct audio_hw_device *dev,
                                          audio_config_t *config,
                                          audio_stream_in_t **stream_in)
 {
+    if (config == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+
     struct StreamInterface::ext *ext_stream =
         (struct StreamInterface::ext *)calloc(1, sizeof(*ext_stream));
     if (ext_stream == NULL) {
@@ -214,7 +222,7 @@ int DeviceInterface::wrapOpenInputStream(struct audio_hw_device *dev,
     struct ext *ext_dev = reinterpret_cast<struct ext *>(dev);
     AUDIOCOMMS_ASSERT(ext_dev != NULL, "Invalid device");
     int error = static_cast<int>(
-        ext_dev->obj->openInputStream(handle, devices, config, &ext_stream->obj.in));
+        ext_dev->obj->openInputStream(handle, devices, *config, ext_stream->obj.in));
     if (ext_stream->obj.in == NULL) {
         free(ext_stream);
         *stream_in = NULL;
@@ -276,7 +284,10 @@ int DeviceInterface::wrapSetMasterVolume(struct audio_hw_device *dev, float volu
 
 int DeviceInterface::wrapGetMasterVolume(struct audio_hw_device *dev, float *volume)
 {
-    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getMasterVolume(volume)));
+    if (volume == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getMasterVolume(*volume)));
 }
 
 int DeviceInterface::wrapSetMasterMute(struct audio_hw_device *dev, bool mute)
@@ -286,7 +297,10 @@ int DeviceInterface::wrapSetMasterMute(struct audio_hw_device *dev, bool mute)
 
 int DeviceInterface::wrapGetMasterMute(struct audio_hw_device *dev, bool *muted)
 {
-    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getMasterMute(muted)));
+    if (muted == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getMasterMute(*muted)));
 }
 
 int DeviceInterface::wrapSetMode(struct audio_hw_device *dev, audio_mode_t mode)
@@ -301,7 +315,10 @@ int DeviceInterface::wrapSetMicMute(struct audio_hw_device *dev, bool state)
 
 int DeviceInterface::wrapGetMicMute(const struct audio_hw_device *dev, bool *state)
 {
-    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getMicMute(state)));
+    if (state == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getMicMute(*state)));
 }
 
 int DeviceInterface::wrapSetParameters(struct audio_hw_device *dev, const char *keyValuePairs)
@@ -319,7 +336,10 @@ char *DeviceInterface::wrapGetParameters(const struct audio_hw_device *dev, cons
 size_t DeviceInterface::wrapGetInputBufferSize(const struct audio_hw_device *dev,
                                                const audio_config_t *config)
 {
-    return FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getInputBufferSize(config));
+    if (config == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getInputBufferSize(*config));
 }
 
 int DeviceInterface::wrapDump(const struct audio_hw_device *dev, int fd)

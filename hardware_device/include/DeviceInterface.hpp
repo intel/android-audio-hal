@@ -63,8 +63,8 @@ public:
     virtual android::status_t openOutputStream(audio_io_handle_t handle,
                                                audio_devices_t devices,
                                                audio_output_flags_t flags,
-                                               audio_config_t *config,
-                                               StreamOutInterface **stream) = 0;
+                                               audio_config_t &config,
+                                               StreamOutInterface *&stream) = 0;
 
     /** Closes and frees the audio hardware output stream.
      *
@@ -82,8 +82,8 @@ public:
      */
     virtual android::status_t openInputStream(audio_io_handle_t handle,
                                               audio_devices_t devices,
-                                              audio_config_t *config,
-                                              StreamInInterface **stream) = 0;
+                                              audio_config_t &config,
+                                              StreamInInterface *&stream) = 0;
 
     /** Closes and frees the audio hardware input stream.
      *
@@ -120,7 +120,7 @@ public:
      *             HALs which do not support this method may leave it set to NULL.
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t getMasterVolume(float *volume) const = 0;
+    virtual android::status_t getMasterVolume(float &volume) const = 0;
 
     /** Set the audio mute status for all audio activities.
      *
@@ -138,7 +138,7 @@ public:
      *             HALs which do not support this method may leave it set to NULL.
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t getMasterMute(bool *muted) const = 0;
+    virtual android::status_t getMasterMute(bool &muted) const = 0;
 
     /** Called when the audio mode changes.
      * @see audio_mode_t enums for possible values.
@@ -160,7 +160,7 @@ public:
      * @param[out] muted true when muted, false when unmuted
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t getMicMute(bool *muted) const = 0;
+    virtual android::status_t getMicMute(bool &muted) const = 0;
 
     /** Set the global parameters on Audio HAL.
      * Called by Audio System to inform the HAL of parameter value change like BT enabled,
@@ -188,7 +188,7 @@ public:
      * @return audio input buffer size according to parameters passed or
      *         0 if one of the parameters is not supported.
      */
-    virtual size_t getInputBufferSize(const audio_config_t *config) const = 0;
+    virtual size_t getInputBufferSize(const audio_config_t &config) const = 0;
 
     /** Dump the state of the audio hardware.
      *
