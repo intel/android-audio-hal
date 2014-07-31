@@ -34,9 +34,6 @@ namespace intel_audio
 class StreamOutInterface;
 class StreamInInterface;
 
-namespace details
-{
-
 /** Stream interface common to input and output streams. */
 class StreamInterface
 {
@@ -197,11 +194,8 @@ public:
                                      effect_handle_t effect);
 };
 
-} // namespace details
-
-
 /** Audio output stream interface. */
-class StreamOutInterface : public details::StreamInterface
+class StreamOutInterface : public virtual StreamInterface
 {
 public:
     /**
@@ -360,7 +354,7 @@ public:
 
 
 /** Audio input stream interface. */
-class StreamInInterface : public details::StreamInterface
+class StreamInInterface : public virtual StreamInterface
 {
 public:
     /** Set the input gain for the audio driver.

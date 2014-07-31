@@ -27,8 +27,6 @@
 namespace intel_audio
 {
 
-using details::StreamInterface;
-
 extern "C"
 {
 DeviceInterface *createAudioHardware(void);
