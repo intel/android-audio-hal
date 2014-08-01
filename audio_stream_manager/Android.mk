@@ -173,6 +173,37 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 
 endif
 
+# Component functional test
+#######################################################################
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES:= test/FunctionalTest.cpp
+
+LOCAL_C_INCLUDES := \
+        $(TARGET_OUT_HEADERS)/hw \
+        $(TARGET_OUT_HEADERS)/parameter \
+        frameworks/av/include \
+        system/media/audio_utils/include \
+        system/media/audio_effects/include \
+
+LOCAL_STATIC_LIBRARIES := \
+        libkeyvaluepairs \
+        libaudio_comms_utilities \
+        libaudio_comms_convert \
+        libmedia_helper \
+
+LOCAL_SHARED_LIBRARIES := \
+        libhardware \
+        liblog \
+
+LOCAL_MODULE := audio-hal-functional_test
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_CFLAGS := -Wall -Werror -Wextra
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+include $(BUILD_NATIVE_TEST)
+
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
 
