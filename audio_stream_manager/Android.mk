@@ -30,11 +30,11 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 # Common variables
 
 audio_stream_manager_src_files :=  \
-    Stream.cpp \
-    Device.cpp \
-    StreamIn.cpp \
-    StreamOut.cpp \
-    AudioParameterHandler.cpp
+    src/Stream.cpp \
+    src/Device.cpp \
+    src/StreamIn.cpp \
+    src/StreamOut.cpp \
+    src/AudioParameterHandler.cpp
 
 audio_stream_manager_includes_dir := \
     $(TARGET_OUT_HEADERS)/libaudioresample \
