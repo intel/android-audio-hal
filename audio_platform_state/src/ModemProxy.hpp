@@ -90,5 +90,6 @@ private:
     static const std::string &mKeyState;
     static const std::string &mKeyCallStatus;
     static const std::string &mKeyBandType;
+    static const std::string &mLiteralFalseValue;
     const std::string mInstance;
 };

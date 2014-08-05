@@ -39,6 +39,7 @@ using audio_comms::utilities::convertTo;
 const std::string &ModemProxy::mKeyState = "modem_state_";
 const std::string &ModemProxy::mKeyCallStatus = "call_status_";
 const std::string &ModemProxy::mKeyBandType = "csv_band_type_";
+const std::string &ModemProxy::mLiteralFalseValue = "0";
 
 ModemProxy::ModemProxy(const string &libraryName,
                        const string &instance,
@@ -113,6 +114,9 @@ const std::string ModemProxy::isModemAlive(void *context) const
 {
     ModemProxy *proxy = static_cast<ModemProxy *>(context);
     AUDIOCOMMS_ASSERT(proxy != NULL, "NULL context given back");
+    if (proxy->mModemAudioManagerInterface == NULL) {
+        return mLiteralFalseValue;
+    }
     string modemAlive;
     convertTo(static_cast<uint32_t>(proxy->mModemAudioManagerInterface->isModemAlive()),
               modemAlive);
@@ -123,6 +127,9 @@ const std::string ModemProxy::isModemAudioAvailable(void *context) const
 {
     ModemProxy *proxy = static_cast<ModemProxy *>(context);
     AUDIOCOMMS_ASSERT(proxy != NULL, "NULL context given back");
+    if (proxy->mModemAudioManagerInterface == NULL) {
+        return mLiteralFalseValue;
+    }
     string modemAudioAvailable;
     convertTo(static_cast<uint32_t>(proxy->mModemAudioManagerInterface->isModemAudioAvailable()),
               modemAudioAvailable);
@@ -133,9 +140,11 @@ const std::string ModemProxy::getAudioBand(void *context) const
 {
     ModemProxy *proxy = static_cast<ModemProxy *>(context);
     AUDIOCOMMS_ASSERT(proxy != NULL, "NULL context given back");
+    if (proxy->mModemAudioManagerInterface == NULL) {
+        return CAudioBand::toLiteral(CAudioBand::ENarrow);
+    }
     return CAudioBand::toLiteral(proxy->mModemAudioManagerInterface->getAudioBand());
 }
-
 
 bool ModemProxy::start()
 {
