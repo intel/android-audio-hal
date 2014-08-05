@@ -50,15 +50,10 @@ extern "C"
  */
 DeviceInterface *createAudioHardware(void)
 {
-    return Device::create();
-}
-}         // extern "C"
-
-DeviceInterface *Device::create()
-{
     ALOGD("Using Audio XML HAL");
     return new Device();
 }
+}         // extern "C"
 
 const char *const Device::mBluetoothHfpSupportedPropName = "Audiocomms.BT.HFP.Supported";
 const bool Device::mBluetoothHfpSupportedDefaultValue = true;
