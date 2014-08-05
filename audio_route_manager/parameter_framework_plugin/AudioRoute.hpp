@@ -74,23 +74,23 @@ protected:
     virtual bool sendToHW(string &error);
 
 private:
-    const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
+    const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */
+    intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
 
-    static const Status DEFAULT_STATUS; /**< default status at object creation. */
+    static const Status mDefaultStatus; /**< default status at object creation. */
 
-    Status _status; /**< status of a route. */
+    Status mStatus; /**< status of a route. */
 
-    string _routeName; /**< Name of the audio route. */
-    uint32_t _routeId; /**< Identifier of the audio route. */
-    bool _isStreamRoute; /**< qualifier of the audio route. */
-    bool _isOut; /**< direction qualifier of the audio route. */
+    string mRouteName; /**< Name of the audio route. */
+    uint32_t mRouteId; /**< Identifier of the audio route. */
+    bool mIsStreamRoute; /**< qualifier of the audio route. */
+    bool mIsOut; /**< direction qualifier of the audio route. */
 
-    static const std::string ROUTE_CRITERION_TYPE; /**< Route criterion type name. */
-    static const std::string OUTPUT_DIRECTION; /**< string key to identify output routes. */
-    static const std::string STREAM_TYPE; /**< key to identify stream route. */
-    static const uint32_t SINGLE_PORT = 1;  /**< only one port is mentionned for this route. */
-    static const uint32_t DUAL_PORTS = 2; /**< both port are mentionnent for this route. */
-    static const std::string PORT_DELIMITER; /**< Delimiter to parse a list of ports. */
+    static const std::string mRouteCriterionType; /**< Route criterion type name. */
+    static const std::string mOutputDirection; /**< string key to identify output routes. */
+    static const std::string mStreamType; /**< key to identify stream route. */
+    static const uint32_t mSinglePort = 1;  /**< only one port is mentionned for this route. */
+    static const uint32_t mDualPorts = 2; /**< both port are mentionnent for this route. */
+    static const std::string mPortDelimiter; /**< Delimiter to parse a list of ports. */
 
 };

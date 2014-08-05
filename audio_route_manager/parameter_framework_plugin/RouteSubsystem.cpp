@@ -36,71 +36,72 @@
 using namespace NInterfaceProvider;
 using intel_audio::IRouteInterface;
 
-const char *const RouteSubsystem::ROUTE_LIB_PROP_NAME = "audiocomms.routeLib";
-const char *const RouteSubsystem::ROUTE_LIBRARY_NAME = "audio.routemanager.so";
+const char *const RouteSubsystem::mRouteLibPropName = "audiocomms.routeLib";
+const char *const RouteSubsystem::mRouteLibraryName = "audio.routemanager.so";
 
-const char *const RouteSubsystem::KEY_NAME = "Name";
-const char *const RouteSubsystem::KEY_ID = "Id";
-const char *const RouteSubsystem::KEY_DIRECTION = "Direction";
-const char *const RouteSubsystem::KEY_TYPE = "Type";
-const char *const RouteSubsystem::KEY_CARD = "Card";
-const char *const RouteSubsystem::KEY_DEVICE = "Device";
-const char *const RouteSubsystem::KEY_PORT = "Ports";
-const char *const RouteSubsystem::KEY_GROUPS = "Groups";
-const char *const RouteSubsystem::KEY_INCLUSIVE = "Inclusive";
-const char *const RouteSubsystem::KEY_AMEND_1 = "Amend1";
-const char *const RouteSubsystem::KEY_AMEND_2 = "Amend2";
-const char *const RouteSubsystem::KEY_AMEND_3 = "Amend3";
+const char *const RouteSubsystem::mKeyName = "Name";
+const char *const RouteSubsystem::mKeyId = "Id";
+const char *const RouteSubsystem::mKeyDirection = "Direction";
+const char *const RouteSubsystem::mKeyType = "Type";
+const char *const RouteSubsystem::mKeyCard = "Card";
+const char *const RouteSubsystem::mKeyDevice = "Device";
+const char *const RouteSubsystem::mKeyPort = "Ports";
+const char *const RouteSubsystem::mKeyGroups = "Groups";
+const char *const RouteSubsystem::mKeyInclusive = "Inclusive";
+const char *const RouteSubsystem::mKeyAmend1 = "Amend1";
+const char *const RouteSubsystem::mKeyAmend2 = "Amend2";
+const char *const RouteSubsystem::mKeyAmend3 = "Amend3";
 
-const char *const RouteSubsystem::PORT_COMPONENT_NAME = "Port";
-const char *const RouteSubsystem::ROUTE_COMPONENT_NAME = "Route";
-const char *const RouteSubsystem::STREAM_ROUTE_COMPONENT_NAME = "StreamRoute";
-const char *const RouteSubsystem::CRITERION_COMPONENT_NAME = "Criterion";
+const char *const RouteSubsystem::mPortComponentName = "Port";
+const char *const RouteSubsystem::mRouteComponentName = "Route";
+const char *const RouteSubsystem::mStreamRouteComponentName = "StreamRoute";
+const char *const RouteSubsystem::mCriterionComponentName = "Criterion";
 
-RouteSubsystem::RouteSubsystem(const string &strName) : CSubsystem(strName),
-                                                        _routeInterface(NULL)
+RouteSubsystem::RouteSubsystem(const string &name)
+    : CSubsystem(name),
+      mRouteInterface(NULL)
 {
     // Try to connect a Route Interface from RouteManager
     IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<string>(ROUTE_LIB_PROP_NAME,
-                                               ROUTE_LIBRARY_NAME).getValue().c_str());
+        getInterfaceProvider(TProperty<string>(mRouteLibPropName,
+                                               mRouteLibraryName).getValue().c_str());
 
     if (interfaceProvider) {
 
         // Retrieve the Route Interface
-        _routeInterface = interfaceProvider->queryInterface<IRouteInterface>();
+        mRouteInterface = interfaceProvider->queryInterface<IRouteInterface>();
     }
 
     // Provide mapping keys to upper layer
-    addContextMappingKey(KEY_NAME);
-    addContextMappingKey(KEY_ID);
-    addContextMappingKey(KEY_DIRECTION);
-    addContextMappingKey(KEY_TYPE);
-    addContextMappingKey(KEY_CARD);
-    addContextMappingKey(KEY_DEVICE);
-    addContextMappingKey(KEY_PORT);
-    addContextMappingKey(KEY_GROUPS);
-    addContextMappingKey(KEY_INCLUSIVE);
-    addContextMappingKey(KEY_AMEND_1);
-    addContextMappingKey(KEY_AMEND_2);
-    addContextMappingKey(KEY_AMEND_3);
+    addContextMappingKey(mKeyName);
+    addContextMappingKey(mKeyId);
+    addContextMappingKey(mKeyDirection);
+    addContextMappingKey(mKeyType);
+    addContextMappingKey(mKeyCard);
+    addContextMappingKey(mKeyDevice);
+    addContextMappingKey(mKeyPort);
+    addContextMappingKey(mKeyGroups);
+    addContextMappingKey(mKeyInclusive);
+    addContextMappingKey(mKeyAmend1);
+    addContextMappingKey(mKeyAmend2);
+    addContextMappingKey(mKeyAmend3);
 
     // Provide creators to upper layer
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<AudioPort>(
-            PORT_COMPONENT_NAME,
+            mPortComponentName,
             (1 << MappingKeyId) | (1 << MappingKeyAmend1) | (1 << MappingKeyGroups))
         );
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<AudioRoute>(
-            ROUTE_COMPONENT_NAME,
+            mRouteComponentName,
             (1 << MappingKeyId) |
             (1 << MappingKeyType) | (1 << MappingKeyDirection) | (1 << MappingKeyPorts) |
             (1 << MappingKeyAmend1))
         );
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<AudioStreamRoute>(
-            STREAM_ROUTE_COMPONENT_NAME,
+            mStreamRouteComponentName,
             (1 << MappingKeyId) | (1 << MappingKeyDirection) |
             (1 << MappingKeyCard) | (1 << MappingKeyDevice) | (1 << MappingKeyPorts) |
             (1 << MappingKeyAmend1))
@@ -108,7 +109,7 @@ RouteSubsystem::RouteSubsystem(const string &strName) : CSubsystem(strName),
 
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<Criterion>(
-            CRITERION_COMPONENT_NAME,
+            mCriterionComponentName,
             (1 << MappingKeyName) | (1 << MappingKeyType) | (1 << MappingKeyInclusive))
         );
 }
@@ -116,5 +117,5 @@ RouteSubsystem::RouteSubsystem(const string &strName) : CSubsystem(strName),
 // Retrieve Route interface
 IRouteInterface *RouteSubsystem::getRouteInterface() const
 {
-    return _routeInterface;
+    return mRouteInterface;
 }

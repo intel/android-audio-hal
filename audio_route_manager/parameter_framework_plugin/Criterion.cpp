@@ -31,22 +31,22 @@
 
 using intel_audio::IRouteInterface;
 
-const string Criterion::VALUE_PAIR_CRITERION_TYPE = "ValuePair";
-const string Criterion::BIT_PARAM_CRITERION_TYPE = "BitParameter";
+const string Criterion::mValuePairCriterionType = "ValuePair";
+const string Criterion::mBitParamCriterionType = "BitParameter";
 
 Criterion::Criterion(const string &mappingValue,
                      CInstanceConfigurableElement *instanceConfigurableElement,
                      const CMappingContext &context)
     : CSubsystemObject(instanceConfigurableElement),
-      _routeSubsystem(static_cast<const RouteSubsystem *>(
+      mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem())),
-      _criterionName(context.getItem(MappingKeyName)),
-      _criterionType(context.getItem(MappingKeyType))
+      mCriterionName(context.getItem(MappingKeyName)),
+      mCriterionType(context.getItem(MappingKeyType))
 {
-    _routeInterface = _routeSubsystem->getRouteInterface();
+    mRouteInterface = mRouteSubsystem->getRouteInterface();
 
     // First checks if criterion Type has been already added, if no, populate value pairs
-    if (!_routeInterface->addAudioCriterionType(_criterionType,
+    if (!mRouteInterface->addAudioCriterionType(mCriterionType,
                                                 context.getItemAsInteger(MappingKeyInclusive))) {
 
         // If exists, get the children of element to retrieve Criterion type
@@ -56,23 +56,23 @@ Criterion::Criterion(const string &mappingValue,
         uint32_t index;
         for (index = 0; index < nbChildren; index++) {
 
-            _routeInterface->addAudioCriterionTypeValuePair(
-                _criterionType,
+            mRouteInterface->addAudioCriterionTypeValuePair(
+                mCriterionType,
                 elementToDiscover->getChild(index)->getName(),
                 getIndex(elementToDiscover->getChild(index)));
         }
     }
-    _routeInterface->addAudioCriterion(_criterionName, _criterionType);
+    mRouteInterface->addAudioCriterion(mCriterionName, mCriterionType);
 }
 
 uint32_t Criterion::getIndex(const CElement *element) const
 {
-    if (element->getKind() == VALUE_PAIR_CRITERION_TYPE) {
+    if (element->getKind() == mValuePairCriterionType) {
 
         const CEnumValuePair *enumPair = static_cast<const CEnumValuePair *>(element);
         return enumPair->getNumerical();
 
-    } else if (element->getKind() == BIT_PARAM_CRITERION_TYPE) {
+    } else if (element->getKind() == mBitParamCriterionType) {
 
         const CBitParameterType *bitParameterType = static_cast<const CBitParameterType *>(element);
         return 1 << bitParameterType->getBitPos();
@@ -84,7 +84,7 @@ uint32_t Criterion::getIndex(const CElement *element) const
 
 bool Criterion::receiveFromHW(string &error)
 {
-    blackboardWrite(&_value, sizeof(_value));
+    blackboardWrite(&mValue, sizeof(mValue));
 
     return true;
 }
@@ -92,9 +92,9 @@ bool Criterion::receiveFromHW(string &error)
 bool Criterion::sendToHW(string &error)
 {
     // Retrieve blackboard
-    blackboardRead(&_value, sizeof(_value));
+    blackboardRead(&mValue, sizeof(mValue));
 
     // Informs the route manager of a change of criterion
-    _routeInterface->setParameter(_criterionName, _value);
+    mRouteInterface->setParameter(mCriterionName, mValue);
     return true;
 }

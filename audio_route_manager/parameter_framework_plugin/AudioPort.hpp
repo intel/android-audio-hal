@@ -63,12 +63,12 @@ protected:
     virtual bool sendToHW(string &error);
 
 private:
-    string _name; /**< Name of an audio port. */
-    uint32_t _id; /**< Identifier of an audio port. */
-    bool _isBlocked; /**< Blocked attribute of the port, ie, port must not be used. */
+    string mName; /**< Name of an audio port. */
+    uint32_t mId; /**< Identifier of an audio port. */
+    bool mIsBlocked; /**< Blocked attribute of the port, ie, port must not be used. */
 
-    const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
+    const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */
+    intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
 
-    static const std::string DELIMITER; /**< Delimiter to parse a concatenated list of ports. */
+    static const std::string mDelimiter; /**< Delimiter to parse a concatenated list of ports. */
 };

@@ -45,26 +45,26 @@ public:
     intel_audio::IRouteInterface *getRouteInterface() const;
 
 private:
-    intel_audio::IRouteInterface *_routeInterface; /**< Route Interface. */
+    intel_audio::IRouteInterface *mRouteInterface; /**< Route Interface. */
 
-    static const char *const ROUTE_LIB_PROP_NAME; /**< Route Manager name property. */
-    static const char *const ROUTE_LIBRARY_NAME; /**< Route Manager library name. */
+    static const char *const mRouteLibPropName; /**< Route Manager name property. */
+    static const char *const mRouteLibraryName; /**< Route Manager library name. */
 
-    static const char *const KEY_NAME; /**< name key mapping string. */
-    static const char *const KEY_ID; /**< id key mapping string. */
-    static const char *const KEY_DIRECTION; /**< direction key mapping string. */
-    static const char *const KEY_TYPE; /**< type key mapping string. */
-    static const char *const KEY_CARD; /**< card key mapping string. */
-    static const char *const KEY_DEVICE; /**< device key mapping string. */
-    static const char *const KEY_PORT; /**< port key mapping string. */
-    static const char *const KEY_GROUPS; /**< groups key mapping string. */
-    static const char *const KEY_INCLUSIVE; /**< inclusive key mapping string. */
-    static const char *const KEY_AMEND_1; /**< amend1 key mapping string. */
-    static const char *const KEY_AMEND_2; /**< amend2 key mapping string. */
-    static const char *const KEY_AMEND_3; /**< amend3 key mapping string. */
+    static const char *const mKeyName; /**< name key mapping string. */
+    static const char *const mKeyId; /**< id key mapping string. */
+    static const char *const mKeyDirection; /**< direction key mapping string. */
+    static const char *const mKeyType; /**< type key mapping string. */
+    static const char *const mKeyCard; /**< card key mapping string. */
+    static const char *const mKeyDevice; /**< device key mapping string. */
+    static const char *const mKeyPort; /**< port key mapping string. */
+    static const char *const mKeyGroups; /**< groups key mapping string. */
+    static const char *const mKeyInclusive; /**< inclusive key mapping string. */
+    static const char *const mKeyAmend1; /**< amend1 key mapping string. */
+    static const char *const mKeyAmend2; /**< amend2 key mapping string. */
+    static const char *const mKeyAmend3; /**< amend3 key mapping string. */
 
-    static const char *const PORT_COMPONENT_NAME; /**< name of port component. */
-    static const char *const ROUTE_COMPONENT_NAME; /**< name of route component. */
-    static const char *const STREAM_ROUTE_COMPONENT_NAME; /**< name of stream route component. */
-    static const char *const CRITERION_COMPONENT_NAME; /**< name of criterion component. */
+    static const char *const mPortComponentName; /**< name of port component. */
+    static const char *const mRouteComponentName; /**< name of route component. */
+    static const char *const mStreamRouteComponentName; /**< name of stream route component. */
+    static const char *const mCriterionComponentName; /**< name of criterion component. */
 };

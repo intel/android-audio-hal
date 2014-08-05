@@ -30,7 +30,7 @@
 
 using intel_audio::IRouteInterface;
 
-const string AudioPort::DELIMITER = "-";
+const string AudioPort::mDelimiter = "-";
 
 AudioPort::AudioPort(const string &mappingValue,
                      CInstanceConfigurableElement *instanceConfigurableElement,
@@ -40,30 +40,30 @@ AudioPort::AudioPort(const string &mappingValue,
                                 MappingKeyAmend1,
                                 (MappingKeyAmendEnd - MappingKeyAmend1 + 1),
                                 context),
-      _name(getFormattedMappingValue()),
-      _id(context.getItemAsInteger(MappingKeyId)),
-      _isBlocked(false),
-      _routeSubsystem(static_cast<const RouteSubsystem *>(
+      mName(getFormattedMappingValue()),
+      mId(context.getItemAsInteger(MappingKeyId)),
+      mIsBlocked(false),
+      mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem()))
 {
-    _routeInterface = _routeSubsystem->getRouteInterface();
+    mRouteInterface = mRouteSubsystem->getRouteInterface();
 
     // Adds port first to the route manager and then the links that may exist between these
     // ports (i.e. port groups that represent mutual exclusive ports).
-    _routeInterface->addPort(_name, 1 << _id);
+    mRouteInterface->addPort(mName, 1 << mId);
 
     string portGroups = context.getItem(MappingKeyGroups);
-    Tokenizer mappingTok(portGroups, DELIMITER);
+    Tokenizer mappingTok(portGroups, mDelimiter);
     vector<string> subStrings = mappingTok.split();
     for (uint32_t i = 0; i < subStrings.size(); i++) {
 
-        _routeInterface->addPortGroup(subStrings[i], 0, _name);
+        mRouteInterface->addPortGroup(subStrings[i], 0, mName);
     }
 }
 
 bool AudioPort::receiveFromHW(string &error)
 {
-    blackboardWrite(&_isBlocked, sizeof(_isBlocked));
+    blackboardWrite(&mIsBlocked, sizeof(mIsBlocked));
 
     return true;
 }
@@ -71,9 +71,9 @@ bool AudioPort::receiveFromHW(string &error)
 bool AudioPort::sendToHW(string &error)
 {
     // Retrieve blackboard
-    blackboardRead(&_isBlocked, sizeof(_isBlocked));
+    blackboardRead(&mIsBlocked, sizeof(mIsBlocked));
 
-    _routeInterface->setPortBlocked(_name, _isBlocked);
+    mRouteInterface->setPortBlocked(mName, mIsBlocked);
 
     return true;
 }

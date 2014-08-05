@@ -34,7 +34,7 @@ class RouteSubsystem;
 class AudioStreamRoute : public CFormattedSubsystemObject
 {
 private:
-    static const uint32_t MAX_STRING_SIZE = 257; /**< max string size (plus zero terminal). */
+    static const uint32_t mMaxStringSize = 257; /**< max string size (plus zero terminal). */
 
     /**
      * Mapped control structure - must be packed
@@ -45,7 +45,7 @@ private:
         bool requirePostDisable; /**< require post disable attribute. */
         uint32_t silencePrologInMs; /**< prolog silence to be added when opening the device in ms.*/
         uint32_t channel; /**< pcm channels supported. */
-        char channelsPolicy[MAX_STRING_SIZE]; /**< channel policy supported. */
+        char channelsPolicy[mMaxStringSize]; /**< channel policy supported. */
         uint32_t rate; /**< pcm rate supported. */
         uint8_t format; /**< pcm format supported. */
         uint32_t periodSize; /**< period size. */
@@ -55,7 +55,7 @@ private:
         uint32_t silenceThreshold; /**< silence threshold. */
         uint32_t availMin; /** avail min. */
         uint32_t applicabilityMask; /**< applicability mask, either input source or output flags. */
-        char effectSupported[MAX_STRING_SIZE]; /**< effects supported by the stream route. */
+        char effectSupported[mMaxStringSize]; /**< effects supported by the stream route. */
     } __attribute__((packed));
 
 public:
@@ -97,26 +97,26 @@ private:
     std::vector<intel_audio::SampleSpec::ChannelsPolicy>
     parseChannelPolicyString(const std::string &channelPolicy);
 
-    const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
+    const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */
+    intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
 
-    static const Config _defaultConfig; /**< default route stream configuration at construction. */
+    static const Config mDefaultConfig; /**< default route stream configuration at construction. */
     Config _config; /**< stream route configuration. */
 
-    string _routeName; /**< stream route name. */
-    uint32_t _routeId;   /**< stream route Id. */
-    string _cardName; /**< card name used by the stream route. */
-    int32_t _device; /**< audio device used by the stream route. */
-    bool _isOut; /**< direction qualifier of the stream route. */
-    bool _isStreamRoute; /**< qualifier of the stream route. */
+    string mRouteName; /**< stream route name. */
+    uint32_t mRouteId;   /**< stream route Id. */
+    string mCardName; /**< card name used by the stream route. */
+    int32_t mDevice; /**< audio device used by the stream route. */
+    bool mIsOut; /**< direction qualifier of the stream route. */
+    bool mIsStreamRoute; /**< qualifier of the stream route. */
 
-    static const std::string OUTPUT_DIRECTION; /**< string key to identify output routes. */
-    static const std::string STREAM_TYPE; /**< key to identify stream route. */
-    static const uint32_t SINGLE_PORT = 1;  /**< only one port is mentionned for this route. */
-    static const uint32_t DUAL_PORTS = 2; /**< both port are mentionnent for this route. */
-    static const std::string PORT_DELIMITER; /**< Delimiter to parse a list of ports. */
-    static const std::string STRING_DELIMITER; /**< Delimiter to parse strings. */
-    static const std::string CHANNEL_POLICY_COPY; /**< copy channel policy tag. */
-    static const std::string CHANNEL_POLICY_IGNORE; /**< ignore channel policy tag. */
-    static const std::string CHANNEL_POLICY_AVERAGE; /**< average channel policy tag. */
+    static const std::string mOutputDirection; /**< string key to identify output routes. */
+    static const std::string mStreamType; /**< key to identify stream route. */
+    static const uint32_t mSinglePort = 1;  /**< only one port is mentionned for this route. */
+    static const uint32_t mDualPorts = 2; /**< both port are mentionnent for this route. */
+    static const std::string mPortDelimiter; /**< Delimiter to parse a list of ports. */
+    static const std::string mStringDelimiter; /**< Delimiter to parse strings. */
+    static const std::string mChannelPolicyCopy; /**< copy channel policy tag. */
+    static const std::string mChannelPolicyIgnore; /**< ignore channel policy tag. */
+    static const std::string mChannelPolicyAverage; /**< average channel policy tag. */
 };

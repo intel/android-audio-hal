@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -29,9 +29,9 @@
 static const char *const ROUTE_SUBSYSTEM_NAME = "ROUTEMGR";
 extern "C"
 {
-void getROUTESubsystemBuilder(CSubsystemLibrary *pSubsystemLibrary)
+void getROUTESubsystemBuilder(CSubsystemLibrary *subsystemLibrary)
 {
-    pSubsystemLibrary->addElementBuilder(ROUTE_SUBSYSTEM_NAME,
-                                         new TNamedElementBuilderTemplate<RouteSubsystem>());
+    subsystemLibrary->addElementBuilder(ROUTE_SUBSYSTEM_NAME,
+                                        new TNamedElementBuilderTemplate<RouteSubsystem>());
 }
 }

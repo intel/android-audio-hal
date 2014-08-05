@@ -77,15 +77,15 @@ private:
      */
     uint32_t getIndex(const CElement *element) const;
 
-    const RouteSubsystem *_routeSubsystem; /**< Route subsytem plugin. */
-    intel_audio::IRouteInterface *_routeInterface; /**< Interface to communicate with Route Mgr. */
+    const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */
+    intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
 
-    static const uint32_t DEFAULT_VALUE = 0; /**< default numerical value of the criterion. */
-    string _criterionName; /**< Name of the criterion. */
-    string _criterionType; /**< Type name of the criterion. */
-    uint32_t _value; /**< numerical value of the criterion. */
+    static const uint32_t mDefaultValue = 0; /**< default numerical value of the criterion. */
+    string mCriterionName; /**< Name of the criterion. */
+    string mCriterionType; /**< Type name of the criterion. */
+    uint32_t mValue; /**< numerical value of the criterion. */
 
-    static const std::string VALUE_PAIR_CRITERION_TYPE; /**< Value pair criterion type name. */
-    static const std::string BIT_PARAM_CRITERION_TYPE; /**< Bit Parameter criterion type name. */
+    static const std::string mValuePairCriterionType; /**< Value pair criterion type name. */
+    static const std::string mBitParamCriterionType; /**< Bit Parameter criterion type name. */
 
 };

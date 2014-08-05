@@ -30,12 +30,12 @@
 
 using intel_audio::IRouteInterface;
 
-const string AudioRoute::OUTPUT_DIRECTION = "out";
-const string AudioRoute::STREAM_TYPE = "streamRoute";
-const string AudioRoute::PORT_DELIMITER = "-";
-const string AudioRoute::ROUTE_CRITERION_TYPE = "RouteType";
+const string AudioRoute::mOutputDirection = "out";
+const string AudioRoute::mStreamType = "streamRoute";
+const string AudioRoute::mPortDelimiter = "-";
+const string AudioRoute::mRouteCriterionType = "RouteType";
 
-const AudioRoute::Status AudioRoute::DEFAULT_STATUS = {
+const AudioRoute::Status AudioRoute::mDefaultStatus = {
     isApplicable    : false,
     needReconfigure : false,
     needReroute     : false
@@ -49,45 +49,45 @@ AudioRoute::AudioRoute(const string &mappingValue,
                                 MappingKeyAmend1,
                                 (MappingKeyAmendEnd - MappingKeyAmend1 + 1),
                                 context),
-      _routeSubsystem(static_cast<const RouteSubsystem *>(
+      mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem())),
-      _routeInterface(_routeSubsystem->getRouteInterface()),
-      _status(DEFAULT_STATUS),
-      _routeId(context.getItemAsInteger(MappingKeyId)),
-      _isStreamRoute(context.getItem(MappingKeyType) == STREAM_TYPE),
-      _isOut(context.getItem(MappingKeyDirection) == OUTPUT_DIRECTION)
+      mRouteInterface(mRouteSubsystem->getRouteInterface()),
+      mStatus(mDefaultStatus),
+      mRouteId(context.getItemAsInteger(MappingKeyId)),
+      mIsStreamRoute(context.getItem(MappingKeyType) == mStreamType),
+      mIsOut(context.getItem(MappingKeyDirection) == mOutputDirection)
 {
-    _routeName = getFormattedMappingValue();
+    mRouteName = getFormattedMappingValue();
 
     // Add Route criterion type value pair
-    _routeInterface->addAudioCriterionType(ROUTE_CRITERION_TYPE, true);
-    _routeInterface->addAudioCriterionTypeValuePair(ROUTE_CRITERION_TYPE,
+    mRouteInterface->addAudioCriterionType(mRouteCriterionType, true);
+    mRouteInterface->addAudioCriterionTypeValuePair(mRouteCriterionType,
                                                     context.getItem(MappingKeyAmend1),
-                                                    1 << _routeId);
+                                                    1 << mRouteId);
 
     string ports = context.getItem(MappingKeyPorts);
-    Tokenizer mappingTok(ports, PORT_DELIMITER);
+    Tokenizer mappingTok(ports, mPortDelimiter);
     vector<string> subStrings = mappingTok.split();
-    AUDIOCOMMS_ASSERT(subStrings.size() <= DUAL_PORTS,
+    AUDIOCOMMS_ASSERT(subStrings.size() <= mDualPorts,
                       "Route cannot be connected to more than 2 ports");
 
-    string portSrc = subStrings.size() >= SINGLE_PORT ? subStrings[0] : string();
-    string portDst = subStrings.size() == DUAL_PORTS ? subStrings[1] : string();
+    string portSrc = subStrings.size() >= mSinglePort ? subStrings[0] : string();
+    string portDst = subStrings.size() == mDualPorts ? subStrings[1] : string();
 
     // Append route to RouteMgr
-    if (_isStreamRoute) {
+    if (mIsStreamRoute) {
 
-        _routeInterface->addAudioStreamRoute(_routeName, 1 << _routeId,
-                                             portSrc, portDst, _isOut);
+        mRouteInterface->addAudioStreamRoute(mRouteName, 1 << mRouteId,
+                                             portSrc, portDst, mIsOut);
     } else {
-        _routeInterface->addAudioRoute(_routeName, 1 << _routeId,
-                                       portSrc, portDst, _isOut);
+        mRouteInterface->addAudioRoute(mRouteName, 1 << mRouteId,
+                                       portSrc, portDst, mIsOut);
     }
 }
 
 bool AudioRoute::receiveFromHW(string &error)
 {
-    blackboardWrite(&_status, sizeof(_status));
+    blackboardWrite(&mStatus, sizeof(mStatus));
 
     return true;
 }
@@ -100,24 +100,24 @@ bool AudioRoute::sendToHW(string &error)
     blackboardRead(&status, sizeof(status));
 
     // Updates applicable status if changed
-    if (status.isApplicable != _status.isApplicable) {
+    if (status.isApplicable != mStatus.isApplicable) {
 
-        _routeInterface->setRouteApplicable(_routeName, status.isApplicable);
+        mRouteInterface->setRouteApplicable(mRouteName, status.isApplicable);
     }
 
     // Updates reconfigure flag if changed
-    if (status.needReconfigure != _status.needReconfigure) {
+    if (status.needReconfigure != mStatus.needReconfigure) {
 
-        _routeInterface->setRouteNeedReconfigure(_routeName, status.needReconfigure);
+        mRouteInterface->setRouteNeedReconfigure(mRouteName, status.needReconfigure);
     }
 
     // Updates reroute flag if changed
-    if (status.needReroute != _status.needReroute) {
+    if (status.needReroute != mStatus.needReroute) {
 
-        _routeInterface->setRouteNeedReroute(_routeName, status.needReroute);
+        mRouteInterface->setRouteNeedReroute(mRouteName, status.needReroute);
     }
 
-    _status = status;
+    mStatus = status;
 
     return true;
 }
