@@ -256,9 +256,8 @@ size_t Device::getInputBufferSize(const struct audio_config &config) const
         ALOGW("%s bad channel count: %d", __FUNCTION__, channelCount);
         return 0;
     }
-
-    // Returns 20ms buffer size per channel
-    return (config.sample_rate / 25) * channelCount;
+    SampleSpec spec(channelCount, config.format, config.sample_rate);
+    return spec.convertFramesToBytes(spec.convertUsecToframes(mRecordingBufferTimeUsec));
 }
 
 status_t Device::setParameters(const string &keyValuePairs)

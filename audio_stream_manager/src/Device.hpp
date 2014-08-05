@@ -244,6 +244,8 @@ private:
     static const char *const mRouteLibPropDefaultValue;  /**< Route Manager lib default value. */
     static const char *const mRestartingKey; /**< Restart key parameter. */
     static const char *const mRestartingRequested; /**< Restart key parameter value. */
+
+    static const uint32_t mRecordingBufferTimeUsec = 20000;
 };
 
 } // namespace intel_audio
