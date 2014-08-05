@@ -263,25 +263,21 @@ status_t Device::setParameters(const string &keyValuePairs)
     string key(mRestartingKey);
     status_t status = pairs.get(key, restart);
     if (status == android::OK) {
-
+        pairs.remove(key);
         if (restart == mRestartingRequested) {
-
-            // Restore the audio parameters when mediaserver is restarted in case of crash.
+            // Replace the restarting key with all previously backuped {keys,value} pairs in order
+            // to restore the previous HAL state
             ALOGI("Restore audio parameters as mediaserver is restarted param=%s",
                   mAudioParameterHandler->getParameters().c_str());
-            mPlatformState->setParameters(mAudioParameterHandler->getParameters());
+            KeyValuePairs backupedPairs(mAudioParameterHandler->getParameters());
+            backupedPairs.add(pairs.toString());
+            pairs = backupedPairs;
         }
-        pairs.remove(key);
-    } else {
-
-        // Set the audio parameters
-        status = mPlatformState->setParameters(keyValuePairs);
-        if (status == android::OK) {
-
-            ALOGV("%s: saving %s", __FUNCTION__, keyValuePairs.string());
-            // Save the audio parameters for recovering audio parameters in case of crash.
-            mAudioParameterHandler->saveParameters(keyValuePairs);
-        }
+    }
+    status = mPlatformState->setParameters(pairs.toString());
+    if (status == android::OK) {
+        ALOGV("%s: saving the parameters to recover in case of media server crash", __FUNCTION__);
+        mAudioParameterHandler->saveParameters(pairs.toString());
     }
     return status;
 }
