@@ -545,8 +545,7 @@ T *AudioRouteManager::getElement(const string &name, map<string, T *> &elementsM
 {
     routingElementSupported<T>();
     typename map<string, T *>::iterator it = elementsMap.find(name);
-    AUDIOCOMMS_ASSERT(it != elementsMap.end(),
-                      "Element " << name.c_str() << " not found");
+    AUDIOCOMMS_ASSERT(it != elementsMap.end(), "Element " << name << " not found");
     return it->second;
 }
 
@@ -774,7 +773,7 @@ void AudioRouteManager::addCriterionTypeValuePair(const string &name,
 {
     AutoW lock(mRoutingLock);
     AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(name) != mCriterionTypesMap.end(),
-                      "CriterionType " << name.c_str() << "not found");
+                      "CriterionType " << name << "not found");
 
     CriterionType *criterionType = mCriterionTypesMap[name];
 
@@ -793,14 +792,14 @@ void AudioRouteManager::addCriterion(const string &name, const string &criterion
 {
     AutoW lock(mRoutingLock);
     ALOGV("%s: name=%s criterionType=%s", __FUNCTION__, name.c_str(), criterionTypeName.c_str());
-    AUDIOCOMMS_ASSERT(mCriteriaMap.find(name) == mCriteriaMap.end(), "Criterion already added");
+    AUDIOCOMMS_ASSERT(mCriteriaMap.find(name) == mCriteriaMap.end(),
+                      "Criterion " << name << "of type " << criterionTypeName << " already added");
 
     // Retrieve criteria Type object
     CriteriaTypeMapIterator it = mCriterionTypesMap.find(criterionTypeName);
 
     AUDIOCOMMS_ASSERT(it != mCriterionTypesMap.end(),
-                      "type " << criterionTypeName.c_str() << "not found for " << name.c_str() <<
-                      " criteria");
+                      "type " << criterionTypeName << "not found for " << name << " criterion");
 
     mCriteriaMap[name] = new Criterion(name, it->second, mAudioPfwConnector, defaultLiteralValue);
 }
@@ -873,9 +872,8 @@ void AudioRouteManager::addRoute(const string &name,
         if (route->isStreamRoute()) {
 
             // Stream route must also be added in route list as well.
-            AUDIOCOMMS_ASSERT(mRouteMap.find(
-                                  name) == mRouteMap.end(),
-                              "Fatal: route already added to route list!");
+            AUDIOCOMMS_ASSERT(mRouteMap.find(name) == mRouteMap.end(),
+                              "Fatal: route " << name << " already added to route list!");
             mRouteMap[name] = route;
         }
     }
