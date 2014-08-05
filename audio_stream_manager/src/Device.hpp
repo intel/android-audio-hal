@@ -130,9 +130,6 @@ public:
         return android::INVALID_OPERATION;
     }
 
-    /** Entry point to create AudioHAL. */
-    static DeviceInterface *create();
-
 protected:
     /**
      * Returns the stream interface of the route manager.
