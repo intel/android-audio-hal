@@ -232,8 +232,12 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous)
 {
     AutoW lock(mRoutingLock);
 
-    AUDIOCOMMS_ASSERT(mIsStarted && !mEventThread->inThreadContext(),
-                      "Failure: service not started or not in correct thread context!");
+    if (!mIsStarted) {
+        ALOGW("%s Could not serve this request as Route Manager is not started", __FUNCTION__);
+        return;
+    }
+
+    AUDIOCOMMS_ASSERT(!mEventThread->inThreadContext(), "Failure: not in correct thread context!");
 
     if (!isSynchronous) {
 
