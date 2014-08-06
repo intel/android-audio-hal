@@ -32,12 +32,11 @@
 #include "Property.h"
 #include <AudioConversion.hpp>
 #include <HalAudioDump.hpp>
-#include <cutils/bitops.h>
-#include <cutils/properties.h>
-#include <media/AudioRecord.h>
+#include <string>
 
 using android::status_t;
 using audio_comms::utilities::Direction;
+using namespace std;
 
 namespace intel_audio
 {

@@ -22,38 +22,34 @@
  */
 #pragma once
 
-
+#include "AudioPort.hpp"
+#include "AudioPortGroup.hpp"
+#include "AudioStreamRoute.hpp"
 #include "AudioRoute.hpp"
+#include "EventThread.h"
 #include "RoutingStage.hpp"
 #include "RouteInterface.hpp"
 #include "IStreamInterface.hpp"
 #include <AudioCommsAssert.hpp>
+#include "ParameterMgrPlatformConnector.h"
 #include <ParameterMgrHelper.hpp>
+#include <Criterion.hpp>
+#include <CriterionType.hpp>
 #include <Direction.hpp>
 #include <Observable.hpp>
 #include <EventListener.h>
 #include <InterfaceImplementer.h>
 #include <InterfaceProviderImpl.h>
 #include <NonCopyable.hpp>
+#include <utils/RWLock.h>
 #include <list>
 #include <map>
-#include <utils/threads.h>
 #include <vector>
-
-class CEventThread;
-class CParameterMgrPlatformConnector;
-class Criterion;
-class CriterionType;
-class ParameterMgrHelper;
 
 namespace intel_audio
 {
 
 class IoStream;
-class AudioRoute;
-class AudioPortGroup;
-class AudioPort;
-class AudioStreamRoute;
 struct pcm_config;
 class CParameterMgrPlatformConnectorLogger;
 

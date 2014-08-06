@@ -30,13 +30,12 @@
 #include <KeyValuePairs.hpp>
 #include <IStreamInterface.hpp>
 #include <AudioCommsAssert.hpp>
+#include <utils/Errors.h>
+#include <utils/RWLock.h>
 #include <list>
 #include <map>
 #include <string>
-#include <utils/Errors.h>
-#include <string>
 #include <vector>
-#include <utils/RWLock.h>
 
 class CParameterMgrPlatformConnector;
 class Criterion;

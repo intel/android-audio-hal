@@ -22,18 +22,11 @@
  */
 #define LOG_TAG "RouteManager"
 
-#include "AudioRouteManagerObserver.hpp"
-#include "AudioPort.hpp"
-#include "AudioPortGroup.hpp"
 #include "AudioRouteManager.hpp"
-#include "AudioStreamRoute.hpp"
-#include "EventThread.h"
+#include "AudioRouteManagerObserver.hpp"
 #include "InterfaceProviderLib.h"
-#include "ParameterMgrPlatformConnector.h"
 #include "Property.h"
 #include <Observer.hpp>
-#include <Criterion.hpp>
-#include <CriterionType.hpp>
 #include <IoStream.hpp>
 #include <BitField.hpp>
 #include <cutils/bitops.h>

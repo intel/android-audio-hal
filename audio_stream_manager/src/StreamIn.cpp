@@ -28,11 +28,6 @@
 #include <KeyValuePairs.hpp>
 #include <BitField.hpp>
 #include <EffectHelper.hpp>
-#include <algorithm>
-#include <cutils/properties.h>
-
-#include <media/AudioRecord.h>
-
 #include <utils/Log.h>
 
 using namespace std;
