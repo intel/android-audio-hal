@@ -27,11 +27,8 @@
 #define LOG_TAG "AudioStreamOut"
 
 #include "StreamOut.hpp"
-
 #include <AudioCommsAssert.hpp>
 #include <HalAudioDump.hpp>
-#include <cutils/properties.h>
-#include <media/AudioRecord.h>
 
 using namespace std;
 using android::status_t;

@@ -27,6 +27,7 @@
 #include <StreamInterface.hpp>
 #include <media/AudioBufferProvider.h>
 #include <vector>
+#include <list>
 
 namespace intel_audio
 {

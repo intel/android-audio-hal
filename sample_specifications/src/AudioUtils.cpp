@@ -29,7 +29,6 @@
 #include <convert.hpp>
 #include <AudioCommsAssert.hpp>
 #include <limits.h>
-#include <limits>
 #include <stdint.h>
 #include <stdlib.h>
 #include <hardware/audio.h>

@@ -29,16 +29,11 @@
 #include <hardware/audio_effect.h>
 #include <hardware/hardware.h>
 #include <DeviceInterface.hpp>
-
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <NonCopyable.hpp>
 #include <AudioCommsAssert.hpp>
-#include <list>
 #include <string>
-#include <utils/List.h>
-#include <utils/threads.h>
-#include <vector>
 
 struct echo_reference_itfe;
 
