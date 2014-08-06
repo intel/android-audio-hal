@@ -224,14 +224,10 @@ private:
 
     IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */
 
-    bool mBluetoothHFPSupported; /**< track if platform supports Bluetooth HFP. */
-
     audio_mode_t mMode; /**< Android telephony mode. */
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
-    static const char *const mBluetoothHfpSupportedPropName; /**< BT HFP property name. */
-    static const bool mBluetoothHfpSupportedDefaultValue; /**< Default BT HFP value. */
     static const char *const mRouteLibPropName;  /**< Route Manager name property. */
     static const char *const mRouteLibPropDefaultValue;  /**< Route Manager lib default value. */
     static const char *const mRestartingKey; /**< Restart key parameter. */
