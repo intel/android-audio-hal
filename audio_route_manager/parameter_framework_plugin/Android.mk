@@ -26,54 +26,41 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-common_includes := \
-
-common_cflags := \
-    -Wall \
-    -Werror \
-    -Wextra \
-    -Wno-unused-parameter
-
-common_static_libraries := \
-    libaudio_comms_utilities
-
-common_local_import_c_include_dirs_from_static_libraries := \
-    libsamplespec_static \
-    libpfw_utility \
-    libparameter_includes \
-    libxmlserializer
-
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/parameter-framework-plugins/Route
 
 LOCAL_SRC_FILES := \
-    RouteSubsystem.cpp \
     RouteSubsystemBuilder.cpp \
+    RouteSubsystem.cpp \
     AudioPort.cpp \
     AudioRoute.cpp \
     AudioStreamRoute.cpp \
     Criterion.cpp
 
-LOCAL_MODULE := libroute-subsystem
+LOCAL_CFLAGS += \
+    -Wall \
+    -Werror \
+    -Wextra \
 
-LOCAL_MODULE_TAGS := optional
+LOCAL_C_INCLUDES += external/tinyalsa/include \
 
-LOCAL_CFLAGS += $(common_cflags)
-
-LOCAL_C_INCLUDES += \
-    $(common_includes) \
-    $(call include-path-for, stlport) \
-    $(call include-path-for, tinyalsa) \
-    $(call include-path-for, bionic)
-
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_SHARED_LIBRARIES := audio.routemanager
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
-    $(common_local_import_c_include_dirs_from_static_libraries)
+LOCAL_SHARED_LIBRARIES := \
+    libparameter \
+    libinterface-provider-lib \
+    libproperty \
+    liblog \
 
 LOCAL_STATIC_LIBRARIES := \
-    $(common_static_libraries)
+    libparameter_includes \
+    libxmlserializer_includes \
+    libaudio_comms_utilities \
+    audio.routemanager.includes \
+    libsamplespec_static \
+    libpfw_utility \
 
-LOCAL_SHARED_LIBRARIES := libstlport libparameter libinterface-provider-lib libproperty liblog
+LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/parameter-framework-plugins/Route
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE := libroute-subsystem
 
+include external/stlport/libstlport.mk
 include $(BUILD_SHARED_LIBRARY)
 
 endif #ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)

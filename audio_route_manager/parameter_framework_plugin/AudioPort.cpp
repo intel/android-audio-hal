@@ -61,14 +61,14 @@ AudioPort::AudioPort(const string &mappingValue,
     }
 }
 
-bool AudioPort::receiveFromHW(string &error)
+bool AudioPort::receiveFromHW(string & /*error*/)
 {
     blackboardWrite(&mIsBlocked, sizeof(mIsBlocked));
 
     return true;
 }
 
-bool AudioPort::sendToHW(string &error)
+bool AudioPort::sendToHW(string & /*error*/)
 {
     // Retrieve blackboard
     blackboardRead(&mIsBlocked, sizeof(mIsBlocked));

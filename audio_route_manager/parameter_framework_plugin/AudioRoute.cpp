@@ -85,14 +85,14 @@ AudioRoute::AudioRoute(const string &mappingValue,
     }
 }
 
-bool AudioRoute::receiveFromHW(string &error)
+bool AudioRoute::receiveFromHW(string & /*error*/)
 {
     blackboardWrite(&mStatus, sizeof(mStatus));
 
     return true;
 }
 
-bool AudioRoute::sendToHW(string &error)
+bool AudioRoute::sendToHW(string & /*error*/)
 {
     Status status;
 

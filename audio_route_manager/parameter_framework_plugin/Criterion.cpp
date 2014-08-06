@@ -34,7 +34,7 @@ using intel_audio::IRouteInterface;
 const string Criterion::mValuePairCriterionType = "ValuePair";
 const string Criterion::mBitParamCriterionType = "BitParameter";
 
-Criterion::Criterion(const string &mappingValue,
+Criterion::Criterion(const string & /*mappingValue*/,
                      CInstanceConfigurableElement *instanceConfigurableElement,
                      const CMappingContext &context)
     : CSubsystemObject(instanceConfigurableElement),
@@ -82,14 +82,14 @@ uint32_t Criterion::getIndex(const CElement *element) const
     return 0;
 }
 
-bool Criterion::receiveFromHW(string &error)
+bool Criterion::receiveFromHW(string & /*error*/)
 {
     blackboardWrite(&mValue, sizeof(mValue));
 
     return true;
 }
 
-bool Criterion::sendToHW(string &error)
+bool Criterion::sendToHW(string & /*error*/)
 {
     // Retrieve blackboard
     blackboardRead(&mValue, sizeof(mValue));

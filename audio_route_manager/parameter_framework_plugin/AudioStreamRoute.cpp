@@ -142,14 +142,14 @@ AudioStreamRoute::parseChannelPolicyString(const std::string &channelPolicy)
     return channelPolicyVector;
 }
 
-bool AudioStreamRoute::receiveFromHW(string &error)
+bool AudioStreamRoute::receiveFromHW(string & /*error*/)
 {
     blackboardWrite(&_config, sizeof(_config));
 
     return true;
 }
 
-bool AudioStreamRoute::sendToHW(string &error)
+bool AudioStreamRoute::sendToHW(string & /*error*/)
 {
     Config config;
     blackboardRead(&config, sizeof(config));
