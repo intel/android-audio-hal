@@ -55,8 +55,6 @@ DeviceInterface *createAudioHardware(void)
 }
 }         // extern "C"
 
-const char *const Device::mBluetoothHfpSupportedPropName = "Audiocomms.BT.HFP.Supported";
-const bool Device::mBluetoothHfpSupportedDefaultValue = true;
 const char *const Device::mRouteLibPropName = "audiocomms.routeLib";
 const char *const Device::mRouteLibPropDefaultValue = "audio.routemanager.so";
 const char *const Device::mRestartingKey = "restarting";
@@ -66,9 +64,7 @@ Device::Device()
     : mEchoReference(NULL),
       mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
-      mStreamInterface(NULL),
-      mBluetoothHFPSupported(TProperty<bool>(mBluetoothHfpSupportedPropName,
-                                             mBluetoothHfpSupportedDefaultValue))
+      mStreamInterface(NULL)
 {
     /// Get the Stream Interface of the Route manager
     NInterfaceProvider::IInterfaceProvider *interfaceProvider =
