@@ -192,7 +192,7 @@ private:
 
         virtual android::status_t stopService()
         {
-            return android::OK;
+            return mRouteMgr->stopService();
         }
 
         virtual void addStream(IoStream *stream)
@@ -461,7 +461,12 @@ private:
      */
     android::status_t startService();
 
-    bool isStarted() const;
+    /**
+     * Stops the route manager service.
+     *
+     * @return OK if success, error code otherwise.
+     */
+    android::status_t stopService();
 
     /**
      * Sets the voice volume.
@@ -731,7 +736,7 @@ private:
      * @param[in] id of the routing element to add.
      * @param[in] elementsMap maps of routing elements to add to.
      *
-     * @return true if added, false otherwise (already added).
+     * @return true if added, false otherwise (already added or PFW already started).
      */
     template <typename T>
     bool addElement(const std::string &name, uint32_t id, std::map<std::string, T *> &elementsMap);

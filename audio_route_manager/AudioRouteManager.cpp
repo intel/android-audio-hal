@@ -139,8 +139,11 @@ AudioRouteManager::~AudioRouteManager()
     AutoW lock(mRoutingLock);
 
     if (mIsStarted) {
-
+        // Synchronous stop of the event thread must be called with NOT held lock as pending request
+        // may need to be served
+        mRoutingLock.unlock();
         mEventThread->stop();
+        mRoutingLock.writeLock();
     }
     delete mEventThread;
 
@@ -169,11 +172,32 @@ void AudioRouteManager::getImplementedInterfaces(CInterfaceProviderImpl &interfa
     interfaceProvider.addInterface(&mStreamInterface);
 }
 
+status_t AudioRouteManager::stopService()
+{
+    AutoW lock(mRoutingLock);
+    if (mIsStarted) {
+        // Synchronous stop of the event thread must be called with NOT held lock as pending request
+        // may need to be served
+        mRoutingLock.unlock();
+        mEventThread->stop();
+        mRoutingLock.writeLock();
+        mIsStarted = false;
+    }
+    return android::OK;
+}
+
 status_t AudioRouteManager::startService()
 {
     AutoW lock(mRoutingLock);
 
     AUDIOCOMMS_ASSERT(mIsStarted != true, "Route Manager service already started!");
+    AUDIOCOMMS_ASSERT(mEventThread->start(), "failure when starting event thread!");
+
+    if (mAudioPfwConnector->isStarted()) {
+        ALOGD("%s: Audio PFW is already started, bailing out", __FUNCTION__);
+        mIsStarted = true;
+        return android::OK;
+    }
 
     // Routes Criterion Type
     AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(mRouteCriterionType) != mCriterionTypesMap.end(),
@@ -202,23 +226,16 @@ status_t AudioRouteManager::startService()
     // configuration for init and minimalize cold latency at first playback / capture
     mRoutingStageCriterion = new Criterion(mRoutingStage, routageStageCriterionType,
                                            mAudioPfwConnector, Configure | Path | Flow);
-    // Start Event thread
-    bool started = mEventThread->start();
-    AUDIOCOMMS_ASSERT(started, "failure when starting event thread!");
 
     // Start PFW
     std::string strError;
     if (!mAudioPfwConnector->start(strError)) {
-
         ALOGE("parameter-manager start error: %s", strError.c_str());
         mEventThread->stop();
         return android::NO_INIT;
     }
-
-    mIsStarted = true;
-
     ALOGD("%s: parameter-manager successfully started!", __FUNCTION__);
-
+    mIsStarted = true;
     return android::OK;
 }
 
@@ -293,11 +310,6 @@ void AudioRouteManager::doReconsiderRouting()
 
     executeRouting();
     ALOGD("%s: DONE", __FUNCTION__);
-}
-
-bool AudioRouteManager::isStarted() const
-{
-    return mAudioPfwConnector && mAudioPfwConnector->isStarted();
 }
 
 void AudioRouteManager::executeRouting()
@@ -523,6 +535,10 @@ void AudioRouteManager::doEnableRoutes(bool isPreEnable)
 template <typename T>
 bool AudioRouteManager::addElement(const string &name, uint32_t id, map<string, T *> &elementsMap)
 {
+    if (mAudioPfwConnector->isStarted()) {
+        ALOGW("%s: Not allowed while Audio Parameter Manager running", __FUNCTION__);
+        return false;
+    }
     routingElementSupported<T>();
     if (elementsMap.find(name) != elementsMap.end()) {
 
@@ -747,6 +763,10 @@ bool AudioRouteManager::routingHasChanged()
 bool AudioRouteManager::addCriterionType(const std::string &name, bool isInclusive)
 {
     AutoW lock(mRoutingLock);
+    if (mAudioPfwConnector->isStarted()) {
+        ALOGW("%s: Not allowed while Audio Parameter Manager running", __FUNCTION__);
+        return true;
+    }
     CriteriaTypeMapIterator it;
     if ((it = mCriterionTypesMap.find(name)) == mCriterionTypesMap.end()) {
 
@@ -765,6 +785,10 @@ void AudioRouteManager::addCriterionTypeValuePair(const string &name,
                                                   uint32_t value)
 {
     AutoW lock(mRoutingLock);
+    if (mAudioPfwConnector->isStarted()) {
+        ALOGW("%s: Not allowed while Audio Parameter Manager running", __FUNCTION__);
+        return;
+    }
     AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(name) != mCriterionTypesMap.end(),
                       "CriterionType " << name << "not found");
 
@@ -784,6 +808,10 @@ void AudioRouteManager::addCriterion(const string &name, const string &criterion
                                      const string &defaultLiteralValue /* = "" */)
 {
     AutoW lock(mRoutingLock);
+    if (mAudioPfwConnector->isStarted()) {
+        ALOGW("%s: Not allowed while Audio Parameter Manager running", __FUNCTION__);
+        return;
+    }
     ALOGV("%s: name=%s criterionType=%s", __FUNCTION__, name.c_str(), criterionTypeName.c_str());
     AUDIOCOMMS_ASSERT(mCriteriaMap.find(name) == mCriteriaMap.end(),
                       "Criterion " << name << "of type " << criterionTypeName << " already added");
@@ -850,6 +878,7 @@ void AudioRouteManager::addRoute(const string &name,
                                  bool isOut,
                                  map<string, T *> &elementsMap)
 {
+    AutoW lock(mRoutingLock);
     if (addElement<T>(name, routeId, elementsMap)) {
 
         T *route = elementsMap[name];
@@ -874,21 +903,23 @@ void AudioRouteManager::addRoute(const string &name,
 
 void AudioRouteManager::addPort(const string &name, uint32_t portId)
 {
+    AutoW lock(mRoutingLock);
     ALOGD("%s Name=%s", __FUNCTION__, name.c_str());
     addElement<AudioPort>(name, portId, mPortMap);
 }
 
 void AudioRouteManager::addPortGroup(const string &name, int32_t groupId, const string &portMember)
 {
-    ALOGD("%s: GroupName=%s PortMember to add=%s", __FUNCTION__, name.c_str(), portMember.c_str());
+    AutoW lock(mRoutingLock);
+    if (addElement<AudioPortGroup>(name, groupId, mPortGroupMap)) {
+        ALOGD("%s: GroupName=%s PortMember to add=%s", __FUNCTION__, name.c_str(),
+              portMember.c_str());
+        AudioPortGroup *portGroup = mPortGroupMap[name];
+        AUDIOCOMMS_ASSERT(portGroup != NULL, "Fatal: invalid port group!");
 
-    addElement<AudioPortGroup>(name, groupId, mPortGroupMap);
-
-    AudioPortGroup *portGroup = mPortGroupMap[name];
-    AUDIOCOMMS_ASSERT(portGroup != NULL, "Fatal: invalid port group!");
-
-    AudioPort *port = findElementByName<AudioPort>(portMember, mPortMap);
-    portGroup->addPortToGroup(port);
+        AudioPort *port = findElementByName<AudioPort>(portMember, mPortMap);
+        portGroup->addPortToGroup(port);
+    }
 }
 
 } // namespace intel_audio
