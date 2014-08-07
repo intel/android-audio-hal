@@ -208,15 +208,17 @@ status_t Device::setMicMute(bool mute)
 {
     ALOGV("%s: %s", __FUNCTION__, mute ? "true" : "false");
     KeyValuePairs pair;
-    pair.add(AudioPlatformState::mKeyMicMute, mute);
+    status_t status = pair.add(AudioPlatformState::mKeyMicMute, mute);
+    if (status != android::OK) {
+        return status;
+    }
     return mPlatformState->setParameters(pair.toString());
 }
 
 status_t Device::getMicMute(bool &muted) const
 {
     KeyValuePairs pair(mPlatformState->getParameters(AudioPlatformState::mKeyMicMute));
-    status_t res = pair.get(AudioPlatformState::mKeyMicMute, muted);
-    return res;
+    return pair.get(AudioPlatformState::mKeyMicMute, muted);
 }
 
 size_t Device::getInputBufferSize(const struct audio_config &config) const

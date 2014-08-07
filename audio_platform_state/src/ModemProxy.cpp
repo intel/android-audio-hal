@@ -121,8 +121,7 @@ const std::string ModemProxy::isModemAlive(void *context) const
         return mLiteralFalseValue;
     }
     string modemAlive;
-    convertTo(static_cast<uint32_t>(proxy->mModemAudioManagerInterface->isModemAlive()),
-              modemAlive);
+    convertTo(proxy->mModemAudioManagerInterface->isModemAlive(), modemAlive);
     return modemAlive;
 }
 
@@ -134,8 +133,7 @@ const std::string ModemProxy::isModemAudioAvailable(void *context) const
         return mLiteralFalseValue;
     }
     string modemAudioAvailable;
-    convertTo(static_cast<uint32_t>(proxy->mModemAudioManagerInterface->isModemAudioAvailable()),
-              modemAudioAvailable);
+    convertTo(proxy->mModemAudioManagerInterface->isModemAudioAvailable(), modemAudioAvailable);
     return modemAudioAvailable;
 }
 
