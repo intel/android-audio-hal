@@ -113,6 +113,7 @@ Device::Device()
 
 Device::~Device()
 {
+    mStreamInterface->stopService();
     // Remove parameter handler
     delete mAudioParameterHandler;
     // Remove Platform State component
