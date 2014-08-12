@@ -25,8 +25,10 @@
 #include "ParameterMgrHelper.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "SelectionCriterionInterface.h"
+#include <utilities/Log.hpp>
 #include <string>
 
+using audio_comms::utilities::Log;
 using std::map;
 using std::string;
 using std::vector;
@@ -53,9 +55,8 @@ bool ParameterMgrHelper::setAsTypedValue<uint32_t>(CParameterHandle *parameterHa
                                                    const uint32_t &value, string &error)
 {
     if (!parameterHandle->setAsInteger(value, error)) {
-
-        ALOGE("Unable to set value: %s, from parameter path: %s", error.c_str(),
-              parameterHandle->getPath().c_str());
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
         return false;
     }
     return true;
@@ -66,9 +67,8 @@ bool ParameterMgrHelper::getAsTypedValue<uint32_t>(CParameterHandle *parameterHa
                                                    uint32_t &value, string &error)
 {
     if (!parameterHandle->getAsInteger(value, error)) {
-
-        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(),
-              parameterHandle->getPath().c_str());
+        Log::Error() << "Unable to get value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
         return false;
     }
     return true;
@@ -80,9 +80,8 @@ bool ParameterMgrHelper::setAsTypedValue<vector<uint32_t> >(CParameterHandle *pa
                                                             string &error)
 {
     if (!parameterHandle->setAsIntegerArray(value, error)) {
-
-        ALOGE("Unable to set value: %s, from parameter path: %s", error.c_str(),
-              parameterHandle->getPath().c_str());
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
         return false;
     }
     return true;
@@ -93,9 +92,8 @@ bool ParameterMgrHelper::setAsTypedValue<string>(CParameterHandle *parameterHand
                                                  const string &value, string &error)
 {
     if (!parameterHandle->setAsString(value, error)) {
-
-        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(),
-              parameterHandle->getPath().c_str());
+        Log::Error() << "Unable to get value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
         return false;
     }
     return true;
@@ -106,9 +104,8 @@ bool ParameterMgrHelper::getAsTypedValue<string>(CParameterHandle *parameterHand
                                                  string &value, string &error)
 {
     if (!parameterHandle->getAsString(value, error)) {
-
-        ALOGE("Unable to get value: %s, from parameter path: %s", error.c_str(),
-              parameterHandle->getPath().c_str());
+        Log::Error() << "Unable to get value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
         return false;
     }
     return true;
@@ -119,13 +116,13 @@ bool ParameterMgrHelper::getParameterHandle(CParameterMgrPlatformConnector *pfwC
                                             const string &path)
 {
     if (pfwConnector == NULL || !pfwConnector->isStarted()) {
-        ALOGE("%s PFW connector is NULL or PFW is not started", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": PFW connector is NULL or PFW is not started";
         return false;
     }
     string error;
     handle = pfwConnector->createParameterHandle(path, error);
     if (!handle) {
-        ALOGE("%s: Unable to get handle for '%s' '%s'", __FUNCTION__, path.c_str(), error.c_str());
+        Log::Error() << __FUNCTION__ << ": Unable to get handle for " << path << "' '" << error;
         return false;
     }
     return true;
@@ -137,11 +134,10 @@ CParameterHandle *ParameterMgrHelper::getPlatformParameterHandle(const string &p
 
     // First retrieve the platform dependant parameter path
     if (!getParameterValue<string>(mPfwConnector, paramPath, platformParamPath)) {
-
-        ALOGE("Could not retrieve parameter path handler");
+        Log::Error() << "Could not retrieve parameter path handler";
         return NULL;
     }
-    ALOGD("%s  Platform specific parameter path=%s", __FUNCTION__, platformParamPath.c_str());
+    Log::Debug() << __FUNCTION__ << ": Platform specific parameter path=" << platformParamPath;
 
     // Initialise handle to NULL to avoid KW "false-positive".
     CParameterHandle *handle = NULL;
@@ -154,8 +150,8 @@ CParameterHandle *ParameterMgrHelper::getPlatformParameterHandle(const string &p
 CParameterHandle *ParameterMgrHelper::getDynamicParameterHandle(const string &dynamicParamPath)
 {
     if (mParameterHandleMap.find(dynamicParamPath) == mParameterHandleMap.end()) {
-        ALOGD("Dynamic parameter %s not found in map, get a handle and push it in the map",
-              dynamicParamPath.c_str());
+        Log::Debug() << __FUNCTION__ << ": Dynamic parameter " << dynamicParamPath
+                     << " not found in map, get a handle and push it in the map";
         mParameterHandleMap[dynamicParamPath] = getPlatformParameterHandle(dynamicParamPath);
     }
     return mParameterHandleMap[dynamicParamPath];

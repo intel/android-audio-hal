@@ -27,7 +27,6 @@
 #include <utils/Errors.h>
 #include "ParameterMgrPlatformConnector.h"
 #include <vector>
-#include <utils/Log.h>
 
 class CParameterMgrPlatformConnector;
 class CParameterHandle;

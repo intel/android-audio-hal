@@ -29,10 +29,11 @@
 #include "AudioResampler.hpp"
 #include "AudioUtils.hpp"
 #include <AudioCommsAssert.hpp>
-#include <cutils/log.h>
+#include <utilities/Log.hpp>
 #include <media/AudioBufferProvider.h>
 #include <stdlib.h>
 
+using audio_comms::utilities::Log;
 using namespace android;
 using namespace std;
 
@@ -85,8 +86,7 @@ status_t AudioConversion::configure(const SampleSpec &ssSrc, const SampleSpec &s
     mSsDst = ssDst;
 
     if (ssSrc == ssDst) {
-
-        ALOGD("%s: no convertion required", __FUNCTION__);
+        Log::Debug() << __FUNCTION__ << ": no convertion required";
         return ret;
     }
 
@@ -116,8 +116,7 @@ status_t AudioConversion::getConvertedBuffer(void *dst,
     status_t status = NO_ERROR;
 
     if (mActiveAudioConvList.empty()) {
-
-        ALOGE("%s: conversion called with empty converter list", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": conversion called with empty converter list";
         return NO_INIT;
     }
 
@@ -133,9 +132,7 @@ status_t AudioConversion::getConvertedBuffer(void *dst,
                                            mSsDst.convertFramesToBytes(
                                                mConvOutBufferSizeInFrames)));
         if (reallocBuffer == NULL) {
-
-            ALOGE(" %s(frames=%ld): realloc failed", __FUNCTION__,
-                  static_cast<long int>(outFrames));
+            Log::Error() << __FUNCTION__ << ": (frames=" << outFrames << " ): realloc failed";
             return NO_MEMORY;
         }
         mConvOutBuffer = reallocBuffer;

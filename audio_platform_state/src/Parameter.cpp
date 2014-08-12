@@ -23,8 +23,10 @@
 
 #include "Parameter.hpp"
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 
 using std::string;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -32,7 +34,7 @@ namespace intel_audio
 void Parameter::setMappingValuePair(const string &name, const string &value)
 {
     if (mMappingValuesMap.find(name) != mMappingValuesMap.end()) {
-        ALOGW("parameter value %s already appended", name.c_str());
+        Log::Warning() << __FUNCTION__ << ": parameter value " << name << " already appended";
         return;
     }
     mMappingValuesMap[name] = value;
@@ -49,8 +51,8 @@ bool Parameter::getLiteralValueFromParam(const string &androidParam, string &lit
     }
     if (!isAndroidParameterValueValid(androidParam)) {
 
-        ALOGV("%s: unknown parameter value(%s) for %s",
-              __FUNCTION__, androidParam.c_str(), mAndroidParameterKey.c_str());
+        Log::Verbose() << __FUNCTION__ << ": unknown parameter value(" << androidParam
+                       << ") for " << mAndroidParameterKey << "";
         return false;
     }
     MappingValuesMapConstIterator it = mMappingValuesMap.find(androidParam);

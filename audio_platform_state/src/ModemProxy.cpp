@@ -30,11 +30,12 @@
 #include <AudioCommsAssert.hpp>
 #include "ModemAudioManagerInterface.h"
 #include <InterfaceProviderLib.h>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 
 using namespace std;
 using namespace android;
 using audio_comms::utilities::convertTo;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -57,21 +58,19 @@ ModemProxy::ModemProxy(const string &libraryName,
         audio_comms::mamgr::ModemCollection::getInstance().getModem(libraryName, mInstance);
 
     if (interfaceProvider == NULL) {
-
-        ALOGI("No MAMGR library.");
+        Log::Info() << "No MAMGR library.";
     } else {
 
         // Retrieve the ModemAudioManager Interface
         mModemAudioManagerInterface =
             interfaceProvider->queryInterface<IModemAudioManagerInterface>();
         if (mModemAudioManagerInterface == NULL) {
-
-            ALOGE("Failed to get ModemAudioManager interface");
+            Log::Error() << "Failed to get ModemAudioManager interface";
         } else {
 
             // Declare ourselves as observer
             mModemAudioManagerInterface->setModemAudioManagerObserver(this);
-            ALOGV("Connected to a ModemAudioManager interface");
+            Log::Verbose() << "Connected to a ModemAudioManager interface";
         }
     }
 
@@ -97,19 +96,19 @@ ModemProxy::~ModemProxy()
 
 void ModemProxy::onModemAudioStatusChanged()
 {
-    ALOGV("%s on Modem instance %s", __FUNCTION__, mInstance.c_str());
+    Log::Verbose() << __FUNCTION__ << ": on Modem instance " << mInstance;
     notifyValueChange(mKeyCallStatus + mInstance);
 }
 
 void ModemProxy::onModemStateChanged()
 {
-    ALOGV("%s on Modem instance %s", __FUNCTION__, mInstance.c_str());
+    Log::Verbose() << __FUNCTION__ << ": on Modem instance " << mInstance;
     notifyValueChange(mKeyState + mInstance);
 }
 
 void ModemProxy::onModemAudioBandChanged()
 {
-    ALOGV("%s on Modem instance %s", __FUNCTION__, mInstance.c_str());
+    Log::Verbose() << __FUNCTION__ << ": on Modem instance " << mInstance;
     notifyValueChange(mKeyBandType + mInstance);
 }
 
@@ -153,8 +152,8 @@ bool ModemProxy::start()
         return false;
     }
     if (!mModemAudioManagerInterface->start()) {
-        ALOGW("%s: could not start ModemAudioManager for instance %s",
-              __FUNCTION__, mInstance.c_str());
+        Log::Warning() << __FUNCTION__
+                       << ": could not start ModemAudioManager for instance " << mInstance;
         mModemAudioManagerInterface->setModemAudioManagerObserver(NULL);
         return false;
     }

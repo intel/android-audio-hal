@@ -24,7 +24,6 @@
 
 #include "SampleSpec.hpp"
 #include <AudioCommsAssert.hpp>
-#include <cutils/log.h>
 #include <stdint.h>
 #include <errno.h>
 #include <limits>

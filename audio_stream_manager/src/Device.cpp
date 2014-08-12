@@ -34,12 +34,13 @@
 #include <InterfaceProviderLib.h>
 #include <hardware/audio_effect.h>
 #include <media/AudioRecord.h>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 #include <string>
 #include <cutils/properties.h>
 
 using namespace std;
 using android::status_t;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -50,7 +51,7 @@ extern "C"
  */
 DeviceInterface *createAudioHardware(void)
 {
-    ALOGD("Using Audio XML HAL");
+    Log::Debug() << "Using Audio XML HAL";
     return new Device();
 }
 }         // extern "C"
@@ -71,22 +72,20 @@ Device::Device()
         getInterfaceProvider(TProperty<string>(mRouteLibPropName,
                                                mRouteLibPropDefaultValue).getValue().c_str());
     if (!interfaceProvider) {
-        ALOGE("%s: Could not connect to interface provider", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": Could not connect to interface provider";
         return;
     }
     // Retrieve the Stream Interface
     mStreamInterface = interfaceProvider->queryInterface<IStreamInterface>();
     if (mStreamInterface == NULL) {
-
-        ALOGE("Failed to get Stream Interface on RouteMgr");
+        Log::Error() << "Failed to get Stream Interface on RouteMgr";
         return;
     }
 
     /// Construct the platform state component and start it
     mPlatformState = new AudioPlatformState(mStreamInterface);
     if (mPlatformState->start() != android::OK) {
-
-        ALOGE("%s: could not start Platform State", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not start Platform State";
         mStreamInterface = NULL;
         delete mPlatformState;
         mPlatformState = NULL;
@@ -95,8 +94,7 @@ Device::Device()
 
     /// Start Routing service
     if (mStreamInterface->startService() != android::OK) {
-
-        ALOGE("Could not start Route Manager stream service");
+        Log::Error() << __FUNCTION__ << ": Could not start Route Manager stream service";
         // Reset interface pointer to give a chance for initCheck to catch any issue
         // with the RouteMgr.
         mStreamInterface = NULL;
@@ -108,7 +106,7 @@ Device::Device()
 
     mStreamInterface->reconsiderRouting();
 
-    ALOGD("%s Route Manager Service successfully started", __FUNCTION__);
+    Log::Debug() << __FUNCTION__ << ": Route Manager Service successfully started";
 }
 
 Device::~Device()
@@ -138,16 +136,16 @@ android::status_t Device::openOutputStream(audio_io_handle_t /*handle*/,
                                            StreamOutInterface *&stream,
                                            const std::string &/*address*/)
 {
-    ALOGD("%s: called for devices: 0x%08x", __FUNCTION__, devices);
+    Log::Debug() << __FUNCTION__ << ": called for devices: " << devices;
 
     if (!audio_is_output_devices(devices)) {
-        ALOGE("%s: called with bad devices", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": called with bad devices";
         return android::BAD_VALUE;
     }
     StreamOut *out = new StreamOut(this, flags);
     status_t err = out->set(config);
     if (err != android::OK) {
-        ALOGE("%s: set error.", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": set error.";
         delete out;
         return err;
     }
@@ -155,7 +153,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t /*handle*/,
     mStreamInterface->addStream(out);
     stream = out;
 
-    ALOGD("%s: output created with status=%d", __FUNCTION__, err);
+    Log::Debug() << __FUNCTION__ << ": output created with status=" << err;
     return android::OK;
 }
 
@@ -175,17 +173,17 @@ android::status_t Device::openInputStream(audio_io_handle_t /*handle*/,
                                           const std::string &/*address*/,
                                           audio_source_t source)
 {
-    ALOGD("%s: called for devices: 0x%08x and input source: 0x%08x", __FUNCTION__, devices, source);
-
+    Log::Debug() << __FUNCTION__ << ": called for devices: " << devices
+                 << " and input source: 0x%08x" << static_cast<uint32_t>(source);
     if (!audio_is_input_device(devices)) {
-        ALOGE("%s: called with bad device 0x%08x", __FUNCTION__, devices);
+        Log::Error() << __FUNCTION__ << ": called with bad device " << devices;
         return android::BAD_VALUE;
     }
 
     StreamIn *in = new StreamIn(this, source);
     status_t err = in->set(config);
     if (err != android::OK) {
-        ALOGE("%s: Set err", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": Set err";
         delete in;
         return err;
     }
@@ -193,7 +191,7 @@ android::status_t Device::openInputStream(audio_io_handle_t /*handle*/,
     mStreamInterface->addStream(in);
     stream = in;
 
-    ALOGD("%s: input created with status=%d", __FUNCTION__, err);
+    Log::Debug() << __FUNCTION__ << ": input created with status=" << err;
     return android::OK;
 }
 
@@ -207,7 +205,7 @@ void Device::closeInputStream(StreamInInterface *in)
 
 status_t Device::setMicMute(bool mute)
 {
-    ALOGV("%s: %s", __FUNCTION__, mute ? "true" : "false");
+    Log::Verbose() << __FUNCTION__ << ": " << (mute ? "true" : "false");
     KeyValuePairs pair;
     status_t status = pair.add(AudioPlatformState::mKeyMicMute, mute);
     if (status != android::OK) {
@@ -236,18 +234,18 @@ size_t Device::getInputBufferSize(const struct audio_config &config) const
     case 48000:
         break;
     default:
-        ALOGW("%s bad sampling rate: %d", __FUNCTION__, config.sample_rate);
+        Log::Warning() << __FUNCTION__ << ": bad sampling rate: " << config.sample_rate;
         return 0;
     }
     if (config.format != AUDIO_FORMAT_PCM_16_BIT) {
-        ALOGW("%s bad format: %d", __FUNCTION__, config.format);
+        Log::Warning() << __FUNCTION__ << ": bad format: " << static_cast<int32_t>(config.format);
         return 0;
     }
     uint32_t channelCount = popcount(config.channel_mask);
 
     // multichannel capture is currently supported only for submix
     if ((channelCount < 1) || (channelCount > 8)) {
-        ALOGW("%s bad channel count: %d", __FUNCTION__, channelCount);
+        Log::Warning() << __FUNCTION__ << ": bad channel count: " << channelCount;
         return 0;
     }
     SampleSpec spec(channelCount, config.format, config.sample_rate);
@@ -256,7 +254,7 @@ size_t Device::getInputBufferSize(const struct audio_config &config) const
 
 status_t Device::setParameters(const string &keyValuePairs)
 {
-    ALOGV("%s: key value pair %s", __FUNCTION__, keyValuePairs.c_str());
+    Log::Verbose() << __FUNCTION__ << ": key value pair " << keyValuePairs;
     KeyValuePairs pairs(keyValuePairs);
     string restart;
     string key(mRestartingKey);
@@ -266,8 +264,9 @@ status_t Device::setParameters(const string &keyValuePairs)
         if (restart == mRestartingRequested) {
             // Replace the restarting key with all previously backuped {keys,value} pairs in order
             // to restore the previous HAL state
-            ALOGI("Restore audio parameters as mediaserver is restarted param=%s",
-                  mAudioParameterHandler->getParameters().c_str());
+            Log::Info() << __FUNCTION__
+                        << ": Restore audio parameters as mediaserver is restarted param="
+                        << mAudioParameterHandler->getParameters();
             KeyValuePairs backupedPairs(mAudioParameterHandler->getParameters());
             backupedPairs.add(pairs.toString());
             pairs = backupedPairs;
@@ -275,7 +274,8 @@ status_t Device::setParameters(const string &keyValuePairs)
     }
     status = mPlatformState->setParameters(pairs.toString());
     if (status == android::OK) {
-        ALOGV("%s: saving the parameters to recover in case of media server crash", __FUNCTION__);
+        Log::Verbose() << __FUNCTION__
+                       << ": saving the parameters to recover in case of media server crash";
         mAudioParameterHandler->saveParameters(pairs.toString());
     }
     return status;
@@ -283,7 +283,7 @@ status_t Device::setParameters(const string &keyValuePairs)
 
 string Device::getParameters(const string &keys) const
 {
-    ALOGV("%s: requested keys %s", __FUNCTION__, keys.c_str());
+    Log::Verbose() << __FUNCTION__ << ": requested keys " << keys;
     return mPlatformState->getParameters(keys);
 }
 
@@ -297,7 +297,7 @@ android::status_t Device::setMode(audio_mode_t mode)
 status_t Device::startStream(Stream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    ALOGD("%s: %s stream", __FUNCTION__, stream->isOut() ? "output" : "input");
+    Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
     mPlatformState->startStream(stream);
     getStreamInterface()->startStream();
     return android::OK;
@@ -306,7 +306,7 @@ status_t Device::startStream(Stream *stream)
 status_t Device::stopStream(Stream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    ALOGD("%s: %s stream", __FUNCTION__, stream->isOut() ? "output" : "input");
+    Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
     mPlatformState->stopStream(stream);
     getStreamInterface()->stopStream();
     return android::OK;
@@ -327,13 +327,13 @@ status_t Device::setStreamParameters(Stream *stream, const string &keyValuePairs
         // the mode and selects a new parameter for output
         pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
     }
-    ALOGV("%s: key value pair %s", __FUNCTION__, pairs.toString().c_str());
+    Log::Verbose() << __FUNCTION__ << ": key value pair " << pairs.toString();
     return mPlatformState->setParameters(pairs.toString());
 }
 
 void Device::resetEchoReference(struct echo_reference_itfe *reference)
 {
-    ALOGD(" %s(reference=%p)", __FUNCTION__, reference);
+    Log::Debug() << __FUNCTION__ << ": (reference=" << reference << ")";
     // Check that the reset is possible:
     //  - reference and _echoReference shall both point to the same struct (consistency check)
     //  - they should not be NULL because the reset process will remove the reference from
@@ -347,9 +347,9 @@ void Device::resetEchoReference(struct echo_reference_itfe *reference)
     // Get active voice output stream
     IoStream *stream = getStreamInterface()->getVoiceOutputStream();
     if (stream == NULL) {
-
-        ALOGE("%s: no voice output found,"
-              " so problem to provide data reference for AEC effect!", __FUNCTION__);
+        Log::Error() << __FUNCTION__
+                     << ": no voice output found"
+                     << " so problem to provide data reference for AEC effect!";
         return;
     }
     StreamOut *out = static_cast<StreamOut *>(stream);
@@ -360,15 +360,14 @@ void Device::resetEchoReference(struct echo_reference_itfe *reference)
 
 struct echo_reference_itfe *Device::getEchoReference(const SampleSpec &inputSampleSpec)
 {
-    ALOGD("%s ()", __FUNCTION__);
+    Log::Debug() << __FUNCTION__;
     resetEchoReference(mEchoReference);
 
     // Get active voice output stream
     IoStream *stream = getStreamInterface()->getVoiceOutputStream();
     if (stream == NULL) {
-
-        ALOGE("%s: no voice output found,"
-              " so problem to provide data reference for AEC effect!", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": no voice output found,"
+                     << " so problem to provide data reference for AEC effect!";
         return NULL;
     }
     StreamOut *out = static_cast<StreamOut *>(stream);
@@ -381,13 +380,11 @@ struct echo_reference_itfe *Device::getEchoReference(const SampleSpec &inputSamp
                               outputSampleSpec.getChannelCount(),
                               outputSampleSpec.getSampleRate(),
                               &mEchoReference) < 0) {
-
-        ALOGE("%s: Could not create echo reference", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": Could not create echo reference";
         return NULL;
     }
     out->addEchoReference(mEchoReference);
-
-    ALOGD(" %s() will return that mEchoReference=%p", __FUNCTION__, mEchoReference);
+    Log::Debug() << __FUNCTION__ << ": return that mEchoReference=" << mEchoReference << ")";
     return mEchoReference;
 }
 

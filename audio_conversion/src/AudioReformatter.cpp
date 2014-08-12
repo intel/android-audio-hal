@@ -23,8 +23,9 @@
 #define LOG_TAG "AudioReformatter"
 
 #include "AudioReformatter.hpp"
-#include <cutils/log.h>
+#include <utilities/Log.hpp>
 
+using audio_comms::utilities::Log;
 using namespace android;
 
 namespace intel_audio
@@ -57,8 +58,7 @@ status_t AudioReformatter::configure(const SampleSpec &ssSrc, const SampleSpec &
         mConvertSamplesFct =
             static_cast<SampleConverter>(&AudioReformatter::convertS24over32toS16);
     } else {
-
-        ALOGE("%s: reformatter not available", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": reformatter not available";
         return INVALID_OPERATION;
     }
 

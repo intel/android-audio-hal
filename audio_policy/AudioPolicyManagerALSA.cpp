@@ -23,13 +23,14 @@
 
 #define LOG_TAG "AudioPolicyManagerALSA"
 
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 #include <hardware/audio.h>
 #include "AudioPolicyManagerALSA.hpp"
 #include <media/mediarecorder.h>
 #include <Property.h>
 #include <AudioCommsAssert.hpp>
 
+using audio_comms::utilities::Log;
 
 namespace android_audio_legacy
 {
@@ -80,22 +81,22 @@ status_t AudioPolicyManagerALSA::setDeviceConnectionState(AudioSystem::audio_dev
     }
 
     if (device_address == NULL) {
-        ALOGE("setDeviceConnectionState() NULL address");
+        Log::Error() << "setDeviceConnectionState() NULL address";
         return BAD_VALUE;
     }
 
     if (strlen(device_address) >= MAX_DEVICE_ADDRESS_LEN) {
-        ALOGE("setDeviceConnectionState() invalid address: %s", device_address);
+        Log::Error() << "setDeviceConnectionState() invalid address: " << device_address;
         return BAD_VALUE;
     }
 
     if (AudioSystem::isOutputDevice(device) && state == AudioSystem::DEVICE_STATE_AVAILABLE) {
         if (mAvailableOutputDevices & device) {
-            ALOGW("setDeviceConnectionState() device already connected: %x", device);
+            Log::Warning() << __FUNCTION__ << ": device already connected: "
+                           << static_cast<uint32_t>(device);
             return INVALID_OPERATION;
         }
-
-        ALOGV("setDeviceConnectionState() connecting device %x", device);
+        Log::Verbose() << __FUNCTION__ << ": connecting device " << static_cast<uint32_t>(device);
 
         // Clear wired headset/headphone device, if any already available, as only
         // one wired headset/headphone device can be connected at a time
@@ -116,8 +117,9 @@ status_t AudioPolicyManagerALSA::startOutput(audio_io_handle_t output,
                                              AudioSystem::stream_type stream,
                                              int session)
 {
-    ALOGD("startOutput() output %d, stream type %d, session %d", output, stream, session);
-
+    Log::Debug() << __FUNCTION__ << ": output " << output
+                 << ", stream type " << static_cast<uint32_t>(stream)
+                 << ", session " << session;
     return AudioPolicyManagerBase::startOutput(output, stream, session);
 }
 
@@ -130,12 +132,12 @@ audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
     audio_devices_t device = getDeviceForInputSource(inputSource);
     audio_io_handle_t input = 0;
 
-
-    ALOGV("getInput() inputSource %d, samplingRate %d, format %d, channelMask %x, acoustics %x",
-          inputSource, samplingRate, format, channelMask, acoustics);
-
+    Log::Verbose() << __FUNCTION__
+                   << ":  inputSource " << inputSource << ", samplingRate " << samplingRate
+                   << ", format " << static_cast<uint32_t>(format)
+                   << ", channelMask " << channelMask;
     if (device == 0) {
-        ALOGW("getInput() could not find device for inputSource %d", inputSource);
+        Log::Warning() << __FUNCTION__ << ": could not find device for inputSource " << inputSource;
         return 0;
     }
 
@@ -144,14 +146,16 @@ audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
                                          format,
                                          channelMask);
     if (profile == NULL) {
-        ALOGW("getInput() could not find profile for device %04x, samplingRate %d, format %d,"
-              "channelMask %04x",
-              device, samplingRate, format, channelMask);
+        Log::Warning() << __FUNCTION__
+                       << ": could not find profile for device " << device
+                       << ", samplingRate " << samplingRate
+                       << ", format " << static_cast<uint32_t>(format)
+                       << ", channelMask " << channelMask;
         return 0;
     }
 
     if (profile->mModule->mHandle == 0) {
-        ALOGE("getInput(): HW module %s not opened", profile->mModule->mName);
+        Log::Error() << "getInput(): HW module " << profile->mModule->mName << " not opened";
         return 0;
     }
 
@@ -174,8 +178,9 @@ audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
         (samplingRate != inputDesc->mSamplingRate) ||
         (format != inputDesc->mFormat) ||
         (channelMask != inputDesc->mChannelMask)) {
-        ALOGV("getInput() failed opening input: samplingRate %d, format %d, channelMask %d",
-              samplingRate, format, channelMask);
+        Log::Verbose() << __FUNCTION__ << ": failed opening input: samplingRate " << samplingRate
+                       << ", format " << static_cast<uint32_t>(format)
+                       << ", channelMask " << channelMask;
         if (input != 0) {
             mpClientInterface->closeInput(input);
         }
@@ -191,16 +196,16 @@ audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
 
 status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
 {
-    ALOGI("%s: input %d", __FUNCTION__, input);
+    Log::Info() << __FUNCTION__ << ": input " << input;
     ssize_t index = mInputs.indexOfKey(input);
     if (index < 0) {
-        ALOGW("%s: unknown input %d", __FUNCTION__, input);
+        Log::Warning() << __FUNCTION__ << ": unknown input " << input;
         return BAD_VALUE;
     }
     AudioInputDescriptor *inputDesc = mInputs.valueAt(index);
 
     if (isVirtualInputDevice(inputDesc->mDevice)) {
-        ALOGV("startInput() input %d remote submix initiated", input);
+        Log::Verbose() << __FUNCTION__ << ": input " << input << " remote submix initiated";
         return AudioPolicyManagerBase::startInput(input);
     }
 
@@ -229,31 +234,36 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
              (activeInputDesc->mInputSource != AUDIO_SOURCE_VOICE_COMMUNICATION)) &&
             ((REMOVE_DEVICE_DIR(inputDesc->mDevice) & AUDIO_DEVICE_IN_VOICE_CALL) ||
              (inputDesc->mInputSource == AUDIO_SOURCE_VOICE_COMMUNICATION))) {
-            ALOGI("%s: Stop current active input %d because of higher priority input %d !",
-                  __FUNCTION__, activeInput, input);
+            Log::Info() << __FUNCTION__
+                        << ": Stop current active input " << activeInput
+                        << " because of higher priority input " << input << " !";
             stopInput(activeInput);
         } else if ((REMOVE_DEVICE_DIR(activeInputDesc->mDevice) & AUDIO_DEVICE_IN_VOICE_CALL) &&
                    (inputDesc->mInputSource == AUDIO_SOURCE_VOICE_COMMUNICATION)) {
-            ALOGI("%s: Granting input %d for VoIP although VCR input %d already started",
-                  __FUNCTION__, input, activeInput);
+            Log::Info() << __FUNCTION__
+                        << ": Granting input " << input
+                        << " for VoIP although VCR input " << activeInput
+                        << " already started";
         } else if (inputDesc->mInputSource == activeInputDesc->mInputSource) {
-            ALOGI("%s: Two requests for the same source 0x%x (device 0x%x),"
-                  "return the audio input handle to the latest requester!",
-                  __FUNCTION__, inputDesc->mInputSource, inputDesc->mDevice);
+            Log::Info() << __FUNCTION__
+                        << ": Two requests for the same source " << inputDesc->mInputSource
+                        << " (device " << inputDesc->mDevice
+                        << "), return the audio input handle to the latest requester!";
             stopInput(activeInput);
         } else if (activeInputDesc->mInputSource == AUDIO_SOURCE_HOTWORD) {
-            ALOGI("%s: Preempting already started low-priority input %d",
-                  __FUNCTION__, activeInput);
+            Log::Info() << __FUNCTION__
+                        << ": Preempting already started low-priority input " << activeInput;
             stopInput(activeInput);
             releaseInput(activeInput);
         } else if (activeInputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
             // The difference between LPAL and HOTWORD is that LPAL shall be resumed.
-            ALOGI("%s: Preempting Always-Listening input %d",
-                  __FUNCTION__, activeInput);
+            Log::Info() << __FUNCTION__ << ": Preempting Always-Listening input " << activeInput;
             stopInput(activeInput);
         } else {
-            ALOGW("%s: input %d failed: other input (%d) already started",
-                  __FUNCTION__, input, activeInput);
+            Log::Warning() << __FUNCTION__
+                           << ": input " << input
+                           << " failed: other input (" << activeInput
+                           << ") already started";
             return INVALID_OPERATION;
         }
     }
@@ -282,8 +292,8 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     }
     param.addInt(String8(AudioParameter::keyInputSource), aliasSource);
     mpClientInterface->setParameters(input, param.toString());
-    ALOGV("startInput() input %d source = %d", (int)input, inputDesc->mInputSource);
-
+    Log::Verbose() << __FUNCTION__ << ": input " << input
+                   << " source = " << inputDesc->mInputSource;
     inputDesc->mRefCount = 1;
     inputDesc->mHasStarted = true;
     return NO_ERROR;
@@ -305,7 +315,7 @@ status_t AudioPolicyManagerALSA::doParseParameters(AudioParameter &param)
             isAlwaysListeningOn = true;
         }
 
-        ALOGD("%s: LPAL is %s", __FUNCTION__, isAlwaysListeningOn ? "on" : "off");
+        Log::Debug() << __FUNCTION__ << ": LPAL is on=" << (isAlwaysListeningOn ? "on" : "off");
         audio_io_handle_t ioHandle = getHandleFromInputSource(AUDIO_SOURCE_LPAL);
 
         if (isAlwaysListeningOn && (ioHandle == 0)) {
@@ -314,10 +324,11 @@ status_t AudioPolicyManagerALSA::doParseParameters(AudioParameter &param)
                                 AUDIO_FORMAT_PCM_16_BIT,
                                 AUDIO_CHANNEL_IN_MONO,
                                 AudioSystem::AGC_DISABLE);
-
-            ALOGD("%s: getInput done", __FUNCTION__);
+            Log::Debug() << __FUNCTION__ << ": getInput done";
             status = startInput(ioHandle);
-            ALOGW_IF(status != NO_ERROR, "%s: Input failed to start : %d", __FUNCTION__, status);
+            if (status != NO_ERROR) {
+                Log::Warning() << __FUNCTION__ << ":  Input failed to start : " << status;
+            }
         } else {
             status = stopInput(ioHandle);
             if (status == OK) {
@@ -325,7 +336,7 @@ status_t AudioPolicyManagerALSA::doParseParameters(AudioParameter &param)
             } else {
                 // do not release input : maybe the input was already stopped through
                 //   input concurrency. So it shall be resumed later
-                ALOGW("%s: Input failed to stop : %d", __FUNCTION__, status);
+                Log::Warning() << __FUNCTION__ << ": Input failed to stop : " << status;
             }
         }
     }
@@ -347,11 +358,12 @@ status_t AudioPolicyManagerALSA::setStreamVolumeIndex(AudioSystem::stream_type s
                                                       int index,
                                                       audio_devices_t device)
 {
-
     // check that stream is not negative to avoid out of bounds index
     if (!isStreamValid(stream)) {
-        ALOGE("setStreamVolumeIndex() invalid stream of type %d,at volume index %d on device %#04x",
-              stream, index, device);
+        Log::Error() << __FUNCTION__ << ": invalid stream of type "
+                     << static_cast<uint32_t>(stream)
+                     << ",at volume index " << index
+                     << " on device " << static_cast<uint32_t>(device);
         return BAD_VALUE;
     }
 
@@ -368,9 +380,8 @@ status_t AudioPolicyManagerALSA::setStreamVolumeIndex(AudioSystem::stream_type s
             index = mStreams[stream].mIndexMax;
         }
     }
-
-    ALOGV("setStreamVolumeIndex() stream %d, device %04x, index %d",
-          stream, device, index);
+    Log::Verbose() << __FUNCTION__ << ": stream " << static_cast<uint32_t>(stream)
+                   << ", device " << static_cast<uint32_t>(device) << ", index " << index;
 
     // if device is AUDIO_DEVICE_OUT_DEFAULT set default value and
     // clear all device specific values
@@ -527,20 +538,21 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
             case AudioSystem::FORCE_SPEAKER:
                 device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER;
                 if (device != 0) {
-                    ALOGD("%s- Unsupported device in STRATEGY_PHONE: set Speaker as ouput",
-                          __FUNCTION__);
+                    Log::Debug() << __FUNCTION__
+                                 << "- Unsupported device in STRATEGY_PHONE: set Speaker as ouput";
                 } else {
-                    ALOGE("%s- Earpiece device not found", __FUNCTION__);
+                    Log::Error() << __FUNCTION__ << ": Earpiece device not found";
                 }
                 break;
 
             default:
                 device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_EARPIECE;
                 if (device != 0) {
-                    ALOGD("%s- Unsupported device in STRATEGY_PHONE: set Earpiece as ouput",
-                          __FUNCTION__);
+                    Log::Debug() << __FUNCTION__
+                                 << "- Unsupported device in STRATEGY_PHONE: set Earpiece as ouput";
                 } else {
-                    ALOGE("%s- Earpiece device not found: set speaker as output", __FUNCTION__);
+                    Log::Error() << __FUNCTION__
+                                 << ": Earpiece device not found: set speaker as output";
                     device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER;
                 }
                 break;
@@ -558,10 +570,9 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
             //  - the BT SCO will be unrouted for instance during a shutter sound
             //  during CSV call.
             //  - the earpiece is not handled by the base class on MEDIA fall through case.
-            ALOGV(
-                "%s- Current device(0x%x) and speaker stream output for an enforced audible stream",
-                __FUNCTION__,
-                currentDevice);
+            Log::Verbose() << __FUNCTION__
+                           << ": Current device(" << currentDevice
+                           << ") and speaker stream output for an enforced audible stream";
             device = (mAvailableOutputDevices & AUDIO_DEVICE_OUT_SPEAKER) | currentDevice;
         }
         break;
@@ -571,7 +582,7 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
         if ((device == AUDIO_DEVICE_OUT_SPEAKER)
             && (isInCall())
             && (getForceUse(AudioSystem::FOR_COMMUNICATION) != AudioSystem::FORCE_SPEAKER)) {
-            ALOGV("%s- Force the device to earpiece and not IHF", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": Force the device to earpiece and not IHF";
             device = mAvailableOutputDevices & AUDIO_DEVICE_OUT_EARPIECE;
         }
         break;
@@ -585,24 +596,23 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForStrategy(routing_strategy st
         // do nothing
         break;
     }
-
-    ALOGV("getDeviceForStrategy() strategy %d, device 0x%x", strategy, device);
-
+    Log::Verbose() << __FUNCTION__ << ": strategy " << static_cast<uint32_t>(strategy)
+                   << ", device " << static_cast<uint32_t>(device);
     return device;
 }
 
 status_t AudioPolicyManagerALSA::stopInput(audio_io_handle_t input)
 {
-    ALOGV("stopInput() input %d", input);
+    Log::Verbose() << __FUNCTION__ << ": input " << input;
     ssize_t index = mInputs.indexOfKey(input);
     if (index < 0) {
-        ALOGW("stopInput() unknow input %d", input);
+        Log::Warning() << __FUNCTION__ << ": unknow input " << input;
         return BAD_VALUE;
     }
     AudioInputDescriptor *inputDesc = mInputs.valueAt(index);
 
     if (inputDesc->mRefCount == 0) {
-        ALOGW("stopInput() input %d already stopped", input);
+        Log::Warning() << __FUNCTION__ << ": input " << input << "already stopped";
         return INVALID_OPERATION;
     } else {
         // automatically disable the remote submix output when input is stopped
@@ -633,7 +643,7 @@ void AudioPolicyManagerALSA::releaseInput(audio_io_handle_t input)
 {
     AudioPolicyManagerBase::releaseInput(input);
     int mInputsSize = mInputs.size();
-    ALOGD("%s(input %d) mInputs.size() = %d", __FUNCTION__, input, mInputsSize);
+    Log::Debug() << __FUNCTION__ << ": (input " << input << ") mInputs.size() = " << mInputsSize;
 
     // Reroute the input only when these conditions are met:
     // - there are still registered inputs
@@ -661,8 +671,8 @@ void AudioPolicyManagerALSA::releaseInput(audio_io_handle_t input)
                 param.addInt(String8(AudioParameter::keyInputSource), (int)inputDesc->mInputSource);
                 mpClientInterface->setParameters(input, param.toString());
                 bValidInput = true;
-                ALOGI("%s: Rerouting to previously stopped input %d", __FUNCTION__,
-                      getActiveInput());
+                Log::Info() << __FUNCTION__
+                            << ": Rerouting to previously stopped input " << getActiveInput();
             }
             iRemainingInputs--;
         }
@@ -684,8 +694,9 @@ audio_devices_t AudioPolicyManagerALSA::getDeviceForInputSource(int inputSource)
         if ((inputSource == AUDIO_SOURCE_MIC) &&
             mPhoneState == AudioSystem::MODE_IN_COMMUNICATION &&
             (getForceUse(AudioSystem::FOR_COMMUNICATION) == AudioSystem::FORCE_SPEAKER)) {
-            ALOGI("Force speaker in VoIP call : set input device to back mic "
-                  "with input source AUDIO_SOURCE_MIC");
+            Log::Info() << __FUNCTION__
+                        << ": Force speaker in VoIP call : set input device to back mic "
+                        << " with input source AUDIO_SOURCE_MIC";
             if ((mAvailableInputDevices & AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET) ||
                 (mAvailableInputDevices & AUDIO_DEVICE_IN_WIRED_HEADSET)) {
                 device =  AUDIO_DEVICE_IN_BUILTIN_MIC;
@@ -705,20 +716,19 @@ AudioPolicyManagerALSA::AudioPolicyManagerALSA(AudioPolicyClientInterface *clien
     // mVoiceVolumeAppliedAfterMixInComm
     if (getCustomPropertyAsBool(mVoiceVolumeAppliedAfterMixInCommPropName,
                                 mVoiceVolumeAppliedAfterMixInComm)) {
-        ALOGD("%s- mVoiceVolumeAppliedAfterMixInComm = %d",
-              __FUNCTION__,
-              mVoiceVolumeAppliedAfterMixInComm);
+        Log::Debug() << __FUNCTION__ << "- mVoiceVolumeAppliedAfterMixInComm = "
+                     << mVoiceVolumeAppliedAfterMixInComm;
     }
     // mVoiceVolumeAppliedAfterMixInCall
     if (getCustomPropertyAsBool(mVoiceVolumeAppliedAfterMixInCallPropName,
                                 mVoiceVolumeAppliedAfterMixInCall)) {
-        ALOGD("%s- mVoiceVolumeAppliedAfterMixInCall = %d",
-              __FUNCTION__,
-              mVoiceVolumeAppliedAfterMixInCall);
+        Log::Debug() << __FUNCTION__ << "- mVoiceVolumeAppliedAfterMixInCall = "
+                     << mVoiceVolumeAppliedAfterMixInCall;
     }
     // mInCallMusicAttenuation_dB
     if (getCustomPropertyAsFloat(mInCallMusicAttenuation_dBPropName, mInCallMusicAttenuation_dB)) {
-        ALOGD("%s- mInCallMusicAttenuation_dB = %.0f", __FUNCTION__, mInCallMusicAttenuation_dB);
+        Log::Debug() << __FUNCTION__ << "- mInCallMusicAttenuation_dB = "
+                     << mInCallMusicAttenuation_dB;
     }
 }
 

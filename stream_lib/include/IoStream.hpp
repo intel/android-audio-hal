@@ -24,7 +24,6 @@
 
 #include <SampleSpec.hpp>
 #include <utils/RWLock.h>
-#include <cutils/log.h>
 #include <string>
 
 typedef android::RWLock::AutoRLock AutoR;

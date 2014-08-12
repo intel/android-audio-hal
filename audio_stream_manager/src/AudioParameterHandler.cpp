@@ -23,11 +23,12 @@
 #define LOG_TAG "StreamManager/ParameterHandler"
 
 #include "AudioParameterHandler.hpp"
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 #include <utils/Errors.h>
 
 using android::status_t;
 using namespace std;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -55,8 +56,7 @@ status_t AudioParameterHandler::save()
 {
     FILE *fp = fopen(mFilePath, "w+");
     if (!fp) {
-
-        ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
+        Log::Error() << __FUNCTION__ << ": error " << strerror(errno);
         return android::UNKNOWN_ERROR;
     }
 
@@ -72,8 +72,7 @@ status_t AudioParameterHandler::restore()
 {
     FILE *fp = fopen(mFilePath, "r");
     if (!fp) {
-
-        ALOGE("%s: error %s", __FUNCTION__, strerror(errno));
+        Log::Error() << __FUNCTION__ << ": error " << strerror(errno);
         return android::UNKNOWN_ERROR;
     }
     char str[mReadBufSize];

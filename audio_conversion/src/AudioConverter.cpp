@@ -24,9 +24,10 @@
 
 #include "AudioConverter.hpp"
 #include "AudioUtils.hpp"
-#include <cutils/log.h>
+#include <utilities/Log.hpp>
 #include <stdlib.h>
 
+using audio_comms::utilities::Log;
 using namespace android;
 
 namespace intel_audio
@@ -60,8 +61,7 @@ void *AudioConverter::getOutputBuffer(ssize_t inFrames)
 
         ret = allocateConvertBuffer(outBufSizeInBytes);
         if (ret != NO_ERROR) {
-
-            ALOGE("%s: could not allocate memory for operation", __FUNCTION__);
+            Log::Error() << __FUNCTION__ << ": could not allocate memory for operation";
             return NULL;
         }
     }
@@ -83,8 +83,7 @@ status_t AudioConverter::allocateConvertBuffer(ssize_t bytes)
     mConvertBuf = new char[mConvertBufSize];
 
     if (!mConvertBuf) {
-
-        ALOGE("cannot allocate resampler tmp buffers.\n");
+        Log::Error() << "cannot allocate resampler tmp buffers.";
         mConvertBufSize = 0;
         ret = NO_MEMORY;
     }
@@ -113,7 +112,7 @@ status_t AudioConverter::configure(const SampleSpec &ssSrc, const SampleSpec &ss
 
             // The Sample spec items on which the converter is NOT working
             // MUST BE the same...
-            ALOGE("%s: not supported", __FUNCTION__);
+            Log::Error() << __FUNCTION__ << ": not supported";
             return INVALID_OPERATION;
         }
     }

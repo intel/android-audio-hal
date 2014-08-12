@@ -26,7 +26,6 @@
 #include <AudioCommsAssert.hpp>
 #include <SampleSpec.hpp>
 #include <utils/RWLock.h>
-#include <cutils/log.h>
 
 using std::string;
 

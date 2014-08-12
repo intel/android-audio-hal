@@ -24,10 +24,11 @@
 
 #include "Resampler.hpp"
 #include <AudioCommsAssert.hpp>
-#include <cutils/log.h>
+#include <utilities/Log.hpp>
 #include <iasrc_resampler.h>
 #include <limits.h>
 
+using audio_comms::utilities::Log;
 using namespace android;
 
 namespace intel_audio
@@ -66,8 +67,7 @@ status_t Resampler::allocateBuffer()
     mFloatOut = new float[(mMaxFrameCnt + 1) * mSsSrc.getChannelCount()];
 
     if (!mFloatInp || !mFloatOut) {
-
-        ALOGE("cannot allocate resampler tmp buffers.\n");
+        Log::Error() << "cannot allocate resampler tmp buffers";
         delete[] mFloatInp;
         delete[] mFloatOut;
 
@@ -78,10 +78,12 @@ status_t Resampler::allocateBuffer()
 
 status_t Resampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    ALOGD("%s: SOURCE rate=%d format=%d channels=%d",  __FUNCTION__, ssSrc.getSampleRate(),
-          ssSrc.getFormat(), ssSrc.getChannelCount());
-    ALOGD("%s: DST rate=%d format=%d channels=%d", __FUNCTION__, ssDst.getSampleRate(),
-          ssDst.getFormat(), ssDst.getChannelCount());
+    Log::Debug() << __FUNCTION__ << ": SOURCE rate=" << ssSrc.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssSrc.getFormat())
+                 << " channels=" << ssSrc.getChannelCount();
+    Log::Debug() << __FUNCTION__ << ": DST rate=" << ssDst.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssDst.getFormat())
+                 << " channels=" << ssDst.getChannelCount();
 
     if ((ssSrc.getSampleRate() == mSsSrc.getSampleRate()) &&
         (ssDst.getSampleRate() == mSsDst.getSampleRate()) && mContext) {
@@ -102,15 +104,14 @@ status_t Resampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
     }
 
     if (!iaresamplib_supported_conversion(ssSrc.getSampleRate(), ssDst.getSampleRate())) {
-
-        ALOGE("%s: SRC lib doesn't support this conversion", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": SRC lib doesn't support this conversion";
         return INVALID_OPERATION;
     }
 
     iaresamplib_new(&mContext, ssSrc.getChannelCount(),
                     ssSrc.getSampleRate(), ssDst.getSampleRate());
     if (!mContext) {
-        ALOGE("cannot create resampler handle for lacking of memory.\n");
+        Log::Error() << "cannot create resampler handle for lacking of memory";
         return BAD_VALUE;
     }
 
@@ -152,8 +153,7 @@ status_t Resampler::resampleFrames(const void *src,
 
         status_t ret = allocateBuffer();
         if (ret != NO_ERROR) {
-
-            ALOGE("%s: could not allocate memory for resampling operation", __FUNCTION__);
+            Log::Error() << __FUNCTION__ << ": could not allocate memory for resampling operation";
             return ret;
         }
     }

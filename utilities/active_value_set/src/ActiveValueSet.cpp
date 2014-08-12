@@ -28,7 +28,9 @@
 #include "Value.hpp"
 #include <EventThread.h>
 #include <AudioCommsAssert.hpp>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
+
+using audio_comms::utilities::Log;
 
 ActiveValueSet::ActiveValueSet()
     : mEventThread(new CEventThread(this))
@@ -50,11 +52,11 @@ ActiveValueSet::~ActiveValueSet()
 bool ActiveValueSet::start()
 {
     if (mEventThread->isStarted()) {
-        ALOGW("%s: already started", __FUNCTION__);
+        Log::Warning() << __FUNCTION__ << ": already started";
         return false;
     }
     if (!mEventThread->start()) {
-        ALOGE("%s: could not start event thread", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not start event thread";
         return false;
     }
     // Loops on Values to get and report the initial values
@@ -71,7 +73,7 @@ bool ActiveValueSet::start()
 void ActiveValueSet::stop()
 {
     if (!mEventThread->isStarted()) {
-        ALOGW("%s: already stopped", __FUNCTION__);
+        Log::Warning() << __FUNCTION__ << ":already stopped";
         return;
     }
     mEventThread->stop();
@@ -96,7 +98,8 @@ void ActiveValueSet::onValueChanged(const std::string &key)
     // Serve the value change notification within our own thread context, so auto trig
     // the event thread
     if (!mEventThread->isStarted()) {
-        ALOGI("%s could not report value changes as event thread is not started", __FUNCTION__);
+        Log::Info() << __FUNCTION__
+                    << ": could not report value changes as event thread is not started";
         return;
     }
     mEventThread->trig((void *)value);

@@ -29,6 +29,7 @@
 #include "Stream.hpp"
 #include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 #include "Property.h"
 #include <AudioConversion.hpp>
 #include <HalAudioDump.hpp>
@@ -36,6 +37,7 @@
 
 using android::status_t;
 using audio_comms::utilities::Direction;
+using audio_comms::utilities::Log;
 using namespace std;
 
 namespace intel_audio
@@ -81,13 +83,13 @@ status_t Stream::set(audio_config_t &config)
     uint32_t channelCount = popcount(config.channel_mask);
 
     if (channelMask != 0) {
-        ALOGD("%s: requested channel mask: 0x%x (Channels count: %d)",
-              __FUNCTION__, channelMask, channelCount);
+        Log::Debug() << __FUNCTION__ << ": requested channel mask: " << channelMask
+                     << " (Channels count: " << channelCount << ")";
         // Always accept the channels requested by the client
         // as far as the channel count is supported
         IoStream::setChannels(channelMask);
         if (channelCount > 2) {
-            ALOGD("%s: channels=(0x%x, %d) not supported", __FUNCTION__, channelMask, channelCount);
+            Log::Debug() << __FUNCTION__ << ": channels= " << channelCount << " not supported";
             badChannelCount = true;
         }
     }
@@ -103,13 +105,13 @@ status_t Stream::set(audio_config_t &config)
         }
         IoStream::setChannels(config.channel_mask);
     }
-    ALOGD("%s: set channels to 0x%x", __FUNCTION__, config.channel_mask);
+    Log::Debug() << __FUNCTION__ << ": set channels to " << config.channel_mask;
 
     // Resampler is always working @ the channel count of the HAL
     IoStream::setChannelCount(popcount(IoStream::getChannels()));
 
     if (config.sample_rate != 0) {
-        ALOGD("%s(requested rate: %d))", __FUNCTION__, config.sample_rate);
+        Log::Debug() << __FUNCTION__ << ": requested rate: " << config.sample_rate;
         // Always accept the rate provided by the client
         setSampleRate(config.sample_rate);
     } else {
@@ -119,15 +121,17 @@ status_t Stream::set(audio_config_t &config)
         config.sample_rate = mDefaultSampleRate;
         setSampleRate(config.sample_rate);
     }
-    ALOGD("%s: set rate to %d", __FUNCTION__, config.sample_rate);
+    Log::Debug() << __FUNCTION__ << ": set rate to " << config.sample_rate;
 
     if (config.format != 0) {
-        ALOGD("%s(requested format: %d))", __FUNCTION__, config.format);
+        Log::Debug() << __FUNCTION__
+                     << ": requested format: " << static_cast<int32_t>(config.format);
         // Always accept the rate provided by the client
         // as far as this rate is supported
         if ((config.format != AUDIO_FORMAT_PCM_16_BIT) &&
             (config.format != AUDIO_FORMAT_PCM_8_24_BIT)) {
-            ALOGD("%s: format=(0x%x) not supported", __FUNCTION__, config.format);
+            Log::Debug() << __FUNCTION__ << ": format=( " << static_cast<int32_t>(config.format)
+                         << ") not supported";
             badFormat = true;
         }
 
@@ -139,7 +143,7 @@ status_t Stream::set(audio_config_t &config)
         config.format = Stream::mDefaultFormat;
         setFormat(config.format);
     }
-    ALOGD("%s : set format to %d (%d)", __FUNCTION__, config.format, getFormat());
+    Log::Debug() << __FUNCTION__ << " : set format to " << static_cast<int32_t>(getFormat());
 
     if (badChannelCount || badFormat) {
         return android::BAD_VALUE;
@@ -235,7 +239,7 @@ string Stream::getParameters(const string &keys) const
         audio_devices_t device = isOut() ? getDevice() : (getDevice() | AUDIO_DEVICE_BIT_IN);
         pairs.add<int32_t>(key, device);
     }
-    ALOGV("getParameters() %s", pairs.toString());
+    Log::Verbose() << __FUNCTION__ << ": " << pairs.toString();
     return pairs.toString();
 }
 
@@ -247,7 +251,8 @@ size_t Stream::getBufferSize() const
     size = AudioUtils::alignOn16(size);
 
     size_t bytes = mSampleSpec.convertFramesToBytes(size);
-    ALOGD("%s: %d (in bytes) for %s stream", __FUNCTION__, bytes, isOut() ? "output" : "input");
+    Log::Debug() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
+                 << (isOut() ? "output" : "input") << " stream.";
 
     return bytes;
 }
@@ -299,8 +304,7 @@ status_t Stream::setStandby(bool isSet)
 
 status_t Stream::attachRouteL()
 {
-    ALOGV("%s %s stream", __FUNCTION__, isOut() ? "output" : "input");
-
+    Log::Verbose() << __FUNCTION__ << ": " << (isOut() ? "output" : "input") << " stream";
     TinyAlsaIoStream::attachRouteL();
 
     SampleSpec ssSrc;
@@ -311,8 +315,8 @@ status_t Stream::attachRouteL()
 
     status_t err = configureAudioConversion(ssSrc, ssDst);
     if (err != android::OK) {
-
-        ALOGE("%s: could not initialize audio conversion chain (err=%d)", __FUNCTION__, err);
+        Log::Error() << __FUNCTION__
+                     << ": could not initialize audio conversion chain (err=" << err << ")";
         return err;
     }
 
@@ -321,8 +325,7 @@ status_t Stream::attachRouteL()
 
 status_t Stream::detachRouteL()
 {
-    ALOGV("%s %s stream", __FUNCTION__, isOut() ? "output" : "input");
-
+    Log::Verbose() << __FUNCTION__ << ": " << (isOut() ? "output" : "input") << " stream";
     TinyAlsaIoStream::detachRouteL();
 
     return android::OK;
@@ -372,7 +375,7 @@ void Stream::initAudioDump()
      */
     if (TProperty<bool>(dumpBeforeConvProps[isOut()], false)) {
         if (!mDumpBeforeConv) {
-            ALOGI("Debug: create dump object for audio before conversion");
+            Log::Info() << __FUNCTION__ << ": create dump object for audio before conversion";
             mDumpBeforeConv = new HalAudioDump();
         }
     } else if (mDumpBeforeConv) {
@@ -381,7 +384,7 @@ void Stream::initAudioDump()
     }
     if (TProperty<bool>(dumpAfterConvProps[isOut()], false)) {
         if (!mDumpAfterConv) {
-            ALOGI("Debug: create dump object for audio after conversion");
+            Log::Info() << __FUNCTION__ << ": create dump object for audio after conversion";
             mDumpAfterConv = new HalAudioDump();
         }
     } else if (mDumpAfterConv) {

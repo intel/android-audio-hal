@@ -27,6 +27,9 @@
 #include <ParameterMgrPlatformConnector.h>
 #include <IStreamInterface.hpp>
 #include <convert.hpp>
+#include <utilities/Log.hpp>
+
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -58,14 +61,11 @@ bool RouteCriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
     if (!getLiteralValueFromParam(value, literalValue)) {
-
-        ALOGW("%s: unknown parameter value(%s) for %s",
-              __FUNCTION__, value.c_str(), getKey().c_str());
+        Log::Warning() << __FUNCTION__
+                       << ": unknown parameter value(" << value << ") for " << getKey();
         return false;
     }
-    ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), value.c_str(),
-          literalValue.c_str());
-
+    Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
     bool succeed = false;
     int32_t numericValue;
     // A criterion might either be sent as a numerical (converted to string) or a literal value.
@@ -107,12 +107,11 @@ bool AudioCriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
     if (!getLiteralValueFromParam(value, literalValue)) {
-        ALOGW("%s: unknown parameter value(%s) for %s",
-              __FUNCTION__, value.c_str(), getKey().c_str());
+        Log::Warning() << __FUNCTION__
+                       << ": unknown parameter value(" << value << ") for " << getKey();
         return false;
     }
-    ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), value.c_str(),
-          literalValue.c_str());
+    Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
     if (mStreamInterface->setAudioCriterion(getName(), literalValue)) {
         CriterionParameter::set(literalValue);
     }

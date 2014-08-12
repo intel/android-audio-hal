@@ -24,7 +24,6 @@
 
 #include "IoStream.hpp"
 #include <SampleSpec.hpp>
-#include <cutils/log.h>
 #include <utils/RWLock.h>
 
 namespace intel_audio

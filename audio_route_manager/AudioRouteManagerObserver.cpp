@@ -20,11 +20,9 @@
  * express and approved by Intel in writing.
  *
  */
-#define LOG_TAG "RouteManager/Route"
 
 #include "AudioRouteManagerObserver.hpp"
 #include <AudioCommsAssert.hpp>
-#include <utils/Log.h>
 
 namespace intel_audio
 {

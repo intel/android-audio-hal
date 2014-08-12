@@ -22,12 +22,12 @@
  */
 #define LOG_TAG "AudioResampler"
 
-#include <cutils/log.h>
-
 #include "AudioResampler.hpp"
 #include "Resampler.hpp"
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 
+using audio_comms::utilities::Log;
 using namespace android;
 
 namespace intel_audio
@@ -65,15 +65,14 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         // Our resampling lib does not support all conversions
         // using 2 resamplers
         //
-        ALOGD("%s: trying to use working sample rate @ 48kHz", __FUNCTION__);
+        Log::Debug() << __FUNCTION__ << ": trying to use working sample rate @ 48kHz";
         SampleSpec pivotSs = ssDst;
         pivotSs.setSampleRate(mPivotSampleRate);
 
         status = mPivotResampler->configure(ssSrc, pivotSs);
         if (status != NO_ERROR) {
-
-            ALOGD("%s: trying to use pivot sample rate @ %dkHz: FAILED",
-                  __FUNCTION__, mPivotSampleRate);
+            Log::Debug() << __FUNCTION__ << ": trying to use pivot sample rate @"
+                         << mPivotSampleRate << "kHz: FAILED";
             return status;
         }
 
@@ -81,8 +80,7 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
 
         status = mResampler->configure(pivotSs, ssDst);
         if (status != NO_ERROR) {
-
-            ALOGD("%s: trying to use pivot sample rate @ 48kHz: FAILED", __FUNCTION__);
+            Log::Debug() << __FUNCTION__ << ": trying to use pivot sample rate @ 48kHz: FAILED";
             return status;
         }
     }

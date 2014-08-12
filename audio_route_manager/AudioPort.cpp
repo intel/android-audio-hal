@@ -26,10 +26,11 @@
 #include "AudioPortGroup.hpp"
 #include "AudioRoute.hpp"
 #include <AudioCommsAssert.hpp>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 
 using std::string;
 using audio_comms::utilities::Direction;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -57,8 +58,7 @@ void AudioPort::resetAvailability()
 
 void AudioPort::addGroupToPort(AudioPortGroup *portGroup)
 {
-    ALOGV("%s", __FUNCTION__);
-
+    Log::Verbose() << __FUNCTION__;
     if (portGroup) {
         mPortGroupList.push_back(portGroup);
     }
@@ -71,8 +71,7 @@ void AudioPort::setBlocked(bool blocked)
 
         return;
     }
-
-    ALOGV("%s: port %s is blocked", __FUNCTION__, getName().c_str());
+    Log::Verbose() << __FUNCTION__ << ": port " << getName() << " is blocked";
 
     mIsBlocked = blocked;
 
@@ -87,7 +86,7 @@ void AudioPort::setBlocked(bool blocked)
         for (it = mRouteList.begin(); it != mRouteList.end(); ++it) {
 
             AudioRoute *route = *it;
-            ALOGV("%s:  blocking %s", __FUNCTION__, route->getName().c_str());
+            Log::Verbose() << __FUNCTION__ << ":  blocking " << route->getName();
             route->setBlocked();
         }
     }
@@ -102,8 +101,7 @@ void AudioPort::setUsed(AudioRoute *route)
         // Port is already in use, bailing out
         return;
     }
-
-    ALOGV("%s: port %s is in use", __FUNCTION__, getName().c_str());
+    Log::Verbose() << __FUNCTION__ << ": port " << getName() << " is in use";
 
     mIsUsed = true;
     mRouteAttached[route->isOut()] = route;
@@ -131,8 +129,7 @@ void AudioPort::setUsed(AudioRoute *route)
 
             continue;
         }
-
-        ALOGV("%s:  blocking %s", __FUNCTION__, routeUsingThisPort->getName().c_str());
+        Log::Verbose() << __FUNCTION__ << ":  blocking " << routeUsingThisPort->getName();
         routeUsingThisPort->setBlocked();
     }
 }
@@ -143,8 +140,8 @@ void AudioPort::addRouteToPortUsers(AudioRoute *route)
 
     mRouteList.push_back(route);
 
-    ALOGV("%s: added %s route to %s port users", __FUNCTION__, route->getName().c_str(),
-          getName().c_str());
+    Log::Verbose() << __FUNCTION__ << ": added " << route->getName()
+                   << " route to " << getName() << " port users";
 }
 
 } // namespace intel_audio

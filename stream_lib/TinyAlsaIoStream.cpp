@@ -26,7 +26,6 @@
 #include "TinyAlsaIoStream.hpp"
 #include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
-#include <cutils/log.h>
 
 using std::string;
 using android::status_t;

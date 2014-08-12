@@ -22,10 +22,10 @@
  */
 #pragma once
 
+#include <AudioCommsAssert.hpp>
 #include <NonCopyable.hpp>
 #include <stdint.h>
 #include <string>
-#include <utils/Log.h>
 
 class CParameterMgrPlatformConnector;
 class ISelectionCriterionTypeInterface;
@@ -80,7 +80,7 @@ public:
      */
     ISelectionCriterionTypeInterface *getTypeInterface()
     {
-        LOG_ALWAYS_FATAL_IF(mCriterionTypeInterface == NULL);
+        AUDIOCOMMS_ASSERT(mCriterionTypeInterface != NULL, "Invalid Interface");
         return mCriterionTypeInterface;
     }
 

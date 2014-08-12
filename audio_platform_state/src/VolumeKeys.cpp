@@ -23,8 +23,10 @@
 #define LOG_TAG "VolumeKeys"
 
 #include "VolumeKeys.hpp"
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 #include <fcntl.h>
+
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -46,7 +48,7 @@ int VolumeKeys::wakeup(bool isEnabled)
         // Nothing to do, bailing out
         return 0;
     }
-    ALOGD("%s volume keys wakeup", isEnabled ? "Enable" : "Disable");
+    Log::Debug() << __FUNCTION__ << ": volume keys wakeup=" << (isEnabled ? "enabled" : "disabled");
 
     int fd;
     int rc;
@@ -55,25 +57,23 @@ int VolumeKeys::wakeup(bool isEnabled)
         isEnabled ? mGpioKeysWakeupEnable : mGpioKeysWakeupDisable;
     fd = open(gpioKeysWakeup, O_RDWR);
     if (fd < 0) {
-        ALOGE("Cannot open sysfs gpio-keys interface (%d)", fd);
-        goto return_error;
+        Log::Error() << __FUNCTION__ << ": " << (isEnabled ? "enable" : "disable")
+                     << " failed: Cannot open sysfs gpio-keys interface ("
+                     << fd << ")";
+        return -1;
     }
     rc = write(fd, mKeyVolumeDown, sizeof(mKeyVolumeDown));
     rc += write(fd, mKeyVolumeUp, sizeof(mKeyVolumeUp));
     close(fd);
     if (rc != (sizeof(mKeyVolumeDown) + sizeof(mKeyVolumeUp))) {
-        ALOGE("sysfs gpio-keys write error");
-        goto return_error;
+        Log::Error() << __FUNCTION__ << ": " << (isEnabled ? "enable" : "disable")
+                     << " failed: sysfs gpio-keys write error";
+        return -1;
     }
-
-    mWakeupEnabled = true;
-    ALOGD("Volume keys wakeup enable OK\n");
+    mWakeupEnabled = isEnabled;
+    Log::Debug() << __FUNCTION__ << ": " << (isEnabled ? "enable" : "disable")
+                 << ": OK";
     return 0;
-
-return_error:
-
-    ALOGE("Volume keys wakeup enable failed\n");
-    return -1;
 }
 
 } // namespace intel_audio

@@ -32,11 +32,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <hardware/audio.h>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 
-using namespace android;
 using namespace std;
 using audio_comms::utilities::convertTo;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -84,7 +84,7 @@ audio_format_t AudioUtils::convertTinyToHalFormat(pcm_format format)
         convFormat = AUDIO_FORMAT_PCM_8_24_BIT;
         break;
     default:
-        ALOGE("%s: format not recognized", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": format not recognized";
         convFormat = AUDIO_FORMAT_INVALID;
         break;
     }
@@ -104,7 +104,7 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
         convFormat = PCM_FORMAT_S32_LE;
         break;
     default:
-        ALOGE("%s: format not recognized", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": format not recognized";
         convFormat = PCM_FORMAT_S16_LE;
         break;
     }
@@ -142,8 +142,7 @@ int AudioUtils::getCardIndexByName(const char *name)
 
         written = readlink(cardFilePath, cardNameWithIndex, sizeof(cardNameWithIndex));
         if (written < 0) {
-
-            ALOGE("Sound card %s does not exist", name);
+            Log::Error() << "Sound card " << name << " does not exist";
             return -errno;
         } else if (written >= (ssize_t)sizeof(cardFilePath)) {
 

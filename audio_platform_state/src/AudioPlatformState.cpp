@@ -41,7 +41,7 @@
 #include <cutils/bitops.h>
 #include <cutils/config_utils.h>
 #include <cutils/misc.h>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 #include <fstream>
 
 #define DIRECT_STREAM_FLAGS (AUDIO_OUTPUT_FLAG_DIRECT | AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)
@@ -49,6 +49,7 @@
 using std::string;
 using audio_comms::utilities::convertTo;
 using android::status_t;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -79,14 +80,12 @@ public:
 
     virtual void log(bool isWarning, const string &log)
     {
-        const static char format[] = "route-parameter-manager: %s";
+        const static string format("route-parameter-manager: ");
 
         if (isWarning) {
-
-            ALOGW(format, log.c_str());
+            Log::Warning() << format << log;
         } else {
-
-            ALOGD(format, log.c_str());
+            Log::Debug() << format << log;
         }
     }
 };
@@ -120,7 +119,8 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     // and can be different for each hardware
     string routePfwConfFilePath = TProperty<string>(mRoutePfwConfFileNamePropName,
                                                     mRoutePfwDefaultConfFileName);
-    ALOGI("Route-PFW: using configuration file: %s", routePfwConfFilePath.c_str());
+    Log::Info() << __FUNCTION__
+                << ": Route-PFW: using configuration file: " << routePfwConfFilePath;
 
     mRoutePfwConnector = new CParameterMgrPlatformConnector(routePfwConfFilePath);
 
@@ -135,9 +135,8 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
 
     if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
         (loadAudioHalConfig(gAudioHalConfFilePath) != android::OK)) {
-
-        ALOGE("Neither vendor conf file (%s) nor system conf file (%s) could be found",
-              gAudioHalVendorConfFilePath, gAudioHalConfFilePath);
+        Log::Error() << "Neither vendor conf file (" << gAudioHalVendorConfFilePath
+                     << ") nor system conf file (" << gAudioHalConfFilePath << ") could be found";
     }
 
     /// Creates hasChanged route criterion
@@ -184,11 +183,10 @@ status_t AudioPlatformState::start()
     /// Start PFW
     std::string strError;
     if (!mRoutePfwConnector->start(strError)) {
-
-        ALOGE("Route PFW start error: %s", strError.c_str());
+        Log::Error() << "Route PFW start error: " << strError;
         return android::NO_INIT;
     }
-    ALOGD("%s: Route PFW successfully started!", __FUNCTION__);
+    Log::Debug() << __FUNCTION__ << ": Route PFW successfully started!";
 
     /// Start All Modem Proxies
     for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
@@ -205,7 +203,8 @@ void AudioPlatformState::addCriterionType<AudioPlatformState::Audio>(const strin
                                                                      bool isInclusive)
 {
     if (mStreamInterface->addCriterionType(typeName, isInclusive)) {
-        ALOGV("%s:criterionType %s already added in Audio PFW", __FUNCTION__, typeName.c_str());
+        Log::Verbose() << __FUNCTION__ << ": criterionType " << typeName
+                       << " already added in Audio PFW";
     }
 }
 
@@ -216,7 +215,7 @@ void AudioPlatformState::addCriterionType<AudioPlatformState::Route>(const strin
     AUDIOCOMMS_ASSERT(mRouteCriterionTypeMap.find(typeName) == mRouteCriterionTypeMap.end(),
                       "CriterionType " << typeName << " already added");
 
-    ALOGD("%s: Adding new criterionType %s for Route PFW", __FUNCTION__, typeName.c_str());
+    Log::Debug() << __FUNCTION__ << ": Adding new criterionType " << typeName << " for Route PFW";
     mRouteCriterionTypeMap[typeName] = new CriterionType(typeName,
                                                          isInclusive,
                                                          mRoutePfwConnector);
@@ -239,9 +238,8 @@ void AudioPlatformState::addCriterionTypeValuePair<AudioPlatformState::Route>(
 {
     AUDIOCOMMS_ASSERT(mRouteCriterionTypeMap.find(typeName) != mRouteCriterionTypeMap.end(),
                       "CriterionType " << typeName.c_str() << "not found");
-
-    ALOGV("%s: Adding new value pair (%d, %s) for criterionType %s for Route PFW", __FUNCTION__,
-          numericValue, literalValue.c_str(), typeName.c_str());
+    Log::Verbose() << __FUNCTION__ << ": Adding new value pair (" << numericValue
+                   << "," << literalValue << ") for criterionType " << typeName << " for Route PFW";
     CriterionType *criterionType = mRouteCriterionTypeMap[typeName];
     criterionType->addValuePair(numericValue, literalValue);
 }
@@ -276,19 +274,16 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
                                       "invalid value pair");
 
                     if (!convertTo<string, uint32_t>(first, index)) {
-
-                        ALOGE("%s: Invalid index(%s) found", __FUNCTION__, first);
+                        Log::Error() << __FUNCTION__ << ": Invalid index(" << first << ") found";
                     }
-                    ALOGV("%s: name=%s, index=0x%X, value=%s", __FUNCTION__, typeName,
-                          index, second);
-
+                    Log::Verbose() << __FUNCTION__ << ": name=" << typeName << ", index=" << index
+                                   << ", value=" << second;
                     addCriterionTypeValuePair<pfw>(typeName, index, second);
                 } else {
 
                     uint32_t pfwIndex = isInclusive ? 1 << index : index;
-                    ALOGV("%s: name=%s, index=0x%X, value=%s", __FUNCTION__, typeName,
-                          pfwIndex, valueName);
-
+                    Log::Verbose() << __FUNCTION__ << ": name=" << typeName
+                                   << ", index=" << pfwIndex << ", value=" << valueName;
                     addCriterionTypeValuePair<pfw>(typeName, pfwIndex, valueName);
                     index += 1;
                 }
@@ -344,7 +339,7 @@ void AudioPlatformState::addParameter<AudioPlatformState::Audio, AudioPlatformSt
                                                      mStreamInterface,
                                                      defaultValue);
     } else {
-        ALOGE("%s: type %s not supported ", __FUNCTION__, typeName.c_str());
+        Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
         return;
     }
     addParameter(rogueParam, valuePairs);
@@ -401,7 +396,7 @@ void AudioPlatformState::addParameter<AudioPlatformState::Route, AudioPlatformSt
         paramRogue = new RouteRogueParameter<string>(this, paramKey, name, mRoutePfwConnector,
                                                      defaultValue);
     } else {
-        ALOGE("%s: type %s not supported ", __FUNCTION__, typeName.c_str());
+        Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
         return;
     }
     addParameter(paramRogue, valuePairs);
@@ -430,11 +425,12 @@ void AudioPlatformState::parseChildren(cnode *root,
         } else if (string(node->name) == gTypeTag) {
             type = node->value;
         } else {
-            ALOGE("%s: Unrecognized %s %s node ", __FUNCTION__, node->name, node->value);
+            Log::Error() << __FUNCTION__
+                         << ": Unrecognized " << node->name << " " << node->value << " node ";
         }
     }
-    ALOGV("%s: path=%s,  key=%s default=%s, type=%s",
-          __FUNCTION__, path.c_str(), key.c_str(), defaultValue.c_str(), type.c_str());
+    Log::Verbose() << __FUNCTION__ << ": path=" << path << ",  key=" << key
+                   << " default=" << defaultValue << ", type=" << type << "";
 }
 
 template <AudioPlatformState::PfwInstance pfw>
@@ -468,7 +464,7 @@ void AudioPlatformState::loadRogueParameterTypeList(cnode *root)
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     cnode *node = config_find(root, gRogueParameterTag.c_str());
     if (node == NULL) {
-        ALOGW("%s: no rogue parameter type found", __FUNCTION__);
+        Log::Warning() << __FUNCTION__ << ": no rogue parameter type found";
         return;
     }
     for (node = node->first_child; node != NULL; node = node->next) {
@@ -502,7 +498,7 @@ void AudioPlatformState::loadCriteria(cnode *root)
     cnode *node = config_find(root, gCriterionTag.c_str());
 
     if (node == NULL) {
-        ALOGW("%s: no inclusive criteria found", __FUNCTION__);
+        Log::Warning() << __FUNCTION__ << ": no inclusive criteria found";
         return;
     }
     for (node = node->first_child; node != NULL; node = node->next) {
@@ -602,10 +598,11 @@ void AudioPlatformState::loadConfig(cnode *root)
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     cnode *node = config_find(root, getPfwInstanceName<pfw>().c_str());
     if (node == NULL) {
-        ALOGW("%s Could not find node for pfw=%s", __FUNCTION__, getPfwInstanceName<pfw>().c_str());
+        Log::Warning() << __FUNCTION__
+                       << ": Could not find node for pfw=" << getPfwInstanceName<pfw>();
         return;
     }
-    ALOGD("%s Loading conf for pfw=%s", __FUNCTION__, getPfwInstanceName<pfw>().c_str());
+    Log::Debug() << __FUNCTION__ << " Loading conf for pfw " << getPfwInstanceName<pfw>();
 
     loadInclusiveCriterionType<pfw>(node);
     loadExclusiveCriterionType<pfw>(node);
@@ -631,11 +628,12 @@ void AudioPlatformState::loadValueSet<ModemProxy>(cnode *root)
         } else if (string(node->name) == gInterfaceLibraryInstance) {
             libraryInstance = node->value;
         } else {
-            ALOGE("%s: Unrecognized %s %s node ", __FUNCTION__, node->name, node->value);
+            Log::Error() << __FUNCTION__
+                         << ": Unrecognized " << node->name << " " << node->value << " node ";
         }
     }
-    ALOGV("%s: Instantiate (lib=%s, Instance=%s) ValueSet ", __FUNCTION__, libraryName.c_str(),
-          libraryInstance.c_str());
+    Log::Verbose() << __FUNCTION__ << ": Instantiate (lib=" << libraryName
+                   << ", Instance=" << libraryInstance << ") ValueSet ";
     ModemProxy *modemProxy = new ModemProxy(libraryName,
                                             libraryInstance,
                                             mParameterAdapter,
@@ -652,10 +650,10 @@ void AudioPlatformState::loadValueSetList<ModemProxy>(cnode *root)
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     cnode *node = config_find(root, gModemValueSet.c_str());
     if (node == NULL) {
-        ALOGW("%s Could not find node for ValueSet=%s", __FUNCTION__, gModemValueSet.c_str());
+        Log::Warning() << __FUNCTION__ << ": Could not find node for ValueSet=" << gModemValueSet;
         return;
     }
-    ALOGV("%s Loading conf for ValueSet=%s", __FUNCTION__, gModemValueSet.c_str());
+    Log::Verbose() << __FUNCTION__ << ": Loading conf for ValueSet=" << gModemValueSet;
     for (node = node->first_child; node != NULL; node = node->next) {
         AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
         loadValueSet<ModemProxy>(node);
@@ -667,7 +665,7 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
     cnode *root;
     char *data;
-    ALOGD("%s", __FUNCTION__);
+    Log::Debug() << __FUNCTION__;
     data = (char *)load_file(path, NULL);
     if (data == NULL) {
         return -ENODEV;
@@ -684,7 +682,7 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
     free(root);
     free(data);
 
-    ALOGD("%s: loaded %s", __FUNCTION__, path);
+    Log::Debug() << __FUNCTION__ << ": loaded " << path;
 
     return android::OK;
 }
@@ -700,8 +698,7 @@ void AudioPlatformState::clearKeys(KeyValuePairs *pairs)
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
                   ClearKeyAndroidParameterHelper(pairs));
     if (pairs->size()) {
-
-        ALOGW("%s: Unhandled argument: %s", __FUNCTION__, pairs->toString().c_str());
+        Log::Warning() << __FUNCTION__ << ": Unhandled argument: " << pairs->toString();
     }
 }
 
@@ -709,7 +706,7 @@ status_t AudioPlatformState::setParameters(const string &keyValuePairs)
 {
     mPfwLock.writeLock();
 
-    ALOGD("%s: key value pair %s", __FUNCTION__, keyValuePairs.c_str());
+    Log::Debug() << __FUNCTION__ << ": key value pair " << keyValuePairs;
     KeyValuePairs pairs(keyValuePairs);
     int errorCount = 0;
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
@@ -851,8 +848,8 @@ void AudioPlatformState::clearPlatformStateEvents()
 
 bool AudioPlatformState::isStarted()
 {
-    ALOGD("%s: %s", __FUNCTION__,
-          mRoutePfwConnector && mRoutePfwConnector->isStarted() ? "true" : "false");
+    Log::Debug() << __FUNCTION__ << ": "
+                 << (mRoutePfwConnector && mRoutePfwConnector->isStarted() ? "true" : "false");
     return mRoutePfwConnector && mRoutePfwConnector->isStarted();
 }
 
@@ -883,7 +880,7 @@ bool AudioPlatformState::isModemEmbedded() const
 
 void AudioPlatformState::printPlatformFwErrorInfo() const
 {
-    ALOGE("^^^^  Print platform Audio firmware error info  ^^^^");
+    Log::Error() << "^^^^  Print platform Audio firmware error info  ^^^^";
 
     string paramValue;
 
@@ -895,7 +892,7 @@ void AudioPlatformState::printPlatformFwErrorInfo() const
     if (!ParameterMgrHelper::getParameterValue<std::string>(mRoutePfwConnector,
                                                             mHwDebugFilesPathList,
                                                             paramValue)) {
-        ALOGE("Could not get path list from XML configuration");
+        Log::Error() << "Could not get path list from XML configuration";
         return;
     }
 
@@ -915,12 +912,13 @@ void AudioPlatformState::printPlatformFwErrorInfo() const
 
     for (it = debugFiles.begin(); it != debugFiles.end(); ++it) {
         ifstream debugStream;
-
-        ALOGE("Opening file %s and reading it.", it->c_str());
+        Log::Error() << "Opening file " << *it << " and reading it.";
         debugStream.open(it->c_str(), ifstream::in);
 
         if (debugStream.fail()) {
-            ALOGE("Could not open Hw debug file, error : %s", strerror(errno));
+            Log::Error() << __FUNCTION__ << ": Unable to open file" << *it
+                         << " with failbit " << (debugStream.rdstate() & ifstream::failbit)
+                         << " and badbit " << (debugStream.rdstate() & ifstream::badbit);
             debugStream.close();
             continue;
         }
@@ -929,7 +927,7 @@ void AudioPlatformState::printPlatformFwErrorInfo() const
             char dataToRead[mMaxDebugStreamSize];
 
             debugStream.read(dataToRead, mMaxDebugStreamSize);
-            ALOGE("%s", dataToRead);
+            Log::Error() << dataToRead;
         }
 
         debugStream.close();
