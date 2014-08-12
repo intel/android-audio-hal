@@ -31,18 +31,16 @@
 #include "LpeNs.hpp"
 #include "LpeAgc.hpp"
 #include <utils/Errors.h>
+#include <utilities/Log.hpp>
 #include <fcntl.h>
 #include <functional>
 #include <algorithm>
-
-// #define LOG_NDEBUG 0
-#include <cutils/log.h>
-
 
 using android::status_t;
 using android::OK;
 using android::BAD_VALUE;
 using audio_comms::utilities::Mutex;
+using audio_comms::utilities::Log;
 
 const struct effect_interface_s LpePreProcessing::mEffectInterface = {
     NULL, /**< process. Not implemented as this lib deals with HW effects. */
@@ -64,8 +62,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
     LpePreProcessing *self = getInstance();
     AudioEffect *effect = self->findEffectByInterface(interface);
     if (effect == NULL) {
-
-        ALOGE("%s: could not find effect for requested interface", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not find effect for requested interface";
         return BAD_VALUE;
     }
 
@@ -83,7 +80,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
             cmdSize != sizeof(effect_config_t) ||
             replyData == NULL ||
             *replySize != sizeof(int)) {
-            ALOGV("%s EFFECT_CMD_SET_CONFIG: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_SET_CONFIG: ERROR";
             return -EINVAL;
         }
         *static_cast<int *>(replyData) = 0;
@@ -91,7 +88,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
 
     case EFFECT_CMD_GET_CONFIG:
         if (replyData == NULL || *replySize != sizeof(effect_config_t)) {
-            ALOGV("%s EFFECT_CMD_GET_CONFIG: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_GET_CONFIG: ERROR";
             return -EINVAL;
         }
         break;
@@ -101,7 +98,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
             cmdSize != sizeof(effect_config_t) ||
             replyData == NULL ||
             *replySize != sizeof(int)) {
-            ALOGV("%s EFFECT_CMD_SET_CONFIG_REVERSE: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_SET_CONFIG_REVERSE: ERROR";
             return -EINVAL;
         }
         *static_cast<int *>(replyData) = 0;
@@ -110,7 +107,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
     case EFFECT_CMD_GET_CONFIG_REVERSE:
         if (replyData == NULL ||
             *replySize != sizeof(effect_config_t)) {
-            ALOGV("%s EFFECT_CMD_GET_CONFIG_REVERSE: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_GET_CONFIG_REVERSE: ERROR";
             return -EINVAL;
         }
         break;
@@ -124,7 +121,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
             cmdSize < static_cast<int>(sizeof(effect_param_t)) ||
             replyData == NULL ||
             *replySize < static_cast<int>(sizeof(effect_param_t))) {
-            ALOGE("%s EFFECT_CMD_GET_PARAM: ERROR", __FUNCTION__);
+            Log::Error() << __FUNCTION__ << ": EFFECT_CMD_GET_PARAM: ERROR";
             return -EINVAL;
         }
         effect_param_t *p = static_cast<effect_param_t *>(cmdData);
@@ -148,7 +145,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
             cmdSize < static_cast<int>(sizeof(effect_param_t)) ||
             replyData == NULL ||
             *replySize != sizeof(int32_t)) {
-            ALOGV("%s EFFECT_CMD_SET_PARAM: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_SET_PARAM: ERROR";
             return -EINVAL;
         }
         effect_param_t *p = static_cast<effect_param_t *>(cmdData);
@@ -159,7 +156,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
 
     case EFFECT_CMD_ENABLE:
         if (replyData == NULL || *replySize != sizeof(int)) {
-            ALOGV("%s EFFECT_CMD_ENABLE: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_ENABLE: ERROR";
             return -EINVAL;
         }
         *static_cast<int *>(replyData) = 0;
@@ -167,7 +164,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
 
     case EFFECT_CMD_DISABLE:
         if (replyData == NULL || *replySize != sizeof(int)) {
-            ALOGV("%s EFFECT_CMD_DISABLE: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_DISABLE: ERROR";
             return -EINVAL;
         }
         *static_cast<int *>(replyData) = 0;
@@ -177,7 +174,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
     case EFFECT_CMD_SET_INPUT_DEVICE:
         if (cmdData == NULL ||
             cmdSize != sizeof(uint32_t)) {
-            ALOGV("%s EFFECT_CMD_SET_INPUT_DEVICE: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_SET_INPUT_DEVICE: ERROR";
             return -EINVAL;
         }
         effect->setDevice(*static_cast<uint32_t *>(cmdData));
@@ -191,7 +188,7 @@ int LpePreProcessing::intelLpeFxCommand(effect_handle_t interface,
     case EFFECT_CMD_SET_AUDIO_SOURCE:
         if (cmdData == NULL ||
             cmdSize != sizeof(uint32_t)) {
-            ALOGV("%s EFFECT_CMD_SET_AUDIO_SOURCE: ERROR", __FUNCTION__);
+            Log::Verbose() << __FUNCTION__ << ": EFFECT_CMD_SET_AUDIO_SOURCE: ERROR";
             return -EINVAL;
         }
         *static_cast<int *>(replyData) = 0;
@@ -210,8 +207,7 @@ int LpePreProcessing::intelLpeFxGetDescriptor(effect_handle_t interface,
     LpePreProcessing *self = getInstance();
     AudioEffect *effect = self->findEffectByInterface(interface);
     if (effect == NULL) {
-
-        ALOGE("%s: could not find effect for requested interface", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not find effect for requested interface";
         return BAD_VALUE;
     }
     memcpy(descriptor, effect->getDescriptor(), sizeof(effect_descriptor_t));
@@ -220,7 +216,7 @@ int LpePreProcessing::intelLpeFxGetDescriptor(effect_handle_t interface,
 
 LpePreProcessing::LpePreProcessing()
 {
-    ALOGD("%s", __FUNCTION__);
+    Log::Debug() << __FUNCTION__;
     init();
 }
 
@@ -228,20 +224,17 @@ status_t LpePreProcessing::getEffectDescriptor(const effect_uuid_t *uuid,
                                                effect_descriptor_t *descriptor)
 {
     if (descriptor == NULL || uuid == NULL) {
-
-        ALOGE("%s: invalue interface and/or uuid", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": invalue interface and/or uuid";
         return BAD_VALUE;
     }
     const AudioEffect *effect = findEffectByUuid(uuid);
     if (effect == NULL) {
-
-        ALOGE("%s: could not find effect for requested uuid", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not find effect for requested uuid";
         return BAD_VALUE;
     }
     const effect_descriptor_t *desc = effect->getDescriptor();
     if (desc == NULL) {
-
-        ALOGE("%s: invalid effect descriptor", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": invalid effect descriptor";
         return BAD_VALUE;
     }
     memcpy(descriptor, desc, sizeof(effect_descriptor_t));
@@ -254,18 +247,17 @@ status_t LpePreProcessing::createEffect(const effect_uuid_t *uuid,
                                         int32_t ioId,
                                         effect_handle_t *interface)
 {
-    ALOGD("%s", __FUNCTION__);
+    Log::Debug() << __FUNCTION__;
     if (interface == NULL || uuid == NULL) {
-
-        ALOGE("%s: invalue interface and/or uuid", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": invalue interface and/or uuid";
         return BAD_VALUE;
     }
     Mutex::Locker Locker(mLpeEffectsLock);
     AudioEffectSession *session = getSession(ioId);
     if (session == NULL) {
-
-        ALOGE("%s: could not get session for sessionId=%d, ioHandleId=%d",
-              __FUNCTION__, sessionId, ioId);
+        Log::Error() << __FUNCTION__
+                     << ": could not get session for sessionId=" << sessionId
+                     << ", ioHandleId=" << ioId;
         return BAD_VALUE;
     }
     return session->createEffect(uuid, interface) == OK ?
@@ -276,18 +268,16 @@ status_t LpePreProcessing::createEffect(const effect_uuid_t *uuid,
 
 status_t LpePreProcessing::releaseEffect(effect_handle_t interface)
 {
-    ALOGD("%s", __FUNCTION__);
+    Log::Debug() << __FUNCTION__;
     Mutex::Locker Locker(mLpeEffectsLock);
     AudioEffect *effect = findEffectByInterface(interface);
     if (effect == NULL) {
-
-        ALOGE("%s: could not find effect for requested interface", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not find effect for requested interface";
         return BAD_VALUE;
     }
     AudioEffectSession *session = effect->getSession();
     if (session == NULL) {
-
-        ALOGE("%s: no session for effect", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": no session for effect";
         return BAD_VALUE;
     }
     return session->removeEffect(effect);
@@ -390,8 +380,9 @@ AudioEffectSession *LpePreProcessing::getSession(uint32_t ioId)
 {
     AudioEffectSession *session = findSession(ioId);
     if (session == NULL) {
-
-        ALOGD("%s: no session assigned for io=%d, try to get one...", __FUNCTION__, ioId);
+        Log::Debug() << __FUNCTION__
+                     << ": no session assigned for io=" << ioId
+                     << ", try to get one...";
         session = findSession(AudioEffectSession::mSessionNone);
         if (session != NULL) {
 

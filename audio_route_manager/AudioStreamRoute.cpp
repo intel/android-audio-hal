@@ -29,9 +29,10 @@
 #include <StreamLib.hpp>
 #include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 
 using std::string;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -52,18 +53,18 @@ AudioStreamRoute::~AudioStreamRoute()
 
 void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
 {
-    ALOGV("%s: config for route %s", __FUNCTION__, getName().c_str());
-
-    ALOGV("%s: requirePreEnable=%d", __FUNCTION__, config.requirePreEnable);
-    ALOGV("%s: requirePostDisable=%d", __FUNCTION__, config.requirePostDisable);
-    ALOGV("%s: cardName=%s", __FUNCTION__, config.cardName);
-    ALOGV("%s: deviceId=%d", __FUNCTION__, config.deviceId);
-    ALOGV("%s: rate=%d", __FUNCTION__, config.rate);
-    ALOGV("%s: silencePrologInMs=%d", __FUNCTION__, config.silencePrologInMs);
-    ALOGV("%s: applicabilityMask=0x%X", __FUNCTION__,  config.applicabilityMask);
-    ALOGV("%s: channels=%d", __FUNCTION__, config.channels);
-    ALOGV("%s: rate=%d", __FUNCTION__, config.rate);
-    ALOGV("%s: format=0x%X", __FUNCTION__, config.format);
+    Log::Verbose() << __FUNCTION__
+                   << ": config for route " << getName() << ":"
+                   << "\n\t requirePreEnable=" << config.requirePreEnable
+                   << "\n\t  requirePostDisable=" << config.requirePostDisable
+                   << "\n\t  cardName=" << config.cardName
+                   << "\n\t  deviceId=" << config.deviceId
+                   << "\n\t  rate=" << config.rate
+                   << "\n\t  silencePrologInMs=" << config.silencePrologInMs
+                   << "\n\t  applicabilityMask=" << config.applicabilityMask
+                   << "\n\t  channels=" << config.channels
+                   << "\n\t  rate=" << config.rate
+                   << "\n\t  format=" << static_cast<int32_t>(config.format);
     mConfig = config;
 
     mSampleSpec = SampleSpec(mConfig.channels, mConfig.format,
@@ -93,8 +94,7 @@ android::status_t AudioStreamRoute::route(bool isPreEnable)
     if (!isPreEnable) {
 
         if (!mAudioDevice->isOpened()) {
-
-            ALOGE("%s: error opening audio device, cannot route new stream", __FUNCTION__);
+            Log::Error() << __FUNCTION__ << ": error opening audio device, cannot route new stream";
             return android::NO_INIT;
         }
 
@@ -118,8 +118,8 @@ void AudioStreamRoute::unroute(bool isPostDisable)
     if (!isPostDisable) {
 
         if (!mAudioDevice->isOpened()) {
-
-            ALOGE("%s: error opening audio device, cannot unroute current stream", __FUNCTION__);
+            Log::Error() << __FUNCTION__
+                         << ": error opening audio device, cannot unroute current stream";
             return;
         }
 
@@ -146,8 +146,8 @@ void AudioStreamRoute::configure()
     if (mCurrentStream != mNewStream) {
 
         if (!mAudioDevice->isOpened()) {
-
-            ALOGE("%s: error opening audio device, cannot configure any stream", __FUNCTION__);
+            Log::Error() << __FUNCTION__
+                         << ": error opening audio device, cannot configure any stream";
             return;
         }
 
@@ -175,8 +175,7 @@ void AudioStreamRoute::resetAvailability()
 void AudioStreamRoute::setStream(IoStream *stream)
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "Fatal: invalid stream parameter!");
-
-    ALOGV("%s to %s route", __FUNCTION__, getName().c_str());
+    Log::Verbose() << __FUNCTION__ << ": to " << getName() << " route";
     AUDIOCOMMS_ASSERT(stream->isOut() == isOut(), "Fatal: unexpected stream direction!");
 
     AUDIOCOMMS_ASSERT(mNewStream == NULL, "Fatal: invalid stream value!");
@@ -189,12 +188,11 @@ bool AudioStreamRoute::isApplicable(const IoStream *stream) const
 {
     AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
     uint32_t mask = stream->getApplicabilityMask();
-    ALOGV("%s: is Route %s applicable? ", __FUNCTION__, getName().c_str());
-    ALOGV("%s: \t\t\t isOut=%s && uiMask=0x%X & _uiApplicableMask[%s]=0x%X", __FUNCTION__,
-          isOut() ? "output" : "input",
-          mask,
-          isOut() ? "output" : "input",
-          mConfig.applicabilityMask);
+    Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
+                   << "\n\t\t\t isOut=" << (isOut() ? "output" : "input")
+                   << " && uiMask=" << mask
+                   << " & _uiApplicableMask[" << (isOut() ? "output" : "input")
+                   << "]=" << mConfig.applicabilityMask;
 
     return AudioRoute::isApplicable() && !isUsed() && (mask & mConfig.applicabilityMask) &&
            implementsEffects(stream->getEffectRequested());
@@ -212,7 +210,7 @@ android::status_t AudioStreamRoute::attachNewStream()
     android::status_t err = mNewStream->attachRoute();
 
     if (err != android::OK) {
-        ALOGE("Failing to attach route for new stream : %d", err);
+        Log::Error() << "Failing to attach route for new stream : " << err;
         return err;
     }
 

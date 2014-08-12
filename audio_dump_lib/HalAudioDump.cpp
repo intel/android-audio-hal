@@ -25,7 +25,7 @@
 
 #define LOG_TAG "HALAudioDump"
 
-#include <cutils/log.h>
+#include <utilities/Log.hpp>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -34,6 +34,7 @@
 
 using namespace android;
 using namespace std;
+using audio_comms::utilities::Log;
 
 const char *HalAudioDump::mStreamDirections[] = {
     "in", "out"
@@ -45,9 +46,8 @@ HalAudioDump::HalAudioDump()
     : mDumpFile(0), mFileCount(0)
 {
     if (mkdir(mDumpDirPath, S_IRWXU | S_IRGRP | S_IROTH) != 0) {
-
-        ALOGE("Cannot create audio dumps directory at %s : %s.",
-              mDumpDirPath, strerror(errno));
+        Log::Error() << "Cannot create audio dumps directory at " << mDumpDirPath
+                     << " : " << strerror(errno);
     }
 }
 
@@ -89,17 +89,16 @@ void HalAudioDump::dumpAudioSamples(const void *buffer,
         mDumpFile = fopen(audio_file_name, "wb");
 
         if (mDumpFile == NULL) {
-            ALOGE("Cannot open dump file %s, errno %d, reason: %s",
-                  audio_file_name,
-                  errno,
-                  strerror(errno));
+            Log::Error() << __FUNCTION__
+                         << ": Cannot open dump file " << audio_file_name
+                         << " errno " << errno << ", reason: " << strerror(errno);
             free(audio_file_name);
             return;
         }
-
-        ALOGI("Audio %put stream dump file %s, fh %p opened.", streamDirectionStr(isOutput),
-              audio_file_name,
-              mDumpFile);
+        Log::Info() << __FUNCTION__
+                    << ": Audio " << streamDirectionStr(isOutput)
+                    << "put stream dump file " << audio_file_name
+                    << ", fh " << mDumpFile << " opened.";
         free(audio_file_name);
     }
 
@@ -159,13 +158,11 @@ status_t HalAudioDump::checkDumpFile(ssize_t bytes)
     struct stat stDump;
     if (mDumpFile && fstat(fileno(mDumpFile), &stDump) == 0
         && (stDump.st_size + bytes) > mMaxDumpFileSize) {
-
-        ALOGE("%s: Max size reached", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": Max size reached";
         return BAD_VALUE;
     }
     if (mFileCount >= mMaxNumberOfFiles) {
-
-        ALOGE("%s: Max number of allowed files reached", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": Max number of allowed files reached";
         return INVALID_OPERATION;
     }
     return OK;
@@ -181,8 +178,8 @@ status_t HalAudioDump::writeDumpFile(const void *buffer, ssize_t bytes)
         return ret;
     }
     if (fwrite(buffer, bytes, 1, mDumpFile) != 1) {
-
-        ALOGE("Error writing PCM in audio dump file : %s", strerror(errno));
+        Log::Error() << __FUNCTION__
+                     << ": Error writing PCM in audio dump file : " << strerror(errno);
         return BAD_VALUE;
     }
     return OK;

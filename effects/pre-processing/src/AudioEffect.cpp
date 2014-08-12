@@ -27,11 +27,10 @@
 #include "LpePreProcessing.hpp"
 #include "AudioEffectSession.hpp"
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 #include <convert.hpp>
 #include <media/AudioSystem.h>
 #include <media/AudioParameter.h>
-#include <cutils/log.h>
-
 
 using android::status_t;
 using android::AudioParameter;
@@ -39,6 +38,7 @@ using android::String8;
 using android::AudioSystem;
 using android::NO_ERROR;
 using audio_comms::utilities::convertTo;
+using audio_comms::utilities::Log;
 
 const std::string AudioEffect::mParamKeyDelimiter = "-";
 
@@ -68,30 +68,30 @@ const effect_uuid_t *AudioEffect::getUuid() const
 
 int AudioEffect::create()
 {
-    ALOGV("%s: NOP", __FUNCTION__);
+    Log::Verbose() << __FUNCTION__ << ": NOP";
     return 0;
 }
 
 int AudioEffect::init()
 {
-    ALOGV("%s: NOP", __FUNCTION__);
+    Log::Verbose() << __FUNCTION__ << ": NOP";
     return 0;
 }
 
 int AudioEffect::reset()
 {
-    ALOGV("%s: NOP", __FUNCTION__);
+    Log::Verbose() << __FUNCTION__ << ": NOP";
     return 0;
 }
 
 void AudioEffect::enable()
 {
-    ALOGV("%s: NOP", __FUNCTION__);
+    Log::Verbose() << __FUNCTION__ << ": NOP";
 }
 
 void AudioEffect::disable()
 {
-    ALOGV("%s: NOP", __FUNCTION__);
+    Log::Verbose() << __FUNCTION__ << ": NOP";
 }
 
 int AudioEffect::getParamId(const effect_param_t *param, int32_t &paramId) const
@@ -99,8 +99,8 @@ int AudioEffect::getParamId(const effect_param_t *param, int32_t &paramId) const
     // Retrieve the parameter(s) - Only supports until now a single paramId
     int32_t *pParamTemp = (int32_t *)param->data;
     if (param->psize != sizeof(int32_t)) {
-        ALOGV("%s: effect = %s, only single paramId supported", __FUNCTION__,
-              getDescriptor()->name);
+        Log::Verbose() << __FUNCTION__ << ": effect = " << getDescriptor()->name
+                       << ", only single paramId supported";
         // @todo: Manage sub-parameters appending it to the key with delimiter.
         return -EINVAL;
     }
@@ -136,7 +136,8 @@ int AudioEffect::setParameter(const effect_param_t *param)
     if (ret) {
         return ret;
     }
-    ALOGV("%s: effect %s key %s", __FUNCTION__, getDescriptor()->name, key.string());
+    Log::Verbose() << __FUNCTION__
+                   << ": effect " << getDescriptor()->name << " key " << key.string();
 
     /**
      * Retrieve the value(s) - Only supports a single value at the moment.
@@ -153,7 +154,8 @@ int AudioEffect::setParameter(const effect_param_t *param)
     } else if (param->vsize == sizeof(int32_t)) {
         value = *reinterpret_cast<const int32_t *>(pValue);
     } else {
-        ALOGV("%s: effect %s, only single value supported", __FUNCTION__, getDescriptor()->name);
+        Log::Verbose() << __FUNCTION__
+                       << ": effect" << getDescriptor()->name << ", only single value supported";
         // @todo: Manage array of value by formatting a string with [<value[0]>,<value[1]>, ...].
         return -EINVAL;
     }
@@ -175,7 +177,8 @@ int AudioEffect::getParameter(effect_param_t *param) const
     if (ret) {
         return ret;
     }
-    ALOGV("%s:  effect %s key %s", __FUNCTION__, getDescriptor()->name, key.string());
+    Log::Verbose() << __FUNCTION__
+                   << ":  effect " << getDescriptor()->name << " key " << key.string();
 
     String8 keyValuePair = AudioSystem::getParameters(0, key);
 
@@ -183,26 +186,29 @@ int AudioEffect::getParameter(effect_param_t *param) const
 
     String8 strValue;
     if (audioParam.get(key, strValue) != NO_ERROR) {
-        ALOGE("%s: effect %s, could not get the read value", __FUNCTION__,
-              getDescriptor()->name);
+        Log::Error() << __FUNCTION__
+                     << ": effect " << getDescriptor()->name << ", could not get the read value";
         return -EINVAL;
     }
     int32_t *pValue = reinterpret_cast<int32_t *>(param->data + param->psize);
     if (param->vsize == sizeof(int16_t)) {
         if (!convertTo(std::string(strValue.string()),
                        *reinterpret_cast<int16_t *>(pValue))) {
-            ALOGE("%s: effect %s, could not get the read value as int16_t", __FUNCTION__,
-                  getDescriptor()->name);
+            Log::Error() << __FUNCTION__
+                         << ": effect " << getDescriptor()->name
+                         << ", could not get the read value as int16_t";
             return -EINVAL;
         }
     } else if (param->vsize == sizeof(int32_t)) {
         if (!convertTo(std::string(strValue.string()), *pValue)) {
-            ALOGE("%s: effect %s, could not get the read value as int32_t", __FUNCTION__,
-                  getDescriptor()->name);
+            Log::Error() << __FUNCTION__
+                         << ": effect " << getDescriptor()->name
+                         << ", could not get the read value as int32_t";
             return -EINVAL;
         }
     } else {
-        ALOGE("%s: effect = %s, only single value supported", __FUNCTION__, getDescriptor()->name);
+        Log::Error() << __FUNCTION__
+                     << ": effect = " << getDescriptor()->name << ", only single value supported";
         // @todo: Manage array of value by formatting a string with [<value[0]>,<value[1]>, ...].
         return -EINVAL;
     }
@@ -211,6 +217,6 @@ int AudioEffect::getParameter(effect_param_t *param) const
 
 int AudioEffect::setDevice(uint32_t device)
 {
-    ALOGV("%s: NOP", __FUNCTION__);
+    Log::Verbose() << __FUNCTION__ << ": NOP";
     return 0;
 }

@@ -25,6 +25,7 @@
 #include "Parameter.hpp"
 #include <convert.hpp>
 #include <ParameterMgrHelper.hpp>
+#include <utilities/Log.hpp>
 
 namespace intel_audio
 {
@@ -62,13 +63,15 @@ protected:
     {
         std::string literalParamValue = getDefaultLiteralValue();
         if (!getLiteralValueFromParam(androidParamValue, literalParamValue)) {
-
-            ALOGW("%s: unknown parameter value(%s) for %s",
-                  __FUNCTION__, androidParamValue.c_str(), getKey().c_str());
+            audio_comms::utilities::Log::Warning() << __FUNCTION__
+                                                   << ": unknown parameter value "
+                                                   << androidParamValue
+                                                   << " for " << getKey();
             return false;
         }
-        ALOGV("%s: %s (%s, %s)", __FUNCTION__, getName().c_str(), androidParamValue.c_str(),
-              literalParamValue.c_str());
+        audio_comms::utilities::Log::Verbose() << __FUNCTION__
+                                               << ": " << getName() << " (" << androidParamValue
+                                               << ", " << literalParamValue << ")";
 
         return audio_comms::utilities::convertTo(literalParamValue, rogueValue);
     }

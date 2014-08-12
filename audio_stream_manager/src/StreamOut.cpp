@@ -20,7 +20,7 @@
  * express and approved by Intel in writing.
  *
  */
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
@@ -32,6 +32,7 @@
 
 using namespace std;
 using android::status_t;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -61,9 +62,8 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     status_t status;
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
-
-        ALOGW("%s(buffer=%p, bytes=%d) No route available. Trashing samples for stream %p.",
-              __FUNCTION__, buffer, bytes, this);
+        Log::Warning() << __FUNCTION__ << ": (buffer=" << buffer << ", bytes=" << bytes
+                       << ") No route available. Trashing samples for stream " << this;
 
         status = generateSilence(bytes);
         mStreamLock.unlock();
@@ -94,7 +94,8 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
         mStreamLock.unlock();
         return status;
     }
-    ALOGV("%s: srcFrames=%zd, bytes=%d dstFrames=%d", __FUNCTION__, srcFrames, bytes, dstFrames);
+    Log::Verbose() << __FUNCTION__ << ": srcFrames=" << srcFrames << ", bytes=" << bytes
+                   << " dstFrames=" << dstFrames;
 
     do {
         std::string error;
@@ -102,11 +103,10 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
         status = pcmWriteFrames(dstBuf, dstFrames, error);
 
         if (status < 0) {
-            ALOGE("%s: write error: %s - requested %d (bytes=%d) frames",
-                  __FUNCTION__,
-                  error.c_str(),
-                  srcFrames,
-                  streamSampleSpec().convertFramesToBytes(srcFrames));
+            Log::Error() << __FUNCTION__ << ": write error: " << error
+                         << " - requested " << srcFrames
+                         << " (bytes=" << streamSampleSpec().convertFramesToBytes(srcFrames)
+                         << ") frames";
 
             if (error.find(strerror(EIO)) != std::string::npos) {
                 // Dump hw registers debug file info in console
@@ -114,8 +114,7 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
 
             } else if (error.find(strerror(EBADFD)) != std::string::npos) {
                 mStreamLock.unlock();
-
-                ALOGE("%s: execute device recovery", __FUNCTION__);
+                Log::Error() << __FUNCTION__ << ": execute device recovery";
                 setStandby(true);
                 return -EBADFD;
             }
@@ -131,13 +130,13 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
             if (safeSleep(sleepUsecs)) {
                 // If some error arises when trying to sleep, try I/O operation anyway.
                 // Error counter will provoke the restart of mediaserver.
-                ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
+                Log::Error() << __FUNCTION__ << ":  Error while calling nanosleep interface";
             }
         }
     } while (status < 0);
 
-    ALOGV("%s: returns %u", __FUNCTION__, streamSampleSpec().convertFramesToBytes(
-              AudioUtils::convertSrcToDstInFrames(status, routeSampleSpec(), streamSampleSpec())));
+    Log::Verbose() << __FUNCTION__ << ": returns " << streamSampleSpec().convertFramesToBytes(
+        AudioUtils::convertSrcToDstInFrames(status, routeSampleSpec(), streamSampleSpec()));
 
     // Dump audio output after eventual conversions
     // FOR DEBUG PURPOSE ONLY
@@ -183,7 +182,7 @@ status_t StreamOut::attachRouteL()
             std::string writeError;
             status = pcmWriteFrames(silenceBuffer, bufferSizeInFrames, writeError);
             if (status < 0) {
-                ALOGE("Write error when writing silence : %s", writeError.c_str());
+                Log::Error() << "Write error when writing silence : " << writeError;
             }
         }
     }
@@ -218,8 +217,8 @@ void StreamOut::addEchoReference(struct echo_reference_itfe *reference)
 {
     AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
     AutoW lock(mPreProcEffectLock);
-    ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, mEchoReference);
-
+    Log::Debug() << __FUNCTION__ << ": (reference = " << reference
+                 << "): note mEchoReference = " << mEchoReference;
     // Called from a WLocked context
     mEchoReference = reference;
 }
@@ -231,15 +230,14 @@ void StreamOut::removeEchoReference(struct echo_reference_itfe *reference)
 
         return;
     }
-
-    ALOGD("%s(reference = %p): note mEchoReference = %p", __FUNCTION__, reference, mEchoReference);
+    Log::Debug() << __FUNCTION__ << ": (reference = " << reference
+                 << "): note mEchoReference = " << mEchoReference;
     if (mEchoReference == reference) {
 
         mEchoReference->write(mEchoReference, NULL);
         mEchoReference = NULL;
     } else {
-
-        ALOGE("%s: reference requested was not attached to this stream...", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": reference requested was not attached to this stream...";
     }
 }
 
@@ -253,8 +251,8 @@ int StreamOut::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *bu
         buffer->time_stamp.tv_sec = 0;
         buffer->time_stamp.tv_nsec = 0;
         buffer->delay_ns = 0;
-        ALOGE("get_playback_delay(): pcm_get_htimestamp error,"
-              "setting playbackTimestamp to 0");
+        Log::Error() << "get_playback_delay(): pcm_get_htimestamp error,"
+                     << "setting playbackTimestamp to 0";
         return status;
     }
     kernelFrames = getBufferSizeInFrames() - kernelFrames;
@@ -265,13 +263,11 @@ int StreamOut::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *bu
      */
     buffer->delay_ns = streamSampleSpec().convertFramesToUsec(kernelFrames + frames);
 
-    ALOGV("%s: kernel_frames=%d buffer->time_stamp.tv_sec=%lu,"
-          "buffer->time_stamp.tv_nsec =%lu buffer->delay_ns=%d",
-          __FUNCTION__,
-          kernelFrames,
-          buffer->time_stamp.tv_sec,
-          buffer->time_stamp.tv_nsec,
-          buffer->delay_ns);
+    Log::Verbose() << __FUNCTION__
+                   << ": kernel_frames=" << kernelFrames
+                   << " buffer->time_stamp.tv_sec=" << buffer->time_stamp.tv_sec << ","
+                   << "buffer->time_stamp.tv_nsec =" << buffer->time_stamp.tv_nsec
+                   << " buffer->delay_ns=" << buffer->delay_ns;
 
     return 0;
 }
@@ -291,7 +287,7 @@ void StreamOut::pushEchoReference(const void *buffer, ssize_t frames)
 status_t StreamOut::setDevice(audio_devices_t device)
 {
     if (!audio_is_output_devices(device)) {
-        ALOGE("%s: invalid output device 0x%X", __FUNCTION__, device);
+        Log::Error() << __FUNCTION__ << ": invalid output device " << device;
         return android::BAD_VALUE;
     }
     return Stream::setDevice(device);

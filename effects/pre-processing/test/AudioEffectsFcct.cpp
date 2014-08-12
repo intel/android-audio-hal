@@ -36,6 +36,7 @@ using ::testing::Test;
 using std::string;
 using std::numeric_limits;
 using namespace android;
+using audio_comms::utilities::Log;
 
 const string AudioEffectsFunctionalTest::mLpeEffectLibPath =
     "/system/lib/soundfx/liblpepreprocessing.so";
@@ -86,9 +87,9 @@ void AudioEffectsFunctionalTest::compareEffectParams(const effect_param_t *param
     const char *vOrigData = param1->data + paramValueOffsetInBytes;
     const char *vData = param2->data + paramValueOffsetInBytes;
 
-    ALOGD("getParameterForEffect origVal=%d value=%d ValueSize=%d ptr=0x%p",
-          *(uint16_t *)vOrigData, *(uint16_t *)vData,
-          param1->vsize, vOrigData);
+    Log::Debug() << "getParameterForEffect origVal=" << *(uint16_t *)vOrigData
+                 << " value=" << *(uint16_t *)vData << " ValueSize=" << param1->vsize
+                 << " ptr=" << vOrigData;
     EXPECT_EQ(0, memcmp(vOrigData, vData,
                         param1->vsize))
         << " Requested vData = "

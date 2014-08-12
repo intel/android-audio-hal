@@ -23,6 +23,7 @@
 #pragma once
 
 #include <NonCopyable.hpp>
+#include <utilities/Log.hpp>
 #include <media/AudioEffect.h>
 #include <binder/IServiceManager.h>
 #include <media/IAudioFlinger.h>
@@ -104,13 +105,20 @@ public:
         mParam = reinterpret_cast<effect_param_t *>(malloc(mSize));
         memcpy(mParam, param, mSize);
 
-        ALOGV("setEffectParam param=%d val=%d paramSize=%d @data=%p size=%d",
-              *(uint32_t *)mParam->data, *((uint16_t *)mParam->data + 2), mParam->psize,
-              mParam->data, sizeof(mParam->status) + sizeof(mParam->psize) + sizeof(mParam->vsize));
+        audio_comms::utilities::Log::Verbose() << __FUNCTION__
+                                               << ": param=" << *(uint32_t *)mParam->data
+                                               << " val=" << *((uint16_t *)mParam->data + 2)
+                                               << " paramSize=" << mParam->psize
+                                               << " @data=" << mParam->data
+                                               << " size=" << sizeof(mParam->status) +
+            sizeof(mParam->psize) +
+            sizeof(mParam->vsize);
 
         for (size_t i = 0; i < mSize / 2; i++) {
-            ALOGV("setEffectParam: dump param struct = effect[%d]=%d @=%p", i,
-                  *((uint16_t *)mParam + i), (mParam + i));
+            audio_comms::utilities::Log::Verbose() << "setEffectParam: dump param struct = effect["
+                                                   << i
+                                                   << "=" << *((uint16_t *)mParam + i)
+                                                   << " @=" << (mParam + i);
         }
     }
 

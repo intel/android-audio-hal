@@ -58,6 +58,7 @@ endef
 include $(CLEAR_VARS)
 LOCAL_MODULE := libhalaudiodump
 $(call make_hal_dump_lib,target)
+LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
@@ -67,4 +68,5 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_MODULE := libhalaudiodump_host
 $(call make_hal_dump_lib,host)
+LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities_host
 include $(BUILD_HOST_STATIC_LIBRARY)

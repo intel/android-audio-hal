@@ -28,11 +28,12 @@
 #include <KeyValuePairs.hpp>
 #include <BitField.hpp>
 #include <EffectHelper.hpp>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 
 using namespace std;
 using audio_comms::utilities::BitField;
 using android::status_t;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -90,12 +91,9 @@ status_t StreamIn::readHwFrames(void *buffer, size_t frames)
         ret = pcmReadFrames(buffer, frames, error);
 
         if (ret < 0) {
-
-            ALOGE("%s: read error: %s - requested %d (bytes=%d) frames",
-                  __FUNCTION__,
-                  error.c_str(),
-                  frames,
-                  streamSampleSpec().convertFramesToBytes(frames));
+            Log::Error() << __FUNCTION__ << ": read error: " << error << " - requested " << frames
+                         << " (bytes=" << streamSampleSpec().convertFramesToBytes(frames)
+                         << ") frames";
 
             if (error.find(strerror(EBADFD)) != std::string::npos) {
                 return android::DEAD_OBJECT;
@@ -112,7 +110,7 @@ status_t StreamIn::readHwFrames(void *buffer, size_t frames)
             if (safeSleep(sleepUSecs)) {
                 // If some error arises when trying to sleep, try I/O operation anyway.
                 // Error counter will provoke the restart of mediaserver.
-                ALOGE("%s:  Error while calling nanosleep interface", __FUNCTION__);
+                Log::Error() << __FUNCTION__ << ":  Error while calling nanosleep interface";
             }
         }
 
@@ -250,8 +248,7 @@ status_t StreamIn::processFrames(void *buffer, ssize_t frames, ssize_t *processe
 
         // Effects processing failed
         // at least, it is necessary to return the read HW frames
-        ALOGD("%s: unable to apply any effect; returned value is %d", __FUNCTION__,
-              processingReturn);
+        Log::Debug() << __FUNCTION__ << ": unable to apply any effect, ret=" << processingReturn;
         memcpy(buffer,
                mProcessingBuffer,
                streamSampleSpec().convertFramesToBytes(mProcessingFramesIn));
@@ -289,8 +286,9 @@ status_t StreamIn::read(void *buffer, size_t &bytes)
     status_t status;
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
-        ALOGW("%s(buffer=%p, bytes=%ld) No route available. Generating silence for stream %p.",
-              __FUNCTION__, buffer, static_cast<long int>(bytes), this);
+        Log::Warning() << __FUNCTION__ << ": (buffer=" << buffer
+                       << ", bytes=" << bytes
+                       << ") No route available. Generating silence for stream " << this;
         status = generateSilence(bytes, buffer);
 
         mStreamLock.unlock();
@@ -313,16 +311,15 @@ status_t StreamIn::read(void *buffer, size_t &bytes)
     mPreProcEffectLock.unlock();
 
     if (status < 0) {
-
-        ALOGE("%s(buffer=%p, bytes=%ld) returns %ld. Generating silence for stream %p.",
-              __FUNCTION__, buffer, static_cast<long int>(bytes),
-              static_cast<long int>(received_frames), this);
+        Log::Error() << __FUNCTION__ << ": (buffer=" << buffer << ", bytes=" << bytes
+                     << ") returns " << received_frames
+                     << ". Generating silence for stream " << this;
         generateSilence(bytes, buffer);
 
         mStreamLock.unlock();
 
         if (status == android::DEAD_OBJECT) {
-            ALOGE("%s: execute device recovery", __FUNCTION__);
+            Log::Error() << __FUNCTION__ << ": execute device recovery";
             setStandby(true);
         }
         return -EBADFD;
@@ -361,8 +358,7 @@ status_t StreamIn::allocateHwBuffer()
 
     mHwBuffer = new char[mHwBufferSize];
     if (!mHwBuffer) {
-
-        ALOGE("%s: cannot allocate resampler Hwbuffer", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": cannot allocate resampler Hwbuffer";
         return android::NO_MEMORY;
     }
     return android::OK;
@@ -421,7 +417,7 @@ status_t StreamIn::setParameters(const string &keyValuePairs)
 status_t StreamIn::setDevice(audio_devices_t device)
 {
     if (!audio_is_input_device(device)) {
-        ALOGE("%s: invalid input device 0x%X", __FUNCTION__, device);
+        Log::Error() << __FUNCTION__ << ": invalid input device " << device;
         return android::BAD_VALUE;
     }
     return Stream::setDevice(device & ~AUDIO_DEVICE_BIT_IN);
@@ -434,7 +430,7 @@ void StreamIn::setInputSource(audio_source_t inputSource)
 
 status_t StreamIn::addAudioEffect(effect_handle_t effect)
 {
-    ALOGD("%s (effect=%p)", __FUNCTION__, effect);
+    Log::Debug() << __FUNCTION__ << ": effect=" << effect;
     AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
@@ -443,8 +439,7 @@ status_t StreamIn::addAudioEffect(effect_handle_t effect)
     AutoW lock(mPreProcEffectLock);
 
     if (isHwEffectL(effect)) {
-
-        ALOGD("%s HW Effect requested(effect=%p)", __FUNCTION__, effect);
+        Log::Debug() << __FUNCTION__ << ": HW Effect requested";
         /**
          * HW Effects management
          */
@@ -456,14 +451,12 @@ status_t StreamIn::addAudioEffect(effect_handle_t effect)
         }
         addRequestedEffect(EffectHelper::convertEffectNameToProcId(name));
         if (isStarted()) {
-
-            ALOGD("%s stream running, reconsider routing", __FUNCTION__);
+            Log::Debug() << __FUNCTION__ << ": stream running, reconsider routing";
             // If the stream is routed, force a reconsider routing to take effect into account
             mParent->updateRequestedEffect();
         }
     } else {
-
-        ALOGD("%s SW Effect requested(effect=%p)", __FUNCTION__, effect);
+        Log::Debug() << __FUNCTION__ << ": SW Effect requested(effect=" << effect << ")";
         /**
          * SW Effects management
          */
@@ -481,7 +474,7 @@ status_t StreamIn::addAudioEffect(effect_handle_t effect)
 
 status_t StreamIn::removeAudioEffect(effect_handle_t effect)
 {
-    ALOGD("%s (effect=%p)", __FUNCTION__, effect);
+    Log::Debug() << __FUNCTION__ << ": effect=" << effect;
 
     // Called from different context than the stream,
     // so effect Lock must be held.
@@ -491,8 +484,7 @@ status_t StreamIn::removeAudioEffect(effect_handle_t effect)
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     if (isHwEffectL(effect)) {
-
-        ALOGD("%s HW Effect requested(effect=%p)", __FUNCTION__, effect);
+        Log::Debug() << __FUNCTION__ << ": HW Effect requested";
         /**
          * HW Effects management
          */
@@ -504,15 +496,13 @@ status_t StreamIn::removeAudioEffect(effect_handle_t effect)
         }
         removeRequestedEffect(EffectHelper::convertEffectNameToProcId(name));
         if (isStarted()) {
-
-            ALOGD("%s stream running, reconsider routing", __FUNCTION__);
+            Log::Debug() << __FUNCTION__ << ": stream running, reconsider routing";
             // If the stream is routed,
             // force a reconsider routing to take effect removal into account
             mParent->updateRequestedEffect();
         }
     } else {
-
-        ALOGD("%s SW Effect requested(effect=%p)", __FUNCTION__, effect);
+        Log::Debug() << __FUNCTION__ << ": SW Effect requested";
         /**
          * SW Effects management
          */
@@ -533,14 +523,14 @@ status_t StreamIn::addSwAudioEffectL(effect_handle_t effect,
     it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
     if (it != mPreprocessorsHandlerList.end()) {
-
-        ALOGW("%s (effect=%p): it is useless to add again the same effect",
-              __FUNCTION__, effect);
+        Log::Warning() << __FUNCTION__ << ": (effect=" << effect
+                       << "): it is useless to add again the same effect";
         return android::OK;
     }
     mPreprocessorsHandlerList.push_back(AudioEffectHandle(effect, reference));
-    ALOGD("%s (effect=%p): effect added. number of stored effects is %d", __FUNCTION__,
-          effect, mPreprocessorsHandlerList.size());
+    Log::Debug() << __FUNCTION__ << ": (effect=" << effect
+                 << "): effect added. number of stored effects is"
+                 << effect, mPreprocessorsHandlerList.size();
     return android::OK;
 }
 
@@ -553,9 +543,9 @@ status_t StreamIn::removeSwAudioEffectL(effect_handle_t effect)
     it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
     if (it != mPreprocessorsHandlerList.end()) {
-
-        ALOGD("%s (effect=%p): effect has been found. number of effects before erase %d",
-              __FUNCTION__, effect, mPreprocessorsHandlerList.size());
+        Log::Debug() << __FUNCTION__ << ": (effect=" << effect
+                     << "): effect has been found. number of effects before erase "
+                     << mPreprocessorsHandlerList.size();
         if (it->mEchoReference != NULL) {
 
             /* stop reading from echo reference */
@@ -564,9 +554,9 @@ status_t StreamIn::removeSwAudioEffectL(effect_handle_t effect)
             it->mEchoReference = NULL;
         }
         mPreprocessorsHandlerList.erase(it);
-        ALOGD("%s (effect=%p): number of effects after erase %d",
-              __FUNCTION__, effect, mPreprocessorsHandlerList.size());
-
+        Log::Debug() << __FUNCTION__ << " (effect=" << effect
+                     << "): effect has been found. number of effects after erase "
+                     << mPreprocessorsHandlerList.size();
         return android::OK;
     }
     return android::BAD_VALUE;
@@ -579,11 +569,10 @@ status_t StreamIn::getAudioEffectNameFromHandle(effect_handle_t effect,
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
-
-        ALOGE("%s: could not get effect descriptor", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not get effect descriptor";
         return android::BAD_VALUE;
     }
-    ALOGV("%s: Name=%s", __FUNCTION__, desc.name);
+    Log::Verbose() << __FUNCTION__ << ": Name=" << desc.name;
     name = string(desc.name);
     return android::OK;
 }
@@ -595,11 +584,10 @@ status_t StreamIn::getAudioEffectImplementorFromHandle(effect_handle_t effect,
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
-
-        ALOGE("%s: could not get effect descriptor", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not get effect descriptor";
         return android::BAD_VALUE;
     }
-    ALOGV("%s: Name=%s", __FUNCTION__, desc.implementor);
+    Log::Verbose() << __FUNCTION__ << ": Name=" << desc.implementor;
     implementor = string(desc.implementor);
     return android::OK;
 }
@@ -610,13 +598,11 @@ bool StreamIn::isAecEffect(effect_handle_t effect)
     AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
-
-        ALOGE("%s: could not get effect descriptor", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not get effect descriptor";
         return false;
     }
     if (memcmp(&desc.type, FX_IID_AEC, sizeof(effect_uuid_t)) == 0) {
-
-        ALOGD("%s effect is AEC", __FUNCTION__);
+        Log::Debug() << __FUNCTION__ << ": effect is AEC";
         return true;
     }
     return false;
@@ -636,7 +622,7 @@ void StreamIn::getCaptureDelay(struct echo_reference_buffer *buffer)
         buffer->time_stamp.tv_sec = 0;
         buffer->time_stamp.tv_nsec = 0;
         buffer->delay_ns = 0;
-        ALOGW("read get_capture_delay(): pcm_htimestamp error");
+        Log::Warning() << __FUNCTION__ << ": read get_capture_delay(): pcm_htimestamp error";
         return;
     }
     // read frames available in audio HAL input buffer
@@ -651,10 +637,10 @@ void StreamIn::getCaptureDelay(struct echo_reference_buffer *buffer)
 
     buffer->time_stamp = tstamp;
     buffer->delay_ns = delay_ns;
-    ALOGV("get_capture_delay time_stamp = [%ld].[%ld], delay_ns: [%d],"
-          " kernel_delay:[%ld], buf_delay:[%ld], kernel_frames:[%d], ",
-          buffer->time_stamp.tv_sec, buffer->time_stamp.tv_nsec, buffer->delay_ns,
-          kernel_delay, buf_delay, kernel_frames);
+    Log::Verbose() << "get_capture_delay time_stamp = [" << buffer->time_stamp.tv_sec
+                   << "].[" << buffer->time_stamp.tv_nsec << "], delay_ns: [" << buffer->delay_ns
+                   << "], kernel_delay:[" << kernel_delay << "], buf_delay:[" << buf_delay
+                   << "], kernel_frames:[" << kernel_frames << "]";
 }
 
 int32_t StreamIn::updateEchoReference(ssize_t frames,
@@ -675,9 +661,7 @@ int32_t StreamIn::updateEchoReference(ssize_t frames,
                                                           streamSampleSpec().convertFramesToBytes(
                                                               mReferenceBufferSizeInFrames));
             if (referenceBuffer == NULL) {
-
-                ALOGE(" %s(frames=%ld): realloc failed", __FUNCTION__,
-                      static_cast<long int>(frames));
+                Log::Error() << __FUNCTION__ << ": (frames=" << frames << "): realloc failed";
                 return android::NO_MEMORY;
             }
             mReferenceBuffer = referenceBuffer;
@@ -693,8 +677,7 @@ int32_t StreamIn::updateEchoReference(ssize_t frames,
 
             mReferenceFramesIn += b.frame_count;
         } else {
-
-            ALOGW("%s: NOT enough frames to read ref buffer", __FUNCTION__);
+            Log::Warning() << __FUNCTION__ << ": NOT enough frames to read ref buffer";
         }
     }
     return b.delay_ns;
@@ -717,9 +700,7 @@ status_t StreamIn::pushEchoReference(ssize_t frames, effect_handle_t preprocesso
     }
 
     if ((*preprocessor)->process_reverse == NULL) {
-
-        ALOGW(" %s(frames %ld): process_reverse is NULL", __FUNCTION__,
-              static_cast<long int>(frames));
+        Log::Warning() << __FUNCTION__ << ": (frames " << frames << ": process_reverse is NULL";
         return android::BAD_VALUE;
     }
 
@@ -802,19 +783,17 @@ status_t StreamIn::allocateProcessingMemory(ssize_t frames)
                                                    streamSampleSpec().convertFramesToBytes(
                                                        mProcessingBufferSizeInFrames));
     if (processingBuffer == NULL) {
-
-        ALOGE(" %s(frames=%ld): realloc failed errno = %s!", __FUNCTION__,
-              static_cast<long int>(frames), strerror(errno));
+        Log::Error() << __FUNCTION__ << ": (frames=" << frames
+                     << "): realloc failed errno = " << strerror(errno) << "!";
         return android::NO_MEMORY;
     }
     mProcessingBuffer = processingBuffer;
-    ALOGD("%s(frames=%ld): mProcessingBuffer=%p size extended to %ld frames (i.e. %d bytes)",
-          __FUNCTION__,
-          static_cast<long int>(frames),
-          mProcessingBuffer,
-          static_cast<long int>(mProcessingBufferSizeInFrames),
-          streamSampleSpec().convertFramesToBytes(mProcessingBufferSizeInFrames));
-
+    Log::Debug() << __FUNCTION__ << ": (frames=" << frames
+                 << "): mProcessingBuffer=" << mProcessingBuffer
+                 << " size extended to " << mProcessingBufferSizeInFrames
+                 << " frames (i.e. "
+                 << streamSampleSpec().convertFramesToBytes(mProcessingBufferSizeInFrames)
+                 << " bytes)";
     return android::OK;
 }
 

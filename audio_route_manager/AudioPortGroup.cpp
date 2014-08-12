@@ -21,13 +21,14 @@
  *
  */
 #define LOG_TAG "AudioPortGroup"
-#include <utils/Log.h>
 
-#include "AudioPort.hpp"
 #include "AudioPortGroup.hpp"
+#include "AudioPort.hpp"
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 
 using std::string;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -51,14 +52,14 @@ void AudioPortGroup::addPortToGroup(AudioPort *port)
     // Give the pointer on Group port back to the port
     port->addGroupToPort(this);
 
-    ALOGV("%s: added %d to port group", __FUNCTION__, port->getId());
+    Log::Verbose() << __FUNCTION__ << ": added " << port->getId() << " to port group";
 }
 
 void AudioPortGroup::blockMutualExclusivePort(const AudioPort *port)
 {
     AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
 
-    ALOGV("%s of port %d", __FUNCTION__, port->getId());
+    Log::Verbose() << __FUNCTION__ << ": of port " << port->getId();
 
     PortListIterator it;
 

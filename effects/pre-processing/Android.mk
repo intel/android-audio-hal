@@ -65,7 +65,6 @@ effect_pre_proc_static_lib_target += \
 
 effect_pre_proc_shared_lib_target += \
     libutils  \
-    liblog \
     libcutils \
     libmedia
 
@@ -149,10 +148,9 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 #######################################################################
 
 audio_effects_functional_test_static_lib += \
-    libaudio_comms_utilities \
-    log_mock \
+    libgmock_main \
     libgmock \
-    libgmock_main
+    libaudio_comms_utilities \
 
 audio_effects_functional_test_src_files := \
     test/AudioEffectsFcct.cpp

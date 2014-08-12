@@ -25,9 +25,10 @@
 #include "AudioPort.hpp"
 #include "AudioRoute.hpp"
 #include <AudioCommsAssert.hpp>
-#include <utils/Log.h>
+#include <utilities/Log.hpp>
 
 using std::string;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -52,7 +53,7 @@ void AudioRoute::addPort(AudioPort *port)
 {
     AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
 
-    ALOGV("%s: %d to route %s", __FUNCTION__, port->getId(), getName().c_str());
+    Log::Verbose() << __FUNCTION__ << ": " << port->getId() << " to route " << getName();
 
     port->addRouteToPortUsers(this);
     if (!mPort[EPortSource]) {
@@ -72,8 +73,8 @@ void AudioRoute::resetAvailability()
 
 bool AudioRoute::isApplicable() const
 {
-    ALOGV("%s %s !isBlocked()=%d && _isApplicable=%d", __FUNCTION__,
-          getName().c_str(), !isBlocked(), mIsApplicable);
+    Log::Verbose() << __FUNCTION__ << ": " << getName()
+                   << "!isBlocked()=" << !isBlocked() << " && _isApplicable=" << mIsApplicable;
     return !isBlocked() && mIsApplicable;
 }
 
@@ -87,8 +88,8 @@ void AudioRoute::setUsed(bool isUsed)
     AUDIOCOMMS_ASSERT(isBlocked() != true, "Requested route blocked");
 
     if (!mIsUsed) {
-        ALOGV("%s: route %s is now in use in %s", __FUNCTION__, getName().c_str(),
-              mIsOut ? "PLAYBACK" : "CAPTURE");
+        Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
+                       << (mIsOut ? "PLAYBACK" : "CAPTURE");
         mIsUsed = true;
 
         // Propagate the in use attribute to the ports
@@ -106,8 +107,7 @@ void AudioRoute::setUsed(bool isUsed)
 void AudioRoute::setBlocked()
 {
     if (!mBlocked) {
-
-        ALOGV("%s: route %s is now blocked", __FUNCTION__, getName().c_str());
+        Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now blocked";
         mBlocked = true;
     }
 }

@@ -29,14 +29,14 @@
 #include <audio_effects/effect_ns.h>
 #include <audio_effects/effect_agc.h>
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 #include <functional>
 #include <algorithm>
-
-#include <cutils/log.h>
 
 using android::status_t;
 using android::OK;
 using android::BAD_VALUE;
+using audio_comms::utilities::Log;
 
 AudioEffectSession::AudioEffectSession(uint32_t sessionId)
     : mId(sessionId)
@@ -52,7 +52,7 @@ void AudioEffectSession::init()
 
 void AudioEffectSession::setIoHandle(int ioHandle)
 {
-    ALOGD("%s: setting io=%d for session %d", __FUNCTION__, ioHandle, mId);
+    Log::Debug() << __FUNCTION__ << ": setting io=" << ioHandle << " for session=" << mId;
     mIoHandle = ioHandle;
 }
 
@@ -78,12 +78,11 @@ status_t AudioEffectSession::createEffect(const effect_uuid_t *uuid, effect_hand
     AUDIOCOMMS_ASSERT(uuid != NULL, "Invalid UUID");
     AudioEffect *effect = findEffectByUuid(uuid);
     if (effect == NULL) {
-
-        ALOGE("%s: could not find effect for requested uuid", __FUNCTION__);
+        Log::Error() << __FUNCTION__ << ": could not find effect for requested uuid";
         return BAD_VALUE;
     }
-    ALOGD("%s: requesting to create effect %s on session %d",
-          __FUNCTION__, effect->getDescriptor()->name, mId);
+    Log::Debug() << __FUNCTION__ << ": requesting to create effect "
+                 << effect->getDescriptor()->name << " on session=" << mId;
     // Set the interface handle
     *interface = effect->getHandle();
 
@@ -95,14 +94,14 @@ status_t AudioEffectSession::createEffect(const effect_uuid_t *uuid, effect_hand
 status_t AudioEffectSession::removeEffect(AudioEffect *effect)
 {
     AUDIOCOMMS_ASSERT(effect != NULL, "trying to remove null Effect");
-    ALOGD("%s: requesting to remove effect %s on session %d",
-          __FUNCTION__, effect->getDescriptor()->name, mId);
+    Log::Debug() << __FUNCTION__ << ": requesting to remove effect "
+                 << effect->getDescriptor()->name << " on session=" << mId;
     mEffectsCreatedList.remove(effect);
 
     // Reset the session if no more effects are created on it.
     if (mEffectsCreatedList.empty()) {
-
-        ALOGD("%s: no more effect within session=%d, reinitialising session", __FUNCTION__, mId);
+        Log::Debug() << __FUNCTION__ << ": no more effect within session=" << mId
+                     << ", reinitialising session";
         init();
     }
 
