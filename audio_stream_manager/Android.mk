@@ -155,24 +155,24 @@ include $(BUILD_SHARED_LIBRARY)
 #######################################################################
 # Build for host
 
-ifeq ($(audiocomms_test_host),true)
+# ifeq ($(audiocomms_test_host),true)
 
-include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(audio_stream_manager_includes_dir_host)
-LOCAL_STATIC_LIBRARIES := $(audio_stream_manager_static_lib_host)
-LOCAL_WHOLE_STATIC_LIBRARIES := $(audio_stream_manager_whole_static_lib)
-LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
-LOCAL_CFLAGS := $(audio_stream_manager_cflags)
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
-    $(audio_stream_manager_include_dirs_from_static_libraries_host)
-LOCAL_MODULE_TAGS := tests
-LOCAL_MODULE := libaudio_stream_manager_static_host
-include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-include $(BUILD_HOST_STATIC_LIBRARY)
+# include $(CLEAR_VARS)
+# LOCAL_C_INCLUDES := $(audio_stream_manager_includes_dir_host)
+# LOCAL_STATIC_LIBRARIES := $(audio_stream_manager_static_lib_host)
+# LOCAL_WHOLE_STATIC_LIBRARIES := $(audio_stream_manager_whole_static_lib)
+# LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
+# LOCAL_CFLAGS := $(audio_stream_manager_cflags)
+# LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
+#     $(audio_stream_manager_include_dirs_from_static_libraries_host)
+# LOCAL_MODULE_TAGS := tests
+# LOCAL_MODULE := libaudio_stream_manager_static_host
+# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+# include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
+# endif
 
 
-include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
+# include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
 
 endif #ifeq ($(BOARD_USES_AUDIO_HAL_XML),true)

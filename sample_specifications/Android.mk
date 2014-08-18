@@ -70,12 +70,12 @@ $( \
 endef
 
 # Build for host test
-include $(CLEAR_VARS)
-LOCAL_MODULE := libsamplespec_static_host
-LOCAL_MODULE_TAGS := tests
-$(call make_sample_specifications_lib,host)
-include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-include $(BUILD_HOST_STATIC_LIBRARY)
+# include $(CLEAR_VARS)
+# LOCAL_MODULE := libsamplespec_static_host
+# LOCAL_MODULE_TAGS := tests
+# $(call make_sample_specifications_lib,host)
+# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+# include $(BUILD_HOST_STATIC_LIBRARY)
 
 # Build for target
 include $(CLEAR_VARS)

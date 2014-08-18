@@ -79,11 +79,11 @@ endef
 
 
 # Build for host test
-include $(CLEAR_VARS)
-LOCAL_MODULE := libaudioconversion_static_host
-$(call make_audio_conversion_lib,host)
-include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-include $(BUILD_HOST_STATIC_LIBRARY)
+# include $(CLEAR_VARS)
+# LOCAL_MODULE := libaudioconversion_static_host
+# $(call make_audio_conversion_lib,host)
+# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+# include $(BUILD_HOST_STATIC_LIBRARY)
 
 
 # Build for target
