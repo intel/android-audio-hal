@@ -200,6 +200,43 @@ AudioStreamOut *AudioIntelHal::openOutputStream(uint32_t devices,
     return out;
 }
 
+AudioStreamOut *AudioIntelHal::openOutputStreamWithFlags(uint32_t devices,
+                                                audio_output_flags_t flags,
+                                                int *format,
+                                                uint32_t *channels,
+                                                uint32_t *sampleRate,
+                                                status_t *status)
+{
+    ALOGD("%s: called for devices: 0x%08x", __FUNCTION__, devices);
+
+    AUDIOCOMMS_ASSERT(status != NULL, "invalid status pointer");
+
+    status_t &err = *status;
+
+    if (!audio_is_output_device(devices)) {
+
+        ALOGD("%s: called with bad devices", __FUNCTION__);
+        err = BAD_VALUE;
+        return NULL;
+    }
+
+    AudioStreamOutImpl *out = new AudioStreamOutImpl(this, flags);
+
+    err = out->set(format, channels, sampleRate);
+    if (err != NO_ERROR) {
+
+        ALOGE("%s: set error.", __FUNCTION__);
+        delete out;
+        return NULL;
+    }
+
+    // Informs the route manager of stream creation
+    mStreamInterface->addStream(out);
+
+    ALOGD("%s: output created with status=%d", __FUNCTION__, err);
+    return out;
+}
+
 void AudioIntelHal::closeOutputStream(AudioStreamOut *out)
 {
     // Informs the route manager of stream destruction

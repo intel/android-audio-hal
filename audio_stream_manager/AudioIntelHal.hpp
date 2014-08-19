@@ -154,6 +154,14 @@ public:
         uint32_t *sampleRate = NULL,
         status_t *status = NULL);
 
+    virtual AudioStreamOut* openOutputStreamWithFlags(
+                                    uint32_t devices,
+                                    audio_output_flags_t flags=(audio_output_flags_t)0,
+                                    int *format=0,
+                                    uint32_t *channels=0,
+                                    uint32_t *sampleRate=0,
+                                    status_t *status=0);
+
     /**
      * Closes and deletes an audio output stream.
      *
