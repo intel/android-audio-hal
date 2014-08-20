@@ -348,12 +348,6 @@ status_t AudioPolicyManagerALSA::setStreamVolumeIndex(AudioSystem::stream_type s
                                                       audio_devices_t device)
 {
 
-    // force the routing if BGM state is on
-    if (!isInCall() && mIsBGMEnabled) {
-        device = getDeviceForStrategy(STRATEGY_BACKGROUND_MUSIC, false /*fromCache*/);
-        ALOGD("[BGMUSIC] BGM is ON, return new device for music =  %x", device);
-    }
-
     // check that stream is not negative to avoid out of bounds index
     if (!isStreamValid(stream)) {
         ALOGE("setStreamVolumeIndex() invalid stream of type %d,at volume index %d on device %#04x",
