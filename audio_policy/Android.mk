@@ -20,7 +20,6 @@
 # express and approved by Intel in writing.
 #
 
-ifeq ($(BOARD_USES_ALSA_AUDIO),true)
 
 # uncomment this variable to execute audio policy test
 #AUDIO_POLICY_TEST := true
@@ -64,4 +63,3 @@ endif
 include external/stlport/libstlport.mk
 
 include $(BUILD_SHARED_LIBRARY)
-endif

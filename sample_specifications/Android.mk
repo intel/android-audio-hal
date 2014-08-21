@@ -20,7 +20,6 @@
 # otherwise. Any license under such intellectual property rights must be
 # express and approved by Intel in writing.
 
-ifeq ($(BOARD_USES_ALSA_AUDIO),true)
 
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
@@ -168,4 +167,3 @@ include $(BUILD_HOST_EXECUTABLE)
 include $(OPTIONAL_QUALITY_RUN_TEST)
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
-endif #ifeq ($(BOARD_USES_ALSA_AUDIO),true)

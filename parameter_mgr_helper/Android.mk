@@ -20,7 +20,6 @@
 # express and approved by Intel in writing.
 #
 
-ifeq ($(BOARD_USES_ALSA_AUDIO),true)
 
 LOCAL_PATH := $(call my-dir)
 
@@ -120,6 +119,3 @@ LOCAL_MODULE := libparametermgr_static
 $(call make_param_mgr_helper_lib,target)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
-
-
-endif #ifeq ($(BOARD_USES_ALSA_AUDIO),true)
