@@ -94,77 +94,77 @@ include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 
-# # Component functional test
-# #######################################################################
-# audio_conversion_fcttest_src_files += \
-#     test/AudioConversionTest.cpp
+# Component functional test
+#######################################################################
+audio_conversion_fcttest_src_files += \
+    test/AudioConversionTest.cpp
 
-# audio_conversion_fcttest_c_includes += \
-#     external/tinyalsa/include \
-#     frameworks/av/include/media
+audio_conversion_fcttest_c_includes += \
+    external/tinyalsa/include \
+    frameworks/av/include/media
 
-# # Other Lib
-# audio_conversion_fcttest_static_lib += \
-#     libsamplespec_static \
-#     libaudio_comms_utilities
+# Other Lib
+audio_conversion_fcttest_static_lib += \
+    libsamplespec_static \
+    libaudio_comms_utilities
 
-# # Compile macro
-# audio_conversion_fcttest_c_includes_target += \
-#     $(foreach inc, $(audio_conversion_fcttest_export_c_includes), $(TARGET_OUT_HEADERS)/$(inc))
+# Compile macro
+audio_conversion_fcttest_c_includes_target += \
+    $(foreach inc, $(audio_conversion_fcttest_export_c_includes), $(TARGET_OUT_HEADERS)/$(inc))
 
-# audio_conversion_fcttest_c_includes_host += \
-#     $(foreach inc, $(audio_conversion_fcttest_export_c_includes), $(HOST_OUT_HEADERS)/$(inc)) \
-#     bionic/libc/kernel/common \
-#     external/gtest/include
+audio_conversion_fcttest_c_includes_host += \
+    $(foreach inc, $(audio_conversion_fcttest_export_c_includes), $(HOST_OUT_HEADERS)/$(inc)) \
+    bionic/libc/kernel/common \
+    external/gtest/include
 
-# audio_conversion_fcttest_static_lib_host += \
-#     $(foreach lib, $(audio_conversion_fcttest_static_lib), $(lib)_host) \
-#     libaudioresample_static_host \
-#     liblog \
-#     libgtest_host \
-#     libgtest_main_host
+audio_conversion_fcttest_static_lib_host += \
+    $(foreach lib, $(audio_conversion_fcttest_static_lib), $(lib)_host) \
+    libaudioresample_static_host \
+    liblog \
+    libgtest_host \
+    libgtest_main_host
 
-# audio_conversion_fcttest_static_lib_target += \
-#     $(audio_conversion_fcttest_static_lib)
+audio_conversion_fcttest_static_lib_target += \
+    $(audio_conversion_fcttest_static_lib)
 
-# audio_conversion_fcttest_shared_lib_target += \
-#     libstlport libcutils \
-#     libaudioresample
+audio_conversion_fcttest_shared_lib_target += \
+    libstlport libcutils \
+    libaudioresample
 
-# # $(1): "_target" or "_host"
-# define make_audio_conversion_functional_test
-# $( \
-#     $(eval LOCAL_SRC_FILES += $(audio_conversion_fcttest_src_files)) \
-#     $(eval LOCAL_C_INCLUDES += $(audio_conversion_fcttest_c_includes)) \
-#     $(eval LOCAL_C_INCLUDES += $(audio_conversion_fcttest_c_includes$(1))) \
-#     $(eval LOCAL_CFLAGS += $(audio_conversion_fcttest_defines)) \
-#     $(eval LOCAL_STATIC_LIBRARIES += $(audio_conversion_fcttest_static_lib$(1))) \
-#     $(eval LOCAL_SHARED_LIBRARIES += $(audio_conversion_fcttest_shared_lib$(1))) \
-#     $(eval LOCAL_LDFLAGS += $(audio_conversion_fcttest_static_ldflags$(1))) \
-#     $(eval LOCAL_MODULE_TAGS := tests) \
-# )
-# endef
-
-
-# # Functional test target
-# include $(CLEAR_VARS)
-# LOCAL_MODULE := audio_conversion_functional_test
-# LOCAL_STATIC_LIBRARIES += libaudioconversion_static
-# $(call make_audio_conversion_functional_test,_target)
-# include $(BUILD_NATIVE_TEST)
+# $(1): "_target" or "_host"
+define make_audio_conversion_functional_test
+$( \
+    $(eval LOCAL_SRC_FILES += $(audio_conversion_fcttest_src_files)) \
+    $(eval LOCAL_C_INCLUDES += $(audio_conversion_fcttest_c_includes)) \
+    $(eval LOCAL_C_INCLUDES += $(audio_conversion_fcttest_c_includes$(1))) \
+    $(eval LOCAL_CFLAGS += $(audio_conversion_fcttest_defines)) \
+    $(eval LOCAL_STATIC_LIBRARIES += $(audio_conversion_fcttest_static_lib$(1))) \
+    $(eval LOCAL_SHARED_LIBRARIES += $(audio_conversion_fcttest_shared_lib$(1))) \
+    $(eval LOCAL_LDFLAGS += $(audio_conversion_fcttest_static_ldflags$(1))) \
+    $(eval LOCAL_MODULE_TAGS := tests) \
+)
+endef
 
 
-# # Functional test host
-# include $(CLEAR_VARS)
-# LOCAL_MODULE := audio_conversion_fcttest_host
-# LOCAL_STATIC_LIBRARIES += libaudioconversion_static_host
-# $(call make_audio_conversion_functional_test,_host)
-# LOCAL_LDFLAGS += -pthread
-# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-# # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
-# # misalignment against gtest mk files
-# include $(BUILD_HOST_EXECUTABLE)
+# Functional test target
+include $(CLEAR_VARS)
+LOCAL_MODULE := audio_conversion_functional_test
+LOCAL_STATIC_LIBRARIES += libaudioconversion_static
+$(call make_audio_conversion_functional_test,_target)
+include $(BUILD_NATIVE_TEST)
 
-# include $(OPTIONAL_QUALITY_RUN_TEST)
 
-# include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
+# Functional test host
+include $(CLEAR_VARS)
+LOCAL_MODULE := audio_conversion_fcttest_host
+LOCAL_STATIC_LIBRARIES += libaudioconversion_static_host
+$(call make_audio_conversion_functional_test,_host)
+LOCAL_LDFLAGS += -pthread
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+# Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
+# misalignment against gtest mk files
+include $(BUILD_HOST_EXECUTABLE)
+
+include $(OPTIONAL_QUALITY_RUN_TEST)
+
+include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
