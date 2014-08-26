@@ -33,19 +33,23 @@ namespace intel_audio
 class DeviceMock : public DeviceInterface
 {
 public:
-    MOCK_METHOD5(openOutputStream,
+    MOCK_METHOD6(openOutputStream,
                  android::status_t(audio_io_handle_t handle,
                                    audio_devices_t devices,
                                    audio_output_flags_t flags,
                                    audio_config_t &config,
-                                   StreamOutInterface *&stream));
+                                   StreamOutInterface *&stream,
+                                   const std::string &address));
     MOCK_METHOD1(closeOutputStream,
                  void(StreamOutInterface *stream));
-    MOCK_METHOD4(openInputStream,
+    MOCK_METHOD7(openInputStream,
                  android::status_t(audio_io_handle_t handle,
                                    audio_devices_t devices,
                                    audio_config_t &config,
-                                   StreamInInterface *&stream));
+                                   StreamInInterface *&stream,
+                                   audio_input_flags_t flags,
+                                   const std::string &address,
+                                   audio_source_t source));
     MOCK_METHOD1(closeInputStream,
                  void(StreamInInterface *stream));
     MOCK_CONST_METHOD0(initCheck,
@@ -74,6 +78,16 @@ public:
                        size_t(const audio_config_t &config));
     MOCK_CONST_METHOD1(dump,
                        android::status_t(const int fd));
+    MOCK_METHOD5(createAudioPatch,
+                 android::status_t(uint32_t sourcesCount, const struct audio_port_config *sources,
+                                   uint32_t sinksCount, const struct audio_port_config *sinks,
+                                   audio_patch_handle_t *handle));
+    MOCK_METHOD1(releaseAudioPatch,
+                 android::status_t(audio_patch_handle_t handle));
+    MOCK_CONST_METHOD1(getAudioPort,
+                       android::status_t(struct audio_port &port));
+    MOCK_METHOD1(setAudioPortConfig,
+                 android::status_t(const struct audio_port_config &config));
 };
 
 } // namespace intel_audio

@@ -103,7 +103,11 @@ int DeviceInterface::wrapOpen(const hw_module_t *module, const char *name, hw_de
     ext_dev->device.close_output_stream = DeviceInterface::wrapCloseOutputStream;
     ext_dev->device.open_input_stream = DeviceInterface::wrapOpenInputStream;
     ext_dev->device.close_input_stream = DeviceInterface::wrapCloseInputStream;
-    ext_dev->device.dump = wrapDump;
+    ext_dev->device.dump = DeviceInterface::wrapDump;
+    ext_dev->device.create_audio_patch = DeviceInterface::wrapCreateAudioPatch;
+    ext_dev->device.release_audio_patch = DeviceInterface::wrapReleaseAudioPatch;
+    ext_dev->device.get_audio_port = DeviceInterface::wrapGetAudioPort;
+    ext_dev->device.set_audio_port_config = DeviceInterface::wrapSetAudioPortConfig;
 
     ext_dev->obj = createAudioHardware();
     if (ext_dev->obj == NULL) {
@@ -133,7 +137,8 @@ int DeviceInterface::wrapOpenOutputStream(struct audio_hw_device *dev,
                                           audio_devices_t devices,
                                           audio_output_flags_t flags,
                                           audio_config_t *config,
-                                          audio_stream_out_t **stream_out)
+                                          audio_stream_out_t **stream_out,
+                                          const char *address)
 {
     if (config == NULL) {
         return static_cast<int>(android::BAD_VALUE);
@@ -148,8 +153,10 @@ int DeviceInterface::wrapOpenOutputStream(struct audio_hw_device *dev,
     struct ext *ext_dev = reinterpret_cast<struct ext *>(dev);
     AUDIOCOMMS_ASSERT(ext_dev != NULL, "Invalid device");
 
+    std::string deviceAddress(address);
     int error = static_cast<int>(
-        ext_dev->obj->openOutputStream(handle, devices, flags, *config, ext_stream->obj.out));
+        ext_dev->obj->openOutputStream(handle, devices, flags, *config, ext_stream->obj.out,
+                                       deviceAddress));
     if (error || ext_stream->obj.out == NULL) {
         free(ext_stream);
         *stream_out = NULL;
@@ -207,7 +214,10 @@ int DeviceInterface::wrapOpenInputStream(struct audio_hw_device *dev,
                                          audio_io_handle_t handle,
                                          audio_devices_t devices,
                                          audio_config_t *config,
-                                         audio_stream_in_t **stream_in)
+                                         audio_stream_in_t **stream_in,
+                                         audio_input_flags_t flags,
+                                         const char *address,
+                                         audio_source_t source)
 {
     if (config == NULL) {
         return static_cast<int>(android::BAD_VALUE);
@@ -221,8 +231,10 @@ int DeviceInterface::wrapOpenInputStream(struct audio_hw_device *dev,
 
     struct ext *ext_dev = reinterpret_cast<struct ext *>(dev);
     AUDIOCOMMS_ASSERT(ext_dev != NULL, "Invalid device");
+    std::string deviceAddress(address);
     int error = static_cast<int>(
-        ext_dev->obj->openInputStream(handle, devices, *config, ext_stream->obj.in));
+        ext_dev->obj->openInputStream(handle, devices, *config,
+                                      ext_stream->obj.in, flags, deviceAddress, source));
     if (ext_stream->obj.in == NULL) {
         free(ext_stream);
         *stream_in = NULL;
@@ -345,6 +357,45 @@ size_t DeviceInterface::wrapGetInputBufferSize(const struct audio_hw_device *dev
 int DeviceInterface::wrapDump(const struct audio_hw_device *dev, int fd)
 {
     return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, dump(fd)));
+}
+
+int DeviceInterface::wrapCreateAudioPatch(struct audio_hw_device *dev,
+                                          unsigned int num_sources,
+                                          const struct audio_port_config *sources,
+                                          unsigned int num_sinks,
+                                          const struct audio_port_config *sinks,
+                                          audio_patch_handle_t *handle)
+{
+    if (sources == NULL || sinks == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(, dev, createAudioPatch(num_sources,
+                                                                                 sources,
+                                                                                 num_sinks,
+                                                                                 sinks,
+                                                                                 handle)));
+}
+
+int DeviceInterface::wrapReleaseAudioPatch(struct audio_hw_device *dev, audio_patch_handle_t handle)
+{
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(, dev, releaseAudioPatch(handle)));
+}
+
+int DeviceInterface::wrapGetAudioPort(struct audio_hw_device *dev, struct audio_port *port)
+{
+    if (port == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(const, dev, getAudioPort(*port)));
+}
+
+int DeviceInterface::wrapSetAudioPortConfig(struct audio_hw_device *dev,
+                                            const struct audio_port_config *config)
+{
+    if (config == NULL) {
+        return static_cast<int>(android::BAD_VALUE);
+    }
+    return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(, dev, setAudioPortConfig(*config)));
 }
 
 } // namespace intel_audio

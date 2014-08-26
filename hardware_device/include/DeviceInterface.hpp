@@ -64,7 +64,8 @@ public:
                                                audio_devices_t devices,
                                                audio_output_flags_t flags,
                                                audio_config_t &config,
-                                               StreamOutInterface *&stream) = 0;
+                                               StreamOutInterface *&stream,
+                                               const std::string &address) = 0;
 
     /** Closes and frees the audio hardware output stream.
      *
@@ -83,7 +84,10 @@ public:
     virtual android::status_t openInputStream(audio_io_handle_t handle,
                                               audio_devices_t devices,
                                               audio_config_t &config,
-                                              StreamInInterface *&stream) = 0;
+                                              StreamInInterface *&stream,
+                                              audio_input_flags_t flags,
+                                              const std::string &address,
+                                              audio_source_t source) = 0;
 
     /** Closes and frees the audio hardware input stream.
      *
@@ -197,6 +201,47 @@ public:
      */
     virtual android::status_t dump(const int fd) const = 0;
 
+    /** Creates an audio patch between several source ports and sink ports.
+     *
+     * @param[in] sourcesCount number of source ports to connect.
+     * @param[in] sources array of source port configurations.
+     * @param[in] sinksCount number of sink ports to connect.
+     * @param[in] sinks array of sink port configurations.
+     * @param[out] handle allocated by the HAL should be unique for this
+     *                    audio HAL module.
+     * @return OK if succeed, error code else.
+     */
+    virtual android::status_t createAudioPatch(unsigned int sourcesCount,
+                                               const struct audio_port_config *sources,
+                                               unsigned int sinksCount,
+                                               const struct audio_port_config *sinks,
+                                               audio_patch_handle_t *handle) = 0;
+
+    /** Releases an audio patch.
+     *
+     * @param[in] handle of the patch to release.
+     * @return OK if succeed, error code else.
+     */
+    virtual android::status_t releaseAudioPatch(audio_patch_handle_t handle) = 0;
+
+    /** Fills the list of supported attributes for a given audio port.
+     * As input, "port" contains the information (type, role, address etc...)
+     * needed by the HAL to identify the port.
+     * As output, "port" contains possible attributes (sampling rates, formats,
+     * channel masks, gain controllers...) for this port.
+     *
+     * @param[in,out] port for which attributes are requested to be filled by HAL.
+     * @return OK if succeed, error code else.
+     */
+    virtual android::status_t getAudioPort(struct audio_port &port) const = 0;
+
+    /** Set audio port configuration.
+     *
+     * @param[out] config port configuration.
+     * @return OK if succeed, error code else.
+     */
+    virtual android::status_t setAudioPortConfig(const struct audio_port_config &config) = 0;
+
 public:
     /* This section should have been private as they declared for internal use only.
      * It has to be declared public to allow access from C code. */
@@ -218,14 +263,18 @@ public:
                                     audio_devices_t devices,
                                     audio_output_flags_t flags,
                                     audio_config_t *config,
-                                    audio_stream_out_t **stream_out);
+                                    audio_stream_out_t **stream_out,
+                                    const char *address);
     static void wrapCloseOutputStream(audio_hw_device_t *dev,
                                       audio_stream_out_t *stream);
     static int wrapOpenInputStream(audio_hw_device_t *dev,
                                    audio_io_handle_t handle,
                                    audio_devices_t devices,
                                    audio_config_t *config,
-                                   audio_stream_in_t **stream_in);
+                                   audio_stream_in_t **stream_in,
+                                   audio_input_flags_t flags,
+                                   const char *address,
+                                   audio_source_t source);
     static void wrapCloseInputStream(audio_hw_device_t *dev,
                                      audio_stream_in_t *stream);
     static int wrapInitCheck(const audio_hw_device_t *dev);
@@ -242,6 +291,17 @@ public:
     static size_t wrapGetInputBufferSize(const audio_hw_device_t *dev,
                                          const audio_config_t *config);
     static int wrapDump(const audio_hw_device_t *dev, int fd);
+    static int wrapCreateAudioPatch(struct audio_hw_device *dev,
+                                    unsigned int num_sources,
+                                    const struct audio_port_config *sources,
+                                    unsigned int num_sinks,
+                                    const struct audio_port_config *sinks,
+                                    audio_patch_handle_t *handle);
+    static int wrapReleaseAudioPatch(struct audio_hw_device *dev, audio_patch_handle_t handle);
+    static int wrapGetAudioPort(struct audio_hw_device *dev, struct audio_port *port);
+    static int wrapSetAudioPortConfig(struct audio_hw_device *dev,
+                                      const struct audio_port_config *config);
+
 };
 
 } // namespace intel_audio
