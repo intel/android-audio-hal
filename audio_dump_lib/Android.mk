@@ -62,9 +62,9 @@ include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 
-# # Build for host
-# ################
-# include $(CLEAR_VARS)
-# LOCAL_MODULE := libhalaudiodump_host
-# $(call make_hal_dump_lib,host)
-# include $(BUILD_HOST_STATIC_LIBRARY)
+# Build for host
+################
+include $(CLEAR_VARS)
+LOCAL_MODULE := libhalaudiodump_host
+$(call make_hal_dump_lib,host)
+include $(BUILD_HOST_STATIC_LIBRARY)

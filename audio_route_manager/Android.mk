@@ -131,24 +131,24 @@ include $(BUILD_SHARED_LIBRARY)
 #######################################################################
 # Build for host
 
-# ifeq ($(audiocomms_test_gcov_host),true)
+ifeq ($(audiocomms_test_gcov_host),true)
 
-# include $(CLEAR_VARS)
-# LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include)
-# LOCAL_C_INCLUDES := $(audio_route_manager_includes_common)
-# LOCAL_C_INCLUDES += $(audio_route_manager_includes_dir_host)
-# LOCAL_STATIC_LIBRARIES := $(audio_route_manager_static_lib_host)
-# LOCAL_SRC_FILES := $(audio_route_manager_src_files)
-# LOCAL_CFLAGS := $(audio_route_manager_cflags)
-# LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
-#     $(audio_route_manager_include_dirs_from_static_libraries_host)
-# LOCAL_MODULE_TAGS := tests
-# LOCAL_MODULE := libaudio_route_manager_static_gcov_host
+include $(CLEAR_VARS)
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include)
+LOCAL_C_INCLUDES := $(audio_route_manager_includes_common)
+LOCAL_C_INCLUDES += $(audio_route_manager_includes_dir_host)
+LOCAL_STATIC_LIBRARIES := $(audio_route_manager_static_lib_host)
+LOCAL_SRC_FILES := $(audio_route_manager_src_files)
+LOCAL_CFLAGS := $(audio_route_manager_cflags)
+LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
+    $(audio_route_manager_include_dirs_from_static_libraries_host)
+LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE := libaudio_route_manager_static_gcov_host
 
-# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-# include $(BUILD_HOST_STATIC_LIBRARY)
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+include $(BUILD_HOST_STATIC_LIBRARY)
 
-# endif
+endif
 
 
 #######################################################################

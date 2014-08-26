@@ -99,17 +99,17 @@ include $(BUILD_SHARED_LIBRARY)
 #######################################################################
 # Build for host
 
-# include $(CLEAR_VARS)
-# LOCAL_MODULE := liblpepreprocessing_static_gcov_host
-# LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-# LOCAL_C_INCLUDES := $(effect_pre_proc_includes_common)
-# LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_host)
-# LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
-# LOCAL_CFLAGS := $(effect_pre_proc_cflags)
-# LOCAL_STATIC_LIBRARIES := $(effect_pre_proc_static_lib_host)
-# LOCAL_MODULE_TAGS := tests
-# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-# include $(BUILD_HOST_STATIC_LIBRARY)
+include $(CLEAR_VARS)
+LOCAL_MODULE := liblpepreprocessing_static_gcov_host
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_C_INCLUDES := $(effect_pre_proc_includes_common)
+LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_host)
+LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
+LOCAL_CFLAGS := $(effect_pre_proc_cflags)
+LOCAL_STATIC_LIBRARIES := $(effect_pre_proc_static_lib_host)
+LOCAL_MODULE_TAGS := tests
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+include $(BUILD_HOST_STATIC_LIBRARY)
 
 
 # Helper Effect Lib
@@ -133,17 +133,17 @@ include $(BUILD_STATIC_LIBRARY)
 #######################################################################
 # Build for host
 
-# include $(CLEAR_VARS)
+include $(CLEAR_VARS)
 
-# LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-# LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-# LOCAL_CFLAGS := $(effect_pre_proc_cflags)
-# LOCAL_SRC_FILES := src/EffectHelper.cpp
-# LOCAL_MODULE_TAGS := tests
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
+LOCAL_CFLAGS := $(effect_pre_proc_cflags)
+LOCAL_SRC_FILES := src/EffectHelper.cpp
+LOCAL_MODULE_TAGS := tests
 
-# LOCAL_MODULE := liblpepreprocessinghelper_host
-# include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-# include $(BUILD_HOST_STATIC_LIBRARY)
+LOCAL_MODULE := liblpepreprocessinghelper_host
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+include $(BUILD_HOST_STATIC_LIBRARY)
 
 # # Component functional test
 # #######################################################################

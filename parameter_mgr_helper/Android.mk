@@ -103,14 +103,14 @@ include $(BUILD_STATIC_LIBRARY)
 endif
 
 # Build for host test
-# ifeq ($(audiocomms_test_host),true)
+ifeq ($(audiocomms_test_host),true)
 
-# include $(CLEAR_VARS)
-# LOCAL_MODULE := libparametermgr_static_host
-# $(call make_param_mgr_helper_lib,host)
-# include $(BUILD_HOST_STATIC_LIBRARY)
+include $(CLEAR_VARS)
+LOCAL_MODULE := libparametermgr_static_host
+$(call make_param_mgr_helper_lib,host)
+include $(BUILD_HOST_STATIC_LIBRARY)
 
-# endif
+endif
 
 # Build for target (inconditionnal)
 
