@@ -69,8 +69,8 @@ public:
      */
     virtual audio_io_handle_t getInput(int inputSource,
                                        uint32_t samplingRate,
-                                       audio_format_t format,
-                                       audio_channel_mask_t channels,
+                                       uint32_t format,
+                                       uint32_t channels,
                                        AudioSystem::audio_in_acoustics acoustics);
 
     status_t startInput(audio_io_handle_t input);

@@ -814,7 +814,7 @@ bool AudioRouteManager::setAudioCriterion(const std::string &name, const T &valu
 bool AudioRouteManager::getAudioCriterion(const std::string &name, std::string &value) const
 {
     AutoR lock(mRoutingLock);
-    ALOGV("%s: (%s, %s)", __FUNCTION__, name.c_str(), value.c_str());
+    ALOGV("%s: (%s, %d)", __FUNCTION__, name.c_str(), value);
     CriteriaMapConstIterator it = mCriteriaMap.find(name);
     if (it == mCriteriaMap.end()) {
         ALOGW("%s Criterion %s does not exist", __FUNCTION__, name.c_str());
