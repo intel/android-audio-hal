@@ -128,22 +128,51 @@ TEST_F(DeviceTest, Device)
     EXPECT_CALL(*mDeviceMock, dump(246))
     .WillOnce(Return(11));
     EXPECT_EQ(mDevice->dump(mDevice, 246), 11);
+
+    // Routing Control APIs test
+    uint32_t sourcesCount = 8;
+    uint32_t sinksCount = 3;
+    struct audio_port_config sources[sourcesCount];
+    struct audio_port_config sinks[sinksCount];
+    audio_patch_handle_t handle;
+
+    EXPECT_CALL(*mDeviceMock, createAudioPatch(sourcesCount, sources, sinksCount, sinks, &handle))
+    .WillOnce(Return(3));
+    EXPECT_EQ(mDevice->create_audio_patch(mDevice, sourcesCount, sources,
+                                          sinksCount, sinks, &handle),
+              3);
+
+    EXPECT_CALL(*mDeviceMock, releaseAudioPatch(handle))
+    .WillOnce(Return(8));
+    EXPECT_EQ(mDevice->release_audio_patch(mDevice, handle), 8);
+
+    struct audio_port port;
+    struct audio_port_config portConfig;
+    EXPECT_CALL(*mDeviceMock, getAudioPort(_))
+    .WillOnce(Return(16));
+    EXPECT_EQ(mDevice->get_audio_port(mDevice, &port), 16);
+
+    EXPECT_CALL(*mDeviceMock, setAudioPortConfig(_))
+    .WillOnce(Return(2));
+    EXPECT_EQ(mDevice->set_audio_port_config(mDevice, &portConfig), 2);
 }
 
 /** Helper to handle DeviceMock::openOutputStream mock call.
  * Check that arguments are the expected ones and return a new StreamOutMock.
  */
-ACTION_P4(ActionOpenStreamOut, expHandle, expDevices, expFlags, expConfig)
+ACTION_P5(ActionOpenStreamOut, expHandle, expDevices, expFlags, expConfig, expAddress)
 {
     audio_io_handle_t checkHandle = static_cast<audio_io_handle_t>(expHandle);
     audio_devices_t checkDevices = static_cast<audio_devices_t>(expDevices);
     audio_output_flags_t checkFlags = static_cast<audio_output_flags_t>(expFlags);
     audio_config_t checkConfig = static_cast<audio_config_t>(expConfig);
+    string checkAddress = static_cast<string>(expAddress);
 
     audio_io_handle_t handle = static_cast<audio_io_handle_t>(arg0);
     audio_devices_t devices = static_cast<audio_devices_t>(arg1);
     audio_output_flags_t flags = static_cast<audio_output_flags_t>(arg2);
     audio_config_t config = static_cast<audio_config_t>(arg3);
+    string address = static_cast<string>(arg5);
 
     if (checkHandle != handle
         || checkDevices != devices
@@ -151,6 +180,7 @@ ACTION_P4(ActionOpenStreamOut, expHandle, expDevices, expFlags, expConfig)
         || checkConfig.sample_rate != config.sample_rate
         || checkConfig.format != config.format
         || checkConfig.channel_mask != config.channel_mask
+        || checkAddress != address
         ) {
         return -1;
     }
@@ -179,12 +209,13 @@ TEST_F(DeviceTest, StreamOut)
     audio_output_flags_t flags = static_cast<audio_output_flags_t>(0);
     audio_config_t config;
     audio_stream_out *stream_out;
+    string deviceAdress("myCard:0,myDevice:1");
 
-    EXPECT_CALL(*mDeviceMock, openOutputStream(_, _, _, _, _))
+    EXPECT_CALL(*mDeviceMock, openOutputStream(_, _, _, _, _, _))
     .WillOnce(DoAll(SetArgReferee<4>(new StreamOutMock()),
-                    ActionOpenStreamOut(handle, devices, flags, config)));
+                    ActionOpenStreamOut(handle, devices, flags, config, deviceAdress)));
     ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, &config,
-                                          &stream_out), 0);
+                                          &stream_out, deviceAdress.c_str()), 0);
 
     StreamOutMock *out = reinterpret_cast<intel_audio::StreamOutMock *>(
         reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_out)->obj.out);
@@ -334,21 +365,30 @@ TEST_F(DeviceTest, StreamOut)
 /** Helper to handle DeviceMock::openInputStream mock call.
  * Check that arguments are the expected ones and return a new StreamInMock.
  */
-ACTION_P3(ActionOpenStreamIn, expHandle, expDevices, expConfig)
+ACTION_P6(ActionOpenStreamIn, expHandle, expDevices, expConfig, expFlags, expAddress, expSource)
 {
     audio_io_handle_t checkHandle = static_cast<audio_io_handle_t>(expHandle);
     audio_devices_t checkDevices = static_cast<audio_devices_t>(expDevices);
     audio_config_t checkConfig = static_cast<audio_config_t>(expConfig);
+    audio_input_flags_t checkFlags = static_cast<audio_input_flags_t>(expFlags);
+    string checkAddress = static_cast<string>(expAddress);
+    audio_source_t checkSource = static_cast<audio_source_t>(expSource);
 
     audio_io_handle_t handle = static_cast<audio_io_handle_t>(arg0);
     audio_devices_t devices = static_cast<audio_devices_t>(arg1);
     audio_config_t config = static_cast<audio_config_t>(arg2);
+    audio_input_flags_t flags = static_cast<audio_input_flags_t>(arg4);
+    string address = static_cast<string>(arg5);
+    audio_source_t source = static_cast<audio_source_t>(arg6);
 
     if (checkHandle != handle
         || checkDevices != devices
         || checkConfig.sample_rate != config.sample_rate
         || checkConfig.format != config.format
         || checkConfig.channel_mask != config.channel_mask
+        || checkFlags != flags
+        || checkAddress != address
+        || checkSource != source
         ) {
         return -1;
     }
@@ -371,11 +411,15 @@ TEST_F(DeviceTest, StreamIn)
     audio_devices_t devices = static_cast<audio_devices_t>(0);
     audio_config_t config;
     audio_stream_in *stream_in;
+    audio_input_flags_t flags = AUDIO_INPUT_FLAG_NONE;
+    string deviceAddress("MyCard,myDeviceId");
+    audio_source_t source = AUDIO_SOURCE_MIC;
 
-    EXPECT_CALL(*mDeviceMock, openInputStream(_, _, _, _))
+    EXPECT_CALL(*mDeviceMock, openInputStream(_, _, _, _, _, _, _))
     .WillOnce(DoAll(SetArgReferee<3>(new StreamInMock()),
-                    ActionOpenStreamIn(handle, devices, config)));
-    ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, &config, &stream_in), 0);
+                    ActionOpenStreamIn(handle, devices, config, flags, deviceAddress, source)));
+    ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, &config, &stream_in,
+                                         flags, deviceAddress.c_str(), source), 0);
 
     StreamInMock *in = reinterpret_cast<intel_audio::StreamInMock *>(
         reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_in)->obj.in);
@@ -480,9 +524,13 @@ TEST_F(DeviceTest, DeviceErrorHandling)
     audio_devices_t devices = static_cast<audio_devices_t>(0);
     audio_config_t *nullConfig = NULL;
     audio_stream_in *stream_in;
+    audio_input_flags_t inputFlags = AUDIO_INPUT_FLAG_NONE;
+    string deviceAddress("MyCard,myDeviceId");
+    audio_source_t source = AUDIO_SOURCE_MIC;
 
     // Input Stream creation with a NULL configuration structure pointer
-    ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, nullConfig, &stream_in),
+    ASSERT_EQ(mDevice->open_input_stream(mDevice, handle, devices, nullConfig, &stream_in,
+                                         inputFlags, deviceAddress.c_str(), source),
               android::BAD_VALUE);
 
     /** Check audio output stream error handling. */
@@ -490,7 +538,8 @@ TEST_F(DeviceTest, DeviceErrorHandling)
     audio_stream_out *stream_out;
 
     // Output Stream creation with a NULL configuration structure pointer
-    ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, nullConfig, &stream_out),
+    ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, nullConfig, &stream_out,
+                                          deviceAddress.c_str()),
               android::BAD_VALUE);
 
     /** Check Get Master volume with NULL pointer error handling. */
@@ -507,6 +556,27 @@ TEST_F(DeviceTest, DeviceErrorHandling)
     /** Check Get Input Buffer Size with NULL configuration structure pointer error handling. */
     EXPECT_EQ(mDevice->get_input_buffer_size(mDevice, nullConfig),
               static_cast<size_t>(android::BAD_VALUE));
+
+    /** Routing control APIs error handling. */
+    uint32_t numSources = 8;
+    uint32_t numSinks = 3;
+    struct audio_port_config *nullSources = NULL;
+    struct audio_port_config *nullSinks = NULL;
+    struct audio_port_config sources[numSources];
+    struct audio_port_config sinks[numSinks];
+
+    EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, nullSources,
+                                          numSinks, sinks, &handle),
+              android::BAD_VALUE);
+    EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, sources,
+                                          numSinks, nullSinks, &handle),
+              android::BAD_VALUE);
+
+    struct audio_port *nullPort = NULL;
+    EXPECT_EQ(mDevice->get_audio_port(mDevice, nullPort), android::BAD_VALUE);
+
+    struct audio_port_config *nullPortConfig = NULL;
+    EXPECT_EQ(mDevice->set_audio_port_config(mDevice, nullPortConfig), android::BAD_VALUE);
 }
 
 TEST_F(DeviceTest, OutputStreamErrorHandling)
@@ -516,12 +586,13 @@ TEST_F(DeviceTest, OutputStreamErrorHandling)
     audio_output_flags_t flags = static_cast<audio_output_flags_t>(0);
     audio_config_t config;
     audio_stream_out *stream_out;
+    string deviceAddress("myCard:0,myDevice:1");
 
-    EXPECT_CALL(*mDeviceMock, openOutputStream(_, _, _, _, _))
+    EXPECT_CALL(*mDeviceMock, openOutputStream(_, _, _, _, _, _))
     .WillOnce(DoAll(SetArgReferee<4>(new StreamOutMock()),
-                    ActionOpenStreamOut(handle, devices, flags, config)));
+                    ActionOpenStreamOut(handle, devices, flags, config, deviceAddress)));
     ASSERT_EQ(mDevice->open_output_stream(mDevice, handle, devices, flags, &config,
-                                          &stream_out), 0);
+                                          &stream_out, deviceAddress.c_str()), 0);
 
     StreamOutMock *out = reinterpret_cast<intel_audio::StreamOutMock *>(
         reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_out)->obj.out);
