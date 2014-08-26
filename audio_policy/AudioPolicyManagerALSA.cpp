@@ -123,9 +123,9 @@ status_t AudioPolicyManagerALSA::startOutput(audio_io_handle_t output,
 
 audio_io_handle_t AudioPolicyManagerALSA::getInput(int inputSource,
                                                    uint32_t samplingRate,
-                                                   uint32_t format,
-                                                   uint32_t channelMask,
-                                                   AudioSystem::audio_in_acoustics acoustics)
+                                                   audio_format_t format,
+                                                   audio_channel_mask_t channelMask,
+                                                   AudioSystem::audio_in_acoustics /*acoustics*/)
 {
     audio_devices_t device = getDeviceForInputSource(inputSource);
     audio_io_handle_t input = 0;
@@ -268,7 +268,7 @@ status_t AudioPolicyManagerALSA::startInput(audio_io_handle_t input)
     param.addInt(String8(AudioParameter::keyRouting), (int)inputDesc->mDevice);
 
     int aliasSource = (inputDesc->mInputSource == AUDIO_SOURCE_HOTWORD) ?
-                                        AUDIO_SOURCE_VOICE_RECOGNITION : inputDesc->mInputSource;
+                      AUDIO_SOURCE_VOICE_RECOGNITION : inputDesc->mInputSource;
 
     if (inputDesc->mInputSource == AUDIO_SOURCE_LPAL) {
         // input = 0 is mandatory in case of LPAL because the parameter is vehiculated through
