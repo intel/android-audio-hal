@@ -151,6 +151,15 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := audio_conversion_functional_test
 LOCAL_STATIC_LIBRARIES += libaudioconversion_static
 $(call make_audio_conversion_functional_test,_target)
+
+# GMock and GTest requires C++ Technical Report 1 (TR1) tuple library, which is not available
+# on target (stlport). GTest provides its own implementation of TR1 (and substiture to standard
+# implementation). This trick does not work well with latest compiler. Flags must be forced
+# by each client of GMock and / or tuple.
+LOCAL_CFLAGS += \
+    -DGTEST_HAS_TR1_TUPLE=1 \
+    -DGTEST_USE_OWN_TR1_TUPLE=1 \
+
 include $(BUILD_NATIVE_TEST)
 
 
