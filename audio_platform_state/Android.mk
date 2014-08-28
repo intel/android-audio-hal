@@ -62,6 +62,7 @@ LOCAL_STATIC_LIBRARIES := \
     libactive_value_set \
     libkeyvaluepairs \
     libevent-listener_static \
+    libparameter_includes
 
 LOCAL_SHARED_LIBRARIES := \
     libgmin_audio_hardwaredetection
