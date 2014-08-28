@@ -82,7 +82,7 @@ LOCAL_STATIC_LIBRARIES += \
     libgmock_host
 
 LOCAL_LDFLAGS := -pthread    # Workaround needed for gmock
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := audiohw_intel_test
 LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)

@@ -142,7 +142,7 @@ $( \
     $(eval LOCAL_STATIC_LIBRARIES += $(sample_specifications_functional_test_static_lib$(1))) \
     $(eval LOCAL_SHARED_LIBRARIES += $(sample_specifications_functional_test_shared_lib$(1))) \
     $(eval LOCAL_LDFLAGS += $(sample_specifications_functional_test_static_ldflags$(1))) \
-    $(eval LOCAL_MODULE_TAGS := tests) \
+    $(eval LOCAL_MODULE_TAGS := optional) \
 )
 endef
 

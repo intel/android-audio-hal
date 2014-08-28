@@ -199,7 +199,7 @@ LOCAL_SHARED_LIBRARIES := \
 
 LOCAL_MODULE := audio-hal-functional_test
 LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 

@@ -108,7 +108,7 @@ LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_host)
 LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
 LOCAL_STATIC_LIBRARIES := $(effect_pre_proc_static_lib_host)
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 
@@ -186,7 +186,7 @@ LOCAL_C_INCLUDES := $(audio_effects_functional_test_c_includes)
 LOCAL_CFLAGS := $(audio_effects_functional_test_defines)
 LOCAL_STATIC_LIBRARIES := $(audio_effects_functional_test_static_lib_target)
 LOCAL_SHARED_LIBRARIES := $(audio_effects_functional_test_shared_lib_target)
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_NATIVE_TEST)
 

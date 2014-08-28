@@ -99,7 +99,7 @@ LOCAL_STATIC_LIBRARIES += \
 LOCAL_CFLAGS := -Wall -Werror -Wextra -Wno-unused-parameter
 LOCAL_LDFLAGS += -pthread -lrt
 
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := active_value_set_fct_test
 LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
