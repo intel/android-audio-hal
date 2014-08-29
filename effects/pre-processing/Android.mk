@@ -53,15 +53,15 @@ effect_pre_proc_includes_dir_target := \
 
 effect_pre_proc_static_lib += \
     libaudio_comms_utilities \
-    libmedia_helper \
-    libaudio_comms_convert
+    libaudio_comms_convert \
 
 effect_pre_proc_static_lib_host += \
     $(foreach lib, $(effect_pre_proc_static_lib), $(lib)_host) \
     libaudioresample_static_host
 
 effect_pre_proc_static_lib_target += \
-    $(effect_pre_proc_static_lib)
+    $(effect_pre_proc_static_lib) \
+    libmedia_helper \
 
 effect_pre_proc_shared_lib_target += \
     libutils  \
