@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <media/AudioBufferProvider.h>
 #include <NonCopyable.hpp>
 #include <gtest/gtest.h>
