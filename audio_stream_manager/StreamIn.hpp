@@ -38,7 +38,7 @@ private:
     typedef std::list<effect_handle_t>::iterator AudioEffectsListIterator;
 
 public:
-    StreamIn(Device *parentn);
+    StreamIn(Device *parent, audio_source_t source);
     virtual ~StreamIn();
 
     // From AudioStreamIn

@@ -65,8 +65,8 @@ TEST(SampleSpec, setGet)
     // Channel mask
     sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_ALL);
     EXPECT_EQ(AUDIO_CHANNEL_OUT_ALL, sampleSpec.getChannelMask());
-    sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_SURROUND);
-    EXPECT_EQ(AUDIO_CHANNEL_OUT_SURROUND, sampleSpec.getChannelMask());
+    sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_5POINT1);
+    EXPECT_EQ(AUDIO_CHANNEL_OUT_5POINT1, sampleSpec.getChannelMask());
 
     // Test setSampleSpecItem
     sampleSpec.setSampleSpecItem(ChannelCountSampleSpecItem, 16);

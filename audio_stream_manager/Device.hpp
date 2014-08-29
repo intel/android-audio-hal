@@ -64,12 +64,16 @@ public:
                                                audio_devices_t devices,
                                                audio_output_flags_t flags,
                                                audio_config_t &config,
-                                               StreamOutInterface *&stream);
-    virtual void closeOutputStream(StreamOutInterface *stream);
+                                               StreamOutInterface *&stream,
+                                               const std::string &address);
     virtual android::status_t openInputStream(audio_io_handle_t handle,
                                               audio_devices_t devices,
                                               audio_config_t &config,
-                                              StreamInInterface *&stream);
+                                              StreamInInterface *&stream,
+                                              audio_input_flags_t flags,
+                                              const std::string &address,
+                                              audio_source_t source);
+    virtual void closeOutputStream(StreamOutInterface *stream);
     virtual void closeInputStream(StreamInInterface *stream);
     virtual android::status_t initCheck() const;
     virtual android::status_t setVoiceVolume(float volume);
@@ -101,6 +105,30 @@ public:
     virtual size_t getInputBufferSize(const audio_config_t &config) const;
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t dump(const int /* fd */) const { return android::OK; }
+    /** @note Routing control API not implemented in our Audio HAL */
+    virtual android::status_t createAudioPatch(unsigned int /*sourcesCount*/,
+                                               const struct audio_port_config */*sources*/,
+                                               unsigned int /*sinksCount*/,
+                                               const struct audio_port_config */*sinks*/,
+                                               audio_patch_handle_t */*handle*/)
+    {
+        return android::INVALID_OPERATION;
+    }
+    /** @note Routing control API not implemented in our Audio HAL */
+    virtual android::status_t releaseAudioPatch(audio_patch_handle_t /*handle*/)
+    {
+        return android::INVALID_OPERATION;
+    }
+    /** @note Routing control API not implemented in our Audio HAL */
+    virtual android::status_t getAudioPort(struct audio_port &/*port*/) const
+    {
+        return android::INVALID_OPERATION;
+    }
+    /** @note Routing control API not implemented in our Audio HAL */
+    virtual android::status_t setAudioPortConfig(const struct audio_port_config &/*config*/)
+    {
+        return android::INVALID_OPERATION;
+    }
 
     /** Entry point to create AudioHAL. */
     static DeviceInterface *create();

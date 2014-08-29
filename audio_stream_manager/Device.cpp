@@ -143,7 +143,8 @@ android::status_t Device::openOutputStream(audio_io_handle_t /*handle*/,
                                            audio_devices_t devices,
                                            audio_output_flags_t flags,
                                            audio_config_t &config,
-                                           StreamOutInterface *&stream)
+                                           StreamOutInterface *&stream,
+                                           const std::string &/*address*/)
 {
     ALOGD("%s: called for devices: 0x%08x", __FUNCTION__, devices);
 
@@ -177,16 +178,19 @@ void Device::closeOutputStream(StreamOutInterface *out)
 android::status_t Device::openInputStream(audio_io_handle_t /*handle*/,
                                           audio_devices_t devices,
                                           audio_config_t &config,
-                                          StreamInInterface *&stream)
+                                          StreamInInterface *&stream,
+                                          audio_input_flags_t /*flags*/,
+                                          const std::string &/*address*/,
+                                          audio_source_t source)
 {
-    ALOGD("%s: called for devices: 0x%08x", __FUNCTION__, devices);
+    ALOGD("%s: called for devices: 0x%08x and input source: 0x%08x", __FUNCTION__, devices, source);
 
     if (!audio_is_input_device(devices)) {
         ALOGE("%s: called with bad device 0x%08x", __FUNCTION__, devices);
         return android::BAD_VALUE;
     }
 
-    StreamIn *in = new StreamIn(this);
+    StreamIn *in = new StreamIn(this, source);
     status_t err = in->set(config);
     if (err != android::OK) {
         ALOGE("%s: Set err", __FUNCTION__);
