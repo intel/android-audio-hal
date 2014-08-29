@@ -44,7 +44,7 @@ namespace intel_audio
 
 const std::string StreamIn::mHwEffectImplementor = "IntelLPE";
 
-StreamIn::StreamIn(Device *parent)
+StreamIn::StreamIn(Device *parent, audio_source_t source)
     : Stream(parent),
       mFramesLost(0),
       mFramesIn(0),
@@ -57,6 +57,7 @@ StreamIn::StreamIn(Device *parent)
       mPreprocessorsHandlerList(),
       mHwBuffer(NULL)
 {
+    setInputSource(source);
 }
 
 StreamIn::~StreamIn()
