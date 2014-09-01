@@ -172,9 +172,9 @@ int StreamOutInterface::wrapGetNextWriteTimestamp(const audio_stream_out_t *stre
                                                                 getNextWriteTimestamp(*timestamp)));
 }
 
-int StreamOutInterface::wrapFlush(const audio_stream_out_t *stream)
+int StreamOutInterface::wrapFlush(audio_stream_out_t *stream)
 {
-    return static_cast<int>(FORWARD_CALL_TO_STREAM_OUT_INSTANCE(const, stream, flush()));
+    return static_cast<int>(FORWARD_CALL_TO_STREAM_OUT_INSTANCE(, stream, flush()));
 }
 
 int StreamOutInterface::wrapSetCallback(audio_stream_out_t *stream,
