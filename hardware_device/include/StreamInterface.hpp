@@ -342,7 +342,7 @@ public:
     static ssize_t wrapWrite(audio_stream_out_t *stream, const void *buffer, size_t bytes);
     static int wrapGetRenderPosition(const audio_stream_out_t *stream, uint32_t *dspFrames);
     static int wrapGetNextWriteTimestamp(const audio_stream_out_t *stream, int64_t *timestamp);
-    static int wrapFlush(const audio_stream_out_t *stream);
+    static int wrapFlush(audio_stream_out_t *stream);
     static int wrapSetCallback(audio_stream_out_t *stream,
                                stream_callback_t callback, void *cookie);
     static int wrapPause(audio_stream_out_t *stream);
