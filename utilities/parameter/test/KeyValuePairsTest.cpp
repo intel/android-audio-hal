@@ -275,7 +275,7 @@ TEST_P(KeyValuePairsTestInt, uint32_t)
 
     ASSERT_EQ(android::OK, parameter.add(key, valueToTest));
 
-    uint32_t returnValue;
+    uint32_t returnValue = 0;
     ASSERT_EQ(android::OK, parameter.get(key, returnValue));
 
     EXPECT_EQ(valueToTest, returnValue);
@@ -325,7 +325,7 @@ TEST_P(KeyValuePairsTestFloat, float)
 
     ASSERT_EQ(android::OK, parameter.add(key, valueToTest));
 
-    float returnValue;
+    float returnValue = 0.0f;
     ASSERT_EQ(android::OK, parameter.get(key, returnValue));
 
     EXPECT_FLOAT_EQ(valueToTest, returnValue);

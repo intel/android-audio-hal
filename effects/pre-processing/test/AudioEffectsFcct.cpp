@@ -29,7 +29,6 @@
 #include <audio_effects/effect_ns.h>
 #include <audio_effects/effect_visualizer.h>
 #include <audio_effects/effect_equalizer.h>
-#include <AudioCommsAssert.hpp>
 #include <utils/String16.h>
 
 using ::testing::Test;
@@ -76,25 +75,18 @@ bool AudioEffectsFunctionalTest::checkPlatformHasEffectType(const effect_uuid_t 
 void AudioEffectsFunctionalTest::compareEffectParams(const effect_param_t *param1,
                                                      const effect_param_t *param2)
 {
+    AUDIOCOMMS_ASSERT(param1->psize != 0, "effect param size 1 is 0");
+    AUDIOCOMMS_ASSERT(param2->psize != 0, "effect param size 2 is 0");
+
     EXPECT_EQ(0, memcmp(param1->data, param2->data, param1->psize))
-        << "Requested pData = "
-        << *(uint32_t *)param1->data
-        << " Effect returned pData =  "
-        << *(uint32_t *)param2->data;
+        << "Effects parameters differ";
 
     uint32_t paramValueOffsetInBytes =
         ((sizeof(param2->psize) - 1) / sizeof(uint32_t) + 1) * sizeof(uint32_t);
     const char *vOrigData = param1->data + paramValueOffsetInBytes;
     const char *vData = param2->data + paramValueOffsetInBytes;
 
-    Log::Debug() << "getParameterForEffect origVal=" << *(uint16_t *)vOrigData
-                 << " value=" << *(uint16_t *)vData << " ValueSize=" << param1->vsize
-                 << " ptr=" << vOrigData;
-    EXPECT_EQ(0, memcmp(vOrigData, vData,
-                        param1->vsize))
-        << " Requested vData = "
-        << *(uint16_t *)vOrigData
-        << " Effect returned vData =  " << *(uint16_t *)vData;
+    EXPECT_EQ(0, memcmp(vOrigData, vData, param1->vsize)) << "Effects values differ";
 }
 
 void AudioEffectsFunctionalTest::getParameterForEffect(AudioEffect *effect,
