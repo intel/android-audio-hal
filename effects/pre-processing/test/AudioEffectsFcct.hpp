@@ -23,6 +23,7 @@
 #pragma once
 
 #include <NonCopyable.hpp>
+#include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <media/AudioEffect.h>
 #include <binder/IServiceManager.h>
@@ -74,7 +75,10 @@ public:
     }
     TestEffectParameterBase &operator=(const TestEffectParameterBase &object)
     {
-        setEffectParam(object.mParam, object.mSize);
+        // SELF ASSIGNMENT CHECK
+        if (this != &object) {
+            setEffectParam(object.mParam, object.mSize);
+        }
         return *this;
     }
 
@@ -103,6 +107,7 @@ public:
         free(mParam);
         mSize = size;
         mParam = reinterpret_cast<effect_param_t *>(malloc(mSize));
+        AUDIOCOMMS_ASSERT(mParam != NULL, "Could not allocate effect param object");
         memcpy(mParam, param, mSize);
 
         audio_comms::utilities::Log::Verbose() << __FUNCTION__

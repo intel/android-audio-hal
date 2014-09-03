@@ -147,8 +147,8 @@ INSTANTIATE_TEST_CASE_P(
 
 TEST(ActiveValueSetTest, StartActiveValueSetBeforeAddValue)
 {
-    ActiveValueSetTest *activeValueSetTest = new ActiveValueSetTest();
-    ASSERT_TRUE(activeValueSetTest->start());
+    ActiveValueSetTest activeValueSetTest;
+    ASSERT_TRUE(activeValueSetTest.start());
 
     const std::string valueKey("KeyVal1");
     const std::string initValue("InitialValue");
@@ -156,26 +156,25 @@ TEST(ActiveValueSetTest, StartActiveValueSetBeforeAddValue)
     std::vector<std::string> myTestVector;
     myTestVector.push_back(valueKey);
     ValueSetMock *mValueSetMock = new ValueSetMock(myTestVector,
-                                                   activeValueSetTest,
-                                                   activeValueSetTest);
+                                                   &activeValueSetTest,
+                                                   &activeValueSetTest);
 
     EXPECT_CALL(*mValueSetMock, getValueCallback(valueKey))
     .WillOnce(Return(initValue));
 
     // Set up the mock for ParameterAdapter to receive the key and the
     // value set in the getter mock
-    EXPECT_CALL(*activeValueSetTest, onValueChanged(valueKey, initValue))
-    .WillOnce(InvokeWithoutArgs(activeValueSetTest, &ActiveValueSetTest::notify));
+    EXPECT_CALL(activeValueSetTest, onValueChanged(valueKey, initValue))
+    .WillOnce(InvokeWithoutArgs(&activeValueSetTest, &ActiveValueSetTest::notify));
 
     // trig the event change for the value key
     mValueSetMock->trigValueEventChange(valueKey);
 
-    activeValueSetTest->waitNotification();
+    activeValueSetTest.waitNotification();
 
-    activeValueSetTest->stop();
+    activeValueSetTest.stop();
 
     delete mValueSetMock;
-    delete activeValueSetTest;
 }
 
 TEST(ActiveValueSetTest, TrigAValueChangedWhileActiveValueSetNotStarted)
@@ -203,7 +202,7 @@ TEST(ActiveValueSetTest, StartTwiceStopTwiceActiveValueSet)
 {
     ActiveValueSetTest *activeValueSetTest = new ActiveValueSetTest();
 
-    ASSERT_TRUE(activeValueSetTest->start());
+    EXPECT_TRUE(activeValueSetTest->start());
 
     EXPECT_FALSE(activeValueSetTest->start());
 
@@ -218,11 +217,11 @@ TEST(ActiveValueSetTest, StartAndStopTwiceActiveValueSet)
 {
     ActiveValueSetTest *activeValueSetTest = new ActiveValueSetTest();
 
-    ASSERT_TRUE(activeValueSetTest->start());
+    EXPECT_TRUE(activeValueSetTest->start());
 
     activeValueSetTest->stop();
 
-    ASSERT_TRUE(activeValueSetTest->start());
+    EXPECT_TRUE(activeValueSetTest->start());
 
     activeValueSetTest->stop();
 

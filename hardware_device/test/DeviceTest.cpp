@@ -598,8 +598,6 @@ TEST_F(DeviceTest, OutputStreamErrorHandling)
         reinterpret_cast<intel_audio::StreamInterface::ext *>(stream_out)->obj.out);
 
     // Common API check
-    audio_stream *stream = reinterpret_cast<audio_stream *>(stream_out);
-
     /** Check get render position with NULL pointer error handling. */
     uint32_t *nullFrames = NULL;
     EXPECT_EQ(stream_out->get_render_position(stream_out, nullFrames), android::BAD_VALUE);

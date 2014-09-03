@@ -23,12 +23,13 @@
  */
 #pragma once
 
+#include <NonCopyable.hpp>
 #include <string>
 
 class ValueSetMock;
 class Value;
 
-class ValueMock
+class ValueMock : private audio_comms::utilities::NonCopyable
 {
 public:
     ValueMock(ValueSetMock *parent, const std::string &key);
