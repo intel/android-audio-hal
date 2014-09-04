@@ -116,7 +116,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_REQUIRED_MODULES := \
     audio.primary.$(TARGET_DEVICE) \
-    audio_policy.$(TARGET_DEVICE) \
     audio.routemanager \
     liblpepreprocessing \
     route_criteria.conf

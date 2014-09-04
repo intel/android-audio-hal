@@ -20,6 +20,7 @@
 # express and approved by Intel in writing.
 #
 
+ifeq ($(USE_LEGACY_AUDIO_POLICY), 1)
 
 # uncomment this variable to execute audio policy test
 #AUDIO_POLICY_TEST := true
@@ -63,3 +64,5 @@ endif
 include external/stlport/libstlport.mk
 
 include $(BUILD_SHARED_LIBRARY)
+
+endif # ifeq ($(USE_LEGACY_AUDIO_POLICY), 1)
