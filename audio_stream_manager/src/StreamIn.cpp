@@ -425,6 +425,11 @@ status_t StreamIn::setDevice(audio_devices_t device)
 
 void StreamIn::setInputSource(audio_source_t inputSource)
 {
+    // temporary hack: ignore input sources with an integer value above 31,
+    // since the BitField class uses an uint32.
+    if (inputSource > 31) {
+        return;
+    }
     setApplicabilityMask(BitField::indexToMask(inputSource));
 }
 
