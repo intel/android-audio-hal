@@ -92,8 +92,8 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
 
 status_t AudioResampler::convert(const void *src,
                                  void **dst,
-                                 uint32_t inFrames,
-                                 uint32_t *outFrames)
+                                 size_t inFrames,
+                                 size_t *outFrames)
 {
     AUDIOCOMMS_ASSERT(src != NULL, "NULL source buffer");
     const void *srcBuf = static_cast<const void *>(src);

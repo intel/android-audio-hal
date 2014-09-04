@@ -107,7 +107,7 @@ status_t AudioConversion::configure(const SampleSpec &ssSrc, const SampleSpec &s
 }
 
 status_t AudioConversion::getConvertedBuffer(void *dst,
-                                             const uint32_t outFrames,
+                                             const size_t outFrames,
                                              AudioBufferProvider *bufferProvider)
 {
     AUDIOCOMMS_ASSERT(bufferProvider != NULL, "NULL source buffer");
@@ -224,8 +224,8 @@ status_t AudioConversion::getConvertedBuffer(void *dst,
 
 status_t AudioConversion::convert(const void *src,
                                   void **dst,
-                                  const uint32_t inFrames,
-                                  uint32_t *outFrames)
+                                  const size_t inFrames,
+                                  size_t *outFrames)
 {
     AUDIOCOMMS_ASSERT(src != NULL, "NULL source buffer");
     const void *srcBuf = src;

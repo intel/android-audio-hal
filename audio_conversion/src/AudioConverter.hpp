@@ -51,8 +51,8 @@ public:
      */
     typedef android::status_t (AudioConverter::*SampleConverter)(const void *src,
                                                                  void *dst,
-                                                                 uint32_t inFrames,
-                                                                 uint32_t *outFrames);
+                                                                 size_t inFrames,
+                                                                 size_t *outFrames);
 
     AudioConverter(SampleSpecItem sampleSpecItem);
 
@@ -90,8 +90,8 @@ public:
      */
     virtual android::status_t convert(const void *src,
                                       void **dst,
-                                      uint32_t inFrames,
-                                      uint32_t *outFrames);
+                                      size_t inFrames,
+                                      size_t *outFrames);
 
 protected:
     /**
