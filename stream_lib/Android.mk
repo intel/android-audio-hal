@@ -84,11 +84,11 @@ $( \
     $(eval LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include) \
     $(eval LOCAL_C_INCLUDES := $(stream_lib_includes_common)) \
     $(eval LOCAL_C_INCLUDES += $(stream_lib_includes_dir_$(1))) \
-    $(eval LOCAL_STATIC_LIBRARIES := $(stream_lib_static_lib_$(1))) \
+    $(eval LOCAL_STATIC_LIBRARIES := $(stream_lib_static_lib_$(1)) \
+        $(stream_lib_include_dirs_from_static_libraries_$(1)) \
+        audio.routemanager.includes )
     $(eval LOCAL_SRC_FILES := $(stream_lib_src_files)) \
     $(eval LOCAL_CFLAGS := $(stream_lib_cflags)) \
-    $(eval LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := $(stream_lib_include_dirs_from_static_libraries_$(1)))
-    $(eval LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_SHARED_LIBRARIES := audio.routemanager)
     $(eval LOCAL_MODULE_TAGS := optional) \
 )
 endef

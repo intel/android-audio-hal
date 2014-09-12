@@ -138,10 +138,11 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include)
 LOCAL_C_INCLUDES := $(audio_route_manager_includes_common)
 LOCAL_C_INCLUDES += $(audio_route_manager_includes_dir_host)
 LOCAL_STATIC_LIBRARIES := $(audio_route_manager_static_lib_host)
+# libraries included for their headers
+LOCAL_STATIC_LIBRARIES += \
+    $(audio_route_manager_include_dirs_from_static_libraries_host)
 LOCAL_SRC_FILES := $(audio_route_manager_src_files)
 LOCAL_CFLAGS := $(audio_route_manager_cflags)
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
-    $(audio_route_manager_include_dirs_from_static_libraries_host)
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := libaudio_route_manager_static_gcov_host
 
