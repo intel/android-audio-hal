@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright (c) 2013-2014 Intel
+# Copyright (c) 2013-2015 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -160,11 +160,12 @@ ifeq ($(audiocomms_test_host),true)
 include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := $(audio_stream_manager_includes_dir_host)
 LOCAL_STATIC_LIBRARIES := $(audio_stream_manager_static_lib_host)
+# libraries included for their headers
+LOCAL_STATIC_LIBRARIES += \
+    $(audio_stream_manager_include_dirs_from_static_libraries_host)
 LOCAL_WHOLE_STATIC_LIBRARIES := $(audio_stream_manager_whole_static_lib)
 LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
 LOCAL_CFLAGS := $(audio_stream_manager_cflags)
-LOCAL_IMPORT_C_INCLUDE_DIRS_FROM_STATIC_LIBRARIES := \
-    $(audio_stream_manager_include_dirs_from_static_libraries_host)
 LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE := libaudio_stream_manager_static_host
 LOCAL_MODULE_OWNER := intel
