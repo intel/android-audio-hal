@@ -60,21 +60,25 @@ audio_route_manager_includes_dir_target := \
 audio_route_manager_header_copy_folder_unit_test := \
     audio_route_manager_unit_test
 
-audio_route_manager_static_lib += \
+audio_route_manager_static_lib := \
     libstream_static \
     libsamplespec_static \
     libparametermgr_static \
     libaudio_comms_utilities \
-    liblpepreprocessinghelper
+    liblpepreprocessinghelper \
+    libevent-listener_static \
+    libinterface-provider-lib_static \
 
-audio_route_manager_static_lib_host += \
-    $(foreach lib, $(audio_route_manager_static_lib), $(lib)_host)
+audio_route_manager_static_lib_host := \
+    $(foreach lib, $(audio_route_manager_static_lib), $(lib)_host) \
+    libproperty_includes_host \
 
-audio_route_manager_static_lib_target += \
+audio_route_manager_static_lib_target := \
     $(audio_route_manager_static_lib) \
-    libmedia_helper
+    libmedia_helper \
+    libproperty_static
 
-audio_route_manager_shared_lib_target += \
+audio_route_manager_shared_lib_target := \
     libtinyalsa \
     libcutils \
     libutils \
@@ -86,17 +90,6 @@ audio_route_manager_shared_lib_target += \
     libproperty \
     libinterface-provider \
     libinterface-provider-lib
-
-audio_route_manager_include_dirs_from_static_libraries := \
-    libevent-listener_static \
-    libinterface-provider-lib_static \
-    libproperty_static
-
-audio_route_manager_include_dirs_from_static_libraries_target := \
-    $(audio_route_manager_include_dirs_from_static_libraries)
-
-audio_route_manager_include_dirs_from_static_libraries_host := \
-    $(foreach lib, $(audio_route_manager_include_dirs_from_static_libraries), $(lib)_host)
 
 audio_route_manager_cflags := -Wall -Werror
 
