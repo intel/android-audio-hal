@@ -143,7 +143,6 @@ $( \
     $(eval LOCAL_STATIC_LIBRARIES += $(audio_conversion_fcttest_static_lib$(1))) \
     $(eval LOCAL_SHARED_LIBRARIES += $(audio_conversion_fcttest_shared_lib$(1))) \
     $(eval LOCAL_LDFLAGS += $(audio_conversion_fcttest_static_ldflags$(1))) \
-    $(eval LOCAL_MODULE_TAGS := tests) \
 )
 endef
 
@@ -154,6 +153,7 @@ LOCAL_MODULE := audio_conversion_functional_test
 LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libaudioconversion_static
 $(call make_audio_conversion_functional_test,_target)
+LOCAL_MODULE_TAGS := optional
 
 # GMock and GTest requires C++ Technical Report 1 (TR1) tuple library, which is not available
 # on target (stlport). GTest provides its own implementation of TR1 (and substiture to standard
@@ -172,6 +172,7 @@ LOCAL_MODULE := audio_conversion_fcttest_host
 LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libaudioconversion_static_host
 $(call make_audio_conversion_functional_test,_host)
+LOCAL_MODULE_TAGS := tests
 LOCAL_LDFLAGS += -pthread
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag

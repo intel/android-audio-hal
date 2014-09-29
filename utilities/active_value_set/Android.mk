@@ -66,7 +66,7 @@ LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := active_value_set_host
 LOCAL_MODULE_OWNER := intel
 LOCAL_LDFLAGS += -pthread
