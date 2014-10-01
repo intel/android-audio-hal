@@ -55,7 +55,11 @@ StreamOut::~StreamOut()
 
 status_t StreamOut::write(const void *buffer, size_t &bytes)
 {
-    AUDIOCOMMS_ASSERT(buffer != NULL, "NULL client buffer");
+    if (buffer == NULL) {
+        Log::Error() << __FUNCTION__ << ": NULL client buffer";
+        return android::BAD_VALUE;
+    }
+
     setStandby(false);
 
     mStreamLock.readLock();

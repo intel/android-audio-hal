@@ -85,6 +85,11 @@ status_t StreamIn::readHwFrames(void *buffer, size_t frames)
     uint32_t retryCount = 0;
     status_t ret;
 
+    if (frames == 0) {
+        Log::Error() << "No frame to read";
+        return android::BAD_VALUE;
+    }
+
     do {
         std::string error;
 
@@ -438,8 +443,10 @@ void StreamIn::setInputSource(audio_source_t inputSource)
 status_t StreamIn::addAudioEffect(effect_handle_t effect)
 {
     Log::Debug() << __FUNCTION__ << ": effect=" << effect;
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    if (effect == NULL || *effect == NULL) {
+        Log::Error() << __FUNCTION__ << ": Invalid argument (" << effect << ")";
+        return android::BAD_VALUE;
+    }
 
     // Called from different context than the stream,
     // so effect Lock must be held
@@ -483,12 +490,14 @@ status_t StreamIn::removeAudioEffect(effect_handle_t effect)
 {
     Log::Debug() << __FUNCTION__ << ": effect=" << effect;
 
+    if (effect == NULL || *effect == NULL) {
+        Log::Error() << __FUNCTION__ << ": Invalid argument (" << effect << ")";
+        return android::BAD_VALUE;
+    }
+
     // Called from different context than the stream,
     // so effect Lock must be held.
     AutoW lock(mPreProcEffectLock);
-
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
 
     if (isHwEffectL(effect)) {
         Log::Debug() << __FUNCTION__ << ": HW Effect requested";
