@@ -99,8 +99,10 @@ status_t StreamIn::readHwFrames(void *buffer, size_t frames)
                 return android::DEAD_OBJECT;
             }
 
-            AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
-                              "Hardware not responding, restarting media server");
+            if (++retryCount >= mMaxReadWriteRetried) {
+                Log::Error() << "%s: Hardware not responding after %d retries", __FUNCTION__, retryCount;
+                return android::DEAD_OBJECT;
+            }
 
             // Get the number of microseconds to sleep, inferred from the number of
             // frames to write.
