@@ -84,8 +84,12 @@ private:
     virtual void onModemAudioBandChanged();
 
     const std::string isModemAlive(void *context) const;
-
-    const std::string isModemAudioAvailable(void *context) const;
+    /**
+     * Get the status of the Audio link
+     * @param[in] context
+     * @return @see AudioStatus
+     */
+    const std::string getModemAudioStatus(void *context) const;
 
     const std::string getAudioBand(void *context) const;
 

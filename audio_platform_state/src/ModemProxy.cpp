@@ -80,7 +80,7 @@ ModemProxy::ModemProxy(const string &libraryName,
                              this);
     addValue(value);
     value = new Value(mKeyCallStatus + mInstance,
-                      reinterpret_cast<Value::GetValueCallback>(&ModemProxy::isModemAudioAvailable),
+                      reinterpret_cast<Value::GetValueCallback>(&ModemProxy::getModemAudioStatus),
                       this);
     addValue(value);
     value = new Value(mKeyBandType + mInstance,
@@ -124,16 +124,15 @@ const std::string ModemProxy::isModemAlive(void *context) const
     return modemAlive;
 }
 
-const std::string ModemProxy::isModemAudioAvailable(void *context) const
+const std::string ModemProxy::getModemAudioStatus(void *context) const
 {
     ModemProxy *proxy = static_cast<ModemProxy *>(context);
     AUDIOCOMMS_ASSERT(proxy != NULL, "NULL context given back");
     if (proxy->mModemAudioManagerInterface == NULL) {
-        return mLiteralFalseValue;
+        return IModemAudioManagerInterface::toLiteral(IModemAudioManagerInterface::AudioDetach);
     }
-    string modemAudioAvailable;
-    convertTo(proxy->mModemAudioManagerInterface->isModemAudioAvailable(), modemAudioAvailable);
-    return modemAudioAvailable;
+    return IModemAudioManagerInterface::toLiteral(
+                proxy->mModemAudioManagerInterface->getModemAudioStatus());
 }
 
 const std::string ModemProxy::getAudioBand(void *context) const
