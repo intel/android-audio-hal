@@ -69,7 +69,7 @@ ModemProxy::ModemProxy(const string &libraryName,
         } else {
 
             // Declare ourselves as observer
-            mModemAudioManagerInterface->setModemAudioManagerObserver(this);
+            mModemAudioManagerInterface->setObserver(this);
             Log::Verbose() << "Connected to a ModemAudioManager interface";
         }
     }
@@ -120,7 +120,7 @@ const std::string ModemProxy::isModemAlive(void *context) const
         return mLiteralFalseValue;
     }
     string modemAlive;
-    convertTo(proxy->mModemAudioManagerInterface->isModemAlive(), modemAlive);
+    convertTo(proxy->mModemAudioManagerInterface->isAlive(), modemAlive);
     return modemAlive;
 }
 
@@ -132,7 +132,7 @@ const std::string ModemProxy::getModemAudioStatus(void *context) const
         return IModemAudioManagerInterface::toLiteral(IModemAudioManagerInterface::AudioDetach);
     }
     return IModemAudioManagerInterface::toLiteral(
-                proxy->mModemAudioManagerInterface->getModemAudioStatus());
+        proxy->mModemAudioManagerInterface->getAudioStatus());
 }
 
 const std::string ModemProxy::getAudioBand(void *context) const
@@ -153,7 +153,7 @@ bool ModemProxy::start()
     if (!mModemAudioManagerInterface->start()) {
         Log::Warning() << __FUNCTION__
                        << ": could not start ModemAudioManager for instance " << mInstance;
-        mModemAudioManagerInterface->setModemAudioManagerObserver(NULL);
+        mModemAudioManagerInterface->setObserver(NULL);
         return false;
     }
     return true;
@@ -163,7 +163,7 @@ void ModemProxy::stop()
 {
     if (mModemAudioManagerInterface != NULL) {
         // Unsuscribe & stop ModemAudioManager
-        mModemAudioManagerInterface->setModemAudioManagerObserver(NULL);
+        mModemAudioManagerInterface->setObserver(NULL);
         mModemAudioManagerInterface->stop();
     }
 }
