@@ -88,7 +88,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(effect_pre_proc_static_lib_target)
 LOCAL_SHARED_LIBRARIES := \
     $(effect_pre_proc_shared_lib_target)
-LOCAL_MODULE_PATH := $(TARGET_OUT_SHARED_LIBRARIES)/soundfx
+LOCAL_MODULE_RELATIVE_PATH := soundfx
 
 include external/stlport/libstlport.mk
 
