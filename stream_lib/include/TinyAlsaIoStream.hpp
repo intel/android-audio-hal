@@ -56,7 +56,7 @@ public:
      * For an output stream, frames available are the number of empty frames available
      * for the application to write.
      */
-    virtual android::status_t getFramesAvailable(size_t &avail, struct timespec &tStamp) const;
+    virtual android::status_t getFramesAvailable(uint32_t &avail, struct timespec &tStamp) const;
 
 protected:
     /**

@@ -60,7 +60,7 @@ TEST_P(AudioConversionT, audioConversion)
 
     const void *sourceBuf = std::tr1::get<2>(GetParam());
     size_t sourceBufSize = std::tr1::get<3>(GetParam());
-    const uint32_t inputFrames = sampleSpecSrc.convertBytesToFrames(sourceBufSize);
+    const size_t inputFrames = sampleSpecSrc.convertBytesToFrames(sourceBufSize);
 
     const uint8_t *expectedDstBuf = (uint8_t *)std::tr1::get<4>(GetParam());
     size_t expectedDstBufSize = std::tr1::get<5>(GetParam());
@@ -75,7 +75,7 @@ TEST_P(AudioConversionT, audioConversion)
 
     bool allocateBuffer = std::tr1::get<6>(GetParam());
     uint8_t *dstBuf = NULL;
-    uint32_t dstFrames = 0;
+    size_t dstFrames = 0;
 
     if (allocateBuffer) {
 
@@ -616,7 +616,7 @@ TEST(AudioConversion, resampleDoubleConfigure)
         sizeof(sourceBuf) / (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
 
     uint16_t *dstBuf = NULL;
-    uint32_t dstFrames = 0;
+    size_t dstFrames = 0;
     EXPECT_EQ(0, audioConversion.convert(sourceBuf, reinterpret_cast<void **>(&dstBuf),
                                          inputFrames, &dstFrames));
 
@@ -633,7 +633,7 @@ TEST(AudioConversion, resampleDoubleConfigure)
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15,
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15
     };
-    const uint32_t inputFrames2 =
+    const size_t inputFrames2 =
         sizeof(secondSourceBuf) / (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
 
     EXPECT_EQ(0, audioConversion.convert(secondSourceBuf, reinterpret_cast<void **>(&dstBuf),
@@ -730,10 +730,10 @@ TEST(AudioConversion, memoryTest)
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15,
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15
     };
-    const uint32_t inputFrames =
+    const size_t inputFrames =
         sizeof(sourceBuf) / (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
 
-    uint32_t dstFrames = 0;
+    size_t dstFrames = 0;
     EXPECT_EQ(0, audioConversion->convert(sourceBuf,
                                           reinterpret_cast<void **>(&dstBuf),
                                           inputFrames, &dstFrames));

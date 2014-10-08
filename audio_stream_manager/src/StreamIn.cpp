@@ -627,7 +627,7 @@ bool StreamIn::isAecEffect(effect_handle_t effect)
 void StreamIn::getCaptureDelay(struct echo_reference_buffer *buffer)
 {
     /* read frames available in kernel driver buffer */
-    size_t kernel_frames;
+    uint32_t kernel_frames;
     struct timespec tstamp;
     long buf_delay;
     long kernel_delay;

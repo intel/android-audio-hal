@@ -145,7 +145,7 @@ void Resampler::convertFloat2Short(float *inp, int16_t *out, size_t sz) const
 status_t Resampler::resampleFrames(const void *src,
                                    void *dst,
                                    const size_t inFrames,
-                                   uint32_t *outFrames)
+                                   size_t *outFrames)
 {
     size_t outFrameCount = convertSrcToDstInFrames(inFrames);
 

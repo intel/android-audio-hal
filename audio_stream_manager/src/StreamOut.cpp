@@ -211,7 +211,7 @@ status_t StreamOut::getRenderPosition(uint32_t &dspFrames) const
 
 status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &timestamp) const
 {
-    size_t avail;
+    uint32_t avail;
 
     if (getFramesAvailable(avail, timestamp) == 0) {
         size_t kernelBufferSize = getBufferSize();
@@ -269,7 +269,7 @@ void StreamOut::removeEchoReference(struct echo_reference_itfe *reference)
 
 int StreamOut::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer)
 {
-    size_t kernelFrames;
+    uint32_t kernelFrames;
     int status;
     status = getFramesAvailable(kernelFrames, buffer->time_stamp);
     if (status != android::OK) {
