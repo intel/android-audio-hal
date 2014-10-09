@@ -41,7 +41,8 @@ Criterion::Criterion(const std::string & /*mappingValue*/,
       mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem())),
       mCriterionName(context.getItem(MappingKeyName)),
-      mCriterionType(context.getItem(MappingKeyType))
+      mCriterionType(context.getItem(MappingKeyType)),
+      mValue(mDefaultValue)
 {
     mRouteInterface = mRouteSubsystem->getRouteInterface();
 
