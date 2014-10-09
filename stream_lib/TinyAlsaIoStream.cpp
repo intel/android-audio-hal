@@ -26,10 +26,12 @@
 #include "TinyAlsaIoStream.hpp"
 #include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 
 using std::string;
 using android::status_t;
 using android::OK;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -56,8 +58,12 @@ android::status_t TinyAlsaIoStream::detachRouteL()
 
 status_t TinyAlsaIoStream::pcmReadFrames(void *buffer, size_t frames, string &error) const
 {
-    status_t ret;
+    if (frames == 0) {
+        Log::Error() << "Invalid frame number to read (" << frames << ")";
+        return android::BAD_VALUE;
+    }
 
+    status_t ret;
     ret = pcm_read(getPcmDevice(),
                    (char *)buffer,
                    routeSampleSpec().convertFramesToBytes(frames));

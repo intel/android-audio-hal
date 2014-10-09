@@ -285,9 +285,9 @@ public:
     virtual android::status_t getFramesAvailable(uint32_t &avail,
                                                  struct timespec &tStamp) const = 0;
 
-    IStreamRoute *getCurrentStreamRoute() { return mCurrentStreamRoute; }
+    IStreamRoute *getCurrentStreamRoute() const { return mCurrentStreamRoute; }
 
-    IStreamRoute *getNewStreamRoute() { return mNewStreamRoute; }
+    IStreamRoute *getNewStreamRoute() const { return mNewStreamRoute; }
 
     /**
      * Attach the stream to its route.

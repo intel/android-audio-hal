@@ -55,7 +55,11 @@ StreamOut::~StreamOut()
 
 status_t StreamOut::write(const void *buffer, size_t &bytes)
 {
-    AUDIOCOMMS_ASSERT(buffer != NULL, "NULL client buffer");
+    if (buffer == NULL) {
+        Log::Error() << __FUNCTION__ << ": NULL client buffer";
+        return android::BAD_VALUE;
+    }
+
     setStandby(false);
 
     mStreamLock.readLock();
@@ -119,8 +123,10 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                 return -EBADFD;
             }
 
-            AUDIOCOMMS_ASSERT(++retryCount < mMaxReadWriteRetried,
-                              "Hardware not responding, restarting media server");
+            if (++retryCount > mMaxReadWriteRetried) {
+                Log::Error() << __FUNCTION__ << ": Hardware not responding";
+                return android::DEAD_OBJECT;
+            }
 
             // Get the number of microseconds to sleep, inferred from the number of
             // frames to write.
