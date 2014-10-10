@@ -202,6 +202,32 @@ status_t StreamOut::getRenderPosition(uint32_t &dspFrames) const
     return android::OK;
 }
 
+status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &timestamp) const
+{
+    /** Take the stream lock in read mode to avoid the route manager unrouting this stream,
+     * and closing the audio device while dealing with it.
+     */
+    AutoR lock(mStreamLock);
+    // Check if the audio route is available for this stream (i.e. an audio device is assign to it).
+    if (!isRoutedL()) {
+        return android::INVALID_OPERATION;
+    }
+    size_t avail;
+    if (getFramesAvailable(avail, timestamp) != android::OK) {
+        return android::BAD_VALUE;
+    }
+    size_t kernelBufferSize = getBufferSizeInFrames();
+    // FIXME This calculation is incorrect if there is buffering after app processor
+    int64_t signedFrames = mFrameCount - kernelBufferSize + avail;
+    if (signedFrames < 0) {
+        Log::Error() << __FUNCTION__ << ": signedFrames=" << signedFrames
+                     << " unusual negative value, please check avail implementation within driver.";
+        return android::BAD_VALUE;
+    }
+    frames = signedFrames;
+    return android::OK;
+}
+
 status_t StreamOut::flush()
 {
     AutoR lock(mStreamLock);
