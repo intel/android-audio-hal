@@ -55,11 +55,7 @@ public:
     virtual android::status_t resume() { return android::OK; }
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t drain(audio_drain_type_t) { return android::OK; }
-    /** @note API not implemented in our Audio HAL */
-    virtual android::status_t getPresentationPosition(uint64_t &, struct timespec &) const
-    {
-        return android::OK;
-    }
+    virtual android::status_t getPresentationPosition(uint64_t &, struct timespec &) const;
     virtual android::status_t setDevice(audio_devices_t device);
 
     /**
@@ -124,7 +120,7 @@ private:
      */
     int getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer);
 
-    uint32_t mFrameCount; /**< number of audio frames written by AudioFlinger. */
+    uint64_t mFrameCount; /**< number of audio frames written by AudioFlinger. */
 
     struct echo_reference_itfe *mEchoReference; /**< echo reference pointer, for SW AEC effect. */
 
