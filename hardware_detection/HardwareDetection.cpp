@@ -49,6 +49,10 @@ ConfigurationLocator::ConfigurationLocator()
         "/etc/parameter-framework/ParameterFrameworkConfiguration-bytcr-rt5651-default.xml",
         "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5651-default.xml");
 
+    mConfigurationFilePaths["cherrytrailaud"] = make_pair(
+        "/etc/parameter-framework/ParameterFrameworkConfiguration-chtrvp-rt5672-default.xml",
+        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-chtrvp-rt5672-default.xml");
+
     mSupportedCard = findSupportedCard();
 }
 
