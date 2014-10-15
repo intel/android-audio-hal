@@ -75,7 +75,7 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
     // guarantee to return a pcm structure, even when failing to open
     // it will return a reference on a "bad pcm" structure
     //
-    uint32_t flags = (isOut ? PCM_OUT : PCM_IN);
+    uint32_t flags = (isOut ? PCM_OUT : PCM_IN) | PCM_MONOTONIC;
     mPcmDevice = pcm_open(AudioUtils::getCardIndexByName(cardName),
                           deviceId, flags, &config);
     if (mPcmDevice && !pcm_is_ready(mPcmDevice)) {

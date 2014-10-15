@@ -158,6 +158,7 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     bytes = streamSampleSpec().convertFramesToBytes(
         AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
 
+    mFrameCount += srcFrames;
     mStreamLock.unlock();
     return status;
 }
@@ -206,6 +207,25 @@ status_t StreamOut::getRenderPosition(uint32_t &dspFrames) const
 {
     dspFrames = mFrameCount;
     return android::OK;
+}
+
+status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &timestamp) const
+{
+    size_t avail;
+
+    if (getFramesAvailable(avail, timestamp) == 0) {
+        size_t kernelBufferSize = getBufferSize();
+        // FIXME This calculation is incorrect if there is buffering after app processor
+        int64_t signedFrames = mFrameCount - kernelBufferSize + avail;
+        // It would be unusual for this value to be negative, but check just in case ...
+        if (signedFrames >= 0) {
+            frames = signedFrames;
+            return android::OK;
+        } else {
+            Log::Error() << __FUNCTION__ << ": signedFrames=" << signedFrames;
+        }
+    }
+    return android::BAD_VALUE;
 }
 
 status_t StreamOut::flush()

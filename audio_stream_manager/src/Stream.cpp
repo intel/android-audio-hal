@@ -251,9 +251,10 @@ size_t Stream::getBufferSize() const
     size = AudioUtils::alignOn16(size);
 
     size_t bytes = mSampleSpec.convertFramesToBytes(size);
-    Log::Debug() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
-                 << (isOut() ? "output" : "input") << " stream.";
-
+    if (bytes == 0) {
+        Log::Error() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
+                     << (isOut() ? "output" : "input") << " stream.";
+    }
     return bytes;
 }
 
