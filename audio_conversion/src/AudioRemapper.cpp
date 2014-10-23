@@ -101,8 +101,8 @@ android::status_t AudioRemapper::configure()
 template <typename type>
 status_t AudioRemapper::convertStereoToMono(const void *src,
                                             void *dst,
-                                            const uint32_t inFrames,
-                                            uint32_t *outFrames)
+                                            const size_t inFrames,
+                                            size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
@@ -122,8 +122,8 @@ status_t AudioRemapper::convertStereoToMono(const void *src,
 template <typename type>
 status_t AudioRemapper::convertMonoToStereo(const void *src,
                                             void *dst,
-                                            const uint32_t inFrames,
-                                            uint32_t *outFrames)
+                                            const size_t inFrames,
+                                            size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
@@ -150,11 +150,11 @@ status_t AudioRemapper::convertMonoToStereo(const void *src,
 template <typename type>
 status_t AudioRemapper::convertChannelsPolicyInStereo(const void *src,
                                                       void *dst,
-                                                      const uint32_t inFrames,
-                                                      uint32_t *outFrames)
+                                                      const size_t inFrames,
+                                                      size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
-    uint32_t frames = 0;
+    size_t frames = 0;
     uint32_t srcChannels = mSsSrc.getChannelCount();
 
     struct Stereo

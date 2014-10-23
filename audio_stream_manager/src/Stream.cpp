@@ -336,14 +336,14 @@ status_t Stream::configureAudioConversion(const SampleSpec &ssSrc, const SampleS
     return mAudioConversion->configure(ssSrc, ssDst);
 }
 
-status_t Stream::getConvertedBuffer(void *dst, const uint32_t outFrames,
+status_t Stream::getConvertedBuffer(void *dst, const size_t outFrames,
                                     android::AudioBufferProvider *bufferProvider)
 {
     return mAudioConversion->getConvertedBuffer(dst, outFrames, bufferProvider);
 }
 
-status_t Stream::applyAudioConversion(const void *src, void **dst, uint32_t inFrames,
-                                      uint32_t *outFrames)
+status_t Stream::applyAudioConversion(const void *src, void **dst, size_t inFrames,
+                                      size_t *outFrames)
 {
     return mAudioConversion->convert(src, dst, inFrames, outFrames);
 }

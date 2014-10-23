@@ -391,7 +391,7 @@ public:
 
     /* Helpers that convert C calls into C++ calls */
     static int wrapSetGain(audio_stream_in_t *stream, float gain);
-    static int wrapRead(audio_stream_in_t *stream, void *buffer, size_t bytes);
+    static ssize_t wrapRead(audio_stream_in_t *stream, void *buffer, size_t bytes);
     static uint32_t wrapGetInputFramesLost(audio_stream_in_t *stream);
 };
 

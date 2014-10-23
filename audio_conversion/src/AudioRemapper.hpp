@@ -90,8 +90,8 @@ private:
     template <typename type>
     android::status_t convertStereoToMono(const void *src,
                                           void *dst,
-                                          const uint32_t inFrames,
-                                          uint32_t *outFrames);
+                                          const size_t inFrames,
+                                          size_t *outFrames);
 
     /**
      * Remap from mono to stereo in typed format.
@@ -110,8 +110,8 @@ private:
     template <typename type>
     android::status_t convertMonoToStereo(const void *src,
                                           void *dst,
-                                          const uint32_t inFrames,
-                                          uint32_t *outFrames);
+                                          const size_t inFrames,
+                                          size_t *outFrames);
 
     /**
      * Remap channels policy in typed format.
@@ -131,8 +131,8 @@ private:
     template <typename type>
     android::status_t convertChannelsPolicyInStereo(const void *src,
                                                     void *dst,
-                                                    const uint32_t inFrames,
-                                                    uint32_t *outFrames);
+                                                    const size_t inFrames,
+                                                    size_t *outFrames);
 
     /**
      * Convert a source sample in typed format.

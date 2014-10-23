@@ -135,7 +135,7 @@ protected:
      * @return status OK is conversion is successful, error code otherwise.
      */
     android::status_t applyAudioConversion(const void *src, void **dst,
-                                           uint32_t inFrames, uint32_t *outFrames);
+                                           size_t inFrames, size_t *outFrames);
 
     /**
      * Converts audio samples and output an exact number of output frames.
@@ -149,7 +149,7 @@ protected:
      *
      * @return status OK, error code otherwise.
      */
-    android::status_t getConvertedBuffer(void *dst, const uint32_t outFrames,
+    android::status_t getConvertedBuffer(void *dst, const size_t outFrames,
                                          android::AudioBufferProvider *bufferProvider);
 
     /**

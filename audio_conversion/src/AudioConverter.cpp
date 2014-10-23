@@ -128,8 +128,8 @@ status_t AudioConverter::configure(const SampleSpec &ssSrc, const SampleSpec &ss
 
 status_t AudioConverter::convert(const void *src,
                                  void **dst,
-                                 const uint32_t inFrames,
-                                 uint32_t *outFrames)
+                                 const size_t inFrames,
+                                 size_t *outFrames)
 {
     void *outBuf;
     status_t ret = NO_ERROR;

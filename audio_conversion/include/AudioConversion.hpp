@@ -84,8 +84,8 @@ public:
      */
     android::status_t convert(const void *src,
                               void **dst,
-                              const uint32_t inFrames,
-                              uint32_t *outFrames);
+                              const size_t inFrames,
+                              size_t *outFrames);
 
     /**
      * Converts audio samples and output an exact number of output frames.
@@ -103,7 +103,7 @@ public:
      * @return status OK, error code otherwise.
      */
     android::status_t getConvertedBuffer(void *dst,
-                                         const uint32_t outFrames,
+                                         const size_t outFrames,
                                          android::AudioBufferProvider *bufferProvider);
 
 private:

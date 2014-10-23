@@ -51,8 +51,8 @@ public:
      */
     android::status_t resampleFrames(const void *src,
                                      void *dst,
-                                     const uint32_t inFrames,
-                                     uint32_t *outFrames);
+                                     const size_t inFrames,
+                                     size_t *outFrames);
 
     /**
      * Configures the resampler.

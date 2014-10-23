@@ -62,8 +62,10 @@ size_t AudioUtils::convertSrcToDstInFrames(size_t frames,
                                            const SampleSpec &ssSrc,
                                            const SampleSpec &ssDst)
 {
-    AUDIOCOMMS_ASSERT(ssSrc.getSampleRate() != 0, "Sample Rate not set");
-    AUDIOCOMMS_COMPILE_TIME_ASSERT(sizeof(uint64_t) >= (2 * sizeof(ssize_t)));
+    AUDIOCOMMS_ASSERT(ssSrc.getSampleRate() != 0, "Source Sample Rate not set");
+    AUDIOCOMMS_ASSERT(ssDst.getSampleRate() != 0, "Destination Sample Rate not set");
+    AUDIOCOMMS_ASSERT(frames < (numeric_limits<uint64_t>::max() / ssDst.getSampleRate()),
+                      "Overflow detected");
     int64_t dstFrames = ((uint64_t)frames * ssDst.getSampleRate() + ssSrc.getSampleRate() - 1) /
                         ssSrc.getSampleRate();
     AUDIOCOMMS_ASSERT(dstFrames <= numeric_limits<ssize_t>::max(),
