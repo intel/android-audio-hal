@@ -154,7 +154,7 @@ status_t AudioRemapper::convertChannelsPolicyInStereo(const void *src,
                                                       size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
-    uint32_t frames = 0;
+    size_t frames = 0;
     uint32_t srcChannels = mSsSrc.getChannelCount();
 
     struct Stereo

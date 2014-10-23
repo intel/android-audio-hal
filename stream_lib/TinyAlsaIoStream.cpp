@@ -28,10 +28,11 @@
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 
+using audio_comms::utilities::Log;
 using std::string;
 using android::status_t;
 using android::OK;
-using audio_comms::utilities::Log;
+using android::INVALID_OPERATION;
 
 namespace intel_audio
 {
@@ -102,9 +103,16 @@ size_t TinyAlsaIoStream::getBufferSizeInFrames() const
     return pcm_get_buffer_size(getPcmDevice());
 }
 
-status_t TinyAlsaIoStream::getFramesAvailable(uint32_t &avail, struct timespec &tStamp) const
+status_t TinyAlsaIoStream::getFramesAvailable(size_t &avail, struct timespec &tStamp) const
 {
-    return pcm_get_htimestamp(getPcmDevice(), &avail, &tStamp);
+    unsigned int availFrames;
+    int err =  pcm_get_htimestamp(getPcmDevice(), &availFrames, &tStamp);
+    if (err < 0) {
+        Log::Error() << __FUNCTION__ << ": Unable to get available frames";
+        return INVALID_OPERATION;
+    }
+    avail = availFrames;
+    return OK;
 }
 
 status_t TinyAlsaIoStream::pcmStop() const

@@ -64,7 +64,7 @@ TEST_P(AudioConversionT, audioConversion)
 
     const uint8_t *expectedDstBuf = (uint8_t *)std::tr1::get<4>(GetParam());
     size_t expectedDstBufSize = std::tr1::get<5>(GetParam());
-    const uint32_t expextedDstFrames = AudioUtils::convertSrcToDstInFrames(inputFrames,
+    const size_t expextedDstFrames = AudioUtils::convertSrcToDstInFrames(inputFrames,
                                                                            sampleSpecSrc,
                                                                            sampleSpecDst);
 
@@ -79,7 +79,7 @@ TEST_P(AudioConversionT, audioConversion)
 
     if (allocateBuffer) {
 
-        uint32_t dstSizeInBytes = AudioUtils::convertSrcToDstInBytes(sourceBufSize,
+        size_t dstSizeInBytes = AudioUtils::convertSrcToDstInBytes(sourceBufSize,
                                                                      sampleSpecSrc,
                                                                      sampleSpecDst);
 
@@ -612,7 +612,7 @@ TEST(AudioConversion, resampleDoubleConfigure)
         0xFFFF, 0xFFFF,
         0xF000, 0x9880
     };
-    const uint32_t inputFrames =
+    const size_t inputFrames =
         sizeof(sourceBuf) / (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
 
     uint16_t *dstBuf = NULL;
@@ -761,9 +761,9 @@ TEST(AudioConversion, frameExactApi)
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15, 10, 20,
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15, 10, 20
     };
-    const uint32_t inputFrames = sizeof(sourceBuf) /
+    const size_t inputFrames = sizeof(sourceBuf) /
                                  (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
-    const uint32_t expectedDstFrames = AudioUtils::convertSrcToDstInFrames(inputFrames,
+    const size_t expectedDstFrames = AudioUtils::convertSrcToDstInFrames(inputFrames,
                                                                            sampleSpecSrc,
                                                                            sampleSpecDst);
 
