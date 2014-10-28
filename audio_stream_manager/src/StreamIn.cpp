@@ -425,7 +425,14 @@ status_t StreamIn::setDevice(audio_devices_t device)
 
 void StreamIn::setInputSource(audio_source_t inputSource)
 {
-    setApplicabilityMask(BitField::indexToMask(inputSource));
+    AUDIOCOMMS_COMPILE_TIME_ASSERT(AUDIO_SOURCE_CNT < 32);
+
+    uint32_t inputSourceShift = inputSource;
+
+    if (inputSource == AUDIO_SOURCE_HOTWORD) {
+        inputSourceShift = AUDIO_SOURCE_CNT;
+    }
+    setApplicabilityMask(BitField::indexToMask(inputSourceShift));
 }
 
 status_t StreamIn::addAudioEffect(effect_handle_t effect)
