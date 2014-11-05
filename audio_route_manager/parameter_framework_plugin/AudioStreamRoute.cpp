@@ -40,6 +40,8 @@ const string AudioStreamRoute::mChannelPolicyIgnore = "ignore";
 const string AudioStreamRoute::mChannelPolicyAverage = "average";
 
 const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
+    applicabilityMask :     0,
+    effectSupported :       {},
     requirePreEnable :      false,
     requirePostDisable :    false,
     silencePrologInMs :     0,
@@ -52,9 +54,7 @@ const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
     startThreshold :        0,
     stopThreshold :         0,
     silenceThreshold :      0,
-    availMin :              0,
-    applicabilityMask :     0,
-    effectSupported :       {}
+    availMin :              0
 };
 
 AudioStreamRoute::AudioStreamRoute(const string &mappingValue,

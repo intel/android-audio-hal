@@ -38,9 +38,17 @@ private:
 
     /**
      * Mapped control structure - must be packed
+     * Note that the component called config is either playback or capture config.
+     * Playback will use output flags as applicability mask whereas capture will use input sources
+     * as applicability mask.
+     * Both Playback and Capture config component type will extend generic config type.
+     * Extend mecanism will append the generic config parameter AFTER specific capture / playback
+     * parameters.
      */
     struct Config
     {
+        uint32_t applicabilityMask; /**< applicability mask, either input source or output flags. */
+        char effectSupported[mMaxStringSize]; /**< effects supported by the stream route. */
         bool requirePreEnable; /**< require pre enable attribute. */
         bool requirePostDisable; /**< require post disable attribute. */
         uint32_t silencePrologInMs; /**< prolog silence to be added when opening the device in ms.*/
@@ -54,8 +62,6 @@ private:
         uint32_t stopThreshold; /**< stop threshold. */
         uint32_t silenceThreshold; /**< silence threshold. */
         uint32_t availMin; /** avail min. */
-        uint32_t applicabilityMask; /**< applicability mask, either input source or output flags. */
-        char effectSupported[mMaxStringSize]; /**< effects supported by the stream route. */
     } __attribute__((packed));
 
 public:
