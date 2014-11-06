@@ -24,6 +24,7 @@
 
 #include "AudioPort.hpp"
 #include "AudioRoute.hpp"
+#include <cutils/bitops.h>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 
@@ -33,8 +34,8 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioRoute::AudioRoute(const string &name, uint32_t routeId)
-    : RoutingElement(name, routeId),
+AudioRoute::AudioRoute(const string &name)
+    : RoutingElement(name),
       mIsUsed(false),
       mPreviouslyUsed(false),
       mIsApplicable(false),
@@ -53,7 +54,7 @@ void AudioRoute::addPort(AudioPort *port)
 {
     AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
 
-    Log::Verbose() << __FUNCTION__ << ": " << port->getId() << " to route " << getName();
+    Log::Verbose() << __FUNCTION__ << ": " << port->getName() << " to route " << getName();
 
     port->addRouteToPortUsers(this);
     if (!mPort[EPortSource]) {

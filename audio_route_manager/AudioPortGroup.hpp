@@ -39,7 +39,7 @@ private:
     typedef std::list<AudioPort *>::const_iterator PortListConstIterator;
 
 public:
-    AudioPortGroup(const std::string &name, uint32_t groupId);
+    AudioPortGroup(const std::string &name);
     virtual ~AudioPortGroup();
 
     /**

@@ -42,7 +42,7 @@ private:
     typedef std::list<AudioRoute *>::const_iterator RouteListConstIterator;
 
 public:
-    AudioPort(const std::string &name, uint32_t portIndex);
+    AudioPort(const std::string &name);
     virtual ~AudioPort();
 
     /**

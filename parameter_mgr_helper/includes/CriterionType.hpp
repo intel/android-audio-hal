@@ -91,6 +91,15 @@ public:
      */
     std::string getFormattedState(uint32_t value);
 
+    /**
+     * Get the numerical value of the criterion.
+     *
+     * @param[in] literalValue to convert
+     *
+     * @return the numerical value associated to the literal value.
+     */
+    int getNumericalFromLiteral(const std::string &literalValue) const;
+
 private:
     /**
      * criterion type interface for parameter manager operations.

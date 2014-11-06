@@ -57,7 +57,9 @@ const char *const AudioRouteManager::mClosingRouteCriterion[Direction::_nbDirect
 const char *const AudioRouteManager::mOpenedRouteCriterion[Direction::_nbDirections] = {
     "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
 };
-const char *const AudioRouteManager::mRouteCriterionType = "RouteType";
+const char *const AudioRouteManager::mRouteCriterionType[Direction::_nbDirections] = {
+    "RoutePlaybackType", "RouteCaptureType"
+};
 const char *const AudioRouteManager::mRoutingStage = "RoutageState";
 
 const char *const AudioRouteManager::mAudioPfwConfFilePropName = "AudioComms.PFW.ConfPath";
@@ -199,14 +201,14 @@ status_t AudioRouteManager::startService()
         return android::OK;
     }
 
-    // Routes Criterion Type
-    AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(mRouteCriterionType) != mCriterionTypesMap.end(),
-                      "Route CriterionType not found");
-
-    CriterionType *routeCriterionType = mCriterionTypesMap[mRouteCriterionType];
-
     // Route Criteria
     for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+        // Routes Criterion Type
+        AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(
+                              mRouteCriterionType[i]) != mCriterionTypesMap.end(),
+                          "Route CriterionType not found");
+
+        CriterionType *routeCriterionType = mCriterionTypesMap[mRouteCriterionType[i]];
 
         mSelectedOpenedRoutes[i] = new Criterion(mOpenedRouteCriterion[i],
                                                  routeCriterionType,
@@ -293,29 +295,29 @@ void AudioRouteManager::doReconsiderRouting()
     Log::Debug() << __FUNCTION__
                  << ": Route state:"
                  << "\n\t-Previously Enabled Route in Input = "
-                 << routeCriterionType()->getFormattedState(prevEnabledRoutes(Direction::Input))
+                 << routeMaskToString<Direction::Input>(prevEnabledRoutes(Direction::Input))
                  << "\n\t-Previously Enabled Route in Output = "
-                 << routeCriterionType()->getFormattedState(prevEnabledRoutes(Direction::Output))
+                 << routeMaskToString<Direction::Output>(prevEnabledRoutes(Direction::Output))
                  << "\n\t-Selected Route in Input = "
-                 << routeCriterionType()->getFormattedState(enabledRoutes(Direction::Input))
+                 << routeMaskToString<Direction::Input>(enabledRoutes(Direction::Input))
                  << "\n\t-Selected Route in Output = "
-                 << routeCriterionType()->getFormattedState(enabledRoutes(Direction::Output))
+                 << routeMaskToString<Direction::Output>(enabledRoutes(Direction::Output))
                  << (needReflowRoutes(Direction::Input) ?
-        "\n\t-Route that need reconfiguration in Input = " +
-        routeCriterionType()->getFormattedState(needReflowRoutes(Direction::Input))
-        : "")
+                    "\n\t-Route that need reconfiguration in Input = " +
+                    routeMaskToString<Direction::Input>(needReflowRoutes(Direction::Input))
+                    : "")
                  << (needReflowRoutes(Direction::Output) ?
-        "\n\t-Route that need reconfiguration in Output = "
-        + routeCriterionType()->getFormattedState(needReflowRoutes(Direction::Output))
-        : "")
+                    "\n\t-Route that need reconfiguration in Output = "
+                    + routeMaskToString<Direction::Output>(needReflowRoutes(Direction::Output))
+                    : "")
                  << (needRepathRoutes(Direction::Input) ?
-        "\n\t-Route that need rerouting in Input = " +
-        routeCriterionType()->getFormattedState(needRepathRoutes(Direction::Input))
-        : "")
+                    "\n\t-Route that need rerouting in Input = " +
+                    routeMaskToString<Direction::Input>(needRepathRoutes(Direction::Input))
+                    : "")
                  << (needRepathRoutes(Direction::Output) ?
-        "\n\t-Route that need rerouting in Output = "
-        + routeCriterionType()->getFormattedState(needRepathRoutes(Direction::Output))
-        : "");
+                    "\n\t-Route that need rerouting in Output = "
+                    + routeMaskToString<Direction::Output>(needRepathRoutes(Direction::Output))
+                    : "");
     executeRouting();
     Log::Debug() << __FUNCTION__ << ": DONE";
 }
@@ -371,8 +373,8 @@ bool AudioRouteManager::checkAndPrepareRouting()
 
         AudioRoute *route =  it->second;
         prepareRoute(route);
-        setBit(route->needReflow(), route->getId(), mRoutes[route->isOut()].needReflow);
-        setBit(route->needRepath(), route->getId(), mRoutes[route->isOut()].needRepath);
+        setBit(route->needReflow(), routeToMask(route), mRoutes[route->isOut()].needReflow);
+        setBit(route->needRepath(), routeToMask(route), mRoutes[route->isOut()].needRepath);
     }
 
     return routingHasChanged<Direction::Output>() | routingHasChanged<Direction::Input>();
@@ -386,7 +388,7 @@ void AudioRouteManager::prepareRoute(AudioRoute *route)
                         setStreamForRoute(static_cast<AudioStreamRoute *>(route)) :
                         route->isApplicable();
     route->setUsed(isApplicable);
-    setBit(isApplicable, route->getId(), mRoutes[route->isOut()].enabled);
+    setBit(isApplicable, routeToMask(route), mRoutes[route->isOut()].enabled);
 }
 
 bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
@@ -535,18 +537,20 @@ void AudioRouteManager::doEnableRoutes(bool isPreEnable)
 }
 
 template <typename T>
-bool AudioRouteManager::addElement(const string &name, uint32_t id, map<string, T *> &elementsMap)
+bool AudioRouteManager::addElement(const string &key,
+                                   const string &name,
+                                   map<string, T *> &elementsMap)
 {
     if (mAudioPfwConnector->isStarted()) {
         Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
         return false;
     }
     routingElementSupported<T>();
-    if (elementsMap.find(name) != elementsMap.end()) {
-        Log::Warning() << __FUNCTION__ << ": element(" << name << ",=" << id << ") already added";
+    if (elementsMap.find(key) != elementsMap.end()) {
+        Log::Warning() << __FUNCTION__ << ": element(" << key << " already added";
         return false;
     }
-    elementsMap[name] = new T(name, id);
+    elementsMap[key] = new T(name);
     return true;
 }
 
@@ -870,19 +874,24 @@ void AudioRouteManager::commitCriteriaAndApply()
     mAudioPfwConnector->applyConfigurations();
 }
 
+static uint32_t count[Direction::_nbDirections] = {
+    0, 0
+};
+
 template <typename T>
 void AudioRouteManager::addRoute(const string &name,
-                                 uint32_t routeId,
                                  const string &portSrc,
                                  const string &portDst,
                                  bool isOut,
                                  map<string, T *> &elementsMap)
 {
-    AutoW lock(mRoutingLock);
-    if (addElement<T>(name, routeId, elementsMap)) {
 
-        T *route = elementsMap[name];
-        Log::Debug() << __FUNCTION__ << ": Name=" << name << ", Id=" << routeId
+    std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
+
+    AutoW lock(mRoutingLock);
+    if (addElement<T>(mapKeyName, name, elementsMap)) {
+        T *route = elementsMap[mapKeyName];
+        Log::Debug() << __FUNCTION__ << ": Name=" << mapKeyName
                      << " ports used= " << portSrc << " ," << portDst;
         route->setDirection(isOut);
         if (!portSrc.empty()) {
@@ -894,24 +903,27 @@ void AudioRouteManager::addRoute(const string &name,
         if (route->isStreamRoute()) {
 
             // Stream route must also be added in route list as well.
-            AUDIOCOMMS_ASSERT(mRouteMap.find(name) == mRouteMap.end(),
-                              "Fatal: route " << name << " already added to route list!");
-            mRouteMap[name] = route;
+            AUDIOCOMMS_ASSERT(mRouteMap.find(mapKeyName) == mRouteMap.end(),
+                              "Fatal: route " << mapKeyName << " already added to route list!");
+            mRouteMap[mapKeyName] = route;
         }
+        // Add Route criterion type value pair
+        addCriterionType(mRouteCriterionType[isOut], true);
+        addCriterionTypeValuePair(mRouteCriterionType[isOut], name, 1 << count[isOut]++);
     }
 }
 
-void AudioRouteManager::addPort(const string &name, uint32_t portId)
+void AudioRouteManager::addPort(const string &name)
 {
     AutoW lock(mRoutingLock);
     Log::Debug() << __FUNCTION__ << ": Name=" << name;
-    addElement<AudioPort>(name, portId, mPortMap);
+    addElement<AudioPort>(name, name, mPortMap);
 }
 
-void AudioRouteManager::addPortGroup(const string &name, int32_t groupId, const string &portMember)
+void AudioRouteManager::addPortGroup(const string &name, const string &portMember)
 {
     AutoW lock(mRoutingLock);
-    if (addElement<AudioPortGroup>(name, groupId, mPortGroupMap)) {
+    if (addElement<AudioPortGroup>(name, name, mPortGroupMap)) {
         Log::Debug() << __FUNCTION__ << ": Group=" << name << " PortMember to add=" << portMember;
         AudioPortGroup *portGroup = mPortGroupMap[name];
         AUDIOCOMMS_ASSERT(portGroup != NULL, "Fatal: invalid port group!");
