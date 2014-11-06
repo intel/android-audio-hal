@@ -37,8 +37,8 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioStreamRoute::AudioStreamRoute(const string &name, uint32_t routeIndex)
-    : AudioRoute(name, routeIndex),
+AudioStreamRoute::AudioStreamRoute(const string &name)
+    : AudioRoute(name),
       mCurrentStream(NULL),
       mNewStream(NULL),
       mEffectSupported(0),

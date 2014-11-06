@@ -32,7 +32,7 @@ namespace intel_audio
 class RoutingElement : public audio_comms::utilities::NonCopyable
 {
 public:
-    RoutingElement(const std::string &name, uint32_t index);
+    RoutingElement(const std::string &name);
     virtual ~RoutingElement();
 
     /**
@@ -42,21 +42,11 @@ public:
      */
     const std::string &getName() const { return mName; }
 
-    /**
-     * Returns numerical id of current routing element
-     *
-     * @returns value representing the id of the routing element
-     */
-    uint32_t getId() const { return mId; }
-
     virtual void resetAvailability() {}
 
 private:
     /** Unique Identifier of a routing element */
     std::string mName;
-
-    /** More than one routing element can share the same id (full duplex route for example)*/
-    uint32_t mId;
 };
 
 } // namespace intel_audio
