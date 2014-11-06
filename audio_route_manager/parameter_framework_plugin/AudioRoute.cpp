@@ -33,7 +33,6 @@ using intel_audio::IRouteInterface;
 const string AudioRoute::mOutputDirection = "out";
 const string AudioRoute::mStreamType = "streamRoute";
 const string AudioRoute::mPortDelimiter = "-";
-const string AudioRoute::mRouteCriterionType = "RouteType";
 
 const AudioRoute::Status AudioRoute::mDefaultStatus = {
     isApplicable    : false,
@@ -53,17 +52,10 @@ AudioRoute::AudioRoute(const string &mappingValue,
                           instanceConfigurableElement->getBelongingSubsystem())),
       mRouteInterface(mRouteSubsystem->getRouteInterface()),
       mStatus(mDefaultStatus),
-      mRouteId(context.getItemAsInteger(MappingKeyId)),
       mIsStreamRoute(context.getItem(MappingKeyType) == mStreamType),
       mIsOut(context.getItem(MappingKeyDirection) == mOutputDirection)
 {
     mRouteName = getFormattedMappingValue();
-
-    // Add Route criterion type value pair
-    mRouteInterface->addAudioCriterionType(mRouteCriterionType, true);
-    mRouteInterface->addAudioCriterionTypeValuePair(mRouteCriterionType,
-                                                    context.getItem(MappingKeyAmend1),
-                                                    1 << mRouteId);
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
@@ -74,14 +66,12 @@ AudioRoute::AudioRoute(const string &mappingValue,
     string portSrc = subStrings.size() >= mSinglePort ? subStrings[0] : string();
     string portDst = subStrings.size() == mDualPorts ? subStrings[1] : string();
 
-    // Append route to RouteMgr
+    // Append route to RouteMgr with route root name
     if (mIsStreamRoute) {
-
-        mRouteInterface->addAudioStreamRoute(mRouteName, 1 << mRouteId,
+        mRouteInterface->addAudioStreamRoute(context.getItem(MappingKeyAmend1),
                                              portSrc, portDst, mIsOut);
     } else {
-        mRouteInterface->addAudioRoute(mRouteName, 1 << mRouteId,
-                                       portSrc, portDst, mIsOut);
+        mRouteInterface->addAudioRoute(context.getItem(MappingKeyAmend1), portSrc, portDst, mIsOut);
     }
 }
 

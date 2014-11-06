@@ -41,7 +41,6 @@ AudioPort::AudioPort(const string &mappingValue,
                                 (MappingKeyAmendEnd - MappingKeyAmend1 + 1),
                                 context),
       mName(getFormattedMappingValue()),
-      mId(context.getItemAsInteger(MappingKeyId)),
       mIsBlocked(false),
       mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem()))
@@ -50,14 +49,14 @@ AudioPort::AudioPort(const string &mappingValue,
 
     // Adds port first to the route manager and then the links that may exist between these
     // ports (i.e. port groups that represent mutual exclusive ports).
-    mRouteInterface->addPort(mName, 1 << mId);
+    mRouteInterface->addPort(mName);
 
     string portGroups = context.getItem(MappingKeyGroups);
     Tokenizer mappingTok(portGroups, mDelimiter);
     vector<string> subStrings = mappingTok.split();
     for (uint32_t i = 0; i < subStrings.size(); i++) {
 
-        mRouteInterface->addPortGroup(subStrings[i], 0, mName);
+        mRouteInterface->addPortGroup(subStrings[i], mName);
     }
 }
 

@@ -110,7 +110,6 @@ private:
     Config _config; /**< stream route configuration. */
 
     string mRouteName; /**< stream route name. */
-    uint32_t mRouteId;   /**< stream route Id. */
     string mCardName; /**< card name used by the stream route. */
     int32_t mDevice; /**< audio device used by the stream route. */
     bool mIsOut; /**< direction qualifier of the stream route. */

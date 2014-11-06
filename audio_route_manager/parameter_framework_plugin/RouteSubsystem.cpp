@@ -40,7 +40,6 @@ const char *const RouteSubsystem::mRouteLibPropName = "audiocomms.routeLib";
 const char *const RouteSubsystem::mRouteLibraryName = "audio.routemanager.so";
 
 const char *const RouteSubsystem::mKeyName = "Name";
-const char *const RouteSubsystem::mKeyId = "Id";
 const char *const RouteSubsystem::mKeyDirection = "Direction";
 const char *const RouteSubsystem::mKeyType = "Type";
 const char *const RouteSubsystem::mKeyCard = "Card";
@@ -74,7 +73,6 @@ RouteSubsystem::RouteSubsystem(const string &name)
 
     // Provide mapping keys to upper layer
     addContextMappingKey(mKeyName);
-    addContextMappingKey(mKeyId);
     addContextMappingKey(mKeyDirection);
     addContextMappingKey(mKeyType);
     addContextMappingKey(mKeyCard);
@@ -90,19 +88,18 @@ RouteSubsystem::RouteSubsystem(const string &name)
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<AudioPort>(
             mPortComponentName,
-            (1 << MappingKeyId) | (1 << MappingKeyAmend1) | (1 << MappingKeyGroups))
+            (1 << MappingKeyAmend1) | (1 << MappingKeyGroups))
         );
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<AudioRoute>(
             mRouteComponentName,
-            (1 << MappingKeyId) |
             (1 << MappingKeyType) | (1 << MappingKeyDirection) | (1 << MappingKeyPorts) |
             (1 << MappingKeyAmend1))
         );
     addSubsystemObjectFactory(
         new TSubsystemObjectFactory<AudioStreamRoute>(
             mStreamRouteComponentName,
-            (1 << MappingKeyId) | (1 << MappingKeyDirection) |
+            (1 << MappingKeyDirection) |
             (1 << MappingKeyCard) | (1 << MappingKeyDevice) | (1 << MappingKeyPorts) |
             (1 << MappingKeyAmend1))
         );

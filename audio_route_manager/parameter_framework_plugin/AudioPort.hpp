@@ -64,7 +64,6 @@ protected:
 
 private:
     string mName; /**< Name of an audio port. */
-    uint32_t mId; /**< Identifier of an audio port. */
     bool mIsBlocked; /**< Blocked attribute of the port, ie, port must not be used. */
 
     const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */

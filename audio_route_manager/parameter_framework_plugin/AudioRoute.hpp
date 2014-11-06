@@ -82,11 +82,8 @@ private:
     Status mStatus; /**< status of a route. */
 
     string mRouteName; /**< Name of the audio route. */
-    uint32_t mRouteId; /**< Identifier of the audio route. */
     bool mIsStreamRoute; /**< qualifier of the audio route. */
     bool mIsOut; /**< direction qualifier of the audio route. */
-
-    static const std::string mRouteCriterionType; /**< Route criterion type name. */
     static const std::string mOutputDirection; /**< string key to identify output routes. */
     static const std::string mStreamType; /**< key to identify stream route. */
     static const uint32_t mSinglePort = 1;  /**< only one port is mentionned for this route. */

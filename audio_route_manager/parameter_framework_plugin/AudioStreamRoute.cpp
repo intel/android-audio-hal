@@ -69,7 +69,6 @@ AudioStreamRoute::AudioStreamRoute(const string &mappingValue,
                           instanceConfigurableElement->getBelongingSubsystem())),
       mRouteInterface(mRouteSubsystem->getRouteInterface()),
       _config(mDefaultConfig),
-      mRouteId(context.getItemAsInteger(MappingKeyId)),
       mCardName(context.getItem(MappingKeyCard)),
       mDevice(context.getItemAsInteger(MappingKeyDevice)),
       mIsOut(context.getItem(MappingKeyDirection) == mOutputDirection),
@@ -103,8 +102,7 @@ AudioStreamRoute::AudioStreamRoute(const string &mappingValue,
     string portDst = subStrings.size() == mDualPorts ? subStrings[1] : string();
 
     // Declares the stream route
-    mRouteInterface->addAudioStreamRoute(mRouteName,
-                                         1 << mRouteId,
+    mRouteInterface->addAudioStreamRoute(context.getItem(MappingKeyAmend1),
                                          portSrc, portDst,
                                          mIsOut);
 
