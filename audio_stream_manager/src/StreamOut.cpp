@@ -159,6 +159,10 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     bytes = streamSampleSpec().convertFramesToBytes(
         AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
 
+    if (mFrameCount > (std::numeric_limits<uint64_t>::max() - srcFrames)) {
+        Log::Error() << __FUNCTION__ << ": overflow detected, resetting framecount";
+        mFrameCount = 0;
+    }
     mFrameCount += srcFrames;
     mStreamLock.unlock();
     return status;
