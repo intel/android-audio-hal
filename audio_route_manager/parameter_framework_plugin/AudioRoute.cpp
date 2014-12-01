@@ -29,6 +29,7 @@
 #include <AudioCommsAssert.hpp>
 
 using intel_audio::IRouteInterface;
+using std::string;
 
 const string AudioRoute::mOutputDirection = "out";
 const string AudioRoute::mStreamType = "streamRoute";
@@ -59,7 +60,7 @@ AudioRoute::AudioRoute(const string &mappingValue,
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
-    vector<string> subStrings = mappingTok.split();
+    std::vector<string> subStrings = mappingTok.split();
     AUDIOCOMMS_ASSERT(subStrings.size() <= mDualPorts,
                       "Route cannot be connected to more than 2 ports");
 

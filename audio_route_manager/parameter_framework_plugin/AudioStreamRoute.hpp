@@ -65,7 +65,7 @@ private:
     } __attribute__((packed));
 
 public:
-    AudioStreamRoute(const string &mappingValue,
+    AudioStreamRoute(const std::string &mappingValue,
                      CInstanceConfigurableElement *instanceConfigurableElement,
                      const CMappingContext &context);
 
@@ -79,7 +79,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool receiveFromHW(string &error);
+    virtual bool receiveFromHW(std::string &error);
 
     /**
      * Sync to HW.
@@ -90,7 +90,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool sendToHW(string &error);
+    virtual bool sendToHW(std::string &error);
 
 private:
     /**
@@ -109,8 +109,8 @@ private:
     static const Config mDefaultConfig; /**< default route stream configuration at construction. */
     Config _config; /**< stream route configuration. */
 
-    string mRouteName; /**< stream route name. */
-    string mCardName; /**< card name used by the stream route. */
+    std::string mRouteName; /**< stream route name. */
+    std::string mCardName; /**< card name used by the stream route. */
     int32_t mDevice; /**< audio device used by the stream route. */
     bool mIsOut; /**< direction qualifier of the stream route. */
     bool mIsStreamRoute; /**< qualifier of the stream route. */

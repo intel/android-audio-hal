@@ -36,7 +36,7 @@ class Criterion : public CSubsystemObject
 {
 
 public:
-    Criterion(const string &mappingValue,
+    Criterion(const std::string &mappingValue,
               CInstanceConfigurableElement *instanceConfigurableElement,
               const CMappingContext &context);
 
@@ -50,7 +50,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool receiveFromHW(string &error);
+    virtual bool receiveFromHW(std::string &error);
 
     /**
      * Sync to HW.
@@ -61,7 +61,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool sendToHW(string &error);
+    virtual bool sendToHW(std::string &error);
 
 private:
     /**
@@ -81,8 +81,8 @@ private:
     intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
 
     static const uint32_t mDefaultValue = 0; /**< default numerical value of the criterion. */
-    string mCriterionName; /**< Name of the criterion. */
-    string mCriterionType; /**< Type name of the criterion. */
+    std::string mCriterionName; /**< Name of the criterion. */
+    std::string mCriterionType; /**< Type name of the criterion. */
     uint32_t mValue; /**< numerical value of the criterion. */
 
     static const std::string mValuePairCriterionType; /**< Value pair criterion type name. */

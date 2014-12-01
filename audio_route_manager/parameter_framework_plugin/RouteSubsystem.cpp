@@ -56,13 +56,13 @@ const char *const RouteSubsystem::mRouteComponentName = "Route";
 const char *const RouteSubsystem::mStreamRouteComponentName = "StreamRoute";
 const char *const RouteSubsystem::mCriterionComponentName = "Criterion";
 
-RouteSubsystem::RouteSubsystem(const string &name)
+RouteSubsystem::RouteSubsystem(const std::string &name)
     : CSubsystem(name),
       mRouteInterface(NULL)
 {
     // Try to connect a Route Interface from RouteManager
     IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<string>(mRouteLibPropName,
+        getInterfaceProvider(TProperty<std::string>(mRouteLibPropName,
                                                mRouteLibraryName).getValue().c_str());
 
     if (interfaceProvider) {

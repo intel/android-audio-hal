@@ -29,6 +29,7 @@
 #include <AudioCommsAssert.hpp>
 
 using std::memcmp;
+using std::string;
 using namespace intel_audio;
 
 const string AudioStreamRoute::mOutputDirection = "out";
@@ -94,7 +95,7 @@ AudioStreamRoute::AudioStreamRoute(const string &mappingValue,
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
-    vector<string> subStrings = mappingTok.split();
+    std::vector<string> subStrings = mappingTok.split();
     AUDIOCOMMS_ASSERT(subStrings.size() <= mDualPorts,
                       "Route cannot be connected to more than 2 ports");
 
@@ -115,7 +116,7 @@ AudioStreamRoute::parseChannelPolicyString(const std::string &channelPolicy)
 {
     std::vector<SampleSpec::ChannelsPolicy> channelPolicyVector;
     Tokenizer mappingTok(channelPolicy, mStringDelimiter);
-    vector<string> subStrings = mappingTok.split();
+    std::vector<string> subStrings = mappingTok.split();
 
     for (size_t i = 0; i < subStrings.size(); i++) {
 
@@ -174,7 +175,7 @@ bool AudioStreamRoute::sendToHW(string & /*error*/)
     streamConfig.channelsPolicy = parseChannelPolicyString(string(config.channelsPolicy));
 
     Tokenizer effectTok(string(config.effectSupported), mStringDelimiter);
-    vector<string> subStrings = effectTok.split();
+    std::vector<string> subStrings = effectTok.split();
     for (uint32_t i = 0; i < subStrings.size(); i++) {
 
         mRouteInterface->addRouteSupportedEffect(mRouteName, subStrings[i]);

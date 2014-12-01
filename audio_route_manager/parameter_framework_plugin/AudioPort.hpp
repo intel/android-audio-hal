@@ -35,7 +35,7 @@ class AudioPort : public CFormattedSubsystemObject
 {
 
 public:
-    AudioPort(const string &mappingValue,
+    AudioPort(const std::string &mappingValue,
               CInstanceConfigurableElement *pInstanceConfigurableElement,
               const CMappingContext &context);
 
@@ -49,7 +49,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool receiveFromHW(string &error);
+    virtual bool receiveFromHW(std::string &error);
 
     /**
      * Sync to HW.
@@ -60,10 +60,10 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool sendToHW(string &error);
+    virtual bool sendToHW(std::string &error);
 
 private:
-    string mName; /**< Name of an audio port. */
+    std::string mName; /**< Name of an audio port. */
     bool mIsBlocked; /**< Blocked attribute of the port, ie, port must not be used. */
 
     const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */

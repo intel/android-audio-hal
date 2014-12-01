@@ -35,7 +35,7 @@ class IRouteInterface;
 class RouteSubsystem : public CSubsystem, private audio_comms::utilities::NonCopyable
 {
 public:
-    RouteSubsystem(const string &strName);
+    RouteSubsystem(const std::string &strName);
 
     /**
      * Retrieve Route Manager interface.

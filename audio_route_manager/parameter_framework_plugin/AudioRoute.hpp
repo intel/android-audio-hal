@@ -46,7 +46,7 @@ private:
     } __attribute__((packed));
 
 public:
-    AudioRoute(const string &mappingValue,
+    AudioRoute(const std::string &mappingValue,
                CInstanceConfigurableElement *instanceConfigurableElement,
                const CMappingContext &context);
 
@@ -60,7 +60,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool receiveFromHW(string &error);
+    virtual bool receiveFromHW(std::string &error);
 
     /**
      * Sync to HW.
@@ -71,7 +71,7 @@ protected:
      *
      * @return true if success, false otherwise.
      */
-    virtual bool sendToHW(string &error);
+    virtual bool sendToHW(std::string &error);
 
 private:
     const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */
@@ -81,7 +81,7 @@ private:
 
     Status mStatus; /**< status of a route. */
 
-    string mRouteName; /**< Name of the audio route. */
+    std::string mRouteName; /**< Name of the audio route. */
     bool mIsStreamRoute; /**< qualifier of the audio route. */
     bool mIsOut; /**< direction qualifier of the audio route. */
     static const std::string mOutputDirection; /**< string key to identify output routes. */

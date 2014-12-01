@@ -29,6 +29,7 @@
 #include "RouteSubsystem.hpp"
 
 using intel_audio::IRouteInterface;
+using std::string;
 
 const string AudioPort::mDelimiter = "-";
 
@@ -53,7 +54,7 @@ AudioPort::AudioPort(const string &mappingValue,
 
     string portGroups = context.getItem(MappingKeyGroups);
     Tokenizer mappingTok(portGroups, mDelimiter);
-    vector<string> subStrings = mappingTok.split();
+    std::vector<string> subStrings = mappingTok.split();
     for (uint32_t i = 0; i < subStrings.size(); i++) {
 
         mRouteInterface->addPortGroup(subStrings[i], mName);
