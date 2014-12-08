@@ -40,9 +40,8 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
      * Called at audio platform discovery.
      *
      * @param[in] name: Port name
-     * @param[in] portId: port identifier
      */
-    virtual void addPort(const std::string &name, uint32_t portId) = 0;
+    virtual void addPort(const std::string &name) = 0;
 
     /**
      * Add a port group and / or a port member of this port group.
@@ -52,25 +51,22 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
      * In general, Groups of port represents all port connected to a shared I2S bus.
      *
      * @param[in] name: Group port name
-     * @param[in] groupId: gorup port identifier
      * @param[in] portMember: port member of the group identified by its name.
      */
     virtual void addPortGroup(const std::string &name,
-                              uint32_t groupId,
                               const std::string &portMember) = 0;
 
     /**
      * Add an Audio Route to route manager.
      * Called at audio platform discovery.
      *
-     * @param[in] name: route name
-     * @param[in] routeId: route identifier.
+     * @param[in] name: route name (short name WITHOUT the direction appended, i.e. _Playback or
+     *                  _Capture)
      * @param[in] portSrc: source port used by route, may be null if no protection needed.
      * @param[in] portDst: destination port used by route, may be null if no protection needed.
      * @param[in] isOut: route direction (true for output, false for input)
      */
     virtual void addAudioRoute(const std::string &name,
-                               uint32_t routeId,
                                const std::string &portSrc, const std::string &portDst,
                                bool isOut) = 0;
 
@@ -80,14 +76,13 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
      * forward the handle to the stream applicable on this route.
      * Called at audio platform discovery.
      *
-     * @param[in] name: route name
-     * @param[in] routeId: route identifier.
+     * @param[in] name: route name (short name WITHOUT the direction appended, i.e. _Playback or
+     *                  _Capture)
      * @param[in] portSrc: source port used by route, may be null if no protection needed.
      * @param[in] portDst: destination port used by route, may be null if no protection needed.
      * @param[in] isOut: route direction (true for output, false for input)
      */
     virtual void addAudioStreamRoute(const std::string &name,
-                                     uint32_t routeId,
                                      const std::string &portSrc, const std::string &portDst,
                                      bool isOut) = 0;
 

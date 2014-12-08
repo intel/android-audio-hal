@@ -91,32 +91,29 @@ private:
         RouteInterfaceImpl(AudioRouteManager *audioRouteManager)
             : mRouteMgr(audioRouteManager) {}
 
-        virtual void addPort(const std::string &name, uint32_t portId)
+        virtual void addPort(const std::string &name)
         {
-            mRouteMgr->addPort(name, portId);
+            mRouteMgr->addPort(name);
         }
 
         virtual void addPortGroup(const std::string &name,
-                                  uint32_t groupId,
                                   const std::string &portMember)
         {
-            mRouteMgr->addPortGroup(name, groupId, portMember);
+            mRouteMgr->addPortGroup(name, portMember);
         }
 
-        virtual void addAudioRoute(const std::string &name, uint32_t routeId,
+        virtual void addAudioRoute(const std::string &name,
                                    const std::string &portSrc, const std::string &portDst,
                                    bool isOut)
         {
-            mRouteMgr->addRoute<AudioRoute>(name, routeId, portSrc, portDst, isOut,
-                                            mRouteMgr->mRouteMap);
+            mRouteMgr->addRoute<AudioRoute>(name, portSrc, portDst, isOut, mRouteMgr->mRouteMap);
         }
 
         virtual void addAudioStreamRoute(const std::string &name,
-                                         uint32_t routeId,
                                          const std::string &portSrc, const std::string &portDst,
                                          bool isOut)
         {
-            mRouteMgr->addRoute<AudioStreamRoute>(name, routeId, portSrc, portDst, isOut,
+            mRouteMgr->addRoute<AudioStreamRoute>(name, portSrc, portDst, isOut,
                                                   mRouteMgr->mStreamRouteMap);
         }
 
@@ -349,18 +346,16 @@ private:
      * Add a new port to route manager.
      *
      * @param[in] name port name.
-     * @param[in] portId port Id.
      */
-    void addPort(const std::string &name, uint32_t portId);
+    void addPort(const std::string &name);
 
     /**
      * Add a new port group or / and port belonging to this group to route manager.
      *
      * @param[in] name port name.
-     * @param[in] portId port Id.
      * @param[in] portMember port belonging to the port group.
      */
-    void addPortGroup(const std::string &name, int32_t groupId, const std::string &portMember);
+    void addPortGroup(const std::string &name, const std::string &portMember);
 
     /**
      * Add an Audio Route to route manager.
@@ -368,7 +363,6 @@ private:
      *
      * @tparam T: route type (Audio Route or Audio Stream Route).
      * @param[in] name: route name.
-     * @param[in] routeId: route identifier.
      * @param[in] portSrc: source port used by route, may be null if no protection needed.
      * @param[in] portDst: destination port used by route, may be null if no protection needed.
      * @param[in] isOut: route direction (true for output, false for input).
@@ -376,7 +370,6 @@ private:
      */
     template <typename T>
     void addRoute(const std::string &name,
-                  uint32_t routeId,
                   const std::string &portSrc,
                   const std::string &portDst,
                   bool isOut,
@@ -732,14 +725,16 @@ private:
      * groups, route and stream route. Compile time error generated if called with wrong type.
      *
      * @tparam T type of routing element to add.
-     * @param[in] name name of the routing element to add.
-     * @param[in] id of the routing element to add.
+     * @param[in] key to be used for indexing the map.
+     * @param[in] name of the routing element to add.
      * @param[in] elementsMap maps of routing elements to add to.
      *
      * @return true if added, false otherwise (already added or PFW already started).
      */
     template <typename T>
-    bool addElement(const std::string &name, uint32_t id, std::map<std::string, T *> &elementsMap);
+    bool addElement(const std::string &key,
+                    const string &name,
+                    std::map<std::string, T *> &elementsMap);
 
     /**
      * Get a routing element from a map by its name. Routing Elements are ports, port
@@ -780,13 +775,49 @@ private:
     void resetAvailability(std::map<std::string, T *> elementsMap);
 
     /**
-     * Returns the route Criterion Type.
+     * Returns the handle on the route criterion type associated to the direction.
      *
-     * @return handle of route criterion type.
+     * @param[in] dir Direction of the route
+     *
+     * @return route criterion type handle.
      */
-    inline CriterionType *routeCriterionType()
+    inline CriterionType *getRouteCriterionType(audio_comms::utilities::Direction::Directions dir)
+    const
     {
-        return mCriterionTypesMap[mRouteCriterionType];
+        CriteriaTypeMapConstIterator it = mCriterionTypesMap.find(mRouteCriterionType[dir]);
+        AUDIOCOMMS_ASSERT(it != mCriterionTypesMap.end(), "Route CriterionType not found");
+        CriterionType *criterionType = it->second;
+        AUDIOCOMMS_ASSERT(criterionType != NULL, "Invalid route criterion type");
+        return criterionType;
+    }
+
+    /**
+     * Returns the formatted state of the route criterion according to the mask.
+     *
+     * @tparam dir Direction of the route for which the translation is requested
+     * @param[in] mask of the route(s) to convert into a formatted state.
+     *
+     * @return litteral values of the route separated by a "|".
+     */
+    template <audio_comms::utilities::Direction::Directions dir>
+    inline const std::string routeMaskToString(uint32_t mask) const
+    {
+        return getRouteCriterionType(dir)->getFormattedState(mask);
+    }
+
+    /**
+     * Returns the numeric part of the route criterion according to the mask.
+     *
+     * @param[in] name of the route to convert into a mask.
+     *
+     * @return associated mask (or numerical part) of the route criterion.
+     */
+    inline uint32_t routeToMask(AudioRoute *route) const
+    {
+        audio_comms::utilities::Direction::Directions dir = route->isOut()?
+                    audio_comms::utilities::Direction::Output :
+                    audio_comms::utilities::Direction::Input;
+        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName());
     }
 
     /**
@@ -816,7 +847,7 @@ private:
     mClosingRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
     static const char *const
     mOpenedRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
-    static const char *const mRouteCriterionType;
+    static const char *const mRouteCriterionType[audio_comms::utilities::Direction::_nbDirections];
     static const char *const mRoutingStage;
     static const char *const mVoiceVolume;
 

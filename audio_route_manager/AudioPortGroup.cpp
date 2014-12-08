@@ -33,8 +33,8 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioPortGroup::AudioPortGroup(const string &name, uint32_t groupId)
-    : RoutingElement(name, groupId),
+AudioPortGroup::AudioPortGroup(const string &name)
+    : RoutingElement(name),
       mPortList(0)
 {
 }
@@ -52,14 +52,14 @@ void AudioPortGroup::addPortToGroup(AudioPort *port)
     // Give the pointer on Group port back to the port
     port->addGroupToPort(this);
 
-    Log::Verbose() << __FUNCTION__ << ": added " << port->getId() << " to port group";
+    Log::Verbose() << __FUNCTION__ << ": added " << port->getName() << " to port group";
 }
 
 void AudioPortGroup::blockMutualExclusivePort(const AudioPort *port)
 {
     AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
 
-    Log::Verbose() << __FUNCTION__ << ": of port " << port->getId();
+    Log::Verbose() << __FUNCTION__ << ": of port " << port->getName();
 
     PortListIterator it;
 

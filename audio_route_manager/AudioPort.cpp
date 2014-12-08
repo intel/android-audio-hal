@@ -35,8 +35,8 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioPort::AudioPort(const string &name, uint32_t portIndex)
-    : RoutingElement(name, portIndex),
+AudioPort::AudioPort(const string &name)
+    : RoutingElement(name),
       mPortGroupList(0),
       mIsBlocked(false),
       mIsUsed(false)
@@ -125,7 +125,7 @@ void AudioPort::setUsed(AudioRoute *route)
     for (routeIt = mRouteList.begin(); routeIt != mRouteList.end(); ++routeIt) {
 
         AudioRoute *routeUsingThisPort = *routeIt;
-        if ((routeUsingThisPort == route) || (route->getId() == routeUsingThisPort->getId())) {
+        if ((routeUsingThisPort == route) || (route->getName() == routeUsingThisPort->getName())) {
 
             continue;
         }

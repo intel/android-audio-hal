@@ -23,8 +23,10 @@
 #include "CriterionType.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 
 using std::string;
+using audio_comms::utilities::Log;
 
 CriterionType::CriterionType(const string &name,
                              bool isInclusive,
@@ -65,4 +67,17 @@ bool CriterionType::hasValuePairByName(const std::string &name)
 {
     int value = 0;
     return getTypeInterface()->getNumericalValue(name, value);
+}
+
+int CriterionType::getNumericalFromLiteral(const std::string &literalValue) const
+{
+    int numericalValue = 0;
+    if (!literalValue.empty() &&
+        !mCriterionTypeInterface->getNumericalValue(literalValue,
+                                                    numericalValue)) {
+        Log::Error() << __FUNCTION__
+                     << ": could not retrieve numerical value " << literalValue
+                     << " for criterion " << mName;
+    }
+    return numericalValue;
 }

@@ -39,7 +39,7 @@ class IAudioDevice;
 class AudioStreamRoute : public AudioRoute, private IStreamRoute
 {
 public:
-    AudioStreamRoute(const std::string &name, uint32_t routeIndex);
+    AudioStreamRoute(const std::string &name);
 
     virtual ~AudioStreamRoute();
 

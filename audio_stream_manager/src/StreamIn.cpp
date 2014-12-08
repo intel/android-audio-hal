@@ -432,12 +432,21 @@ status_t StreamIn::setDevice(audio_devices_t device)
 
 void StreamIn::setInputSource(audio_source_t inputSource)
 {
-    // temporary hack: ignore input sources with an integer value above 31,
-    // since the BitField class uses an uint32.
-    if (inputSource > 31) {
-        return;
+    AUDIOCOMMS_COMPILE_TIME_ASSERT(AUDIO_SOURCE_CNT < 32);
+
+    uint32_t inputSourceShift = inputSource;
+
+    if (inputSource == AUDIO_SOURCE_HOTWORD) {
+        /** Hotword is expected to be hidden by the policy to the HAL
+         * except if a sound trigger hal is provided. As the value of
+         * the hotword source has been voluntarily set to 1999, and as
+         * the stream wishes to store it as a mask, the hotword source
+         * is set at the audio source cnt bit (a compile time assertion
+         * will complain if this workaround is broken)
+         */
+        inputSourceShift = AUDIO_SOURCE_CNT;
     }
-    setApplicabilityMask(BitField::indexToMask(inputSource));
+    setApplicabilityMask(BitField::indexToMask(inputSourceShift));
 }
 
 status_t StreamIn::addAudioEffect(effect_handle_t effect)
