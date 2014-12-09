@@ -276,6 +276,11 @@ private:
             return mRouteMgr->setAudioParameter<std::string>(paramPath, value);
         }
 
+        virtual bool setAudioParameter(const std::string &paramPath, const double &value)
+        {
+            return mRouteMgr->setAudioParameter<double>(paramPath, value);
+        }
+
         virtual bool getAudioParameter(const std::string &paramPath, uint32_t &value) const
         {
             return mRouteMgr->getAudioParameter<uint32_t>(paramPath, value);
@@ -284,6 +289,11 @@ private:
         virtual bool getAudioParameter(const std::string &paramPath, std::string &value) const
         {
             return mRouteMgr->getAudioParameter<std::string>(paramPath, value);
+        }
+
+        virtual bool getAudioParameter(const std::string &paramPath, double &value) const
+        {
+            return mRouteMgr->getAudioParameter<double>(paramPath, value);
         }
 
     private:

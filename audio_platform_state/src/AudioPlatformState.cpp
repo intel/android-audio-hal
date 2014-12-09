@@ -357,6 +357,10 @@ void AudioPlatformState::addParameter<AudioPlatformState::Audio, AudioPlatformSt
         rogueParam = new AudioRogueParameter<string>(this, paramKey, name,
                                                      mStreamInterface,
                                                      defaultValue);
+    } else if (typeName == gDoubleTypeTag) {
+         rogueParam= new AudioRogueParameter<double>(this, paramKey, name,
+                                                    mStreamInterface,
+                                                    defaultValue);
     } else {
         Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
         return;
@@ -413,6 +417,9 @@ void AudioPlatformState::addParameter<AudioPlatformState::Route, AudioPlatformSt
                                                        defaultValue);
     } else if (typeName == gStringTypeTag) {
         paramRogue = new RouteRogueParameter<string>(this, paramKey, name, mRoutePfwConnector,
+                                                     defaultValue);
+    } else if (typeName == gDoubleTypeTag) {
+        paramRogue = new RouteRogueParameter<double>(this, paramKey, name, mRoutePfwConnector,
                                                      defaultValue);
     } else {
         Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
