@@ -111,6 +111,45 @@ bool ParameterMgrHelper::getAsTypedValue<string>(CParameterHandle *parameterHand
     return true;
 }
 
+template <>
+bool ParameterMgrHelper::setAsTypedValue<double>(CParameterHandle *parameterHandle,
+                                                   const double &value, string &error)
+{
+    if (!parameterHandle->setAsDouble(value, error)) {
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::getAsTypedValue<double>(CParameterHandle *parameterHandle,
+                                                   double &value, string &error)
+{
+    if (!parameterHandle->getAsDouble(value, error)) {
+
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::setAsTypedValue<vector<double> >(CParameterHandle *parameterHandle,
+                                                            const vector<double> &value,
+                                                            string &error)
+{
+    if (!parameterHandle->setAsDoubleArray(value, error)) {
+
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
 bool ParameterMgrHelper::getParameterHandle(CParameterMgrPlatformConnector *pfwConnector,
                                             CParameterHandle * &handle,
                                             const string &path)
