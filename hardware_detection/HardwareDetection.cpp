@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -50,8 +50,8 @@ ConfigurationLocator::ConfigurationLocator()
         "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-bytcr-rt5651-default.xml");
 
     mConfigurationFilePaths["cherrytrailaud"] = make_pair(
-        "/etc/parameter-framework/ParameterFrameworkConfiguration-chtrvp-rt5672-default.xml",
-        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-chtrvp-rt5672-default.xml");
+        "/etc/parameter-framework/ParameterFrameworkConfiguration-cherrytrailaud.xml",
+        "/etc/parameter-framework/ParameterFrameworkConfigurationRoute-cherrytrailaud-default.xml");
 
     mSupportedCard = findSupportedCard();
 }
