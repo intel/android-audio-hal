@@ -33,7 +33,6 @@ audio_conversion_src_files :=  \
     src/AudioReformatter.cpp \
     src/AudioRemapper.cpp \
     src/AudioResampler.cpp \
-    src/Resampler.cpp
 
 audio_conversion_includes_dir := \
     libaudioresample

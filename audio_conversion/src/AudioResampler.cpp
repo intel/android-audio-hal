@@ -23,9 +23,10 @@
 #define LOG_TAG "AudioResampler"
 
 #include "AudioResampler.hpp"
-#include "Resampler.hpp"
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
+#include <iasrc_resampler.h>
+#include <limits.h>
 
 using audio_comms::utilities::Log;
 using namespace android;
@@ -35,22 +36,60 @@ namespace intel_audio
 
 AudioResampler::AudioResampler(SampleSpecItem sampleSpecItem)
     : AudioConverter(sampleSpecItem),
-      mResampler(new Resampler(RateSampleSpecItem)),
-      mPivotResampler(new Resampler(RateSampleSpecItem)),
-      mActiveResamplerList()
+      mMaxFrameCnt(0),
+      mContext(NULL), mFloatInp(NULL), mFloatOut(NULL)
 {
 }
 
 AudioResampler::~AudioResampler()
 {
-    mActiveResamplerList.clear();
-    delete mResampler;
-    delete mPivotResampler;
+    if (mContext) {
+        iaresamplib_reset(mContext);
+        iaresamplib_delete(&mContext);
+    }
+
+    delete[] mFloatInp;
+    delete[] mFloatOut;
+}
+
+status_t AudioResampler::allocateBuffer()
+{
+    if (mMaxFrameCnt == 0) {
+        mMaxFrameCnt = mBufSize;
+    } else {
+        mMaxFrameCnt *= 2; // simply double the buf size
+    }
+
+    delete[] mFloatInp;
+    delete[] mFloatOut;
+
+    mFloatInp = new float[(mMaxFrameCnt + 1) * mSsSrc.getChannelCount()];
+    mFloatOut = new float[(mMaxFrameCnt + 1) * mSsSrc.getChannelCount()];
+
+    if (!mFloatInp || !mFloatOut) {
+        Log::Error() << "cannot allocate resampler tmp buffers";
+        delete[] mFloatInp;
+        delete[] mFloatOut;
+
+        return NO_MEMORY;
+    }
+    return NO_ERROR;
 }
 
 status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    mActiveResamplerList.clear();
+    Log::Debug() << __FUNCTION__ << ": SOURCE rate=" << ssSrc.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssSrc.getFormat())
+                 << " channels=" << ssSrc.getChannelCount();
+    Log::Debug() << __FUNCTION__ << ": DST rate=" << ssDst.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssDst.getFormat())
+                 << " channels=" << ssDst.getChannelCount();
+
+    if ((ssSrc.getSampleRate() == mSsSrc.getSampleRate()) &&
+        (ssDst.getSampleRate() == mSsDst.getSampleRate()) && mContext) {
+
+        return NO_ERROR;
+    }
 
     status_t status = AudioConverter::configure(ssSrc, ssDst);
     if (status != NO_ERROR) {
@@ -58,73 +97,72 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         return status;
     }
 
-    status = mResampler->configure(ssSrc, ssDst);
-    if (status != NO_ERROR) {
-
-        //
-        // Our resampling lib does not support all conversions
-        // using 2 resamplers
-        //
-        Log::Debug() << __FUNCTION__ << ": trying to use working sample rate @ 48kHz";
-        SampleSpec pivotSs = ssDst;
-        pivotSs.setSampleRate(mPivotSampleRate);
-
-        status = mPivotResampler->configure(ssSrc, pivotSs);
-        if (status != NO_ERROR) {
-            Log::Debug() << __FUNCTION__ << ": trying to use pivot sample rate @"
-                         << mPivotSampleRate << "kHz: FAILED";
-            return status;
-        }
-
-        mActiveResamplerList.push_back(mPivotResampler);
-
-        status = mResampler->configure(pivotSs, ssDst);
-        if (status != NO_ERROR) {
-            Log::Debug() << __FUNCTION__ << ": trying to use pivot sample rate @ 48kHz: FAILED";
-            return status;
-        }
+    if (mContext) {
+        iaresamplib_reset(mContext);
+        iaresamplib_delete(&mContext);
+        mContext = NULL;
     }
 
-    mActiveResamplerList.push_back(mResampler);
+    if (!iaresamplib_supported_conversion(ssSrc.getSampleRate(), ssDst.getSampleRate())) {
+        Log::Error() << __FUNCTION__ << ": SRC lib doesn't support this conversion";
+        return INVALID_OPERATION;
+    }
 
+    iaresamplib_new(&mContext, ssSrc.getChannelCount(),
+                    ssSrc.getSampleRate(), ssDst.getSampleRate());
+    if (!mContext) {
+        Log::Error() << "cannot create resampler handle for lacking of memory";
+        return BAD_VALUE;
+    }
+
+    mConvertSamplesFct = static_cast<SampleConverter>(&AudioResampler::resampleFrames);
     return NO_ERROR;
 }
 
-status_t AudioResampler::convert(const void *src,
-                                 void **dst,
-                                 size_t inFrames,
-                                 size_t *outFrames)
+void AudioResampler::convertShort2Float(int16_t *inp, float *out, size_t sz) const
 {
-    AUDIOCOMMS_ASSERT(src != NULL, "NULL source buffer");
-    const void *srcBuf = static_cast<const void *>(src);
-    void *dstBuf = NULL;
-    size_t srcFrames = inFrames;
-    size_t dstFrames = 0;
-
-    ResamplerListIterator it;
-    for (it = mActiveResamplerList.begin(); it != mActiveResamplerList.end(); ++it) {
-
-        Resampler *conv = *it;
-        dstFrames = 0;
-
-        if (*dst && (conv == mActiveResamplerList.back())) {
-
-            // Last converter must output within the provided buffer (if provided!!!)
-            dstBuf = *dst;
-        }
-
-        status_t status = conv->convert(srcBuf, &dstBuf, srcFrames, &dstFrames);
-        if (status != NO_ERROR) {
-
-            return status;
-        }
-
-        srcBuf = dstBuf;
-        srcFrames = dstFrames;
+    AUDIOCOMMS_ASSERT(inp != NULL && out != NULL, "Invalid input and/or output buffer(s)");
+    size_t i;
+    for (i = 0; i < sz; i++) {
+        *out++ = (float)*inp++;
     }
+}
 
-    *dst = dstBuf;
-    *outFrames = dstFrames;
+void AudioResampler::convertFloat2Short(float *inp, int16_t *out, size_t sz) const
+{
+    AUDIOCOMMS_ASSERT(inp != NULL && out != NULL, "Invalid input and/or output buffer(s)");
+    size_t i;
+    for (i = 0; i < sz; i++) {
+        if (*inp > SHRT_MAX) {
+            *inp = SHRT_MAX;
+        } else if (*inp < SHRT_MIN) {
+            *inp = SHRT_MIN;
+        }
+        *out++ = (short)*inp++;
+    }
+}
+
+status_t AudioResampler::resampleFrames(const void *src,
+                                        void *dst,
+                                        const size_t inFrames,
+                                        size_t *outFrames)
+{
+    size_t outFrameCount = convertSrcToDstInFrames(inFrames);
+
+    while (outFrameCount > mMaxFrameCnt) {
+
+        status_t ret = allocateBuffer();
+        if (ret != NO_ERROR) {
+            Log::Error() << __FUNCTION__ << ": could not allocate memory for resampling operation";
+            return ret;
+        }
+    }
+    unsigned int outNbFrames;
+    convertShort2Float((short *)src, mFloatInp, inFrames * mSsSrc.getChannelCount());
+    iaresamplib_process_float(mContext, mFloatInp, inFrames, mFloatOut, &outNbFrames);
+    convertFloat2Short(mFloatOut, (short *)dst, outNbFrames * mSsSrc.getChannelCount());
+
+    *outFrames = outNbFrames;
 
     return NO_ERROR;
 }
