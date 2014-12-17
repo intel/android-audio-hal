@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright (c) 2013-2014 Intel
+# Copyright (c) 2013-2015 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -156,8 +156,7 @@ audio_effects_functional_test_src_files := \
     test/AudioEffectsFcct.cpp
 
 audio_effects_functional_test_c_includes := \
-    $(call include-path-for, audio-effects) \
-    $(LOCAL_PATH)/../../../../external/gmock/include
+    $(call include-path-for, audio-effects)
 
 audio_effects_functional_test_static_lib_target := \
     $(audio_effects_functional_test_static_lib)

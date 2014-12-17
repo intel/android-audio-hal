@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2014 Intel Corporation All Rights Reserved.
+# Copyright (c) 2014-2015 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -82,7 +82,6 @@ LOCAL_SRC_FILES += \
     test/ValueMock.cpp
 
 LOCAL_C_INCLUDES := \
-    vendor/intel/hardware/PRIVATE/audiocomms/tests/external/gmock/include \
     external/gtest/include \
 
 LOCAL_STATIC_LIBRARIES += \
