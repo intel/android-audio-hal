@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -83,7 +83,7 @@ int DeviceInterface::wrapOpen(const hw_module_t *module, const char *name, hw_de
     }
 
     ext_dev->device.common.tag = HARDWARE_DEVICE_TAG;
-    ext_dev->device.common.version = AUDIO_DEVICE_API_VERSION_2_0;
+    ext_dev->device.common.version = AUDIO_DEVICE_API_VERSION_3_0;
     ext_dev->device.common.module = const_cast<hw_module_t *>(module);
     ext_dev->device.common.close = DeviceInterface::wrapClose;
 
