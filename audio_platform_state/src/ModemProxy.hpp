@@ -71,7 +71,14 @@ private:
     virtual void onModemStateChanged();
     virtual void onModemAudioBandChanged();
 
-    const std::string isModemAlive(void *context) const;
+    /**
+     * Gets the modem state string for the HAL criterion linked
+     * to the modem state
+     *
+     * @return const string of the modem state.
+     */
+    const std::string getModemState(void *context) const;
+
     /**
      * Get the status of the Audio link
      * @param[in] context
