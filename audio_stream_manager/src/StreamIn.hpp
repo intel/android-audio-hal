@@ -69,6 +69,14 @@ public:
         return false;
     }
 
+    /**
+     * Set the input source.
+     * This function is non-reetrant, intended to be called by the HW device (Routing 3.0 APIs)
+     *
+     * @param[in] inputSource: input source to be used by this stream.
+     */
+    void setInputSource(audio_source_t inputSource);
+
 protected:
     /**
      * Callback of route attachement called by the stream lib. (and so route manager).
@@ -87,14 +95,6 @@ protected:
     virtual android::status_t detachRouteL();
 
 private:
-    /**
-     * Set the input source.
-     * This function is non-reetrant.
-     *
-     * @param[in] inputSource: input source to be used by this stream.
-     */
-    void setInputSource(audio_source_t inputSource);
-
     android::status_t readHwFrames(void *buffer, size_t frames);
 
     /**
