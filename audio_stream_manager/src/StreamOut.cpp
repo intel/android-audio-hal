@@ -20,15 +20,13 @@
  * express and approved by Intel in writing.
  *
  */
-#include <utilities/Log.hpp>
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
+
 #define LOG_TAG "AudioStreamOut"
 
 #include "StreamOut.hpp"
 #include <AudioCommsAssert.hpp>
 #include <HalAudioDump.hpp>
+#include <utilities/Log.hpp>
 
 using namespace std;
 using android::status_t;
