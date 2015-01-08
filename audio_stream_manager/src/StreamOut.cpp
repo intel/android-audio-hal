@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -41,8 +41,8 @@ const uint32_t StreamOut::mMaxAgainRetry = 2;
 const uint32_t StreamOut::mWaitBeforeRetryUs = 10000; // 10ms
 const uint32_t StreamOut::mUsecPerMsec = 1000;
 
-StreamOut::StreamOut(Device *parent, uint32_t streamFlagsMask)
-    : Stream(parent),
+StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t streamFlagsMask)
+    : Stream(parent, handle),
       mFrameCount(0),
       mEchoReference(NULL)
 {
