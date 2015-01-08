@@ -165,17 +165,6 @@ private:
     }
 
     /**
-     * Handle any setParameters called from the streams.
-     * It may result in a routing reconsideration.
-     *
-     * @param[in] stream Stream from which the setParameters is originated.
-     * @param[in] keyValuePairs: one or more value pair "name=value", semicolon-separated.
-     *
-     * @return OK if parameters successfully taken into account, error code otherwise.
-     */
-    android::status_t setStreamParameters(Stream *stream, const std::string &keyValuePairs);
-
-    /**
      * Handle a stream start request.
      * It results in a routing reconsideration. It must be SYNCHRONOUS to avoid loosing samples.
      *
