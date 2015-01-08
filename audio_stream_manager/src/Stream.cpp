@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -54,7 +54,7 @@ const std::string Stream::dumpAfterConvProps[Direction::_nbDirections] = {
     "media.dump_input.aftconv", "media.dump_output.aftconv"
 };
 
-Stream::Stream(Device *parent)
+Stream::Stream(Device *parent, audio_io_handle_t handle)
     : mParent(parent),
       mStandby(true),
       mDevices(0),
@@ -62,7 +62,8 @@ Stream::Stream(Device *parent)
       mLatencyMs(0),
       mApplicabilityMask(0),
       mDumpBeforeConv(NULL),
-      mDumpAfterConv(NULL)
+      mDumpAfterConv(NULL),
+      mHandle(handle)
 {
 }
 

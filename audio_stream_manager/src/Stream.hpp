@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -83,8 +83,10 @@ public:
     virtual bool isStarted() const;
     virtual bool isOut() const = 0;
 
+    audio_io_handle_t getIoHandle() const { return mHandle; }
+
 protected:
-    Stream(Device *parent);
+    Stream(Device *parent, audio_io_handle_t handle);
 
     /**
      * Set the stream state.
@@ -318,5 +320,7 @@ private:
 
     /** Ratio between nanoseconds and microseconds */
     static const uint32_t mNsecPerUsec = 1000;
+
+    audio_io_handle_t mHandle; /**< Unique IO handle identifier assigned by the audio policy. */
 };
 } // namespace intel_audio

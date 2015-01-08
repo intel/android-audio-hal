@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -34,7 +34,7 @@ namespace intel_audio
 class StreamOut : public StreamOutInterface, public Stream
 {
 public:
-    StreamOut(Device *parent, uint32_t streamFlagsMask);
+    StreamOut(Device *parent, audio_io_handle_t handle, uint32_t streamFlagsMask);
     virtual ~StreamOut();
 
 
