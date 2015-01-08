@@ -409,4 +409,178 @@ void Device::printPlatformFwErrorInfo()
     mPlatformState->printPlatformFwErrorInfo();
 }
 
+bool Device::hasStream(const audio_io_handle_t &streamHandle)
+{
+    return mStreams.find(streamHandle) != mStreams.end();
+}
+
+bool Device::hasPort(const audio_port_handle_t &portHandle)
+{
+    return mPorts.find(portHandle) != mPorts.end();
+}
+
+bool Device::hasPatch(const audio_patch_handle_t &patchHandle)
+{
+    return mPatches.find(patchHandle) != mPatches.end();
+}
+
+bool Device::getStream(const audio_io_handle_t &streamHandle, Stream *&stream)
+{
+    if (!hasStream(streamHandle) || mStreams[streamHandle] == NULL) {
+        return false;
+    }
+    stream = mStreams[streamHandle];
+    return true;
+}
+
+Port &Device::getPort(const audio_port_handle_t &portHandle)
+{
+    AUDIOCOMMS_ASSERT(hasPort(portHandle), "Port not found within collection");
+    return mPorts[portHandle];
+}
+
+Patch &Device::getPatch(const audio_patch_handle_t &patchHandle)
+{
+    AUDIOCOMMS_ASSERT(hasPatch(patchHandle), "Patch not found within collection");
+    return mPatches[patchHandle];
+}
+
+Port &Device::getPortFromHandle(const audio_port_handle_t &portHandle)
+{
+    return mPorts[portHandle];
+}
+
+void Device::onPortAttached(const audio_patch_handle_t &patchHandle,
+                            const audio_port_handle_t &portHandle)
+{
+    Port &portToAttach = getPort(portHandle);
+    if (portToAttach.getType() != AUDIO_PORT_TYPE_MIX) {
+        // Nothing to be done on streams by the Device for DEVICE ports
+        return;
+    }
+    audio_io_handle_t streamHandle = portToAttach.getMixIoHandle();
+
+    Stream *stream = NULL;
+    if (!getStream(streamHandle, stream)) {
+        Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
+        return;
+    }
+    audio_patch_handle_t streamPreviousPatchHandle = stream->getPatchHandle();
+    if (streamPreviousPatchHandle != AUDIO_PATCH_HANDLE_NONE &&
+        streamPreviousPatchHandle != patchHandle) {
+        Log::Warning() << __FUNCTION__ << ": setting new patch for already attached mix";
+        mPatches.erase(streamPreviousPatchHandle);
+    }
+    stream->setPatchHandle(patchHandle);
+
+    if (portToAttach.getRole() == AUDIO_PORT_ROLE_SINK) {
+        StreamIn *inputStream = static_cast<StreamIn *>(stream);
+        inputStream->setInputSource(portToAttach.getMixUseCaseSource());
+    }
+}
+
+void Device::onPortReleased(const audio_patch_handle_t &patchHandle,
+                            const audio_port_handle_t &portHandle)
+{
+    Port &portToRelease = getPort(portHandle);
+    if (portToRelease.getType() != AUDIO_PORT_TYPE_MIX) {
+        // Nothing to be done on streams by the Device for DEVICE ports
+        return;
+    }
+    audio_io_handle_t streamHandle = portToRelease.getMixIoHandle();
+
+    // Only MIX Port can be deleted as will not be reused by Audio Policy
+    mPorts.erase(portHandle);
+
+    Stream *stream = NULL;
+    if (!getStream(streamHandle, stream)) {
+        Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
+        return;
+    }
+    AUDIOCOMMS_ASSERT(stream->getPatchHandle() == patchHandle,
+                      "Mismatch between stream and patch handle");
+    stream->setPatchHandle(AUDIO_PATCH_HANDLE_NONE);
+}
+
+status_t Device::createAudioPatch(size_t sourcesCount,
+                                  const struct audio_port_config sources[],
+                                  size_t sinksCount,
+                                  const struct audio_port_config sinks[],
+                                  audio_patch_handle_t &handle)
+{
+    if (handle == AUDIO_PATCH_HANDLE_NONE) {
+        handle = Patch::nextUniqueHandle();
+    }
+    std::pair<PatchCollection::iterator, bool> ret;
+    ret = mPatches.insert(std::pair<audio_patch_handle_t, Patch>(handle, Patch(handle, this)));
+
+    Patch &patch = ret.first->second;
+    patch.addPorts(sourcesCount, sources, sinksCount, sinks);
+
+    // Update now the routing, i.e. the devices in input and/or output
+    // This is a simple first step implementation that matches that used to be
+    // done within Legacy routing. It has to evolve in parallel of the Audio Policy.
+    // Shall we loop on "active" ports to get the new devices?
+    KeyValuePairs pairs;
+    audio_devices_t newSourceDevices = patch.getSourceDevices();
+    audio_devices_t newSinkDevices = patch.getSinkDevices();
+
+    if (newSourceDevices != AUDIO_DEVICE_NONE) {
+        pairs.add(AudioPlatformState::mKeyDeviceIn, newSourceDevices);
+    }
+    if (newSinkDevices != AUDIO_DEVICE_NONE) {
+        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
+        pairs.add(AudioPlatformState::mKeyDeviceOut, newSinkDevices);
+    }
+    if (pairs.toString().empty()) {
+        return android::OK;
+    }
+    Log::Verbose() << __FUNCTION__ << ": handle:" << handle << ", Devices:" << pairs.toString();
+    return mPlatformState->setParameters(pairs.toString());
+}
+
+status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
+{
+    if (!hasPatch(handle)) {
+        Log::Error() << __FUNCTION__ << " Patch handle " << handle
+                     << " not found within Primary HAL";
+        return android::BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": releasing patch handle:" << handle;
+    Patch &patch = getPatch(handle);
+
+    // Update now the routing, i.e. the devices in input and/or output that were in use by the
+    // released patch. This is a simple first step implementation that matches that used to be
+    // done within Legacy routing. It has to evolve in parallel of the Audio Policy.
+    // Shall we loop on "active" ports to get the new devices?
+    KeyValuePairs pairs;
+    if (patch.getSourceDevices() != AUDIO_DEVICE_NONE) {
+        pairs.add(AudioPlatformState::mKeyDeviceIn, static_cast<int>(AUDIO_DEVICE_NONE));
+    }
+    if (patch.getSinkDevices() != AUDIO_DEVICE_NONE) {
+        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
+        pairs.add(AudioPlatformState::mKeyDeviceOut, static_cast<int>(AUDIO_DEVICE_NONE));
+    }
+
+    mPatches.erase(handle);
+
+    if (pairs.toString().empty()) {
+        return android::OK;
+    }
+    Log::Verbose() << __FUNCTION__ << ": handle:" << handle << ", Devices:" << pairs.toString();
+    return mPlatformState->setParameters(pairs.toString());
+}
+
+status_t Device::getAudioPort(struct audio_port &/*port*/) const
+{
+    Log::Warning() << __FUNCTION__ << ": no implementation provided yet";
+    return android::INVALID_OPERATION;
+}
+
+status_t Device::setAudioPortConfig(const struct audio_port_config &/*config*/)
+{
+    Log::Warning() << __FUNCTION__ << ": no implementation provided yet";
+    return android::INVALID_OPERATION;
+}
+
 } // namespace intel_audio

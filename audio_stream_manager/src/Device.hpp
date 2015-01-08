@@ -22,6 +22,8 @@
  */
 #pragma once
 
+#include "Patch.hpp"
+#include "Port.hpp"
 #include <InterfaceProviderImpl.h>
 #include <IStreamInterface.hpp>
 #include <audio_effects/effect_aec.h>
@@ -48,10 +50,13 @@ class AudioPlatformState;
 class AudioParameterHandler;
 
 class Device : public DeviceInterface,
+               public PatchInterface,
                private audio_comms::utilities::NonCopyable
 {
 private:
     typedef std::map<audio_io_handle_t, Stream *> StreamCollection;
+    typedef std::map<audio_patch_handle_t, Patch> PatchCollection;
+    typedef std::map<audio_port_handle_t, Port> PortCollection;
 
 public:
     Device();
@@ -103,30 +108,14 @@ public:
     virtual size_t getInputBufferSize(const audio_config_t &config) const;
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t dump(const int /* fd */) const { return android::OK; }
-    /** @note Routing control API not implemented in our Audio HAL */
-    virtual android::status_t createAudioPatch(size_t /*sourcesCount*/,
-                                               const struct audio_port_config /*sources*/[],
-                                               size_t /*sinksCount*/,
-                                               const struct audio_port_config /*sinks*/[],
-                                               audio_patch_handle_t &/*handle*/)
-    {
-        return android::INVALID_OPERATION;
-    }
-    /** @note Routing control API not implemented in our Audio HAL */
-    virtual android::status_t releaseAudioPatch(audio_patch_handle_t /*handle*/)
-    {
-        return android::INVALID_OPERATION;
-    }
-    /** @note Routing control API not implemented in our Audio HAL */
-    virtual android::status_t getAudioPort(struct audio_port &/*port*/) const
-    {
-        return android::INVALID_OPERATION;
-    }
-    /** @note Routing control API not implemented in our Audio HAL */
-    virtual android::status_t setAudioPortConfig(const struct audio_port_config &/*config*/)
-    {
-        return android::INVALID_OPERATION;
-    }
+    virtual android::status_t createAudioPatch(size_t sourcesCount,
+                                               const struct audio_port_config sources[],
+                                               size_t sinksCount,
+                                               const struct audio_port_config sinks[],
+                                               audio_patch_handle_t &handle);
+    virtual android::status_t releaseAudioPatch(audio_patch_handle_t handle);
+    virtual android::status_t getAudioPort(struct audio_port &port) const;
+    virtual android::status_t setAudioPortConfig(const struct audio_port_config &config);
 
 protected:
     /**
@@ -153,6 +142,56 @@ protected:
     void printPlatformFwErrorInfo();
 
 private:
+    /**
+     * @return true if the collection of stream managed by the HW Device has a stream tracked by the
+     *         given stream handle, false otherwise.
+     */
+    bool hasStream(const audio_io_handle_t &streamHandle);
+
+    /**
+     * @return true if the collection of port managed by the HW Device has a port tracked by the
+     *         given port handle, false otherwise.
+     */
+    bool hasPort(const audio_port_handle_t &portHandle);
+
+    /**
+     * @return true if the collection of patch managed by the HW Device has a patch tracked by the
+     *         given patch handle, false otherwise.
+     */
+    bool hasPatch(const audio_patch_handle_t &patchHandle);
+
+    /**
+     * Retrieve a stream from a stream handle from the collection managed by the HW Device.
+     *
+     * @param[in] streamHandle unique stream identifier
+     * @param[out] stream instance that is matching the handle, may be NULL.
+     *
+     * @return true if the stream given as output parameter is valid, false otherwise.
+     */
+    bool getStream(const audio_io_handle_t &streamHandle, Stream *&stream);
+
+    /**
+     * Retrieve a Port from a Port handle from the collection managed by the HW Device.
+     * If the handle refers to an unknown Port, this function asserts.
+     *
+     * @return Port tracked by the given Port handle.
+     */
+    Port &getPort(const audio_port_handle_t &portHandle);
+
+    /**
+     * Retrieve a Patch from a Patch handle from the collection managed by the HW Device.
+     * If the handle refers to an unknown Patch, this function asserts.
+     *
+     * @return Patch tracked by the given Patch handle.
+     */
+    Patch &getPatch(const audio_patch_handle_t &patchHandle);
+
+    virtual Port &getPortFromHandle(const audio_port_handle_t &portHandle);
+    virtual void onPortAttached(const audio_patch_handle_t &patchHandle,
+                                const audio_port_handle_t &portHandle);
+    virtual void onPortReleased(const audio_patch_handle_t &patchHandle,
+                                const audio_port_handle_t &portHandle);
+
     /**
      * Get the android telephony mode.
      *
@@ -219,6 +258,8 @@ private:
     audio_mode_t mMode; /**< Android telephony mode. */
 
     StreamCollection mStreams; /**< Collection of opened streams. */
+    PatchCollection mPatches; /**< Collection of connected patches. */
+    PortCollection mPorts; /**< Collection of audio ports. */
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
