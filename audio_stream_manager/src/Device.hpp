@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -50,6 +50,9 @@ class AudioParameterHandler;
 class Device : public DeviceInterface,
                private audio_comms::utilities::NonCopyable
 {
+private:
+    typedef std::map<audio_io_handle_t, Stream *> StreamCollection;
+
 public:
     Device();
     virtual ~Device();
@@ -225,6 +228,8 @@ private:
     IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */
 
     audio_mode_t mMode; /**< Android telephony mode. */
+
+    StreamCollection mStreams; /**< Collection of opened streams. */
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */

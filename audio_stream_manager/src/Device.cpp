@@ -117,26 +117,34 @@ status_t Device::setVoiceVolume(float volume)
     return mStreamInterface->setVoiceVolume(volume);
 }
 
-android::status_t Device::openOutputStream(audio_io_handle_t /*handle*/,
+android::status_t Device::openOutputStream(audio_io_handle_t handle,
                                            audio_devices_t devices,
                                            audio_output_flags_t flags,
                                            audio_config_t &config,
                                            StreamOutInterface * &stream,
                                            const std::string & /*address*/)
 {
-    Log::Debug() << __FUNCTION__ << ": called for devices: " << devices;
+    Log::Debug() << __FUNCTION__ << ": handle=" << handle << ", flags=" << std::hex
+                 << static_cast<uint32_t>(flags) << ", devices: 0x" << devices;
 
     if (!audio_is_output_devices(devices)) {
         Log::Error() << __FUNCTION__ << ": called with bad devices";
         return android::BAD_VALUE;
     }
-    StreamOut *out = new StreamOut(this, flags);
+    StreamOut *out = new StreamOut(this, handle, flags);
     status_t err = out->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": set error.";
         delete out;
         return err;
     }
+    if (mStreams.find(handle) != mStreams.end()) {
+        Log::Error() << __FUNCTION__ << ": stream already added";
+        delete out;
+        return android::BAD_VALUE;
+    }
+    mStreams[handle] = out;
+
     // Informs the route manager of stream creation
     mStreamInterface->addStream(out);
     stream = out;
@@ -150,10 +158,17 @@ void Device::closeOutputStream(StreamOutInterface *out)
     // Informs the route manager of stream destruction
     AUDIOCOMMS_ASSERT(out != NULL, "Invalid output stream to remove");
     mStreamInterface->removeStream(static_cast<StreamOut *>(out));
+    audio_io_handle_t handle = static_cast<StreamOut *>(out)->getIoHandle();
+    if (mStreams.find(handle) == mStreams.end()) {
+        Log::Error() << __FUNCTION__ << ": requesting to deleted an output stream with io handle= "
+                     << handle << " not tracked by Primary HAL";
+    } else {
+        mStreams.erase(handle);
+    }
     delete out;
 }
 
-android::status_t Device::openInputStream(audio_io_handle_t /*handle*/,
+android::status_t Device::openInputStream(audio_io_handle_t handle,
                                           audio_devices_t devices,
                                           audio_config_t &config,
                                           StreamInInterface * &stream,
@@ -161,20 +176,27 @@ android::status_t Device::openInputStream(audio_io_handle_t /*handle*/,
                                           const std::string & /*address*/,
                                           audio_source_t source)
 {
-    Log::Debug() << __FUNCTION__ << ": called for devices: " << devices
-                 << " and input source: 0x%08x" << static_cast<uint32_t>(source);
+    Log::Debug() << __FUNCTION__ << ": handle=" << handle << ", devices: 0x" << std::hex << devices
+                 << " and input source: 0x" << static_cast<uint32_t>(source);
     if (!audio_is_input_device(devices)) {
         Log::Error() << __FUNCTION__ << ": called with bad device " << devices;
         return android::BAD_VALUE;
     }
 
-    StreamIn *in = new StreamIn(this, source);
+    StreamIn *in = new StreamIn(this, handle, source);
     status_t err = in->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": Set err";
         delete in;
         return err;
     }
+    if (mStreams.find(handle) != mStreams.end()) {
+        Log::Error() << __FUNCTION__ << ": stream already added";
+        delete in;
+        return android::BAD_VALUE;
+    }
+    mStreams[handle] = in;
+
     // Informs the route manager of stream creation
     mStreamInterface->addStream(in);
     stream = in;
@@ -188,6 +210,13 @@ void Device::closeInputStream(StreamInInterface *in)
     // Informs the route manager of stream destruction
     AUDIOCOMMS_ASSERT(in != NULL, "Invalid input stream to remove");
     mStreamInterface->removeStream(static_cast<StreamIn *>(in));
+    audio_io_handle_t handle = static_cast<StreamIn *>(in)->getIoHandle();
+    if (mStreams.find(handle) == mStreams.end()) {
+        Log::Error() << __FUNCTION__ << ": requesting to deleted an input stream with io handle= "
+                     << handle << " not tracked by Primary HAL";
+    } else {
+        mStreams.erase(handle);
+    }
     delete in;
 }
 
