@@ -33,6 +33,8 @@ audio_stream_manager_src_files :=  \
     src/Device.cpp \
     src/StreamIn.cpp \
     src/StreamOut.cpp \
+    src/Patch.cpp \
+    src/Port.cpp \
     src/AudioParameterHandler.cpp
 
 audio_stream_manager_includes_dir := \

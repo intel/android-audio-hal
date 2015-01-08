@@ -29,7 +29,7 @@ extern "C"
 {
 
 static struct hw_module_methods_t audio_module_methods = {
-open: intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_2_0>::open
+open: intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_3_0>::open
 };
 
 struct hw_module_t HAL_MODULE_INFO_SYM = {
