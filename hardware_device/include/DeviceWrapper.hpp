@@ -424,14 +424,14 @@ int DeviceWrapper<Device, CDeviceApiVersion>::createAudioPatch(struct audio_hw_d
                                                                const struct audio_port_config *sinks,
                                                                audio_patch_handle_t *handle)
 {
-    if (sources == NULL || sinks == NULL) {
+    if (sources == NULL || sinks == NULL || handle == NULL) {
         return -EINVAL;
     }
     return static_cast<int>(getCppDevice(dev).createAudioPatch(num_sources,
                                                                sources,
                                                                num_sinks,
                                                                sinks,
-                                                               handle));
+                                                               *handle));
 }
 
 template <class Device, int CDeviceApiVersion>

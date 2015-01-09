@@ -111,11 +111,11 @@ public:
     virtual android::status_t dump(const int fd) const
     { return android::OK; }
 
-    virtual android::status_t createAudioPatch(unsigned int sourcesCount,
+    virtual android::status_t createAudioPatch(size_t sourcesCount,
                                                const struct audio_port_config *sources,
-                                               unsigned int sinksCount,
+                                               size_t sinksCount,
                                                const struct audio_port_config *sinks,
-                                               audio_patch_handle_t *handle)
+                                               audio_patch_handle_t &handle)
     { return android::OK; }
 
     virtual android::status_t releaseAudioPatch(audio_patch_handle_t)

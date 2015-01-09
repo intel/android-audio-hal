@@ -63,7 +63,7 @@ TEST(DeviceWrapper, BadOutputPointer)
 
 TEST(DeviceWrapper, BadInterfaceName)
 {
-    hw_device_t *dummy;
+    hw_device_t *dummy = NULL;
     EXPECT_EQ(-EINVAL, Wrapper::open(NULL, "This is a bad interface Name", &dummy));
 
     delete dummy; /* prevent KW to complain (false positive) */
@@ -233,6 +233,11 @@ TEST_F(DeviceTest, DeviceErrorHandling)
               android::BAD_VALUE);
     EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, sources,
                                           numSinks, nullSinks, &handle),
+              android::BAD_VALUE);
+
+    audio_patch_handle_t *nullPatch = NULL;
+    EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, sources,
+                                          numSinks, sinks, nullPatch),
               android::BAD_VALUE);
 
     struct audio_port *nullPort = NULL;
