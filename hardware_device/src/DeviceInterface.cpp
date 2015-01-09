@@ -366,14 +366,14 @@ int DeviceInterface::wrapCreateAudioPatch(struct audio_hw_device *dev,
                                           const struct audio_port_config *sinks,
                                           audio_patch_handle_t *handle)
 {
-    if (sources == NULL || sinks == NULL) {
+    if (sources == NULL || sinks == NULL || handle == NULL) {
         return static_cast<int>(android::BAD_VALUE);
     }
     return static_cast<int>(FORWARD_CALL_TO_DEV_INSTANCE(, dev, createAudioPatch(num_sources,
                                                                                  sources,
                                                                                  num_sinks,
                                                                                  sinks,
-                                                                                 handle)));
+                                                                                 *handle)));
 }
 
 int DeviceInterface::wrapReleaseAudioPatch(struct audio_hw_device *dev, audio_patch_handle_t handle)
