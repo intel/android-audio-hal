@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -149,8 +149,6 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                                                    routeSampleSpec().getChannelCount(),
                                                    "after_conversion");
     }
-    bytes = streamSampleSpec().convertFramesToBytes(
-        AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
 
     if (mFrameCount > (std::numeric_limits<uint64_t>::max() - srcFrames)) {
         Log::Error() << __FUNCTION__ << ": overflow detected, resetting framecount";
