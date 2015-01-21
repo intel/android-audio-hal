@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -21,14 +21,12 @@
  *
  */
 #pragma once
-
 #include "AudioConverter.hpp"
+#include <audio_utils/resampler.h>
 #include <list>
 
 namespace intel_audio
 {
-
-class Resampler;
 
 class AudioResampler : public AudioConverter
 {
@@ -47,7 +45,7 @@ private:
     /**
      * Configures the resampler.
      * It configures the resampler that may be used to convert samples from the source
-     * to destination sample rate.
+     * to destination sample rate, with option 'RESAMPLER_QUALITY_DEFAULT'.
      *
      * @param[in] ssSrc source sample specifications.
      * @param[in] ssDst destination sample specification.
@@ -74,31 +72,7 @@ private:
                                      void *dst,
                                      const size_t inFrames,
                                      size_t *outFrames);
+    struct resampler_itfe *mResampler;
 
-    android::status_t allocateBuffer();
-
-    /**
-     * converts a buffer of S16 to float.
-     *
-     * @param[in] inp input S16 buffer to convert.
-     * @param[out] out output float buffer.
-     * @param[in] sz size of input buffer.
-     */
-    void convertShort2Float(int16_t *inp, float *out, size_t sz) const;
-
-    /**
-     * converts a buffer of float to S16.
-     *
-     * @param[in] inp input float buffer to convert.
-     * @param[out] out output S16 buffer.
-     * @param[in] sz size of input buffer.
-     */
-    void convertFloat2Short(float *inp, int16_t *out, size_t sz) const;
-
-    static const int mBufSize = 4608; /**< default buffer is 24 ms @ 48kHz on S16LE samples. */
-    size_t mMaxFrameCnt;  /* max frame count the buffer can store */
-    void *mContext;      /* handle used to do resample */
-    float *mFloatInp;     /* here sample size is 4 bytes */
-    float *mFloatOut;     /* here sample size is 4 bytes */
 };
 }  // namespace intel_audio
