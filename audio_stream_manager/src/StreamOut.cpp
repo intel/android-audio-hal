@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -70,6 +70,7 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                        << ") No route available. Trashing samples for stream " << this;
 
         status = generateSilence(bytes);
+        mFrameCount += streamSampleSpec().convertBytesToFrames(bytes);
         mStreamLock.unlock();
         return status;
     }
@@ -211,21 +212,33 @@ status_t StreamOut::getRenderPosition(uint32_t &dspFrames) const
 
 status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &timestamp) const
 {
-    uint32_t avail;
-
-    if (getFramesAvailable(avail, timestamp) == 0) {
-        size_t kernelBufferSize = getBufferSize();
-        // FIXME This calculation is incorrect if there is buffering after app processor
-        int64_t signedFrames = mFrameCount - kernelBufferSize + avail;
-        // It would be unusual for this value to be negative, but check just in case ...
-        if (signedFrames >= 0) {
-            frames = signedFrames;
-            return android::OK;
-        } else {
-            Log::Error() << __FUNCTION__ << ": signedFrames=" << signedFrames;
-        }
+    /** Take the stream lock in read mode to avoid the route manager unrouting this stream,
+     * and closing the audio device while dealing with it.
+     */
+    AutoR lock(mStreamLock);
+    // Check if the audio route is available for this stream (i.e. an audio device is assign to it).
+    if (!isRoutedL()) {
+        return android::INVALID_OPERATION;
     }
-    return android::BAD_VALUE;
+    size_t avail;
+    status_t error = getFramesAvailable(avail, timestamp);
+    if (error != android::OK) {
+        return error;
+    }
+    size_t kernelBufferSize = getBufferSizeInFrames();
+    // FIXME This calculation is incorrect if there is buffering after app processor
+    int64_t signedFrames = mFrameCount - kernelBufferSize + avail;
+    if (signedFrames < 0) {
+        Log::Error() << __FUNCTION__ << ": signedFrames=" << signedFrames
+                     << " unusual negative value, please check avail implementation within driver."
+                     << ": mFrameCount=" << mFrameCount
+                     << ": kernelBufferSize=" << kernelBufferSize
+                     << ": avail=" << avail;
+
+        return android::BAD_VALUE;
+    }
+    frames = signedFrames;
+    return android::OK;
 }
 
 status_t StreamOut::flush()
