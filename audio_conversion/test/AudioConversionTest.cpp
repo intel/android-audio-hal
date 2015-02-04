@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -653,14 +653,6 @@ const uint16_t sourceBuf12[] = {
     0x00FF, 0xFF00
 };
 
-const uint16_t expectedDstBuf12[] = {
-    0, 0,
-    0, 1,
-    4, 7,
-    8, 12,
-    7, 25
-};
-
 /**
  * Test a resample from 48kHz to 24kHz in S16 format, stereo with allocated destination
  * buffer.
@@ -673,8 +665,8 @@ INSTANTIATE_TEST_CASE_P(resampleWithAllocatedMemoryFrom48kTo24kInS16le,
                                 SampleSpec(2, AUDIO_FORMAT_PCM_16_BIT, 24000),
                                 sourceBuf12,
                                 sizeof(sourceBuf12),
-                                expectedDstBuf12,
-                                sizeof(expectedDstBuf12),
+                                NULL,
+                                0,
                                 true
                                 )
                             )
