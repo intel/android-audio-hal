@@ -63,8 +63,7 @@ Stream::Stream(Device *parent, audio_io_handle_t handle)
       mApplicabilityMask(0),
       mDumpBeforeConv(NULL),
       mDumpAfterConv(NULL),
-      mHandle(handle),
-      mPatchHandle(AUDIO_PATCH_HANDLE_NONE)
+      mHandle(handle)
 {
 }
 
@@ -192,7 +191,7 @@ audio_devices_t Stream::getDevice() const
 
 bool Stream::isRoutedByPolicy() const
 {
-    return mPatchHandle != AUDIO_PATCH_HANDLE_NONE;
+    return mDevices != 0;
 }
 
 uint32_t Stream::getApplicabilityMask() const
@@ -211,7 +210,7 @@ status_t Stream::setDevice(audio_devices_t device)
 status_t Stream::setParameters(const string &keyValuePairs)
 {
     Log::Warning() << __FUNCTION__ << ": " << keyValuePairs
-                   << ": Not implemented, Using routing API 3.0";
+                   << ": Not implemented, Using routing API 3.0" ;
     return android::OK;
 }
 
@@ -383,11 +382,6 @@ bool Stream::safeSleep(uint32_t sleepTimeUs)
     tim.tv_nsec = sleepTimeUs * mNsecPerUsec;
 
     return nanosleep(&tim, NULL) > 0;
-}
-
-void Stream::setPatchHandle(audio_patch_handle_t patchHandle)
-{
-    mPatchHandle = patchHandle;
 }
 
 } // namespace intel_audio
