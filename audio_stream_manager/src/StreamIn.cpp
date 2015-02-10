@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -40,8 +40,8 @@ namespace intel_audio
 
 const std::string StreamIn::mHwEffectImplementor = "IntelLPE";
 
-StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, audio_source_t source)
-    : Stream(parent, handle),
+StreamIn::StreamIn(Device *parent, audio_source_t source)
+    : Stream(parent),
       mFramesLost(0),
       mFramesIn(0),
       mProcessingFramesIn(0),
