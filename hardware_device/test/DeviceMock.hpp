@@ -79,9 +79,9 @@ public:
     MOCK_CONST_METHOD1(dump,
                        android::status_t(const int fd));
     MOCK_METHOD5(createAudioPatch,
-                 android::status_t(size_t sourcesCount, const struct audio_port_config *sources,
-                                   size_t sinksCount, const struct audio_port_config *sinks,
-                                   audio_patch_handle_t &handle));
+                 android::status_t(uint32_t sourcesCount, const struct audio_port_config *sources,
+                                   uint32_t sinksCount, const struct audio_port_config *sinks,
+                                   audio_patch_handle_t *handle));
     MOCK_METHOD1(releaseAudioPatch,
                  android::status_t(audio_patch_handle_t handle));
     MOCK_CONST_METHOD1(getAudioPort,

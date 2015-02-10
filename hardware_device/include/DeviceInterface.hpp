@@ -211,11 +211,11 @@ public:
      *                    audio HAL module.
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t createAudioPatch(size_t sourcesCount,
-                                               const struct audio_port_config sources[],
-                                               size_t sinksCount,
-                                               const struct audio_port_config sinks[],
-                                               audio_patch_handle_t &handle) = 0;
+    virtual android::status_t createAudioPatch(unsigned int sourcesCount,
+                                               const struct audio_port_config *sources,
+                                               unsigned int sinksCount,
+                                               const struct audio_port_config *sinks,
+                                               audio_patch_handle_t *handle) = 0;
 
     /** Releases an audio patch.
      *

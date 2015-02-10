@@ -104,11 +104,11 @@ public:
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t dump(const int /* fd */) const { return android::OK; }
     /** @note Routing control API not implemented in our Audio HAL */
-    virtual android::status_t createAudioPatch(size_t /*sourcesCount*/,
-                                               const struct audio_port_config /*sources*/[],
-                                               size_t /*sinksCount*/,
-                                               const struct audio_port_config /*sinks*/[],
-                                               audio_patch_handle_t &/*handle*/)
+    virtual android::status_t createAudioPatch(unsigned int /*sourcesCount*/,
+                                               const struct audio_port_config */*sources*/,
+                                               unsigned int /*sinksCount*/,
+                                               const struct audio_port_config */*sinks*/,
+                                               audio_patch_handle_t */*handle*/)
     {
         return android::INVALID_OPERATION;
     }

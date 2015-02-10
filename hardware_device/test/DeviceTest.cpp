@@ -130,19 +130,18 @@ TEST_F(DeviceTest, Device)
     EXPECT_EQ(mDevice->dump(mDevice, 246), 11);
 
     // Routing Control APIs test
-    size_t sourcesCount = 8;
-    size_t sinksCount = 3;
+    uint32_t sourcesCount = 8;
+    uint32_t sinksCount = 3;
     struct audio_port_config sources[sourcesCount];
     struct audio_port_config sinks[sinksCount];
     audio_patch_handle_t handle;
 
-    EXPECT_CALL(*mDeviceMock, createAudioPatch(sourcesCount, sources, sinksCount, sinks, handle))
-    .WillOnce(DoAll(SetArgReferee<4>(1981),
-                    Return(3)));
+    EXPECT_CALL(*mDeviceMock, createAudioPatch(sourcesCount, sources, sinksCount, sinks, &handle))
+    .WillOnce(Return(3));
     EXPECT_EQ(mDevice->create_audio_patch(mDevice, sourcesCount, sources,
                                           sinksCount, sinks, &handle),
               3);
-    EXPECT_EQ(handle, 1981);
+
     EXPECT_CALL(*mDeviceMock, releaseAudioPatch(handle))
     .WillOnce(Return(8));
     EXPECT_EQ(mDevice->release_audio_patch(mDevice, handle), 8);
@@ -565,16 +564,12 @@ TEST_F(DeviceTest, DeviceErrorHandling)
     struct audio_port_config *nullSinks = NULL;
     struct audio_port_config sources[numSources];
     struct audio_port_config sinks[numSinks];
-    audio_patch_handle_t *nullPatch = NULL;
 
     EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, nullSources,
                                           numSinks, sinks, &handle),
               android::BAD_VALUE);
     EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, sources,
                                           numSinks, nullSinks, &handle),
-              android::BAD_VALUE);
-    EXPECT_EQ(mDevice->create_audio_patch(mDevice, numSources, sources,
-                                          numSinks, sinks, nullPatch),
               android::BAD_VALUE);
 
     struct audio_port *nullPort = NULL;
