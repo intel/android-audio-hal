@@ -49,6 +49,7 @@ public:
     virtual int setGain(float /* gain */) { return android::OK; }
     virtual android::status_t read(void *buffer, size_t &bytes);
     virtual uint32_t getInputFramesLost() const;
+    virtual android::status_t setParameters(const std::string &keyValuePairs);
     virtual android::status_t setDevice(audio_devices_t device);
 
     // From AudioBufferProvider

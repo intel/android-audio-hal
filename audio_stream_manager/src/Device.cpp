@@ -347,6 +347,19 @@ void Device::updateRequestedEffect()
     getStreamInterface()->reconsiderRouting();
 }
 
+status_t Device::setStreamParameters(Stream *stream, const string &keyValuePairs)
+{
+    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
+    KeyValuePairs pairs(keyValuePairs);
+    if (stream->isOut()) {
+        // Appends the mode key only for output stream, as the policy may only reconsider
+        // the mode and selects a new parameter for output
+        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
+    }
+    Log::Verbose() << __FUNCTION__ << ": key value pair " << pairs.toString();
+    return mPlatformState->setParameters(pairs.toString());
+}
+
 void Device::resetEchoReference(struct echo_reference_itfe *reference)
 {
     Log::Debug() << __FUNCTION__ << ": (reference=" << reference << ")";
