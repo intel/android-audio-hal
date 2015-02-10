@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -44,18 +44,6 @@ using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
-extern "C"
-{
-/**
- * Function for dlsym() to look up for creating a new DeviceInterface.
- */
-DeviceInterface *createAudioHardware(void)
-{
-    Log::Debug() << "Using Audio XML HAL";
-    return new Device();
-}
-}         // extern "C"
-
 const char *const Device::mRouteLibPropName = "audiocomms.routeLib";
 const char *const Device::mRouteLibPropDefaultValue = "audio.routemanager.so";
 const char *const Device::mRestartingKey = "restarting";
@@ -133,8 +121,8 @@ android::status_t Device::openOutputStream(audio_io_handle_t /*handle*/,
                                            audio_devices_t devices,
                                            audio_output_flags_t flags,
                                            audio_config_t &config,
-                                           StreamOutInterface *&stream,
-                                           const std::string &/*address*/)
+                                           StreamOutInterface * &stream,
+                                           const std::string & /*address*/)
 {
     Log::Debug() << __FUNCTION__ << ": called for devices: " << devices;
 
@@ -168,9 +156,9 @@ void Device::closeOutputStream(StreamOutInterface *out)
 android::status_t Device::openInputStream(audio_io_handle_t /*handle*/,
                                           audio_devices_t devices,
                                           audio_config_t &config,
-                                          StreamInInterface *&stream,
+                                          StreamInInterface * &stream,
                                           audio_input_flags_t /*flags*/,
-                                          const std::string &/*address*/,
+                                          const std::string & /*address*/,
                                           audio_source_t source)
 {
     Log::Debug() << __FUNCTION__ << ": called for devices: " << devices

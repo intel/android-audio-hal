@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2014 Intel Corporation All Rights Reserved.
+# Copyright (c) 2014-2015 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -30,8 +30,7 @@ include $(CLEAR_VARS)
 #######################################################################
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := \
-    src/DeviceInterface.cpp \
-    src/StreamInterface.cpp
+    src/StreamWrapper.cpp
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
 
@@ -50,9 +49,8 @@ include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := \
-    src/DeviceInterface.cpp \
-    src/StreamInterface.cpp
-LOCAL_CFLAGS := -Wall -Werror -Wextra
+    src/StreamWrapper.cpp
+LOCAL_CFLAGS := -Wall -Werror -Wextra -O0 -ggdb
 LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities_host
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
@@ -73,14 +71,17 @@ LOCAL_C_INCLUDES := \
     vendor/intel/hardware/PRIVATE/audiocomms/tests/external/gmock/include
 
 LOCAL_SRC_FILES := \
-    test/DeviceTest.cpp
+    test/DeviceWrapperTest.cpp \
+    test/StreamWrapperTest.cpp
+
+LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities_host
 
 LOCAL_STATIC_LIBRARIES += \
     libaudiohw_intel_host \
     libgtest_host \
     libgtest_main_host \
-    libgmock_host
 
+LOCAL_CFLAGS := -ggdb -O0
 LOCAL_LDFLAGS := -pthread    # Workaround needed for gmock
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := audiohw_intel_test

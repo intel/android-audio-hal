@@ -29,6 +29,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 
 audio_stream_manager_src_files :=  \
     src/Stream.cpp \
+    src/audio_hw.cpp \
     src/Device.cpp \
     src/StreamIn.cpp \
     src/StreamOut.cpp \
@@ -201,7 +202,7 @@ LOCAL_MODULE := audio-hal-functional_test
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_CFLAGS := -Wall -Werror -Wextra
+LOCAL_CFLAGS := -Wall -Werror -Wextra -O0 -ggdb
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_NATIVE_TEST)
