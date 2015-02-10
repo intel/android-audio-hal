@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
+ * Copyright (c) 2013-2014 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -41,7 +41,8 @@ public:
     IoStream()
         : mCurrentStreamRoute(NULL),
           mNewStreamRoute(NULL),
-          mEffectsRequestedMask(0)
+          mEffectsRequestedMask(0),
+          mIsRouted(false)
     {}
 
     /**
@@ -355,6 +356,8 @@ private:
     SampleSpec mRouteSampleSpec;
 
     uint32_t mEffectsRequestedMask; /**< Mask of requested effects. */
+
+    bool mIsRouted; /**< flag indicating the stream is routed and device is ready to use. */
 };
 
 } // namespace intel_audio
