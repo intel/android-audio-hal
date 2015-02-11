@@ -41,7 +41,8 @@ const string AudioStreamRoute::mChannelPolicyIgnore = "ignore";
 const string AudioStreamRoute::mChannelPolicyAverage = "average";
 
 const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
-    applicabilityMask :     0,
+    flagMask :   0,
+    useCaseMask: 0,
     effectSupported :       {},
     requirePreEnable :      false,
     requirePostDisable :    false,
@@ -91,7 +92,8 @@ AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
     config.stopThreshold = _config.stopThreshold;
     config.silenceThreshold = _config.silenceThreshold;
     config.silencePrologInMs = _config.silencePrologInMs;
-    config.applicabilityMask = _config.applicabilityMask;
+    config.flagMask = _config.flagMask;
+    config.useCaseMask = _config.useCaseMask;
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
@@ -168,7 +170,8 @@ bool AudioStreamRoute::sendToHW(string & /*error*/)
     streamConfig.stopThreshold = config.stopThreshold;
     streamConfig.silenceThreshold = config.silenceThreshold;
     streamConfig.silencePrologInMs = config.silencePrologInMs;
-    streamConfig.applicabilityMask = config.applicabilityMask;
+    streamConfig.flagMask = config.flagMask;
+    streamConfig.useCaseMask = config.useCaseMask;
 
     streamConfig.channelsPolicy.erase(streamConfig.channelsPolicy.begin(),
                                       streamConfig.channelsPolicy.end());
