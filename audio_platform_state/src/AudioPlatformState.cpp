@@ -284,8 +284,17 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
                                       (second != NULL) && (strlen(second) != 0),
                                       "invalid value pair");
 
-                    if (!convertTo<string, uint32_t>(first, index)) {
-                        Log::Error() << __FUNCTION__ << ": Invalid index(" << first << ") found";
+                    bool isValueProvidedAsHexa = !string(first).compare(0, 2, "0x");
+                    if (isValueProvidedAsHexa) {
+                        if (!convertTo<string, uint32_t>(first, index)) {
+                            Log::Error() << __FUNCTION__ << ": Invalid value(" << first << ")";
+                        }
+                    } else {
+                        int32_t signedIndex = 0;
+                        if (!convertTo<string, int32_t>(first, signedIndex)) {
+                            Log::Error() << __FUNCTION__ << ": Invalid value(" << first << ")";
+                        }
+                        index = signedIndex;
                     }
                     Log::Verbose() << __FUNCTION__ << ": name=" << typeName << ", index=" << index
                                    << ", value=" << second;

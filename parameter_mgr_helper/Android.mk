@@ -1,6 +1,6 @@
 #
 # INTEL CONFIDENTIAL
-# Copyright (c) 2013-2014 Intel
+# Copyright (c) 2013-2015 Intel
 # Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
@@ -46,7 +46,8 @@ param_mgr_helper_includes_dir_target := \
     $(call include-path-for, bionic)
 
 param_mgr_helper_static_lib += \
-    libaudio_comms_utilities
+    libaudio_comms_utilities \
+    libaudio_comms_convert
 
 param_mgr_helper_static_lib_host += \
     $(foreach lib, $(param_mgr_helper_static_lib), $(lib)_host)

@@ -113,12 +113,16 @@ private:
     /**
      * Helper function to retrieve the numerical value from the literal representation of the
      * criterion.
+     * Note that the literal value may either be the literal value associated to the criterion
+     * or the numerical value converted to string. It may be the case when receiving parameters
+     * from the policy like devices.
      *
      * @param[in] literalValue: literal representation of the criterion.
+     * @param[out] numerical representation of the criterion.
      *
-     * @return numerical value of the criterion associated to this literal.
+     * @return true if the literal value was translated to a valid numerical, false otherwise.
      */
-    int getNumericalFromLiteral(const std::string &literalValue) const;
+    bool getNumericalFromLiteral(const std::string &literalValue, int &numerical) const;
 
     /**
      * criterion interface for parameter manager operations.

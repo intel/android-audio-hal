@@ -836,10 +836,12 @@ private:
      */
     inline uint32_t routeToMask(AudioRoute *route) const
     {
-        audio_comms::utilities::Direction::Directions dir = route->isOut()?
+        audio_comms::utilities::Direction::Directions dir = route->isOut() ?
                     audio_comms::utilities::Direction::Output :
                     audio_comms::utilities::Direction::Input;
-        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName());
+        int numeric;
+        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName(), numeric) ?
+               numeric : 0;
     }
 
     /**
