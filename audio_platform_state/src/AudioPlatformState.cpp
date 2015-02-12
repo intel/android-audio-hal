@@ -223,7 +223,7 @@ template <>
 void AudioPlatformState::addCriterionType<AudioPlatformState::Route>(const string &typeName,
                                                                      bool isInclusive)
 {
-    AUDIOCOMMS_ASSERT(mRouteCriterionTypeMap.find(typeName) == mRouteCriterionTypeMap.end(),
+    AUDIOCOMMS_ASSERT(!collectionHasElement<CriterionType *>(typeName, mRouteCriterionTypeMap),
                       "CriterionType " << typeName << " already added");
 
     Log::Debug() << __FUNCTION__ << ": Adding new criterionType " << typeName << " for Route PFW";
@@ -247,7 +247,7 @@ void AudioPlatformState::addCriterionTypeValuePair<AudioPlatformState::Route>(
     uint32_t numericValue,
     const string &literalValue)
 {
-    AUDIOCOMMS_ASSERT(mRouteCriterionTypeMap.find(typeName) != mRouteCriterionTypeMap.end(),
+    AUDIOCOMMS_ASSERT(collectionHasElement<CriterionType *>(typeName, mRouteCriterionTypeMap),
                       "CriterionType " << typeName.c_str() << "not found");
     Log::Verbose() << __FUNCTION__ << ": Adding new value pair (" << numericValue
                    << "," << literalValue << ") for criterionType " << typeName << " for Route PFW";
@@ -399,7 +399,7 @@ void AudioPlatformState::addRouteCriterion(Criterion *routeCriterion)
 {
     AUDIOCOMMS_ASSERT(routeCriterion != NULL, "Invalid Route Criterion");
     const string criterionName = routeCriterion->getName();
-    AUDIOCOMMS_ASSERT(mRouteCriterionMap.find(criterionName) == mRouteCriterionMap.end(),
+    AUDIOCOMMS_ASSERT(!collectionHasElement<Criterion *>(criterionName, mRouteCriterionMap),
                       "Route Criterion " << criterionName << " already added");
     mRouteCriterionTypeMap[mStateChangedCriterionName]->addValuePair(1 << mRouteCriterionMap.size(),
                                                                      criterionName);
@@ -500,6 +500,14 @@ void AudioPlatformState::loadRogueParameterTypeList(cnode *root)
 }
 
 template <typename T>
+bool AudioPlatformState::collectionHasElement(const string &name,
+                                              const map<string, T> &collection) const
+{
+    typename map<string, T>::const_iterator it = collection.find(name);
+    return it != collection.end();
+}
+
+template <typename T>
 T *AudioPlatformState::getElement(const string &name, map<string, T *> &elementsMap)
 {
     parameterManagerElementSupported<T>();
@@ -563,7 +571,10 @@ void AudioPlatformState::addCriterion<AudioPlatformState::Audio>(const string &n
                                                                  const string &typeName,
                                                                  const string &defaultLiteralValue)
 {
+    AUDIOCOMMS_ASSERT(!collectionHasElement<string>(name, mAudioCriterionMap),
+                      "Criterion " << name << " already added for Audio PFW");
     mStreamInterface->addCriterion(name, typeName, defaultLiteralValue);
+    mAudioCriterionMap[name] = typeName;
 }
 
 template <>
@@ -571,6 +582,9 @@ void AudioPlatformState::addCriterion<AudioPlatformState::Route>(const string &n
                                                                  const string &typeName,
                                                                  const string &defaultLiteralValue)
 {
+
+    AUDIOCOMMS_ASSERT(!collectionHasElement<Criterion *>(name, mRouteCriterionMap),
+                      "Criterion " << name << " already added for Route PFW");
     CriterionType *criterionType = getElement<CriterionType>(typeName, mRouteCriterionTypeMap);
     addRouteCriterion(new Criterion(name, criterionType, mRoutePfwConnector, defaultLiteralValue));
 }
@@ -580,9 +594,6 @@ void AudioPlatformState::loadCriterion(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     const char *criterionName = root->name;
-
-    AUDIOCOMMS_ASSERT(mRouteCriterionMap.find(criterionName) == mRouteCriterionMap.end(),
-                      "Criterion " << criterionName << " already added");
 
     vector<AndroidParamMappingValuePair> valuePairs;
     string paramKeyName = "";
@@ -889,15 +900,27 @@ void AudioPlatformState::applyPlatformConfiguration()
 
 void AudioPlatformState::setValue(int value, const string &stateName)
 {
-    if (getElement<Criterion>(stateName, mRouteCriterionMap)->setCriterionState(value)) {
-
+    if (collectionHasElement<Criterion *>(stateName, mRouteCriterionMap)
+        && getElement<Criterion>(stateName, mRouteCriterionMap)->setCriterionState(value)) {
+        setPlatformStateEvent(stateName);
+    }
+    if (collectionHasElement<string>(stateName, mAudioCriterionMap)
+        && mStreamInterface->setAudioCriterion(stateName, value)) {
         setPlatformStateEvent(stateName);
     }
 }
 
 int AudioPlatformState::getValue(const std::string &stateName) const
 {
-    return getElement<Criterion>(stateName, mRouteCriterionMap)->getValue<uint32_t>();
+    if (collectionHasElement<Criterion *>(stateName, mRouteCriterionMap)) {
+        return getElement<Criterion>(stateName, mRouteCriterionMap)->getValue<uint32_t>();
+    }
+    if (collectionHasElement<string>(stateName, mAudioCriterionMap)) {
+        uint32_t value = 0;
+        mStreamInterface->getAudioCriterion(stateName, value);
+        return value;
+    }
+    return 0;
 }
 
 bool AudioPlatformState::isModemEmbedded() const

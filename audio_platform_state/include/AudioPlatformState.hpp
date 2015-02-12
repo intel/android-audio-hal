@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -536,6 +536,19 @@ private:
     std::vector<AndroidParamMappingValuePair> parseMappingTable(const char *values);
 
     /**
+     * Check if the given collection has the element indexed by the name key
+     *
+     * @tparam T type of element to search.
+     * @param[in] name name of the element to find.
+     * @param[in] elementsMap maps of elements to search into.
+     *
+     * @return true if element found within collection, false otherwise.
+     */
+    template <typename T>
+    bool collectionHasElement(const std::string &name,
+                              const std::map<std::string, T> &collection) const;
+
+    /**
      * Retrieve an element from a map by its name.
      *
      * @tparam T type of element to search.
@@ -612,6 +625,8 @@ private:
 
     std::map<std::string, CriterionType *> mRouteCriterionTypeMap;
     std::map<std::string, Criterion *> mRouteCriterionMap; /**< Route Criterion Map. */
+    /** Audio Criterion Map indexed by the name of criterion and storing the name of the type */
+    std::map<std::string, std::string> mAudioCriterionMap;
     std::vector<Parameter *> mParameterVector; /**< Map of parameters. */
 
     CParameterMgrPlatformConnector *mRoutePfwConnector; /**< Route Parameter Manager connector. */
