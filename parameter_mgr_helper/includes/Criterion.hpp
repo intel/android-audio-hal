@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -72,10 +72,8 @@ public:
      *
      * @return value of the criterion.
      */
-    int getValue() const
-    {
-        return mValue;
-    }
+    template <typename T>
+    T getValue() const;
 
     /**
      * Set the local value to the parameter manager.
@@ -92,13 +90,6 @@ public:
      */
     template <typename T>
     bool setCriterionState(const T &value);
-
-    /**
-     * Get the literal value of the criterion.
-     *
-     * @return the literal value associated to the numerical local value.
-     */
-    std::string getFormattedValue() const;
 
     /**
      * Get the criterion type handler.

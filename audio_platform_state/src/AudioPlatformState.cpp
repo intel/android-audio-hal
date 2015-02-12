@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -777,7 +777,7 @@ bool AudioPlatformState::hasPlatformStateChanged() const
     AUDIOCOMMS_ASSERT(it != mRouteCriterionMap.end(),
                       "state " << mStateChangedCriterionName << " not found");
 
-    return (it->second->getValue() != 0) || mAudioPfwHasChanged;
+    return (it->second->getValue<uint32_t>() != 0) || mAudioPfwHasChanged;
 }
 
 void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
@@ -793,7 +793,7 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
         // If not, consider that this event is related to Audio PFW Instance.
         mAudioPfwHasChanged = true;
     }
-    uint32_t platformEventChanged = stateChange->getValue() | eventId;
+    uint32_t platformEventChanged = stateChange->getValue<uint32_t>() | eventId;
     stateChange->setValue<uint32_t>(platformEventChanged);
 }
 
@@ -888,7 +888,7 @@ void AudioPlatformState::setValue(int value, const string &stateName)
 
 int AudioPlatformState::getValue(const std::string &stateName) const
 {
-    return getElement<Criterion>(stateName, mRouteCriterionMap)->getValue();
+    return getElement<Criterion>(stateName, mRouteCriterionMap)->getValue<uint32_t>();
 }
 
 bool AudioPlatformState::isModemEmbedded() const

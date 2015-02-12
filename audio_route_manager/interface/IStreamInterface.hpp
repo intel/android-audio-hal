@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -173,6 +173,16 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
     virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue) = 0;
 
     /**
+     * Sets an audio parameter manager criterion value.
+     *
+     * @param[in] name: criterion name.
+     * @param[in] value: to set (numeric).
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    virtual bool setAudioCriterion(const std::string &name, uint32_t value) = 0;
+
+    /**
      * Gets an audio parameter manager criterion value.
      *
      * @param[in] name: criterion name.
@@ -181,6 +191,16 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const = 0;
+
+    /**
+     * Gets an audio parameter manager criterion value.
+     *
+     * @param[in] name: criterion name.
+     * @param[in] value: the value is correctly set if return code is true.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const = 0;
 
     /**
      * Sets an audio parameter manager rogue parameter.

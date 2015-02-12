@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -65,11 +65,6 @@ Criterion::~Criterion()
 {
 }
 
-string Criterion::getFormattedValue() const
-{
-    return mCriterionType->getTypeInterface()->getFormattedState(mValue);
-}
-
 template <>
 bool Criterion::setValue<uint32_t>(const uint32_t &value)
 {
@@ -79,6 +74,18 @@ bool Criterion::setValue<uint32_t>(const uint32_t &value)
         return true;
     }
     return false;
+}
+
+template <>
+uint32_t Criterion::getValue() const
+{
+    return mValue;
+}
+
+template <>
+string Criterion::getValue() const
+{
+    return mCriterionType->getFormattedState(mValue);
 }
 
 template <>
