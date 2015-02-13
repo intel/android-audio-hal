@@ -647,7 +647,7 @@ private:
     /**
      * requested preprocessors criterion name
      */
-    static const std::string mPreProcRequestedByActiveInputCriterionName;
+    static const std::string mPreProcRequestedCriterionName;
 
     /**
      * Stream Rate associated with narrow band in case of VoIP.

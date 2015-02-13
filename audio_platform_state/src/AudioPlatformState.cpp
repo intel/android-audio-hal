@@ -105,8 +105,7 @@ const std::string AudioPlatformState::mOutputFlagsCriterionName = "OutputFlags";
 const std::string AudioPlatformState::mInputDevicesCriterionName = "InputDevices";
 const std::string AudioPlatformState::mAndroidModeCriterionName = "AndroidMode";
 const std::string AudioPlatformState::mInputSourcesCriterionName = "InputSources";
-const std::string AudioPlatformState::mPreProcRequestedByActiveInputCriterionName =
-    "PreProcessorRequestedByActiveInput";
+const std::string AudioPlatformState::mPreProcRequestedCriterionName = "PreProcEnabled";
 const std::string AudioPlatformState::mKeyAndroidMode =  "android_mode";
 const std::string AudioPlatformState::mKeyDeviceOut = "output_devices";
 const std::string AudioPlatformState::mKeyDeviceIn =  "input_devices";
@@ -855,7 +854,7 @@ void AudioPlatformState::updateActiveStreamsParameters(bool isOut)
     }
     setValue(streamsMask, isOut ? mOutputFlagsCriterionName : mInputSourcesCriterionName);
     if (!isOut) {
-        setValue(effectRequested, mPreProcRequestedByActiveInputCriterionName);
+        setValue(effectRequested, mPreProcRequestedCriterionName);
     }
     applyPlatformConfiguration();
 }
