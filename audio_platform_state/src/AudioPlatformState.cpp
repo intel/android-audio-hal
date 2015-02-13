@@ -813,6 +813,10 @@ bool AudioPlatformState::hasPlatformStateChanged() const
 
 void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
 {
+    if (!collectionHasElement<Criterion *>(mStateChangedCriterionName, mRouteCriterionMap)) {
+        Log::Warning() << __FUNCTION__ << ": no state changed criterion available.";
+        return;
+    }
     Criterion *stateChange = getElement<Criterion>(mStateChangedCriterionName, mRouteCriterionMap);
 
     // Checks if eventState name is a possible value of HasChanged criteria
