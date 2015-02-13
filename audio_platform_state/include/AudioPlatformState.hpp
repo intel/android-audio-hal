@@ -521,6 +521,9 @@ private:
      * @param[in] root node of the configuration file.
      */
     template <PfwInstance pfw>
+    void loadConfigFor(cnode *root);
+
+    template <PfwInstance pfw>
     void loadConfig(cnode *root);
 
     IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -37,6 +37,7 @@ static const char *const gAudioHalVendorConfFilePath =
  */
 static const std::string gAudioConfTag = "Audio";
 static const std::string gRouteConfTag = "Route";
+static const std::string gCommonConfTag = "Common";
 
 /**
  * PFW elements tags

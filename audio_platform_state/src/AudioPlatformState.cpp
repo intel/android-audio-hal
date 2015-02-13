@@ -263,7 +263,7 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
 
         AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
         const char *typeName = node->name;
-        char *valueNames = (char *)node->value;
+        char *valueNames = strndup(node->value, strlen(node->value));
 
         addCriterionType<pfw>(typeName, isInclusive);
 
@@ -309,6 +309,7 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
             }
             valueName = strtok_r(NULL, ",", &ctx);
         }
+        free(valueNames);
     }
 }
 
@@ -544,7 +545,7 @@ vector<AudioPlatformState::AndroidParamMappingValuePair> AudioPlatformState::par
     const char *values)
 {
     AUDIOCOMMS_ASSERT(values != NULL, "error in parsing file");
-    char *mappingPairs = (char *)(values);
+    char *mappingPairs = strndup(values, strlen(values));
     char *ctx;
     vector<AndroidParamMappingValuePair> valuePairs;
 
@@ -562,6 +563,7 @@ vector<AudioPlatformState::AndroidParamMappingValuePair> AudioPlatformState::par
         }
         mappingPair = strtok_r(NULL, ",", &ctx);
     }
+    free(mappingPairs);
     return valuePairs;
 }
 
@@ -633,12 +635,22 @@ template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadConfig(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, getPfwInstanceName<pfw>().c_str());
-    if (node == NULL) {
-        Log::Warning() << __FUNCTION__
-                       << ": Could not find node for pfw=" << getPfwInstanceName<pfw>();
-        return;
+    cnode *node = config_find(root, gCommonConfTag.c_str());
+    if (node != NULL) {
+        Log::Verbose() << __FUNCTION__ << " Load common conf for " << getPfwInstanceName<pfw>();
+        loadConfigFor<pfw>(node);
     }
+    node = config_find(root, getPfwInstanceName<pfw>().c_str());
+    if (node != NULL) {
+        Log::Verbose() << __FUNCTION__ << " Load specific conf for " << getPfwInstanceName<pfw>();
+        loadConfigFor<pfw>(node);
+    }
+}
+
+template <AudioPlatformState::PfwInstance pfw>
+void AudioPlatformState::loadConfigFor(cnode *node)
+{
+    AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
     Log::Debug() << __FUNCTION__ << " Loading conf for pfw " << getPfwInstanceName<pfw>();
 
     loadInclusiveCriterionType<pfw>(node);
