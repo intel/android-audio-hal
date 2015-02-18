@@ -167,7 +167,7 @@ LOCAL_STATIC_LIBRARIES += \
 LOCAL_WHOLE_STATIC_LIBRARIES := $(audio_stream_manager_whole_static_lib)
 LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
 LOCAL_CFLAGS := $(audio_stream_manager_cflags)
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudio_stream_manager_static_host
 LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)

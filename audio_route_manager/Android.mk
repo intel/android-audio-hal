@@ -141,7 +141,7 @@ LOCAL_STATIC_LIBRARIES += \
     $(audio_route_manager_include_dirs_from_static_libraries_host)
 LOCAL_SRC_FILES := $(audio_route_manager_src_files)
 LOCAL_CFLAGS := $(audio_route_manager_cflags)
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudio_route_manager_static_gcov_host
 LOCAL_MODULE_OWNER := intel
 
