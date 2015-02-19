@@ -125,6 +125,7 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
             }
 
             if (++retryCount > mMaxReadWriteRetried) {
+                mStreamLock.unlock();
                 Log::Error() << __FUNCTION__ << ": Hardware not responding";
                 return android::DEAD_OBJECT;
             }
