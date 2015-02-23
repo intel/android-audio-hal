@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
+# Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -36,15 +36,12 @@ LOCAL_C_INCLUDES := \
     frameworks/av/include/media \
     $(TARGET_OUT_HEADERS)/hw \
     $(TARGET_OUT_HEADERS)/parameter \
-    $(TARGET_OUT_HEADERS)/mamgr-interface \
-    $(TARGET_OUT_HEADERS)/mamgr-core \
 
 LOCAL_SRC_FILES := \
     src/Parameter.cpp \
     src/CriterionParameter.cpp \
     src/AudioPlatformState.cpp \
     src/VolumeKeys.cpp \
-    src/ModemProxy.cpp \
     src/ParameterAdapter.cpp \
 
 LOCAL_STATIC_LIBRARIES := \

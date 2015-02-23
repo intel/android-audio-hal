@@ -26,7 +26,6 @@
 #include "AudioHalConf.hpp"
 #include "CriterionParameter.hpp"
 #include "RogueParameter.hpp"
-#include "ModemProxy.hpp"
 #include "ParameterAdapter.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "VolumeKeys.hpp"
@@ -158,11 +157,6 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
 
 AudioPlatformState::~AudioPlatformState()
 {
-    /// Stop All Modem Proxies
-    for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
-        mModemProxyVector[index]->stop();
-    }
-
     mParameterAdapter->stop();
     delete mParameterAdapter;
 
@@ -198,10 +192,6 @@ status_t AudioPlatformState::start()
     }
     Log::Debug() << __FUNCTION__ << ": Route PFW successfully started!";
 
-    /// Start All Modem Proxies
-    for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
-        mModemProxyVector[index]->start();
-    }
     /// Start ParameterAdapter
     mParameterAdapter->start();
 
@@ -359,9 +349,9 @@ void AudioPlatformState::addParameter<AudioPlatformState::Audio, AudioPlatformSt
                                                      mStreamInterface,
                                                      defaultValue);
     } else if (typeName == gDoubleTypeTag) {
-         rogueParam= new AudioRogueParameter<double>(this, paramKey, name,
-                                                    mStreamInterface,
-                                                    defaultValue);
+        rogueParam = new AudioRogueParameter<double>(this, paramKey, name,
+                                                     mStreamInterface,
+                                                     defaultValue);
     } else {
         Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
         return;
@@ -659,56 +649,6 @@ void AudioPlatformState::loadConfigFor(cnode *node)
     loadRogueParameterTypeList<pfw>(node);
 }
 
-/**
- * ModemProxy loadValueSet specialization. Only this one is available until now.
- */
-template <>
-void AudioPlatformState::loadValueSet<ModemProxy>(cnode *root)
-{
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    string libraryName;
-    string libraryInstance;
-    cnode *node;
-    for (node = root->first_child; node != NULL; node = node->next) {
-        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
-
-        if (string(node->name) == gInterfaceLibraryName) {
-            libraryName = node->value;
-        } else if (string(node->name) == gInterfaceLibraryInstance) {
-            libraryInstance = node->value;
-        } else {
-            Log::Error() << __FUNCTION__
-                         << ": Unrecognized " << node->name << " " << node->value << " node ";
-        }
-    }
-    Log::Verbose() << __FUNCTION__ << ": Instantiate (lib=" << libraryName
-                   << ", Instance=" << libraryInstance << ") ValueSet ";
-    ModemProxy *modemProxy = new ModemProxy(libraryName,
-                                            libraryInstance,
-                                            mParameterAdapter,
-                                            mParameterAdapter);
-    mModemProxyVector.push_back(modemProxy);
-}
-
-/**
- * ModemProxy loadValueSet specialization. Only this one is available until now.
- */
-template <>
-void AudioPlatformState::loadValueSetList<ModemProxy>(cnode *root)
-{
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, gModemValueSet.c_str());
-    if (node == NULL) {
-        Log::Warning() << __FUNCTION__ << ": Could not find node for ValueSet=" << gModemValueSet;
-        return;
-    }
-    Log::Verbose() << __FUNCTION__ << ": Loading conf for ValueSet=" << gModemValueSet;
-    for (node = node->first_child; node != NULL; node = node->next) {
-        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
-        loadValueSet<ModemProxy>(node);
-    }
-}
-
 status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 {
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
@@ -725,7 +665,6 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 
     loadConfig<Audio>(root);
     loadConfig<Route>(root);
-    loadValueSetList<ModemProxy>(root);
 
     config_free(root);
     free(root);
@@ -936,11 +875,6 @@ int AudioPlatformState::getValue(const std::string &stateName) const
         return value;
     }
     return 0;
-}
-
-bool AudioPlatformState::isModemEmbedded() const
-{
-    return !mModemProxyVector.empty();
 }
 
 void AudioPlatformState::printPlatformFwErrorInfo() const

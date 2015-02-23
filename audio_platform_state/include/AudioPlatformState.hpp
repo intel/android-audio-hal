@@ -46,7 +46,6 @@ namespace intel_audio
 {
 
 class IoStream;
-class ModemProxy;
 class ParameterAdapter;
 
 class ParameterMgrPlatformConnectorLogger;
@@ -484,24 +483,6 @@ private:
     void loadCriterionType(cnode *root, bool isInclusive);
 
     /**
-     * Parse and load the ValueSet and their respective attributes from configuration file.
-     *
-     * @tparam[in] valueSet class type.
-     * @param[in] root node of the configuration file
-     */
-    template <class valueSet>
-    void loadValueSet(cnode *root);
-
-    /**
-     * Parse and load the ValueSet list and their respective attributes from configuration file.
-     *
-     * @tparam[in] valueSet class type.
-     * @param[in] root node of the configuration file
-     */
-    template <class valueSet>
-    void loadValueSetList(cnode *root);
-
-    /**
      * Parse and load the chidren node from a given root node.
      *
      * @param[in] root node of the configuration file
@@ -689,11 +670,6 @@ private:
      * Parameter Adapter handle to retrieve parameters from external interfaces (e.g. modem IF).
      */
     ParameterAdapter *mParameterAdapter;
-
-    /**
-     * Vector of modem proxies to handle start / stop of modem proxy services.
-     */
-    std::vector<ModemProxy *> mModemProxyVector;
 
     /**
      * PFW concurrency protection - to garantee atomic operation only.
