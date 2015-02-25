@@ -73,6 +73,19 @@ audio_devices_t Patch::getDevices(audio_port_role_t role) const
     return devices;
 }
 
+const Port *Patch::getMixPort(audio_port_role_t role) const
+{
+    for (PortConstIterator portIter = mPorts.begin(); portIter != mPorts.end(); ++portIter) {
+        const Port *port = *portIter;
+        AUDIOCOMMS_ASSERT(port != NULL, "Invalid Port");
+        if (port->getRole() == role &&
+            port->getType() == AUDIO_PORT_TYPE_MIX) {
+            return port;
+        }
+    }
+    return NULL;
+}
+
 void Patch::release(bool notify)
 {
     for (PortIterator portIter = mPorts.begin(); portIter != mPorts.end();) {

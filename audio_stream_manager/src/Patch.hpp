@@ -111,6 +111,15 @@ public:
                   const struct audio_port_config sinks[]);
 
     /**
+     * Get if exist the mix port involved in this patch according to the role requested.
+     *
+     * @param[in] role for which the devices are requested, i.e. sink or source.
+     *
+     * @return valid Port of the requested role if found, NULL otherwise
+     */
+    const Port *getMixPort(audio_port_role_t role) const;
+
+    /**
      * Release the patch and all the ports involved by this patch.
      * It also clears the collection of ports.
      *
