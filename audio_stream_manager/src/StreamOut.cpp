@@ -58,17 +58,19 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
 
     mStreamLock.readLock();
     status_t status;
+    const ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
+
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
         Log::Warning() << __FUNCTION__ << ": (buffer=" << buffer << ", bytes=" << bytes
                        << ") No route available. Trashing samples for stream " << this;
 
         status = generateSilence(bytes);
+        mFrameCount += srcFrames;
         mStreamLock.unlock();
         return status;
     }
 
-    ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
     size_t dstFrames = 0;
     char *dstBuf = NULL;
     uint32_t retryCount = 0;
