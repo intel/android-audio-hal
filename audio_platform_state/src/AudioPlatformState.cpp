@@ -84,7 +84,7 @@ private:
 
 public:
     ParameterMgrPlatformConnectorLogger()
-        : mVerbose(TProperty<string>("media.pfw.verbose", "false"))
+        : mVerbose(TProperty<string>("persist.media.pfw.verbose", "false"))
     {}
 
     virtual void log(bool isWarning, const string &log)
