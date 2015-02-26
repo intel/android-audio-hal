@@ -275,7 +275,11 @@ status_t Stream::setStandby(bool isSet)
     }
     setStarted(!isSet);
 
-    return mParent->updateStreamsParametersSync(isOut());
+    Log::Debug() << __FUNCTION__ << ": " << (isSet ? "stopping " : "starting ")
+                 << (isOut() ? "output" : "input") << " stream";
+    // Start / Stop streams operation are expected to be synchronous, since we want to avoid loosing
+    // audio data before the stream is routed to its route, i.e. audio device.
+    return mParent->updateStreamsParametersSync(getRole());
 }
 
 status_t Stream::attachRouteL()

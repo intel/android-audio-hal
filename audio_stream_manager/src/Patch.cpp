@@ -59,6 +59,11 @@ audio_devices_t Patch::getSourceDevices() const
     return getDevices(AUDIO_PORT_ROLE_SOURCE) & ~AUDIO_DEVICE_BIT_IN;
 }
 
+bool Patch::hasDevice(audio_port_role_t role) const
+{
+    return getDevices(role) != AUDIO_DEVICE_NONE;
+}
+
 audio_devices_t Patch::getDevices(audio_port_role_t role) const
 {
     audio_devices_t devices = AUDIO_DEVICE_NONE;
@@ -70,7 +75,7 @@ audio_devices_t Patch::getDevices(audio_port_role_t role) const
             devices |= port->getDeviceType();
         }
     }
-    return devices;
+    return role == AUDIO_PORT_ROLE_SOURCE ? devices & ~AUDIO_DEVICE_BIT_IN : devices;
 }
 
 const Port *Patch::getMixPort(audio_port_role_t role) const

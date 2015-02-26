@@ -296,7 +296,7 @@ status_t Device::setParameters(const string &keyValuePairs)
     status = pairs.get(Parameters::gKeyCompressOffloadRouting, mCompressOffloadDevices);
     if (status == android::OK) {
         pairs.remove(key);
-        updateStreamsParametersSync(Direction::Output);
+        updateStreamsParametersSync(AUDIO_PORT_ROLE_SOURCE);
     }
     status = mPlatformState->setParameters(pairs.toString());
     if (status == android::OK) {
@@ -485,67 +485,55 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     if (handle == AUDIO_PATCH_HANDLE_NONE) {
         handle = Patch::nextUniqueHandle();
     }
-    Mutex::Locker locker(mPatchCollectionLock);
+    mPatchCollectionLock.lock();
 
     std::pair<PatchCollection::iterator, bool> ret;
     ret = mPatches.insert(std::pair<audio_patch_handle_t, Patch>(handle, Patch(handle, this)));
 
     Patch &patch = ret.first->second;
     patch.addPorts(sourcesCount, sources, sinksCount, sinks);
+    mPatchCollectionLock.unlock();
 
-    // Update now the routing, i.e. the devices in input and/or output
-    // This is a simple first step implementation that matches that used to be
-    // done within Legacy routing. It has to evolve in parallel of the Audio Policy.
-    // Shall we loop on "active" ports to get the new devices?
-    KeyValuePairs pairs;
-    audio_devices_t newSourceDevices = patch.getSourceDevices();
-    audio_devices_t newSinkDevices = patch.getSinkDevices();
-
-    if (newSourceDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(Parameters::gKeyDevices[Direction::Input], newSourceDevices);
-    }
-    if (newSinkDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(Parameters::gKeyAndroidMode, mode());
-        pairs.add(Parameters::gKeyDevices[Direction::Output], newSinkDevices);
-    }
-    if (pairs.toString().empty()) {
-        return android::OK;
-    }
-    Log::Verbose() << __FUNCTION__ << ": handle:" << handle << ", Devices:" << pairs.toString();
-    return mPlatformState->setParameters(pairs.toString());
+    return updateParameters(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
+                            patch.hasDevice(AUDIO_PORT_ROLE_SINK));
 }
 
 status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
 {
-    Mutex::Locker locker(mPatchCollectionLock);
+    mPatchCollectionLock.lock();
     if (!hasPatchUnsafe(handle)) {
         Log::Error() << __FUNCTION__ << " Patch handle " << handle
                      << " not found within Primary HAL";
+        mPatchCollectionLock.unlock();
         return android::BAD_VALUE;
     }
     Log::Verbose() << __FUNCTION__ << ": releasing patch handle:" << handle;
     Patch &patch = getPatchUnsafe(handle);
-
-    // Update now the routing, i.e. the devices in input and/or output that were in use by the
-    // released patch. This is a simple first step implementation that matches that used to be
-    // done within Legacy routing. It has to evolve in parallel of the Audio Policy.
-    // Shall we loop on "active" ports to get the new devices?
-    KeyValuePairs pairs;
-    if (patch.getSourceDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(Parameters::gKeyDevices[Direction::Input], static_cast<int>(AUDIO_DEVICE_NONE));
-    }
-    if (patch.getSinkDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(Parameters::gKeyAndroidMode, mode());
-        pairs.add(Parameters::gKeyDevices[Direction::Output], static_cast<int>(AUDIO_DEVICE_NONE));
-    }
-
+    bool involvedSourceDevices = patch.hasDevice(AUDIO_PORT_ROLE_SOURCE);
+    bool involvedSinkDevices = patch.hasDevice(AUDIO_PORT_ROLE_SINK);
     mPatches.erase(handle);
+    mPatchCollectionLock.unlock();
 
+    return updateParameters(involvedSourceDevices, involvedSinkDevices);
+}
+
+status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice, bool synchronous)
+{
+    KeyValuePairs pairs;
+    // Update now the routing, i.e. the devices in input and/or output
+    if (updateSourceDevice) {
+        // Source Port update requested: it may impact input streams parameters
+        prepareStreamsParameters(AUDIO_PORT_ROLE_SINK, pairs);
+    }
+    if (updateSinkDevice) {
+        // Sink Port update requested: it may impact output streams parameters
+        prepareStreamsParameters(AUDIO_PORT_ROLE_SOURCE, pairs);
+    }
     if (pairs.toString().empty()) {
         return android::OK;
     }
-    Log::Verbose() << __FUNCTION__ << ": handle:" << handle << ", Devices:" << pairs.toString();
-    return mPlatformState->setParameters(pairs.toString());
+    Log::Verbose() << __FUNCTION__ << ": Parameters:" << pairs.toString();
+    return mPlatformState->setParameters(pairs.toString(), synchronous);
 }
 
 status_t Device::getAudioPort(struct audio_port & /*port*/) const
@@ -560,21 +548,53 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
     return android::INVALID_OPERATION;
 }
 
-status_t Device::updateStreamsParameters(bool isOut, bool isSynchronous)
+void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs)
 {
-    StreamCollection::const_iterator it;
+    audio_port_role_t devicePortRole = streamPortRole == AUDIO_PORT_ROLE_SOURCE ?
+                                       AUDIO_PORT_ROLE_SINK : AUDIO_PORT_ROLE_SOURCE;
+    audio_devices_t devicesMask = AUDIO_DEVICE_NONE;
+    audio_devices_t internalDevicesMask = AUDIO_DEVICE_NONE;
+    audio_devices_t primaryDevicesMask = AUDIO_DEVICE_NONE;
     uint32_t streamsMask = 0;
     uint32_t effectRequestedMask = 0;
-    KeyValuePairs pairs;
 
-    for (it = mStreams.begin(); it != mStreams.end(); ++it) {
-        const IoStream *stream = it->second;
-        if (stream->isOut() != isOut) {
+    const Stream *primaryOutput = NULL;
+
+    Mutex::Locker locker(mPatchCollectionLock);
+    // Loop on all patches that involve source mix ports (i.e. output streams)
+    for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
+        const Patch &patch = it->second;
+        const Port *mixPort = patch.getMixPort(streamPortRole);
+
+        // Only 1 source port is supported (2 special case accross hw modules)
+        if (patch.getMixPort(devicePortRole) != NULL) {
+            // This patch is not a involving a stream with the same role as the requested role.
             continue;
         }
+        if (mixPort == NULL) {
+            // This patch is connecting 2 device ports to one another, so append sink devices
+            internalDevicesMask |= patch.getDevices(devicePortRole);
+            continue;
+        }
+        audio_io_handle_t streamHandle = mixPort->getMixIoHandle();
+        Stream *stream = NULL;
+        if (!getStream(streamHandle, stream)) {
+            Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
+            return;
+        }
+        if (streamPortRole == AUDIO_PORT_ROLE_SOURCE && isPrimaryOutput(*stream)) {
+            primaryOutput = stream;
+            primaryDevicesMask = patch.getDevices(devicePortRole);
+        }
         if (stream->isStarted() && stream->isRoutedByPolicy()) {
+            if (!isPrimaryOutput(*stream)) {
+                devicesMask |= patch.getDevices(devicePortRole);
+            }
             streamsMask |= stream->getApplicabilityMask();
-            if (!isOut) {
+
+            if (streamPortRole == AUDIO_PORT_ROLE_SINK) {
+                AUDIOCOMMS_ASSERT(effectRequestedMask == 0,
+                                  "More than one input stream active, Audio HAL cannot handle it");
                 // Set the requested effect from this active input.
                 effectRequestedMask = stream->getEffectRequested();
                 // Set the band type according to this active input.
@@ -582,20 +602,42 @@ status_t Device::updateStreamsParameters(bool isOut, bool isSynchronous)
                     stream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing ?
                     CAudioBand::ENarrow : CAudioBand::EWide;
                 pairs.add<int>(Parameters::gKeyVoipBandType, band);
-                pairs.add(Parameters::gKeyPreProcRequested, effectRequestedMask);
-                pairs.add(Parameters::gKeyUseCases[Direction::Input], streamsMask);
-                break;
             }
         }
     }
-    if (isOut) {
+    if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
+        // Compress is not handled by primary HAL, so append compress device. If compress is not on
+        // going its device is none.
         if (mCompressOffloadDevices != AUDIO_DEVICE_NONE) {
             streamsMask |= AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
+            devicesMask |= mCompressOffloadDevices;
         }
+
+        // Take the device of the primary if :
+        //      -primary is active.
+        //      -no other streams are active
+        //      -in call
+        if (primaryOutput && (primaryOutput->isStarted() ||
+                              devicesMask == AUDIO_DEVICE_NONE ||
+                              isInCall())) {
+            devicesMask = primaryDevicesMask;
+        }
+        devicesMask |= internalDevicesMask;
+        pairs.add(Parameters::gKeyAndroidMode, mode());
         pairs.add(Parameters::gKeyFlags[Direction::Output], streamsMask);
+    } else {
+        pairs.add(Parameters::gKeyUseCases[Direction::Input], streamsMask);
     }
-    return mPlatformState->setParameters(pairs.toString(), isSynchronous);
+    Direction::Values direction =
+            (streamPortRole == AUDIO_PORT_ROLE_SOURCE) ? Direction::Output : Direction::Input;
+    pairs.add(Parameters::gKeyDevices[direction], devicesMask);
 }
 
+bool Device::isPrimaryOutput(const Stream &stream) const
+{
+    return stream.isOut() &&
+           (stream.getApplicabilityMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
+           AUDIO_OUTPUT_FLAG_PRIMARY;
+}
 
 } // namespace intel_audio

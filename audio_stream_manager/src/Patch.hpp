@@ -97,6 +97,27 @@ public:
      */
     audio_devices_t getSourceDevices() const;
 
+    /**
+     * Returns the device(s) involved in this patch according to the role requested
+     * Note that it removes the sign bit introduced by the policy for input device in order to keep
+     * the cardinality between a bit and a device within the devices mask.
+     *
+     * @param[in] role for which the devices are requested, i.e. sink or source.
+     *
+     * @return valid device(s) of the requested role,
+     *         NONE if no device port of the requested role attached to this patch
+     */
+    audio_devices_t getDevices(audio_port_role_t role) const;
+
+    /**
+     * Checks if a port is involving port devices in the given role.
+     *
+     * @param[in] role of the port device to check.
+     *
+     * @return true if the patch is involving port device with the given role, false otherwise.
+     */
+    bool hasDevice(audio_port_role_t role) const;
+
     /** Add source and sink ports involved within this patch, i.e. connected from one another
      * by this audio patch).
      *
@@ -155,16 +176,6 @@ private:
      * @param[in] port to be added to the collection of ports involved in this patch.
      */
     void addPort(Port &port);
-
-    /**
-     * Returns the device(s) involved in this patch according to the role requested
-     *
-     * @param[in] role for which the devices are requested, i.e. sink or source.
-     *
-     * @return valid device(s) of the requested role,
-     *         NONE if no device port of the requested role attached to this patch
-     */
-    audio_devices_t getDevices(audio_port_role_t role) const;
 
     /**
      * Collection of ports connected by this patch.

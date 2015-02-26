@@ -26,6 +26,7 @@
 #include "Port.hpp"
 #include <InterfaceProviderImpl.h>
 #include <IStreamInterface.hpp>
+#include <KeyValuePairs.hpp>
 #include <audio_effects/effect_aec.h>
 #include <audio_utils/echo_reference.h>
 #include <hardware/audio_effect.h>
@@ -127,26 +128,26 @@ protected:
      * Update the streams parameters upon start / stop / change of devices events on streams.
      * in a synchronous manner.
      *
-     * @param[in] isOut direction of stream from which the events is issued.
+     * @param[in] streamMixPortRole role of the stream (acting as a mix port).
      *
      * @return OK if successfully updated streams parameters, error code otherwise.
      */
-    android::status_t updateStreamsParametersSync(bool isOut)
+    android::status_t updateStreamsParametersSync(audio_port_role_t streamPortRole)
     {
-        return updateStreamsParameters(isOut, true);
+        return updateStreamsParameters(streamPortRole, true);
     }
 
     /**
      * Update the streams parameters upon start / stop / change of devices events on streams.
      * in an asynchronous manner.
      *
-     * @param[in] isOut direction of stream from which the events is issued.
+     * @param[in] streamMixPortRole role of the stream (acting as a mix port).
      *
      * @return OK if successfully updated streams parameters, error code otherwise.
      */
-    android::status_t updateStreamsParametersAsync(bool isOut)
+    android::status_t updateStreamsParametersAsync(audio_port_role_t streamPortRole)
     {
-        return updateStreamsParameters(isOut, false);
+        return updateStreamsParameters(streamPortRole, false);
     }
 
     /**
@@ -183,11 +184,47 @@ private:
      * according to what was requested from this input.
      *
      * @param[in] isOut direction of stream from which the events is issued.
-     * @param[in] synchronous: need to update the settings in a synchronous way or not.
+     * @param[in] isSynchronous: need to update the settings in a synchronous way or not.
      *
      * @return OK if successfully updated streams parameters, error code otherwise.
      */
-    android::status_t updateStreamsParameters(bool isOut, bool isSynchronous);
+    android::status_t updateStreamsParameters(audio_port_role_t streamPortRole, bool isSynchronous)
+    {
+        // If a stream is a sink mix port: we need to update source devices.
+        // If a stream is a source mix port: we need to update parameters related to sink devices.
+        return updateParameters(streamPortRole == AUDIO_PORT_ROLE_SINK,
+                                streamPortRole == AUDIO_PORT_ROLE_SOURCE,
+                                isSynchronous);
+    }
+
+    /**
+     * Update the streams parameters according to the change of source and or sink devices.
+     *
+     * @param[in] updateSourceDevice: if set, we shall update the parameter linked to output devices
+     * @param[in] updateSinkDevice: if set, we shall update the parameter linked to input devices
+     * @param[in] isSynchronous: need to update the settings in a synchronous way or not.
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateParameters(bool updateSourceDevice, bool updateSinkDevice,
+                                       bool isSynchronous = false);
+
+    /**
+     * Prepare the streams parameters to be sent to the parameter framework for routing.
+     *
+     * @param[in] streamPortRole direction of stream from which the events is issued.
+     * @param[out] pairs: parameters as collection of {key,value} pairs.
+     */
+    void prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs);
+
+    /**
+     * Checks if the stream is the primary output stream, i.e. it has PRIMARY flags.
+     *
+     * @param[in] stream to check
+     *
+     * @return true if stream is the primary output, false otherwise.
+     */
+    bool isPrimaryOutput(const Stream &stream) const;
 
     /**
      * @return true if the collection of stream managed by the HW Device has a stream tracked by the
@@ -251,6 +288,14 @@ private:
     int mode() const
     {
         return mMode;
+    }
+
+    /**
+     * @return true if the system is in CSV call, false otherwise.
+     */
+    inline bool isInCall() const
+    {
+        return mMode == AUDIO_MODE_IN_CALL;
     }
 
     /**
