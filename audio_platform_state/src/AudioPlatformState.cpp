@@ -682,7 +682,7 @@ void AudioPlatformState::clearKeys(KeyValuePairs *pairs)
     }
 }
 
-status_t AudioPlatformState::setParameters(const string &keyValuePairs)
+status_t AudioPlatformState::setParameters(const string &keyValuePairs, bool isSynchronous)
 {
     mPfwLock.writeLock();
 
@@ -705,7 +705,7 @@ status_t AudioPlatformState::setParameters(const string &keyValuePairs)
     mPfwLock.unlock();
 
     // Trig the route manager
-    mStreamInterface->reconsiderRouting();
+    mStreamInterface->reconsiderRouting(isSynchronous);
 
     return status;
 }

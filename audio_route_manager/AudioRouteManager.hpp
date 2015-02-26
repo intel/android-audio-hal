@@ -202,19 +202,9 @@ private:
             return mRouteMgr->removeStream(stream);
         }
 
-        virtual void startStream()
+        virtual void reconsiderRouting(bool isSynchronous)
         {
-            return mRouteMgr->reconsiderRouting(true);
-        }
-
-        virtual void stopStream()
-        {
-            return mRouteMgr->reconsiderRouting(true);
-        }
-
-        virtual void reconsiderRouting()
-        {
-            return mRouteMgr->reconsiderRouting(false);
+            return mRouteMgr->reconsiderRouting(isSynchronous);
         }
 
         virtual android::status_t setVoiceVolume(float gain)

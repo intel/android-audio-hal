@@ -317,7 +317,7 @@ status_t Device::startStream(Stream *stream)
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
     Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
     mPlatformState->startStream(stream);
-    getStreamInterface()->startStream();
+    getStreamInterface()->reconsiderRouting(true);
     return android::OK;
 }
 
@@ -326,7 +326,7 @@ status_t Device::stopStream(Stream *stream)
     AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
     Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
     mPlatformState->stopStream(stream);
-    getStreamInterface()->stopStream();
+    getStreamInterface()->reconsiderRouting(true);
     return android::OK;
 }
 

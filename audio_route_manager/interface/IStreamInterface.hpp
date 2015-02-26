@@ -61,19 +61,10 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
 
     /**
      * Trigs a routing reconsideration.
-     */
-    virtual void reconsiderRouting() = 0;
-
-    /**
-     * Informs that a new stream is started.
-     */
-    virtual void startStream() = 0;
-
-    /**
      *
-     * Informs that a stream is stopped.
+     * @param[in] synchronous: if set, re routing shall be synchronous.
      */
-    virtual void stopStream() = 0;
+    virtual void reconsiderRouting(bool isSynchronous = false) = 0;
 
     /**
      * Sets the voice volume.

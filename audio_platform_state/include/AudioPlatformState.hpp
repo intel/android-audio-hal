@@ -242,8 +242,12 @@ public:
      *      - Set the FM state.
      *      - Set the screen state.
      *
+     * @param[in] keyValuePairs semicolon separated list of key=value.
+     * @param[in] synchronous if set, application of these parameters shall be synchronous.
+     *
+     * @return OK if these parameters were applyied correctly, error code otherwise.
      */
-    android::status_t setParameters(const std::string &keyValuePairs);
+    android::status_t setParameters(const std::string &keyValuePairs, bool isSynchronous = false);
 
     /**
      * Get the global parameters of Audio HAL.
