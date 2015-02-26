@@ -26,7 +26,6 @@
 #include "AudioHalConf.hpp"
 #include "CriterionParameter.hpp"
 #include "RogueParameter.hpp"
-#include "ParameterAdapter.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "VolumeKeys.hpp"
 #include <IoStream.hpp>
@@ -118,8 +117,7 @@ struct AudioPlatformState::parameterManagerElementSupported<CriterionType> {};
 AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     : mStreamInterface(streamInterface),
       mRoutePfwConnectorLogger(new ParameterMgrPlatformConnectorLogger),
-      mAudioPfwHasChanged(false),
-      mParameterAdapter(new ParameterAdapter(this))
+      mAudioPfwHasChanged(false)
 {
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
@@ -157,9 +155,6 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
 
 AudioPlatformState::~AudioPlatformState()
 {
-    mParameterAdapter->stop();
-    delete mParameterAdapter;
-
     // Delete All criterion
     CriterionMapIterator it;
     for (it = mRouteCriterionMap.begin(); it != mRouteCriterionMap.end(); ++it) {
@@ -191,9 +186,6 @@ status_t AudioPlatformState::start()
         return android::NO_INIT;
     }
     Log::Debug() << __FUNCTION__ << ": Route PFW successfully started!";
-
-    /// Start ParameterAdapter
-    mParameterAdapter->start();
 
     return android::OK;
 }

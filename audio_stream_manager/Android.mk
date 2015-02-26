@@ -59,7 +59,6 @@ audio_stream_manager_static_lib += \
     libaudioconversion_static \
     libstream_static \
     libaudioplatformstate \
-    libactive_value_set \
     libkeyvaluepairs \
     libparametermgr_static \
     libaudio_comms_utilities \

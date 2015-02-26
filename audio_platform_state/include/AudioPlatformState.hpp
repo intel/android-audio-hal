@@ -46,7 +46,6 @@ namespace intel_audio
 {
 
 class IoStream;
-class ParameterAdapter;
 
 class ParameterMgrPlatformConnectorLogger;
 
@@ -665,11 +664,6 @@ private:
      * criteria.
      */
     bool mAudioPfwHasChanged;
-
-    /**
-     * Parameter Adapter handle to retrieve parameters from external interfaces (e.g. modem IF).
-     */
-    ParameterAdapter *mParameterAdapter;
 
     /**
      * PFW concurrency protection - to garantee atomic operation only.

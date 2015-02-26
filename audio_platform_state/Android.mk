@@ -42,7 +42,6 @@ LOCAL_SRC_FILES := \
     src/CriterionParameter.cpp \
     src/AudioPlatformState.cpp \
     src/VolumeKeys.cpp \
-    src/ParameterAdapter.cpp \
 
 LOCAL_STATIC_LIBRARIES := \
     libsamplespec_static \
@@ -56,7 +55,6 @@ LOCAL_STATIC_LIBRARIES := \
     libproperty_static \
     audio.routemanager.includes \
     libmedia_helper \
-    libactive_value_set \
     libkeyvaluepairs \
     libevent-listener_static \
     libparameter_includes
