@@ -237,7 +237,7 @@ status_t AudioRouteManager::startService()
     // Routing stage criterion is initialised to Configure | Path | Flow to apply all pending
     // configuration for init and minimalize cold latency at first playback / capture
     mRoutingStageCriterion = new Criterion(mRoutingStage, routageStageCriterionType,
-                                           mAudioPfwConnector, Configure | Path | Flow);
+                                           mAudioPfwConnector, ConfigureMask | PathMask | FlowMask);
 
     // Start PFW
     std::string strError;
