@@ -42,7 +42,6 @@ using android::status_t;
 using namespace std;
 using NInterfaceProvider::CInterfaceProviderImpl;
 using audio_comms::utilities::BitField;
-using audio_comms::utilities::Direction;
 using audio_comms::utilities::Log;
 
 typedef android::RWLock::AutoRLock AutoR;
@@ -55,13 +54,13 @@ namespace intel_audio
 const char *const AudioRouteManager::mVoiceVolume =
     "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
 
-const char *const AudioRouteManager::mClosingRouteCriterion[Direction::_nbDirections] = {
+const char *const AudioRouteManager::mClosingRouteCriterion[Direction::gNbDirections] = {
     "ClosingCaptureRoutes", "ClosingPlaybackRoutes"
 };
-const char *const AudioRouteManager::mOpenedRouteCriterion[Direction::_nbDirections] = {
+const char *const AudioRouteManager::mOpenedRouteCriterion[Direction::gNbDirections] = {
     "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
 };
-const char *const AudioRouteManager::mRouteCriterionType[Direction::_nbDirections] = {
+const char *const AudioRouteManager::mRouteCriterionType[Direction::gNbDirections] = {
     "RoutePlaybackType", "RouteCaptureType"
 };
 const char *const AudioRouteManager::mRoutingStage = "RoutageState";
@@ -127,7 +126,7 @@ AudioRouteManager::AudioRouteManager()
       mEventThread(new CEventThread(this)),
       mIsStarted(false)
 {
-    memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::_nbDirections);
+    memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::gNbDirections);
 
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
@@ -213,7 +212,7 @@ status_t AudioRouteManager::startService()
     }
 
     // Route Criteria
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         // Routes Criterion Type
         if (mCriterionTypesMap.find(mRouteCriterionType[i]) == mCriterionTypesMap.end()) {
             Log::Error() << "CriterionType " << mRouteCriterionType[i] << " not found";
@@ -348,7 +347,7 @@ void AudioRouteManager::executeRouting()
 
 void AudioRouteManager::resetRouting()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         mRoutes[i].prevEnabled = mRoutes[i].enabled;
         mRoutes[i].enabled = 0;
         mRoutes[i].needReflow = 0;
@@ -482,7 +481,7 @@ void AudioRouteManager::executeUnmuteRoutingStage()
 
 void AudioRouteManager::setRouteCriteriaForConfigure()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
 
         mSelectedClosingRoutes[i]->setCriterionState<int32_t>(0);
         mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(enabledRoutes(i));
@@ -491,7 +490,7 @@ void AudioRouteManager::setRouteCriteriaForConfigure()
 
 void AudioRouteManager::setRouteCriteriaForMute()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
 
         uint32_t unmutedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needReflowRoutes(i);
         uint32_t routesToMute = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needReflowRoutes(i);
@@ -503,7 +502,7 @@ void AudioRouteManager::setRouteCriteriaForMute()
 
 void AudioRouteManager::setRouteCriteriaForDisable()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
 
         uint32_t openedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needRepathRoutes(i);
         uint32_t routesToDisable = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needRepathRoutes(i);
@@ -886,7 +885,7 @@ void AudioRouteManager::commitCriteriaAndApply()
     mAudioPfwConnector->applyConfigurations();
 }
 
-static uint32_t count[Direction::_nbDirections] = {
+static uint32_t count[Direction::gNbDirections] = {
     0, 0
 };
 

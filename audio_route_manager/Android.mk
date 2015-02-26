@@ -64,6 +64,7 @@ audio_route_manager_static_lib := \
     libstream_static \
     libsamplespec_static \
     libparametermgr_static \
+    libaudio_hal_utilities \
     libaudio_comms_utilities \
     liblpepreprocessinghelper \
     libevent-listener_static \

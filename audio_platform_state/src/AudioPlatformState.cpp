@@ -99,19 +99,6 @@ public:
 
 const std::string AudioPlatformState::mStateChangedCriterionName = "StatesChanged";
 const std::string AudioPlatformState::mAndroidModeCriterionName = "AndroidMode";
-const std::string AudioPlatformState::mKeyAndroidMode =  "android_mode";
-const std::string AudioPlatformState::mKeyMicMute = "mic_mute";
-const std::string AudioPlatformState::gKeyDevices[] = {
-    "input_devices", "output_devices"
-};
-const std::string AudioPlatformState::gKeyFlags[] = {
-    "input_flags", "output_flags"
-};
-const std::string AudioPlatformState::gKeyUseCases[] = {
-    "input_sources", "output_usecase"
-};
-const std::string AudioPlatformState::gKeyVoipBandType = "voip_band_type";
-const std::string AudioPlatformState::gKeyPreProcRequested = "pre_proc_requested";
 
 template <>
 struct AudioPlatformState::parameterManagerElementSupported<Criterion> {};

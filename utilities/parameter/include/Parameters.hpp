@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include <Direction.hpp>
 #include <string>
 
 namespace intel_audio
@@ -32,9 +33,14 @@ namespace intel_audio
  */
 class Parameters
 {
+private:
+    template <typename T>
+    struct Key
+    {
+        typedef const T const_bidirectionalKey[Direction::gNbDirections];
+    };
+
 public:
-
-
     /**
      * Compress Offload routing key (e.g. for Compress Offload routing use case)
      * The values that the parameter with this keys can use are the output devices
@@ -43,7 +49,26 @@ public:
      */
     static const std::string &gKeyCompressOffloadRouting;
 
+    /** Android Mode Parameter Key. */
+    static const std::string &gKeyAndroidMode;
+
+    /** Mic Mute Parameter Key. */
+    static const std::string &gKeyMicMute;
+
+    /** Output and Input Devices Parameter Key. */
+    static Key<std::string>::const_bidirectionalKey gKeyDevices;
+
+    /** Output and input flags key. */
+    static Key<std::string>::const_bidirectionalKey gKeyFlags;
+
+    /** Use case key, i.e. input source for input stream, unused for output. */
+    static Key<std::string>::const_bidirectionalKey gKeyUseCases;
+
+    /** VoIP Band Parameter Key. */
+    static const std::string &gKeyVoipBandType;
+
+    /** PreProc Parameter Key. */
+    static const std::string &gKeyPreProcRequested;
 };
 
 }   // namespace intel_audio
-

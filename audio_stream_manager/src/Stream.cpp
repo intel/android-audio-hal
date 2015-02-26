@@ -27,7 +27,8 @@
 
 #include "Device.hpp"
 #include "Stream.hpp"
-#include <AudioPlatformState.hpp>
+#include <Parameters.hpp>
+#include <KeyValuePairs.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include "Property.h"
@@ -36,7 +37,6 @@
 #include <string>
 
 using android::status_t;
-using audio_comms::utilities::Direction;
 using audio_comms::utilities::Log;
 using namespace std;
 
@@ -46,11 +46,11 @@ namespace intel_audio
 /**
  * Audio dump properties management (set with setprop)
  */
-const std::string Stream::dumpBeforeConvProps[Direction::_nbDirections] = {
+const std::string Stream::dumpBeforeConvProps[Direction::gNbDirections] = {
     "media.dump_input.befconv", "media.dump_output.befconv"
 };
 
-const std::string Stream::dumpAfterConvProps[Direction::_nbDirections] = {
+const std::string Stream::dumpAfterConvProps[Direction::gNbDirections] = {
     "media.dump_input.aftconv", "media.dump_output.aftconv"
 };
 

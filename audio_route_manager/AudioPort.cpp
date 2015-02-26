@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -29,7 +29,6 @@
 #include <utilities/Log.hpp>
 
 using std::string;
-using audio_comms::utilities::Direction;
 using audio_comms::utilities::Log;
 
 namespace intel_audio

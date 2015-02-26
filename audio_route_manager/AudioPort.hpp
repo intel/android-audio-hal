@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -105,7 +105,7 @@ private:
     /**
      * routes attached to this port.
      */
-    AudioRoute *mRouteAttached[audio_comms::utilities::Direction::_nbDirections];
+    AudioRoute *mRouteAttached[Direction::gNbDirections];
 
     std::list<AudioRoute *> mRouteList; /**< list of routes using potentially this port. */
 

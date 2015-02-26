@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
+# Copyright (c) 2015 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -21,28 +21,11 @@
 # express and approved by Intel in writing.
 
 LOCAL_PATH := $(call my-dir)
-include $(OPTIONAL_QUALITY_ENV_SETUP)
 
-define named-subdir-makefiles
-$(wildcard $(addsuffix /Android.mk, $(addprefix $(LOCAL_PATH)/,$(1))))
-endef
+include $(CLEAR_VARS)
 
-SUBDIRS := audio_conversion \
-           audio_dump_lib \
-           audio_policy \
-           audio_route_manager \
-           audio_stream_manager \
-           effects \
-           parameter_mgr_helper \
-           sample_specifications \
-           stream_lib \
-           audio_platform_state \
-           hardware_device \
-           utilities/active_value_set \
-           utilities/parameter \
-           utilities \
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
-# Call sub-folders' Android.mk
-include $(call named-subdir-makefiles, $(SUBDIRS))
+LOCAL_MODULE := libaudio_hal_utilities
 
-include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
+include $(BUILD_STATIC_LIBRARY)

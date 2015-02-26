@@ -324,12 +324,12 @@ private:
     /**
      * Array of property names before conversion
      */
-    static const std::string dumpBeforeConvProps[audio_comms::utilities::Direction::_nbDirections];
+    static const std::string dumpBeforeConvProps[Direction::gNbDirections];
 
     /**
      * Array of property names after conversion
      */
-    static const std::string dumpAfterConvProps[audio_comms::utilities::Direction::_nbDirections];
+    static const std::string dumpAfterConvProps[Direction::gNbDirections];
 
     /** maximum sleep time to be allowed by HAL, in microseconds. */
     static const uint32_t mMaxSleepTime = 1000000UL;

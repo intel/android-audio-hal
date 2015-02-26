@@ -25,7 +25,6 @@
 #include "ParameterChangedObserver.hpp"
 #include "Parameter.hpp"
 #include <NonCopyable.hpp>
-#include <Direction.hpp>
 #include <KeyValuePairs.hpp>
 #include <IStreamInterface.hpp>
 #include <AudioCommsAssert.hpp>
@@ -282,20 +281,6 @@ public:
      * Print debug information from target debug files
      */
     void printPlatformFwErrorInfo() const;
-
-    static const std::string mKeyAndroidMode; /**< Android Mode Parameter Key. */
-    static const std::string mKeyDeviceOut; /**< Output Device Parameter Key. */
-    static const std::string mKeyDeviceIn; /**< Input Device Parameter Key. */
-    static const std::string mKeyMicMute; /**< Mic Mute Parameter Key. */
-
-    /** Output and Input Devices Parameter Key. */
-    static const std::string gKeyDevices[audio_comms::utilities::Direction::_nbDirections];
-    /** Output and input flags key. */
-    static const std::string gKeyFlags[audio_comms::utilities::Direction::_nbDirections];
-    /** Use case key, i.e. input source for input stream, unused for output. */
-    static const std::string gKeyUseCases[audio_comms::utilities::Direction::_nbDirections];
-    static const std::string gKeyVoipBandType; /**< VoIP Band Parameter Key. */
-    static const std::string gKeyPreProcRequested; /**< PreProc Parameter Key. */
 
 private:
     /**

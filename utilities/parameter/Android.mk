@@ -29,6 +29,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 include $(CLEAR_VARS)
 
 LOCAL_STATIC_LIBRARIES := \
+    libaudio_hal_utilities \
     libaudio_comms_utilities \
     libaudio_comms_convert \
 

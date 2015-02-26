@@ -44,7 +44,6 @@ using namespace std;
 using android::status_t;
 using audio_comms::utilities::Log;
 using audio_comms::utilities::Mutex;
-using audio_comms::utilities::Direction;
 
 namespace intel_audio
 {
@@ -229,7 +228,7 @@ status_t Device::setMicMute(bool mute)
 {
     Log::Verbose() << __FUNCTION__ << ": " << (mute ? "true" : "false");
     KeyValuePairs pair;
-    status_t status = pair.add(AudioPlatformState::mKeyMicMute, mute);
+    status_t status = pair.add(Parameters::gKeyMicMute, mute);
     if (status != android::OK) {
         return status;
     }
@@ -238,8 +237,8 @@ status_t Device::setMicMute(bool mute)
 
 status_t Device::getMicMute(bool &muted) const
 {
-    KeyValuePairs pair(mPlatformState->getParameters(AudioPlatformState::mKeyMicMute));
-    return pair.get(AudioPlatformState::mKeyMicMute, muted);
+    KeyValuePairs pair(mPlatformState->getParameters(Parameters::gKeyMicMute));
+    return pair.get(Parameters::gKeyMicMute, muted);
 }
 
 size_t Device::getInputBufferSize(const struct audio_config &config) const
@@ -503,11 +502,11 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     audio_devices_t newSinkDevices = patch.getSinkDevices();
 
     if (newSourceDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::gKeyDevices[Direction::Input], newSourceDevices);
+        pairs.add(Parameters::gKeyDevices[Direction::Input], newSourceDevices);
     }
     if (newSinkDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
-        pairs.add(AudioPlatformState::gKeyDevices[Direction::Output], newSinkDevices);
+        pairs.add(Parameters::gKeyAndroidMode, mode());
+        pairs.add(Parameters::gKeyDevices[Direction::Output], newSinkDevices);
     }
     if (pairs.toString().empty()) {
         return android::OK;
@@ -533,13 +532,11 @@ status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
     // Shall we loop on "active" ports to get the new devices?
     KeyValuePairs pairs;
     if (patch.getSourceDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::gKeyDevices[Direction::Input],
-                  static_cast<int>(AUDIO_DEVICE_NONE));
+        pairs.add(Parameters::gKeyDevices[Direction::Input], static_cast<int>(AUDIO_DEVICE_NONE));
     }
     if (patch.getSinkDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
-        pairs.add(AudioPlatformState::gKeyDevices[Direction::Output],
-                  static_cast<int>(AUDIO_DEVICE_NONE));
+        pairs.add(Parameters::gKeyAndroidMode, mode());
+        pairs.add(Parameters::gKeyDevices[Direction::Output], static_cast<int>(AUDIO_DEVICE_NONE));
     }
 
     mPatches.erase(handle);
@@ -584,9 +581,9 @@ status_t Device::updateStreamsParameters(bool isOut, bool isSynchronous)
                 CAudioBand::Type band =
                     stream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing ?
                     CAudioBand::ENarrow : CAudioBand::EWide;
-                pairs.add<int>(AudioPlatformState::gKeyVoipBandType, band);
-                pairs.add(AudioPlatformState::gKeyPreProcRequested, effectRequestedMask);
-                pairs.add(AudioPlatformState::gKeyUseCases[Direction::Input], streamsMask);
+                pairs.add<int>(Parameters::gKeyVoipBandType, band);
+                pairs.add(Parameters::gKeyPreProcRequested, effectRequestedMask);
+                pairs.add(Parameters::gKeyUseCases[Direction::Input], streamsMask);
                 break;
             }
         }
@@ -595,7 +592,7 @@ status_t Device::updateStreamsParameters(bool isOut, bool isSynchronous)
         if (mCompressOffloadDevices != AUDIO_DEVICE_NONE) {
             streamsMask |= AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
         }
-        pairs.add(AudioPlatformState::gKeyFlags[Direction::Output], streamsMask);
+        pairs.add(Parameters::gKeyFlags[Direction::Output], streamsMask);
     }
     return mPlatformState->setParameters(pairs.toString(), isSynchronous);
 }

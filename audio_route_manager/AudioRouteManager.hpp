@@ -793,7 +793,7 @@ private:
      *
      * @return route criterion type handle.
      */
-    inline CriterionType *getRouteCriterionType(audio_comms::utilities::Direction::Directions dir)
+    inline CriterionType *getRouteCriterionType(Direction::Values dir)
     const
     {
         CriteriaTypeMapConstIterator it = mCriterionTypesMap.find(mRouteCriterionType[dir]);
@@ -811,7 +811,7 @@ private:
      *
      * @return litteral values of the route separated by a "|".
      */
-    template <audio_comms::utilities::Direction::Directions dir>
+    template <Direction::Values dir>
     inline const std::string routeMaskToString(uint32_t mask) const
     {
         return getRouteCriterionType(dir)->getFormattedState(mask);
@@ -826,12 +826,10 @@ private:
      */
     inline uint32_t routeToMask(AudioRoute *route) const
     {
-        audio_comms::utilities::Direction::Directions dir = route->isOut() ?
-                    audio_comms::utilities::Direction::Output :
-                    audio_comms::utilities::Direction::Input;
+        Direction::Values dir = route->isOut() ? Direction::Output : Direction::Input;
         int numeric;
         return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName(), numeric) ?
-               numeric : 0;
+                    numeric : 0;
     }
 
     /**
@@ -858,10 +856,10 @@ private:
     static const char *const mAudioPfwConfFilePropName;
     static const char *const mAudioPfwDefaultConfFileName;
     static const char *const
-    mClosingRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
+    mClosingRouteCriterion[Direction::gNbDirections];
     static const char *const
-    mOpenedRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
-    static const char *const mRouteCriterionType[audio_comms::utilities::Direction::_nbDirections];
+    mOpenedRouteCriterion[Direction::gNbDirections];
+    static const char *const mRouteCriterionType[Direction::gNbDirections];
     static const char *const mRoutingStage;
     static const char *const mVoiceVolume;
 
@@ -874,15 +872,15 @@ private:
     std::map<std::string, Criterion *> mCriteriaMap;
 
     Criterion *mRoutingStageCriterion;
-    Criterion *mSelectedClosingRoutes[audio_comms::utilities::Direction::_nbDirections];
-    Criterion *mSelectedOpenedRoutes[audio_comms::utilities::Direction::_nbDirections];
+    Criterion *mSelectedClosingRoutes[Direction::gNbDirections];
+    Criterion *mSelectedOpenedRoutes[Direction::gNbDirections];
 
     ParameterMgrHelper *mParameterHelper;
 
     /**
      * array of list of streams opened.
      */
-    std::list<IoStream *> mStreamsList[audio_comms::utilities::Direction::_nbDirections];
+    std::list<IoStream *> mStreamsList[Direction::gNbDirections];
 
     std::map<std::string, CriterionType *> mCriterionTypesMap; /**< criterion types map. */
 
@@ -909,7 +907,7 @@ private:
         uint32_t needRepath;  /**< Bitfield of routes that needs to be disabled / enabled. */
         uint32_t enabled;     /**< Bitfield of enabled routes. */
         uint32_t prevEnabled; /**< Bitfield of previously enabled routes. */
-    } mRoutes[audio_comms::utilities::Direction::_nbDirections];
+    } mRoutes[Direction::gNbDirections];
 
     /**
      * Get the need reflow routes mask.

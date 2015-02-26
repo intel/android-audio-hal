@@ -22,10 +22,29 @@
 
 #include "Parameters.hpp"
 
-
 namespace intel_audio
 {
 
 const std::string &Parameters::gKeyCompressOffloadRouting = "key_compress_offload_routing";
+
+const std::string &Parameters::gKeyAndroidMode = "android_mode";
+
+const std::string &Parameters::gKeyMicMute = "mic_mute";
+
+Parameters::Key<std::string>::const_bidirectionalKey Parameters::gKeyDevices = {
+    "input_devices", "output_devices"
+};
+
+Parameters::Key<std::string>::const_bidirectionalKey Parameters::gKeyFlags = {
+    "input_flags", "output_flags"
+};
+
+Parameters::Key<std::string>::const_bidirectionalKey Parameters::gKeyUseCases = {
+    "input_sources", "output_usecase"
+};
+
+const std::string &Parameters::gKeyVoipBandType = "voip_band_type";
+
+const std::string &Parameters::gKeyPreProcRequested = "pre_proc_requested";
 
 }   // namespace intel_audio
