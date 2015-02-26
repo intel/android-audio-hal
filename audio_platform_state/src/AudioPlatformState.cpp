@@ -98,16 +98,20 @@ public:
 };
 
 const std::string AudioPlatformState::mStateChangedCriterionName = "StatesChanged";
-const std::string AudioPlatformState::mVoipBandCriterionName = "VoIPBandType";
-const std::string AudioPlatformState::mOutputFlagsCriterionName = "OutputFlags";
-const std::string AudioPlatformState::mInputDevicesCriterionName = "InputDevices";
 const std::string AudioPlatformState::mAndroidModeCriterionName = "AndroidMode";
-const std::string AudioPlatformState::mInputSourcesCriterionName = "InputSources";
-const std::string AudioPlatformState::mPreProcRequestedCriterionName = "PreProcEnabled";
 const std::string AudioPlatformState::mKeyAndroidMode =  "android_mode";
-const std::string AudioPlatformState::mKeyDeviceOut = "output_devices";
-const std::string AudioPlatformState::mKeyDeviceIn =  "input_devices";
 const std::string AudioPlatformState::mKeyMicMute = "mic_mute";
+const std::string AudioPlatformState::gKeyDevices[] = {
+    "input_devices", "output_devices"
+};
+const std::string AudioPlatformState::gKeyFlags[] = {
+    "input_flags", "output_flags"
+};
+const std::string AudioPlatformState::gKeyUseCases[] = {
+    "input_sources", "output_usecase"
+};
+const std::string AudioPlatformState::gKeyVoipBandType = "voip_band_type";
+const std::string AudioPlatformState::gKeyPreProcRequested = "pre_proc_requested";
 
 template <>
 struct AudioPlatformState::parameterManagerElementSupported<Criterion> {};
@@ -715,8 +719,6 @@ void AudioPlatformState::parameterHasChanged(const std::string &event)
     // Handle particular cases, event is the criterion name, not the key
     if (event == mAndroidModeCriterionName) {
         VolumeKeys::wakeup(getValue(mAndroidModeCriterionName) == AUDIO_MODE_IN_CALL);
-    } else if (event == mInputDevicesCriterionName) {
-        updateActiveStreamsParameters(false);
     }
     setPlatformStateEvent(event);
 }
@@ -761,67 +763,6 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
     }
     uint32_t platformEventChanged = stateChange->getValue<uint32_t>() | eventId;
     stateChange->setValue<uint32_t>(platformEventChanged);
-}
-
-void AudioPlatformState::setVoipBandType(const IoStream *activeStream)
-{
-    CAudioBand::Type band = CAudioBand::EWide;
-    if (activeStream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing) {
-
-        band = CAudioBand::ENarrow;
-    }
-    setValue(band, mVoipBandCriterionName);
-}
-
-void AudioPlatformState::updateRequestedEffect()
-{
-    AutoW lock(mPfwLock);
-    updateActiveStreamsParameters(false);
-}
-
-void AudioPlatformState::updateActiveStreamsParameters(bool isOut)
-{
-    StreamListConstIterator it;
-    uint32_t streamsMask = 0;
-    uint32_t effectRequested = 0;
-
-    for (it = mActiveStreamsList[isOut].begin(); it != mActiveStreamsList[isOut].end(); ++it) {
-        const IoStream *stream = *it;
-        if (stream->isRoutedByPolicy()) {
-            streamsMask |= stream->getApplicabilityMask();
-            if (!isOut) {
-                // Set the requested effect from this active input.
-                effectRequested = stream->getEffectRequested();
-                // Set the band type according to this active input.
-                setVoipBandType(stream);
-                // One and only one input stream must be active. @todo: check for L-dessert.
-                break;
-            }
-        }
-    }
-    setValue(streamsMask, isOut ? mOutputFlagsCriterionName : mInputSourcesCriterionName);
-    if (!isOut) {
-        setValue(effectRequested, mPreProcRequestedCriterionName);
-    }
-    applyPlatformConfiguration();
-}
-
-void AudioPlatformState::startStream(const IoStream *startedStream)
-{
-    AUDIOCOMMS_ASSERT(startedStream != NULL, "NULL stream");
-    AutoW lock(mPfwLock);
-    bool isOut = startedStream->isOut();
-    mActiveStreamsList[isOut].push_back(startedStream);
-    updateActiveStreamsParameters(isOut);
-}
-
-void AudioPlatformState::stopStream(const IoStream *stoppedStream)
-{
-    AUDIOCOMMS_ASSERT(stoppedStream != NULL, "NULL stream");
-    AutoW lock(mPfwLock);
-    bool isOut = stoppedStream->isOut();
-    mActiveStreamsList[isOut].remove(stoppedStream);
-    updateActiveStreamsParameters(isOut);
 }
 
 void AudioPlatformState::clearPlatformStateEvents()

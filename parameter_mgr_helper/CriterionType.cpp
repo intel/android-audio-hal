@@ -95,8 +95,8 @@ bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int
         }
     }
     // We succeeded to convert the literal value as an numerical, checking now that this numerical
-    // value is a valid value for this criterion type
-    return isNumericValueValid(numerical);
+    // value is a valid value for this criterion type (test limited to exclusive criterion)
+    return mCriterionTypeInterface->isTypeInclusive() ? true : isNumericValueValid(numerical);
 }
 
 bool CriterionType::isNumericValueValid(int valueToCheck) const

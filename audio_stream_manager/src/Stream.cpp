@@ -275,7 +275,7 @@ status_t Stream::setStandby(bool isSet)
     }
     setStarted(!isSet);
 
-    return isSet ? mParent->stopStream(this) : mParent->startStream(this);
+    return mParent->updateStreamsParametersSync(isOut());
 }
 
 status_t Stream::attachRouteL()

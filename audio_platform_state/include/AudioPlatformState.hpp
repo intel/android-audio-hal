@@ -22,7 +22,6 @@
  */
 #pragma once
 
-#include "AudioBand.h"
 #include "ParameterChangedObserver.hpp"
 #include "Parameter.hpp"
 #include <NonCopyable.hpp>
@@ -274,30 +273,6 @@ public:
     bool isModemEmbedded() const;
 
     /**
-     * Informs that a stream is started.
-     * It adds the stream to active stream list.
-     * Platform states use this list to provide the outputflags/inputsource bitfield criteria
-     * only when the stream using the flag/source is active.
-     *
-     * @param startedStream stream to be added to the list.
-     */
-    void startStream(const IoStream *startedStream);
-
-    /**
-     * Informs that a stream is stopped.
-     * It removes the stream to active stream list and update the outputflags or input sources.
-     * criterion according to the direction of the stream.
-     *
-     * @param startedStream stream to be added to the list.
-     */
-    void stopStream(const IoStream *stoppedStream);
-
-    /**
-     * Update the requested effects.
-     */
-    void updateRequestedEffect();
-
-    /**
      * Checks if Platform state has changed i.e. at leat one of the criterion of one of PFW instance
      * has changed.
      */
@@ -312,6 +287,15 @@ public:
     static const std::string mKeyDeviceOut; /**< Output Device Parameter Key. */
     static const std::string mKeyDeviceIn; /**< Input Device Parameter Key. */
     static const std::string mKeyMicMute; /**< Mic Mute Parameter Key. */
+
+    /** Output and Input Devices Parameter Key. */
+    static const std::string gKeyDevices[audio_comms::utilities::Direction::_nbDirections];
+    /** Output and input flags key. */
+    static const std::string gKeyFlags[audio_comms::utilities::Direction::_nbDirections];
+    /** Use case key, i.e. input source for input stream, unused for output. */
+    static const std::string gKeyUseCases[audio_comms::utilities::Direction::_nbDirections];
+    static const std::string gKeyVoipBandType; /**< VoIP Band Parameter Key. */
+    static const std::string gKeyPreProcRequested; /**< PreProc Parameter Key. */
 
 private:
     /**
@@ -333,16 +317,6 @@ private:
      * @param[in,out] pairs: {key, value} collection.
      */
     void clearKeys(KeyValuePairs *pairs);
-
-    /**
-     * Set the Voice Band Type.
-     * Voice band type is inferred by the rate of the input stream (which is a "direct" stream, ie
-     * running at the same rate than the VoIP application).
-     *
-     * @param[in] activeStream: current active input stream (i.e. input stream that has a valid
-     *                          input device as per policy implementation.
-     */
-    void setVoipBandType(const IoStream *activeStream);
 
     /**
      * Load the criterion configuration file.
@@ -589,27 +563,6 @@ private:
      */
     void setPlatformStateEvent(const std::string &eventStateName);
 
-    /**
-     * Update the streams mask.
-     * This function parses all active streams and concatenate their mask into a bit field.
-     * For input streams:
-     * It not only updates the requested preproc criterion but also the band type.
-     * Only one input stream may be active at one time.
-     * However, it does not mean that both are not started, but only one has a valid
-     * device given by the policy so that the other may not be routed.
-     * Find this active stream with valid device and set the parameters
-     * according to what was requested from this input.
-     *
-     * @param[in] isOut direction of streams.
-     */
-    void updateActiveStreamsParameters(bool isOut);
-
-    /**
-     * Input/Output Streams list.
-     */
-    std::list<const IoStream *>
-    mActiveStreamsList[audio_comms::utilities::Direction::_nbDirections];
-
     std::map<std::string, CriterionType *> mRouteCriterionTypeMap;
     std::map<std::string, Criterion *> mRouteCriterionMap; /**< Route Criterion Map. */
     /** Audio Criterion Map indexed by the name of criterion and storing the name of the type */
@@ -625,21 +578,7 @@ private:
     static const char *const mRoutePfwConfFileNamePropName;
     static const char *const mRoutePfwDefaultConfFileName; /**< default PFW conf file name. */
     static const std::string mStateChangedCriterionName;  /**< StateChanged route criterion. */
-    static const std::string mVoipBandCriterionName; /**< VoIP band criterion name. */
-    static const std::string mOutputFlagsCriterionName; /**< Output flags criterion name. */
-    static const std::string mInputSourcesCriterionName; /**< Input sources criterion name. */
-    static const std::string mInputDevicesCriterionName; /**< Input sources criterion name. */
     static const std::string mAndroidModeCriterionName; /**< Input sources criterion name. */
-
-    /**
-     * requested preprocessors criterion name
-     */
-    static const std::string mPreProcRequestedCriterionName;
-
-    /**
-     * Stream Rate associated with narrow band in case of VoIP.
-     */
-    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
 
     /**
      * String containing a list of paths to the hardware debug files on target

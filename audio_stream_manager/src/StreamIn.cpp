@@ -462,7 +462,7 @@ status_t StreamIn::addAudioEffect(effect_handle_t effect)
         if (isStarted()) {
             Log::Debug() << __FUNCTION__ << ": stream running, reconsider routing";
             // If the stream is routed, force a reconsider routing to take effect into account
-            mParent->updateRequestedEffect();
+            mParent->updateStreamsParametersAsync(isOut());
         }
     } else {
         Log::Debug() << __FUNCTION__ << ": SW Effect requested(effect=" << effect << ")";
@@ -509,7 +509,7 @@ status_t StreamIn::removeAudioEffect(effect_handle_t effect)
             Log::Debug() << __FUNCTION__ << ": stream running, reconsider routing";
             // If the stream is routed,
             // force a reconsider routing to take effect removal into account
-            mParent->updateRequestedEffect();
+            mParent->updateStreamsParametersAsync(isOut());
         }
     } else {
         Log::Debug() << __FUNCTION__ << ": SW Effect requested";

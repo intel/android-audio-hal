@@ -124,6 +124,32 @@ public:
 
 protected:
     /**
+     * Update the streams parameters upon start / stop / change of devices events on streams.
+     * in a synchronous manner.
+     *
+     * @param[in] isOut direction of stream from which the events is issued.
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateStreamsParametersSync(bool isOut)
+    {
+        return updateStreamsParameters(isOut, true);
+    }
+
+    /**
+     * Update the streams parameters upon start / stop / change of devices events on streams.
+     * in an asynchronous manner.
+     *
+     * @param[in] isOut direction of stream from which the events is issued.
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateStreamsParametersAsync(bool isOut)
+    {
+        return updateStreamsParameters(isOut, false);
+    }
+
+    /**
      * Returns the stream interface of the route manager.
      * As a AudioHAL creator must ensure HAL is started to performs any action on AudioHAL,
      * this function leaves if the stream interface was not created successfully upon start of HAL.
@@ -147,6 +173,22 @@ protected:
     void printPlatformFwErrorInfo();
 
 private:
+    /**
+     * Update the streams parameters upon start / stop / change of devices events on streams.
+     * This function parses all streams and concatenate their mask into a bit field.
+     * For input streams:
+     * It not only updates the requested preproc criterion but also the band type.
+     * Only one input stream may be active at one time by design of android audio policy.
+     * Find this active stream with valid device and set the parameters
+     * according to what was requested from this input.
+     *
+     * @param[in] isOut direction of stream from which the events is issued.
+     * @param[in] synchronous: need to update the settings in a synchronous way or not.
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateStreamsParameters(bool isOut, bool isSynchronous);
+
     /**
      * @return true if the collection of stream managed by the HW Device has a stream tracked by the
      *         given stream handle, false otherwise.
@@ -212,32 +254,6 @@ private:
     }
 
     /**
-     * Handle a stream start request.
-     * It results in a routing reconsideration. It must be SYNCHRONOUS to avoid loosing samples.
-     *
-     * @param[in] stream requester Stream.
-     *
-     * @return OK if stream started successfully, error code otherwise.
-     */
-    android::status_t startStream(Stream *stream);
-
-    /**
-     * Handle a stream stop request.
-     * It results in a routing reconsideration.
-     *
-     * @param[in] stream requester Stream.
-     *
-     * @return OK if stream stopped successfully, error code otherwise.
-     */
-    android::status_t stopStream(Stream *stream);
-
-    /**
-     * Handle a change of requested effect.
-     * It results in a routing reconsideration.
-     */
-    void updateRequestedEffect();
-
-    /**
      * Resets an echo reference.
      *
      * @param[in] reference: echo reference to reset.
@@ -277,6 +293,11 @@ private:
     static const char *const mRestartingRequested; /**< Restart key parameter value. */
 
     static const uint32_t mRecordingBufferTimeUsec = 20000;
+
+    /**
+     * Stream Rate associated with narrow band in case of VoIP.
+     */
+    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
 
     /**
      * Protect concurrent access to routing control API to protect concurrent access to

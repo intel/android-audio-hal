@@ -31,6 +31,7 @@
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
 #include "Property.h"
+#include <AudioBand.h>
 #include <InterfaceProviderLib.h>
 #include <hardware/audio_effect.h>
 #include <media/AudioRecord.h>
@@ -42,6 +43,7 @@ using namespace std;
 using android::status_t;
 using audio_comms::utilities::Log;
 using audio_comms::utilities::Mutex;
+using audio_comms::utilities::Direction;
 
 namespace intel_audio
 {
@@ -311,31 +313,6 @@ android::status_t Device::setMode(audio_mode_t mode)
     return android::OK;
 }
 
-
-status_t Device::startStream(Stream *stream)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
-    mPlatformState->startStream(stream);
-    getStreamInterface()->reconsiderRouting(true);
-    return android::OK;
-}
-
-status_t Device::stopStream(Stream *stream)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
-    mPlatformState->stopStream(stream);
-    getStreamInterface()->reconsiderRouting(true);
-    return android::OK;
-}
-
-void Device::updateRequestedEffect()
-{
-    mPlatformState->updateRequestedEffect();
-    getStreamInterface()->reconsiderRouting();
-}
-
 void Device::resetEchoReference(struct echo_reference_itfe *reference)
 {
     Log::Debug() << __FUNCTION__ << ": (reference=" << reference << ")";
@@ -519,11 +496,11 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     audio_devices_t newSinkDevices = patch.getSinkDevices();
 
     if (newSourceDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyDeviceIn, newSourceDevices);
+        pairs.add(AudioPlatformState::gKeyDevices[Direction::Input], newSourceDevices);
     }
     if (newSinkDevices != AUDIO_DEVICE_NONE) {
         pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
-        pairs.add(AudioPlatformState::mKeyDeviceOut, newSinkDevices);
+        pairs.add(AudioPlatformState::gKeyDevices[Direction::Output], newSinkDevices);
     }
     if (pairs.toString().empty()) {
         return android::OK;
@@ -549,11 +526,13 @@ status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
     // Shall we loop on "active" ports to get the new devices?
     KeyValuePairs pairs;
     if (patch.getSourceDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyDeviceIn, static_cast<int>(AUDIO_DEVICE_NONE));
+        pairs.add(AudioPlatformState::gKeyDevices[Direction::Input],
+                  static_cast<int>(AUDIO_DEVICE_NONE));
     }
     if (patch.getSinkDevices() != AUDIO_DEVICE_NONE) {
         pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
-        pairs.add(AudioPlatformState::mKeyDeviceOut, static_cast<int>(AUDIO_DEVICE_NONE));
+        pairs.add(AudioPlatformState::gKeyDevices[Direction::Output],
+                  static_cast<int>(AUDIO_DEVICE_NONE));
     }
 
     mPatches.erase(handle);
@@ -576,5 +555,40 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
     Log::Warning() << __FUNCTION__ << ": no implementation provided yet";
     return android::INVALID_OPERATION;
 }
+
+status_t Device::updateStreamsParameters(bool isOut, bool isSynchronous)
+{
+    StreamCollection::const_iterator it;
+    uint32_t streamsMask = 0;
+    uint32_t effectRequestedMask = 0;
+    KeyValuePairs pairs;
+
+    for (it = mStreams.begin(); it != mStreams.end(); ++it) {
+        const IoStream *stream = it->second;
+        if (stream->isOut() != isOut) {
+            continue;
+        }
+        if (stream->isStarted() && stream->isRoutedByPolicy()) {
+            streamsMask |= stream->getApplicabilityMask();
+            if (!isOut) {
+                // Set the requested effect from this active input.
+                effectRequestedMask = stream->getEffectRequested();
+                // Set the band type according to this active input.
+                CAudioBand::Type band =
+                    stream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing ?
+                    CAudioBand::ENarrow : CAudioBand::EWide;
+                pairs.add<int>(AudioPlatformState::gKeyVoipBandType, band);
+                pairs.add(AudioPlatformState::gKeyPreProcRequested, effectRequestedMask);
+                pairs.add(AudioPlatformState::gKeyUseCases[Direction::Input], streamsMask);
+                break;
+            }
+        }
+    }
+    if (isOut) {
+        pairs.add(AudioPlatformState::gKeyFlags[Direction::Output], streamsMask);
+    }
+    return mPlatformState->setParameters(pairs.toString(), isSynchronous);
+}
+
 
 } // namespace intel_audio
