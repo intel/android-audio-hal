@@ -32,14 +32,17 @@ LOCAL_STATIC_LIBRARIES := \
     libaudio_comms_utilities \
     libaudio_comms_convert \
 
-LOCAL_SRC_FILES := src/KeyValuePairs.cpp \
+LOCAL_SRC_FILES := \
+    src/KeyValuePairs.cpp \
+    src/Parameters.cpp \
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE := libkeyvaluepairs
+
+LOCAL_MODULE := libaudioparameters
 LOCAL_MODULE_OWNER := intel
 
 include external/stlport/libstlport.mk

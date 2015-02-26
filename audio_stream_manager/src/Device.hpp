@@ -285,6 +285,12 @@ private:
     PatchCollection mPatches; /**< Collection of connected patches. */
     PortCollection mPorts; /**< Collection of audio ports. */
 
+    /**
+     * Until compress is in a separated HAL, keep track of its device as primary HAL is
+     * of routing the compress use case.
+     */
+    audio_devices_t mCompressOffloadDevices;
+
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
     static const char *const mRouteLibPropName;  /**< Route Manager name property. */

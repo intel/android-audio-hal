@@ -31,6 +31,7 @@
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
 #include "Property.h"
+#include <Parameters.hpp>
 #include <AudioBand.h>
 #include <InterfaceProviderLib.h>
 #include <hardware/audio_effect.h>
@@ -56,7 +57,8 @@ Device::Device()
     : mEchoReference(NULL),
       mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
-      mStreamInterface(NULL)
+      mStreamInterface(NULL),
+      mCompressOffloadDevices(AUDIO_DEVICE_NONE)
 {
     /// Get the Stream Interface of the Route manager
     NInterfaceProvider::IInterfaceProvider *interfaceProvider =
@@ -291,6 +293,11 @@ status_t Device::setParameters(const string &keyValuePairs)
             backupedPairs.add(pairs.toString());
             pairs = backupedPairs;
         }
+    }
+    status = pairs.get(Parameters::gKeyCompressOffloadRouting, mCompressOffloadDevices);
+    if (status == android::OK) {
+        pairs.remove(key);
+        updateStreamsParametersSync(Direction::Output);
     }
     status = mPlatformState->setParameters(pairs.toString());
     if (status == android::OK) {
@@ -585,6 +592,9 @@ status_t Device::updateStreamsParameters(bool isOut, bool isSynchronous)
         }
     }
     if (isOut) {
+        if (mCompressOffloadDevices != AUDIO_DEVICE_NONE) {
+            streamsMask |= AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
+        }
         pairs.add(AudioPlatformState::gKeyFlags[Direction::Output], streamsMask);
     }
     return mPlatformState->setParameters(pairs.toString(), isSynchronous);

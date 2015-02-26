@@ -55,7 +55,7 @@ LOCAL_STATIC_LIBRARIES := \
     libproperty_static \
     audio.routemanager.includes \
     libmedia_helper \
-    libkeyvaluepairs \
+    libaudioparameters \
     libevent-listener_static \
     libparameter_includes
 

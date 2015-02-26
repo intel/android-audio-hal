@@ -59,8 +59,9 @@ audio_stream_manager_static_lib += \
     libaudioconversion_static \
     libstream_static \
     libaudioplatformstate \
-    libkeyvaluepairs \
+    libaudioparameters \
     libparametermgr_static \
+    libaudio_hal_utilities \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libhalaudiodump \
@@ -189,7 +190,7 @@ LOCAL_C_INCLUDES := \
         system/media/audio_effects/include \
 
 LOCAL_STATIC_LIBRARIES := \
-        libkeyvaluepairs \
+        libaudioparameters \
         libaudio_comms_utilities \
         libaudio_comms_convert \
         libmedia_helper \
