@@ -63,13 +63,9 @@ audio_stream_manager_static_lib += \
     libparametermgr_static \
     libaudio_comms_utilities \
     libaudio_comms_convert \
+    libhalaudiodump \
     liblpepreprocessinghelper \
     libaudiocomms_naive_tokenizer
-
-ifneq ($(TARGET_BUILD_VARIANT),user)
-    audio_stream_manager_static_lib += \
-        libhalaudiodump
-endif
 
 audio_stream_manager_static_lib_host += \
     $(foreach lib, $(audio_stream_manager_static_lib), $(lib)_host)
