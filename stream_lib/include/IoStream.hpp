@@ -23,6 +23,7 @@
 #pragma once
 
 #include <SampleSpec.hpp>
+#include <system/audio.h>
 #include <utils/RWLock.h>
 #include <string>
 
@@ -73,6 +74,14 @@ public:
      * @return true if playback, false otherwise.
      */
     virtual bool isOut() const = 0;
+
+    /**
+     * A stream is considered as a MIX Port with a given role.
+     * An output stream is a Source Mix Port, an input stream is a Sink Mix Port.
+     *
+     * @return role of the stream (mix port).
+     */
+    virtual audio_port_role_t getRole() const = 0;
 
     /**
      * get stream state.

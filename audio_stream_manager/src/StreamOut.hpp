@@ -81,6 +81,8 @@ public:
      */
     virtual bool isOut() const { return true; }
 
+    virtual audio_port_role_t getRole() const { return AUDIO_PORT_ROLE_SOURCE; }
+
 protected:
     /**
      * Callback of route attachement called by the stream lib. (and so route manager)

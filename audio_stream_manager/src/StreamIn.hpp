@@ -69,6 +69,8 @@ public:
         return false;
     }
 
+    virtual audio_port_role_t getRole() const { return AUDIO_PORT_ROLE_SINK; }
+
     /**
      * Set the input source.
      * This function is non-reetrant, intended to be called by the HW device (Routing 3.0 APIs)
