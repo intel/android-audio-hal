@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -57,7 +57,8 @@ struct StreamRouteConfig
     uint32_t availMin;
 
     uint8_t silencePrologInMs; /**< if needed, silence to be appended before valid samples. */
-    uint32_t applicabilityMask; /**< extra mask to check for applicability of stream. */
+    uint32_t flagMask; /**< flags supported by this route. To be checked with stream flags. */
+    uint32_t useCaseMask; /**< use cases supported by this route. To be checked with stream. */
 
     /**
      * Channel policy vector followed by this route.

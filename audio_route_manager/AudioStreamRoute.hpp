@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -138,14 +138,31 @@ public:
     virtual bool isApplicable(const IoStream *stream = NULL) const;
 
     /**
-     * Returns the applicable mask of the route
-     * Note that applicable mask has a different meaning according to the direction:
-     * -inputSource for input route
-     * -outputflags for output route.
+     * Checks if the stream route matches the given stream attributes, i.e. the flags, the use case.
+     *
+     * @param stream candidate for using this route.
+     *
+     * @return true if the route matches, false otherwise.
      */
-    uint32_t getApplicableMask() const
+    bool isMatchingWithStream(const IoStream *stream) const;
+
+    /**
+     * Returns the applicable flags mask of the route
+     */
+    uint32_t getFlagsMask() const
     {
-        return mConfig.applicabilityMask;
+        return mConfig.flagMask;
+    }
+
+    /**
+     * Returns the applicable use cases mask of the route
+     * Note that use case mask has a different meaning according to the direction:
+     * -inputSource for input route
+     * -not used until now for output route.
+     */
+    uint32_t getUseCaseMask() const
+    {
+        return mConfig.useCaseMask;
     }
 
     /**
@@ -226,14 +243,32 @@ protected:
 
 private:
     /**
+     * Checks if the use cases supported by this route are matching with the stream use case mask.
+     *
+     * @param[in] streamUseCaseMask mask of the use case requested by a stream
+     *
+     * @return true if the route supports the stream use case, false otherwise.
+     */
+    inline bool areUseCasesMatching(uint32_t streamUseCaseMask) const;
+
+    /**
+     * Checks if the flags supported by the route are matching with the given stream flags mask.
+     *
+     * @param[in] streamFlagMask mask of the flags requested by a stream
+     *
+     * @return true if the route supports the stream flags, false otherwise.
+     */
+    inline bool areFlagsMatching(uint32_t streamFlagMask) const;
+
+    /**
      * Checks if route implements all effects in the mask.
      *
-     * @param[in] effectsMask mask of the effects to check.
+     * @param[in] effectMask mask of the effects to check.
      *
      * @return true if all effects in the mask are supported by the stream route,
      *          false otherwise
      */
-    bool implementsEffects(uint32_t effectsMask) const;
+    bool implementsEffects(uint32_t effectMask) const;
 
     /**
      * Get the id of current pcm device.

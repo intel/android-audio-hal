@@ -93,28 +93,28 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * Upon creation, streams need to provide latency. As stream are not attached
      * to any route at creation, they must get a latency dependant of the
      * platform to provide information of latency and buffersize (inferred from ALSA ring buffer).
+     * This latency depends on the route that will be assigned to the stream. The route manager
+     * will return the route matching those stream attributes. If no route is found, it returns 0.
      *
-     * @param[in] isOut direction of the stream requesting the configuration
-     * @param[in] flags only valid for output stream, depends on flag, might use different
-     *                    buffering model.
+     * @param[in] stream requesting the latency
      *
      * @return latency in microseconds
      */
-    virtual uint32_t getLatencyInUs(bool isOut, uint32_t flags = 0) const = 0;
+    virtual uint32_t getLatencyInUs(const IoStream *stream) const = 0;
 
     /**
      * Get the period size.
      * Upon creation, streams need to provide buffer size. As stream are not attached
      * to any route at creation, they must get a latency dependant of the
      * platform to provide information of latency and buffersize (inferred from ALSA ring buffer).
+     * This period depends on the route that will be assigned to the stream. The route manager
+     * will return the route matching those stream attributes. If no route is found, it returns 0.
      *
-     * @param[in] isOut direction of the stream requesting the configuration
-     * @param[in] flags only valid for output stream, depends on flag, might use different
-     *                    buffering model.
+     * @param[in] stream requesting the period
      *
      * @return period size in microseconds
      */
-    virtual uint32_t getPeriodInUs(bool isOut, uint32_t flags = 0) const = 0;
+    virtual uint32_t getPeriodInUs(const IoStream *stream) const = 0;
 
 
     /**

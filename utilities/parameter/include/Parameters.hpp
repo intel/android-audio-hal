@@ -43,7 +43,7 @@ private:
 public:
     /**
      * Compress Offload routing key (e.g. for Compress Offload routing use case)
-     * The values that the parameter with this keys can use are the output devices
+     * With this key, the values used by the parameter are the output devices
      * enumeration found in @see audio_output_flags_t enum (system/audio.h)
      * If none, it follows the same routing than the policy: the use case shall be unrouted.
      */

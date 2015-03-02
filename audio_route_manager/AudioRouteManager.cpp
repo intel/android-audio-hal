@@ -680,47 +680,40 @@ IoStream *AudioRouteManager::getVoiceOutputStream()
     return *it;
 }
 
-const AudioStreamRoute *AudioRouteManager::findMatchingRoute(bool isOut, uint32_t flags) const
+const AudioStreamRoute *AudioRouteManager::findMatchingRouteForStream(const IoStream *stream) const
 {
-    uint32_t mask = !flags ?
-                    (isOut ? static_cast<uint32_t>(AUDIO_OUTPUT_FLAG_PRIMARY) :
-                     static_cast<uint32_t>(BitField::indexToMask(AUDIO_SOURCE_DEFAULT)))
-                    : flags;
-
     StreamRouteMapConstIterator it;
     for (it = mStreamRouteMap.begin(); it != mStreamRouteMap.end(); ++it) {
-
         const AudioStreamRoute *streamRoute = it->second;
-        if ((streamRoute->isOut() == isOut) && (mask & streamRoute->getApplicableMask())) {
-
+        if (streamRoute->isMatchingWithStream(stream)) {
             return streamRoute;
         }
     }
     return NULL;
 }
 
-uint32_t AudioRouteManager::getPeriodInUs(bool isOut, uint32_t flags) const
+uint32_t AudioRouteManager::getPeriodInUs(const IoStream *stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = findMatchingRoute(isOut, flags);
-    if (route != NULL) {
-
-        return route->getPeriodInUs();
+    const AudioStreamRoute *route = findMatchingRouteForStream(stream);
+    if (route == NULL) {
+        Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
+                     << stream->getFlagMask() << ", use case =" << stream->getUseCaseMask();
+        return 0;
     }
-    Log::Error() << __FUNCTION__ << ": not route found, audio might not be functional";
-    return 0;
+    return route->getPeriodInUs();
 }
 
-uint32_t AudioRouteManager::getLatencyInUs(bool isOut, uint32_t flags) const
+uint32_t AudioRouteManager::getLatencyInUs(const IoStream *stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = findMatchingRoute(isOut, flags);
-    if (route != NULL) {
-
-        return route->getLatencyInUs();
+    const AudioStreamRoute *route = findMatchingRouteForStream(stream);
+    if (route == NULL) {
+        Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
+                     << stream->getFlagMask() << ", use case =" << stream->getUseCaseMask();
+        return 0;
     }
-    Log::Error() << __FUNCTION__ << ": not route found, audio might not be functional";
-    return 0;
+    return route->getLatencyInUs();
 }
 
 void AudioRouteManager::setBit(bool isSet, uint32_t index, uint32_t &mask)

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -61,7 +61,7 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
                    << "\n\t  deviceId=" << config.deviceId
                    << "\n\t  rate=" << config.rate
                    << "\n\t  silencePrologInMs=" << config.silencePrologInMs
-                   << "\n\t  applicabilityMask=" << config.applicabilityMask
+                   << "\n\t  flagMask=" << config.flagMask
                    << "\n\t  channels=" << config.channels
                    << "\n\t  rate=" << config.rate
                    << "\n\t  format=" << static_cast<int32_t>(config.format);
@@ -186,21 +186,59 @@ void AudioStreamRoute::setStream(IoStream *stream)
 
 bool AudioStreamRoute::isApplicable(const IoStream *stream) const
 {
-    AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
-    uint32_t mask = stream->getApplicabilityMask();
-    Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
-                   << "\n\t\t\t isOut=" << (isOut() ? "output" : "input")
-                   << " && uiMask=" << mask
-                   << " & _uiApplicableMask[" << (isOut() ? "output" : "input")
-                   << "]=" << mConfig.applicabilityMask;
+    return AudioRoute::isApplicable() && !isUsed() && isMatchingWithStream(stream);
+}
 
-    return AudioRoute::isApplicable() && !isUsed() && (mask & mConfig.applicabilityMask) &&
+bool AudioStreamRoute::isMatchingWithStream(const IoStream *stream) const
+{
+    AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
+    uint32_t streamFlagMask = stream->getFlagMask();
+    uint32_t streamUseCaseMask = stream->getUseCaseMask();
+
+    if (stream->isOut()) {
+        // If no flags is provided for output, take primary by default
+        streamFlagMask = !streamFlagMask ?
+                         static_cast<uint32_t>(AUDIO_OUTPUT_FLAG_PRIMARY) : streamFlagMask;
+    }
+
+    Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
+                   << "\n\t\t\t route direction=" << (isOut() ? "output" : "input")
+                   << " stream direction=" << (stream->isOut() ? "output" : "input") << std::hex
+                   << " && stream flags mask=0x" << streamFlagMask
+                   << " & route applicable flags mask=0x" << getFlagsMask()
+                   << " && stream use case mask=0x" << streamUseCaseMask
+                   << " & route applicable use case mask=0x" << getUseCaseMask();
+
+    return (stream->isOut() == isOut()) &&
+           areFlagsMatching(streamFlagMask) &&
+           areUseCasesMatching(streamUseCaseMask) &&
            implementsEffects(stream->getEffectRequested());
 }
 
-bool AudioStreamRoute::implementsEffects(uint32_t effectsMask) const
+inline bool AudioStreamRoute::areFlagsMatching(uint32_t streamFlagMask) const
 {
-    return (mEffectSupportedMask & effectsMask) == effectsMask;
+    /**
+     * Note that if the streamFlagsMask not 0 (one or more flags are requested), the route selected
+     * must expose all flags requested by the stream.
+     */
+    if (streamFlagMask != 0) {
+        return (streamFlagMask & getFlagsMask()) == streamFlagMask;
+    }
+    /**
+     * Note that if the streamFlagsMask is 0 (no particular flags requested), the route selected
+     * must not expose also any particular flags to avoid using a dedicated pipe for example.
+     */
+    return getFlagsMask() == 0;
+}
+
+inline bool AudioStreamRoute::areUseCasesMatching(uint32_t streamUseCaseMask) const
+{
+    return (streamUseCaseMask & getUseCaseMask()) == streamUseCaseMask;
+}
+
+bool AudioStreamRoute::implementsEffects(uint32_t effectMask) const
+{
+    return (mEffectSupportedMask & effectMask) == effectMask;
 }
 
 android::status_t AudioStreamRoute::attachNewStream()

@@ -40,8 +40,9 @@ namespace intel_audio
 
 const std::string StreamIn::mHwEffectImplementor = "IntelLPE";
 
-StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, audio_source_t source)
-    : Stream(parent, handle),
+StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
+                   audio_source_t source)
+    : Stream(parent, handle, flagMask),
       mFramesLost(0),
       mFramesIn(0),
       mProcessingFramesIn(0),
@@ -433,7 +434,7 @@ void StreamIn::setInputSource(audio_source_t inputSource)
          */
         inputSourceShift = AUDIO_SOURCE_CNT;
     }
-    setApplicabilityMask(BitField::indexToMask(inputSourceShift));
+    setUseCaseMask(BitField::indexToMask(inputSourceShift));
 }
 
 status_t StreamIn::addAudioEffect(effect_handle_t effect)

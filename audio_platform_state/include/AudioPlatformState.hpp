@@ -272,7 +272,7 @@ public:
     bool isModemEmbedded() const;
 
     /**
-     * Checks if Platform state has changed i.e. at leat one of the criterion of one of PFW instance
+     * Checks if Platform state has changed i.e. at least one of the criterion of one PFW instance
      * has changed.
      */
     bool hasPlatformStateChanged() const;

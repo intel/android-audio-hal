@@ -27,11 +27,13 @@
 #include <InterfaceProviderImpl.h>
 #include <IStreamInterface.hpp>
 #include <KeyValuePairs.hpp>
+#include <Direction.hpp>
 #include <audio_effects/effect_aec.h>
 #include <audio_utils/echo_reference.h>
 #include <hardware/audio_effect.h>
 #include <hardware/hardware.h>
 #include <DeviceInterface.hpp>
+#include <AudioBand.h>
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <NonCopyable.hpp>
@@ -197,6 +199,20 @@ private:
                                 isSynchronous);
     }
 
+    inline audio_port_role_t getOppositeRole(audio_port_role_t role) const
+    {
+        return role == AUDIO_PORT_ROLE_SINK ? AUDIO_PORT_ROLE_SOURCE : AUDIO_PORT_ROLE_SINK;
+    }
+
+    /**
+     * Retrieve the device mask from a given stream.
+     *
+     * @param[in] stream for which the request applies to.
+     *
+     * @return devices mask associated to the stream.
+     */
+    uint32_t getDeviceFromStream(const Stream &stream) const;
+
     /**
      * Update the streams parameters according to the change of source and or sink devices.
      *
@@ -218,6 +234,31 @@ private:
     void prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs);
 
     /**
+     * Extract from a given stream the parameters that needs to be updated.
+     *
+     * @param[in] stream for which the request apply to.
+     * @param[in|out] flagMask of the active streams.
+     * @param[in|out] useCaseMask of the active streams.
+     * @param[in|out] devicesMask involved in stream operations.
+     * @param[in|out] requestedEffectMask of the active streams.
+     */
+    void updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
+                                    uint32_t &useCaseMask, uint32_t &deviceMask,
+                                    uint32_t &requestedEffectMask);
+
+    /**
+     * Selects the output devices from streams devices and internal devices. It also take into
+     * account the specific role of the primary output and the compress (as not handled by
+     * primary HAL BUT routed by primary).
+     *
+     * @param[in] internalDeviceMask Devices that are connected internal (without streams).
+     * @param[in] streamDeviceMask involved in stream operations.
+     *
+     * @return selected output devices to be routed.
+     */
+    uint32_t selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask);
+
+    /**
      * Checks if the stream is the primary output stream, i.e. it has PRIMARY flags.
      *
      * @param[in] stream to check
@@ -225,6 +266,13 @@ private:
      * @return true if stream is the primary output, false otherwise.
      */
     bool isPrimaryOutput(const Stream &stream) const;
+
+    /**
+     * Infer the band from a stream, using its sample rate information.
+     *
+     * @return audio band associated to this stream.
+     */
+    inline CAudioBand::Type getBandFromActiveInput() const;
 
     /**
      * @return true if the collection of stream managed by the HW Device has a stream tracked by the
@@ -244,7 +292,7 @@ private:
      * @return true if the collection of patch managed by the HW Device has a patch tracked by the
      *         given patch handle, false otherwise.
      */
-    bool hasPatchUnsafe(const audio_patch_handle_t &patchHandle);
+    bool hasPatchUnsafe(const audio_patch_handle_t &patchHandle) const;
 
     /**
      * Retrieve a stream from a stream handle from the collection managed by the HW Device.
@@ -271,6 +319,7 @@ private:
      *
      * @return Patch tracked by the given Patch handle.
      */
+    const Patch &getPatchUnsafe(const audio_patch_handle_t &patchHandle) const;
     Patch &getPatchUnsafe(const audio_patch_handle_t &patchHandle);
 
     virtual Port &getPortFromHandle(const audio_port_handle_t &portHandle);
@@ -296,6 +345,17 @@ private:
     inline bool isInCall() const
     {
         return mMode == AUDIO_MODE_IN_CALL;
+    }
+
+    inline Direction::Values getDirectionFromMix(audio_port_role_t streamPortRole) const
+    {
+        return streamPortRole == AUDIO_PORT_ROLE_SOURCE ? Direction::Output : Direction::Input;
+    }
+
+    inline audio_output_flags_t getCompressOffloadFlags() const
+    {
+        return mCompressOffloadDevices != AUDIO_DEVICE_NONE ?
+               AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD : AUDIO_OUTPUT_FLAG_NONE;
     }
 
     /**
@@ -329,6 +389,7 @@ private:
     StreamCollection mStreams; /**< Collection of opened streams. */
     PatchCollection mPatches; /**< Collection of connected patches. */
     PortCollection mPorts; /**< Collection of audio ports. */
+    Stream *mPrimaryOutput; /**< Primary output stream, which has a leading routing role. */
 
     /**
      * Until compress is in a separated HAL, keep track of its device as primary HAL is

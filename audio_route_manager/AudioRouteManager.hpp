@@ -217,14 +217,14 @@ private:
             return mRouteMgr->getVoiceOutputStream();
         }
 
-        virtual uint32_t getLatencyInUs(bool isOut, uint32_t flags = 0) const
+        virtual uint32_t getLatencyInUs(const IoStream *stream) const
         {
-            return mRouteMgr->getLatencyInUs(isOut, flags);
+            return mRouteMgr->getLatencyInUs(stream);
         }
 
-        virtual uint32_t getPeriodInUs(bool isOut, uint32_t flags = 0) const
+        virtual uint32_t getPeriodInUs(const IoStream *stream) const
         {
-            return mRouteMgr->getPeriodInUs(isOut, flags);
+            return mRouteMgr->getPeriodInUs(stream);
         }
 
         virtual bool addCriterionType(const std::string &name,
@@ -489,25 +489,31 @@ private:
      * Get the latency introduced by the route for a given stream flags.
      * If no flag is provided, in output only, it will try to return the latency of PRIMARY.
      *
-     * @param isOut direction of stream.
-     * @param flags qualifier of a stream (input source for an input, output flags instead).
+     * @param stream for which the latency is requested.
      *
      * @return  latency in microseconds.
      */
-    uint32_t getLatencyInUs(bool isOut, uint32_t flags) const;
+    uint32_t getLatencyInUs(const IoStream *stream) const;
 
     /**
      * Get the period size used by the route for a given stream flags.
      * If no flag is provided, in output only, it will try to return the period of PRIMARY.
      *
-     * @param isOut direction of stream.
-     * @param flags qualifier of a stream (input source for an input, output flags instead).
+     * @param stream for which the period is requested.
      *
      * @return  period in microseconds.
      */
-    uint32_t getPeriodInUs(bool isOut, uint32_t flags) const;
+    uint32_t getPeriodInUs(const IoStream *stream) const;
 
-    const AudioStreamRoute *findMatchingRoute(bool isOut, uint32_t flags) const;
+    /**
+     * Find the most suitable route for a given stream according to its attributes, ie flags,
+     * use cases, effects...
+     *
+     * @param[in] stream for which the matching route request is performed
+     *
+     * @return valid stream route if found, NULL otherwise.
+     */
+    const AudioStreamRoute *findMatchingRouteForStream(const IoStream *stream) const;
 
     /**
      * Sets the applicable attribute of an audio route.

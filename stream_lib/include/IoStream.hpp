@@ -98,13 +98,22 @@ public:
     virtual bool isRoutedByPolicy() const = 0;
 
     /**
-     * Applicability mask.
-     * For an input stream, applicability mask is the ID of the input source
-     * For an output stream, applicability mask is the output flags
+     * Flag mask.
+     * For an input stream, the input flags are the prefered attribute like fast tracks, hotword
+     * For an output stream, the output flags are the attribute like primary, fast, deep, ...
      *
-     * @return applicability mask.
+     * @return flags mask.
      */
-    virtual uint32_t getApplicabilityMask() const = 0;
+    virtual uint32_t getFlagMask() const = 0;
+
+    /**
+     * Use Case.
+     * For an input stream, use case is known as the input source.
+     * For an output stream: still not propagated to audio hal.
+     *
+     * @return use case.
+     */
+    virtual uint32_t getUseCaseMask() const = 0;
 
     /**
      * Get output silence to be appended before playing.

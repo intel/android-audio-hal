@@ -81,7 +81,8 @@ public:
 
     // From TinyAlsaIoStream
     virtual bool isRoutedByPolicy() const;
-    virtual uint32_t getApplicabilityMask() const;
+    virtual uint32_t getFlagMask() const;
+    virtual uint32_t getUseCaseMask() const;
     virtual bool isStarted() const;
     virtual bool isOut() const = 0;
 
@@ -102,7 +103,7 @@ public:
     audio_patch_handle_t getPatchHandle() const { return mPatchHandle; }
 
 protected:
-    Stream(Device *parent, audio_io_handle_t handle);
+    Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask);
 
     /**
      * Set the stream state.
@@ -114,12 +115,13 @@ protected:
     android::status_t setStandby(bool isSet);
 
     /**
-     * Set the Applicability mask.
+     * Set the use case mask, which is an input source mask for an input stream, and still
+     * not used for output streams.
      * This function is non-reetrant.
      *
-     * @param[in] applicabilityMask: ID of input source if input, stream flags if output.
+     * @param[in] useCaseMask
      */
-    void setApplicabilityMask(uint32_t applicabilityMask);
+    void setUseCaseMask(uint32_t useCaseMask);
 
     /**
      * Callback of route attachement called by the stream lib. (and so route manager)
@@ -296,14 +298,23 @@ private:
     uint32_t mLatencyMs; /**< Latency associated with the current flag of the stream. */
 
     /**
-     * Applicability mask is either:
+     * Flags mask is either:
      *  -for output streams: stream flags, from audio_output_flags_t in audio.h file.
      *                       Note that the stream flags are given at output creation and will not
      *                       changed until output is destroyed.
-     *  -for input streams: input source (bitfield done from audio_source_t in audio.h file.
+     *  -for input streams: audio_input_flags_t.
+     *          Note that 0 will be taken as none.
+     * The values must match audio.h file definitions.
+     */
+    uint32_t mFlagMask;
+
+    /**
+     * Use case mask is either:
+     *  -for output streams: Not used.
+     *  -for input streams: input source translated into a bit.
      *          Note that 0 will be taken as none.
      */
-    uint32_t mApplicabilityMask;
+    uint32_t mUseCaseMask;
 
     static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
     static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */

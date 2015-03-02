@@ -54,13 +54,14 @@ const std::string Stream::dumpAfterConvProps[Direction::gNbDirections] = {
     "media.dump_input.aftconv", "media.dump_output.aftconv"
 };
 
-Stream::Stream(Device *parent, audio_io_handle_t handle)
+Stream::Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
     : mParent(parent),
       mStandby(true),
       mDevices(0),
       mAudioConversion(new AudioConversion),
       mLatencyMs(0),
-      mApplicabilityMask(0),
+      mFlagMask(flagMask),
+      mUseCaseMask(0),
       mDumpBeforeConv(NULL),
       mDumpAfterConv(NULL),
       mHandle(handle),
@@ -150,6 +151,7 @@ status_t Stream::set(audio_config_t &config)
     if (badChannelCount || badFormat) {
         return android::BAD_VALUE;
     }
+    updateLatency();
     return android::OK;
 }
 
@@ -195,10 +197,16 @@ bool Stream::isRoutedByPolicy() const
     return mPatchHandle != AUDIO_PATCH_HANDLE_NONE;
 }
 
-uint32_t Stream::getApplicabilityMask() const
+uint32_t Stream::getFlagMask() const
 {
     AutoR lock(mStreamLock);
-    return mApplicabilityMask;
+    return mFlagMask;
+}
+
+uint32_t Stream::getUseCaseMask() const
+{
+    AutoR lock(mStreamLock);
+    return mUseCaseMask;
 }
 
 status_t Stream::setDevice(audio_devices_t device)
@@ -217,8 +225,9 @@ status_t Stream::setParameters(const string &keyValuePairs)
 
 size_t Stream::getBufferSize() const
 {
+    AutoR lock(mStreamLock);
     size_t size = mSampleSpec.convertUsecToframes(
-        mParent->getStreamInterface()->getPeriodInUs(isOut(), getApplicabilityMask()));
+        mParent->getStreamInterface()->getPeriodInUs(this));
 
     size = AudioUtils::alignOn16(size);
 
@@ -249,22 +258,22 @@ uint32_t Stream::getLatencyMs() const
     return mLatencyMs;
 }
 
-void Stream::setApplicabilityMask(uint32_t applicabilityMask)
+void Stream::setUseCaseMask(uint32_t useCaseMask)
 {
-    if (getApplicabilityMask() == applicabilityMask) {
+    if (getUseCaseMask() == useCaseMask) {
 
         return;
     }
     mStreamLock.writeLock();
-    mApplicabilityMask = applicabilityMask;
+    mUseCaseMask = useCaseMask;
     mStreamLock.unlock();
     updateLatency();
 }
 
 void Stream::updateLatency()
 {
-    mLatencyMs = AudioUtils::convertUsecToMsec(
-        mParent->getStreamInterface()->getLatencyInUs(isOut(), getApplicabilityMask()));
+    AutoR lock(mStreamLock);
+    mLatencyMs = AudioUtils::convertUsecToMsec(mParent->getStreamInterface()->getLatencyInUs(this));
 }
 
 status_t Stream::setStandby(bool isSet)

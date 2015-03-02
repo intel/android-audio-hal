@@ -32,7 +32,6 @@
 #include <hardware/audio.h>
 #include "Property.h"
 #include <Parameters.hpp>
-#include <AudioBand.h>
 #include <InterfaceProviderLib.h>
 #include <hardware/audio_effect.h>
 #include <media/AudioRecord.h>
@@ -149,6 +148,10 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     }
     mStreams[handle] = out;
 
+    if (isPrimaryOutput(*out)) {
+        mPrimaryOutput = out;
+    }
+
     // Informs the route manager of stream creation
     mStreamInterface->addStream(out);
     stream = out;
@@ -167,6 +170,9 @@ void Device::closeOutputStream(StreamOutInterface *out)
         Log::Error() << __FUNCTION__ << ": requesting to deleted an output stream with io handle= "
                      << handle << " not tracked by Primary HAL";
     } else {
+        if (isPrimaryOutput(*mStreams[handle])) {
+            mPrimaryOutput = NULL;
+        }
         mStreams.erase(handle);
     }
     delete out;
@@ -176,18 +182,18 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
                                           audio_devices_t devices,
                                           audio_config_t &config,
                                           StreamInInterface * &stream,
-                                          audio_input_flags_t /*flags*/,
+                                          audio_input_flags_t flags,
                                           const std::string & /*address*/,
                                           audio_source_t source)
 {
     Log::Debug() << __FUNCTION__ << ": handle=" << handle << ", devices: 0x" << std::hex << devices
-                 << " and input source: 0x" << static_cast<uint32_t>(source);
+                 << ", input source: 0x" << static_cast<uint32_t>(source)
+                 << ", input flags: 0x" << static_cast<uint32_t>(flags);
     if (!audio_is_input_device(devices)) {
         Log::Error() << __FUNCTION__ << ": called with bad device " << devices;
         return android::BAD_VALUE;
     }
-
-    StreamIn *in = new StreamIn(this, handle, source);
+    StreamIn *in = new StreamIn(this, handle, flags, source);
     status_t err = in->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": Set err";
@@ -391,7 +397,7 @@ bool Device::hasPort(const audio_port_handle_t &portHandle)
     return mPorts.find(portHandle) != mPorts.end();
 }
 
-bool Device::hasPatchUnsafe(const audio_patch_handle_t &patchHandle)
+bool Device::hasPatchUnsafe(const audio_patch_handle_t &patchHandle) const
 {
     return mPatches.find(patchHandle) != mPatches.end();
 }
@@ -409,6 +415,12 @@ Port &Device::getPort(const audio_port_handle_t &portHandle)
 {
     AUDIOCOMMS_ASSERT(hasPort(portHandle), "Port not found within collection");
     return mPorts[portHandle];
+}
+
+const Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle) const
+{
+    AUDIOCOMMS_ASSERT(hasPatchUnsafe(patchHandle), "Patch not found within collection");
+    return mPatches.find(patchHandle)->second;
 }
 
 Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle)
@@ -548,22 +560,59 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
     return android::INVALID_OPERATION;
 }
 
+uint32_t Device::getDeviceFromStream(const Stream &stream) const
+{
+    if (!stream.isRoutedByPolicy()) {
+        return AUDIO_DEVICE_NONE;
+    }
+    const Patch &patch = getPatchUnsafe(stream.getPatchHandle());
+    return patch.getDevices(getOppositeRole(stream.getRole()));
+}
+
+void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
+                                        uint32_t &useCaseMask, uint32_t &deviceMask,
+                                        uint32_t &requestedEffectMask)
+{
+    if (stream.isStarted() && stream.isRoutedByPolicy()) {
+        if (!isPrimaryOutput(stream)) {
+            // Primary devices are not appended as primary output plays a "special" role.
+            deviceMask |= getDeviceFromStream(stream);
+        }
+        flagMask |= stream.getFlagMask();
+        useCaseMask |= stream.getUseCaseMask();
+        requestedEffectMask |= stream.getEffectRequested();
+    }
+}
+
+uint32_t Device::selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask)
+{
+    uint32_t selectedDeviceMask = streamDeviceMask;
+    // Compress is not handled by primary HAL, so append compress device (none if inactive)
+    selectedDeviceMask |= mCompressOffloadDevices;
+
+    AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
+    // Take the device of the primary output if :
+    // primary is active OR no other streams are active OR in call
+    if (mPrimaryOutput->isStarted() || selectedDeviceMask == AUDIO_DEVICE_NONE || isInCall()) {
+        selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
+    }
+    selectedDeviceMask |= internalDeviceMask;
+    return selectedDeviceMask;
+}
+
 void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs)
 {
-    audio_port_role_t devicePortRole = streamPortRole == AUDIO_PORT_ROLE_SOURCE ?
-                                       AUDIO_PORT_ROLE_SINK : AUDIO_PORT_ROLE_SOURCE;
-    audio_devices_t devicesMask = AUDIO_DEVICE_NONE;
-    audio_devices_t internalDevicesMask = AUDIO_DEVICE_NONE;
-    audio_devices_t primaryDevicesMask = AUDIO_DEVICE_NONE;
-    uint32_t streamsMask = 0;
-    uint32_t effectRequestedMask = 0;
-
-    const Stream *primaryOutput = NULL;
+    audio_devices_t deviceMask = AUDIO_DEVICE_NONE;
+    audio_devices_t internalDeviceMask = AUDIO_DEVICE_NONE;
+    uint32_t streamsFlagMask = 0;
+    uint32_t streamsUseCaseMask = 0;
+    uint32_t requestedEffectMask = 0;
 
     Mutex::Locker locker(mPatchCollectionLock);
     // Loop on all patches that involve source mix ports (i.e. output streams)
     for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
         const Patch &patch = it->second;
+        audio_port_role_t devicePortRole = getOppositeRole(streamPortRole);
         const Port *mixPort = patch.getMixPort(streamPortRole);
 
         // Only 1 source port is supported (2 special case accross hw modules)
@@ -573,70 +622,53 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         }
         if (mixPort == NULL) {
             // This patch is connecting 2 device ports to one another, so append sink devices
-            internalDevicesMask |= patch.getDevices(devicePortRole);
+            internalDeviceMask |= patch.getDevices(devicePortRole);
             continue;
         }
         audio_io_handle_t streamHandle = mixPort->getMixIoHandle();
         Stream *stream = NULL;
         if (!getStream(streamHandle, stream)) {
             Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
-            return;
+            continue;
         }
-        if (streamPortRole == AUDIO_PORT_ROLE_SOURCE && isPrimaryOutput(*stream)) {
-            primaryOutput = stream;
-            primaryDevicesMask = patch.getDevices(devicePortRole);
-        }
-        if (stream->isStarted() && stream->isRoutedByPolicy()) {
-            if (!isPrimaryOutput(*stream)) {
-                devicesMask |= patch.getDevices(devicePortRole);
-            }
-            streamsMask |= stream->getApplicabilityMask();
-
-            if (streamPortRole == AUDIO_PORT_ROLE_SINK) {
-                AUDIOCOMMS_ASSERT(effectRequestedMask == 0,
-                                  "More than one input stream active, Audio HAL cannot handle it");
-                // Set the requested effect from this active input.
-                effectRequestedMask = stream->getEffectRequested();
-                // Set the band type according to this active input.
-                CAudioBand::Type band =
-                    stream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing ?
-                    CAudioBand::ENarrow : CAudioBand::EWide;
-                pairs.add<int>(Parameters::gKeyVoipBandType, band);
-            }
-        }
+        updateParametersFromStream(*stream, streamsFlagMask, streamsUseCaseMask, deviceMask,
+                                   requestedEffectMask);
     }
+
     if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
-        // Compress is not handled by primary HAL, so append compress device. If compress is not on
-        // going its device is none.
-        if (mCompressOffloadDevices != AUDIO_DEVICE_NONE) {
-            streamsMask |= AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD;
-            devicesMask |= mCompressOffloadDevices;
-        }
+        deviceMask = selectOutputDevices(internalDeviceMask, deviceMask);
+        // Compress is not handled by primary HAL, so append compress device (none if inactive)
+        streamsFlagMask |= getCompressOffloadFlags();
 
-        // Take the device of the primary if :
-        //      -primary is active.
-        //      -no other streams are active
-        //      -in call
-        if (primaryOutput && (primaryOutput->isStarted() ||
-                              devicesMask == AUDIO_DEVICE_NONE ||
-                              isInCall())) {
-            devicesMask = primaryDevicesMask;
-        }
-        devicesMask |= internalDevicesMask;
         pairs.add(Parameters::gKeyAndroidMode, mode());
-        pairs.add(Parameters::gKeyFlags[Direction::Output], streamsMask);
     } else {
-        pairs.add(Parameters::gKeyUseCases[Direction::Input], streamsMask);
+        pairs.add<int>(Parameters::gKeyVoipBandType, getBandFromActiveInput());
+        pairs.add(Parameters::gKeyPreProcRequested, requestedEffectMask);
     }
-    Direction::Values direction =
-            (streamPortRole == AUDIO_PORT_ROLE_SOURCE) ? Direction::Output : Direction::Input;
-    pairs.add(Parameters::gKeyDevices[direction], devicesMask);
+    pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
+    pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)], deviceMask);
+    pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
+}
+
+CAudioBand::Type Device::getBandFromActiveInput() const
+{
+    const Stream *activeInput = NULL;
+    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
+        const Stream *stream = it->second;
+        if (!stream->isOut() && stream->isStarted() && stream->isRoutedByPolicy()) {
+            AUDIOCOMMS_ASSERT(activeInput == NULL, "More than one input is active");
+            activeInput = stream;
+        }
+    }
+    return (activeInput != NULL &&
+            activeInput->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing) ?
+           CAudioBand::ENarrow : CAudioBand::EWide;
 }
 
 bool Device::isPrimaryOutput(const Stream &stream) const
 {
     return stream.isOut() &&
-           (stream.getApplicabilityMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
+           (stream.getFlagMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
            AUDIO_OUTPUT_FLAG_PRIMARY;
 }
 
