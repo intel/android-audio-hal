@@ -84,20 +84,6 @@ public:
     ~Patch();
 
     /**
-     * Returns the sink device(s) involved in this patch.
-     *
-     * @return valid sink device(s) or NONE if no sink device port is attached to this patch
-     */
-    audio_devices_t getSinkDevices() const;
-
-    /**
-     * Returns the source device(s) involved in this patch.
-     *
-     * @return valid source device(s) or NONE if no sink device port is attached to this patch
-     */
-    audio_devices_t getSourceDevices() const;
-
-    /**
      * Returns the device(s) involved in this patch according to the role requested
      * Note that it removes the sign bit introduced by the policy for input device in order to keep
      * the cardinality between a bit and a device within the devices mask.
