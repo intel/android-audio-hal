@@ -100,6 +100,10 @@ audio_route_manager_include_dirs_from_static_libraries_host := \
 
 audio_route_manager_cflags := -Wall -Werror
 
+ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
+audio_route_manager_cflags += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
+endif
+
 #######################################################################
 # Build for target
 

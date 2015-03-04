@@ -46,6 +46,10 @@
 
 #define DIRECT_STREAM_FLAGS (AUDIO_OUTPUT_FLAG_DIRECT | AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)
 
+#ifndef PFW_CONF_FILE_PATH
+#define PFW_CONF_FILE_PATH  "/etc/parameter-framework/"
+#endif
+
 using std::string;
 using audio_comms::utilities::convertTo;
 using android::status_t;
@@ -60,10 +64,10 @@ typedef RWLock::AutoRLock AutoR;
 typedef RWLock::AutoWLock AutoW;
 
 const char *const AudioPlatformState::mRoutePfwConfFileNamePropName =
-    "AudioComms.RoutePFW.ConfPath";
+    "persist.audio.routeConf";
 
 const char *const AudioPlatformState::mRoutePfwDefaultConfFileName =
-    "/etc/parameter-framework/ParameterFrameworkConfigurationRoute.xml";
+    "RouteParameterFramework.xml";
 
 const std::string AudioPlatformState::mHwDebugFilesPathList =
     "/Route/debug_fs/debug_files/path_list/";
@@ -122,8 +126,10 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string routePfwConfFilePath = TProperty<string>(mRoutePfwConfFileNamePropName,
-                                                    mRoutePfwDefaultConfFileName);
+    string routePfwConfFilePath = PFW_CONF_FILE_PATH;
+    routePfwConfFilePath += TProperty<string>(mRoutePfwConfFileNamePropName,
+                                              mRoutePfwDefaultConfFileName);
+
     Log::Info() << __FUNCTION__
                 << ": Route-PFW: using configuration file: " << routePfwConfFilePath;
 
