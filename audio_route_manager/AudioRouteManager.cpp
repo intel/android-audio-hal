@@ -24,7 +24,6 @@
 
 #include "AudioRouteManager.hpp"
 #include "AudioRouteManagerObserver.hpp"
-#include "HardwareDetection.hpp"
 #include "InterfaceProviderLib.h"
 #include "Property.h"
 #include <Observer.hpp>
@@ -129,9 +128,8 @@ AudioRouteManager::AudioRouteManager()
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    HardwareDetection::ConfigurationLocator locator;
-    string audioPfwConfigurationFilePath = locator.getAudioConfigurationFile();
-
+    string audioPfwConfigurationFilePath = TProperty<string>(mAudioPfwConfFilePropName,
+                                                             mAudioPfwDefaultConfFileName);
     Log::Info() << __FUNCTION__
                 << ": audio PFW using configuration file: " << audioPfwConfigurationFilePath;
 

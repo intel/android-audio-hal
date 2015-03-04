@@ -84,7 +84,6 @@ audio_route_manager_shared_lib_target += \
     libevent-listener \
     libaudioutils \
     libproperty \
-    libgmin_audio_hardwaredetection \
     libinterface-provider \
     libinterface-provider-lib
 
