@@ -29,15 +29,12 @@
 #include "AudioPort.hpp"
 #include "AudioStreamRoute.hpp"
 #include "Criterion.hpp"
-#include "InterfaceProviderLib.h"
 #include "Property.h"
+#include <RouteManagerInstance.hpp>
 #include <RouteInterface.hpp>
+#include <AudioCommsAssert.hpp>
 
-using namespace NInterfaceProvider;
 using intel_audio::IRouteInterface;
-
-const char *const RouteSubsystem::mRouteLibPropName = "audiocomms.routeLib";
-const char *const RouteSubsystem::mRouteLibraryName = "audio.routemanager.so";
 
 const char *const RouteSubsystem::mKeyName = "Name";
 const char *const RouteSubsystem::mKeyDirection = "Direction";
@@ -60,16 +57,9 @@ RouteSubsystem::RouteSubsystem(const std::string &name)
     : CSubsystem(name),
       mRouteInterface(NULL)
 {
-    // Try to connect a Route Interface from RouteManager
-    IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<std::string>(mRouteLibPropName,
-                                                    mRouteLibraryName).getValue().c_str());
-
-    if (interfaceProvider) {
-
-        // Retrieve the Route Interface
-        mRouteInterface = interfaceProvider->queryInterface<IRouteInterface>();
-    }
+    mRouteInterface = intel_audio::RouteManagerInstance::getRouteInterface();
+    AUDIOCOMMS_ASSERT(mRouteInterface != NULL,
+                      "Could not retrieve route interface, plugin not functional");
 
     // Provide mapping keys to upper layer
     addContextMappingKey(mKeyName);

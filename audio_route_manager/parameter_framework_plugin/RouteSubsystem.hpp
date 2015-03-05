@@ -47,9 +47,6 @@ public:
 private:
     intel_audio::IRouteInterface *mRouteInterface; /**< Route Interface. */
 
-    static const char *const mRouteLibPropName; /**< Route Manager name property. */
-    static const char *const mRouteLibraryName; /**< Route Manager library name. */
-
     static const char *const mKeyName; /**< name key mapping string. */
     static const char *const mKeyId; /**< id key mapping string. */
     static const char *const mKeyDirection; /**< direction key mapping string. */
