@@ -114,11 +114,12 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                 // Dump hw registers debug file info in console
                 mParent->printPlatformFwErrorInfo();
 
-            } else if (error.find(strerror(EBADFD)) != std::string::npos) {
+            } else if ((error.find(strerror(EBADFD)) != std::string::npos)
+                       || (error.find(strerror(EBADF)) != std::string::npos)) {
                 mStreamLock.unlock();
                 Log::Error() << __FUNCTION__ << ": execute device recovery";
                 setStandby(true);
-                return -EBADFD;
+                return android::OK;
             }
 
             if (++retryCount > mMaxReadWriteRetried) {
