@@ -36,7 +36,6 @@ audio_route_manager_src_files :=  \
     AudioRouteManager.cpp \
     AudioRouteManagerObserver.cpp \
     RouteManagerInstance.cpp \
-    EntryPoint.cpp
 
 audio_route_manager_includes_common := \
     $(LOCAL_PATH)/includes \
@@ -68,7 +67,6 @@ audio_route_manager_static_lib := \
     libaudio_comms_utilities \
     liblpepreprocessinghelper \
     libevent-listener_static \
-    libinterface-provider-lib_static \
 
 audio_route_manager_static_lib_host := \
     $(foreach lib, $(audio_route_manager_static_lib), $(lib)_host) \
@@ -88,9 +86,7 @@ audio_route_manager_shared_lib_target := \
     libicuuc \
     libevent-listener \
     libaudioutils \
-    libproperty \
-    libinterface-provider \
-    libinterface-provider-lib
+    libproperty
 
 audio_route_manager_cflags := -Wall -Werror
 
@@ -113,7 +109,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_SRC_FILES := $(audio_route_manager_src_files)
 LOCAL_CFLAGS := $(audio_route_manager_cflags)
 
-LOCAL_MODULE := audio.routemanager
+LOCAL_MODULE := libaudioroutemanager
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := \

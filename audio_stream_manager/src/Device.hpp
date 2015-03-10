@@ -24,7 +24,6 @@
 
 #include "Patch.hpp"
 #include "Port.hpp"
-#include <InterfaceProviderImpl.h>
 #include <IStreamInterface.hpp>
 #include <KeyValuePairs.hpp>
 #include <Direction.hpp>
@@ -399,8 +398,6 @@ private:
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
-    static const char *const mRouteLibPropName;  /**< Route Manager name property. */
-    static const char *const mRouteLibPropDefaultValue;  /**< Route Manager lib default value. */
     static const char *const mRestartingKey; /**< Restart key parameter. */
     static const char *const mRestartingRequested; /**< Restart key parameter value. */
 

@@ -38,8 +38,6 @@
 #include <Direction.hpp>
 #include <Observable.hpp>
 #include <EventListener.h>
-#include <InterfaceImplementer.h>
-#include <InterfaceProviderImpl.h>
 #include <NonCopyable.hpp>
 #include <utils/RWLock.h>
 #include <list>
@@ -53,10 +51,11 @@ class IoStream;
 struct pcm_config;
 class CParameterMgrPlatformConnectorLogger;
 
-class AudioRouteManager : public NInterfaceProvider::IInterfaceImplementer,
-                          public IEventListener,
-                          public audio_comms::utilities::Observable,
-                          public audio_comms::utilities::NonCopyable
+class AudioRouteManager : public IStreamInterface,
+                          public IRouteInterface,
+                          private IEventListener,
+                          private audio_comms::utilities::Observable,
+                          private audio_comms::utilities::NonCopyable
 {
 private:
     typedef std::map<std::string, AudioRoute *>::iterator RouteMapIterator;
@@ -78,234 +77,108 @@ public:
     AudioRouteManager();
     virtual ~AudioRouteManager();
 
-    /// Inherited from IInterfaceImplementer
-    // Interface populate
-    virtual
-    void getImplementedInterfaces(NInterfaceProvider::CInterfaceProviderImpl &interfaceProvider);
-
 private:
-    /// Interface members
-    class RouteInterfaceImpl : public IRouteInterface
+    /// From Stream Interface
+    virtual android::status_t startService();
+    virtual android::status_t stopService();
+    virtual void addStream(IoStream *stream);
+    virtual void removeStream(IoStream *stream);
+    virtual void reconsiderRouting(bool isSynchronous = false);
+    virtual android::status_t setVoiceVolume(float gain);
+    virtual IoStream *getVoiceOutputStream();
+    virtual uint32_t getLatencyInUs(const IoStream *stream) const;
+    virtual uint32_t getPeriodInUs(const IoStream *stream) const;
+    virtual bool addCriterionType(const std::string &name, bool isInclusive);
+    virtual void addCriterionTypeValuePair(const std::string &name, const std::string &literal,
+                                           uint32_t value);
+    virtual void addCriterion(const std::string &name, const std::string &criterionType,
+                              const std::string &defaultLiteralValue = "");
+    virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue)
     {
-    public:
-        RouteInterfaceImpl(AudioRouteManager *audioRouteManager)
-            : mRouteMgr(audioRouteManager) {}
-
-        virtual void addPort(const std::string &name)
-        {
-            mRouteMgr->addPort(name);
-        }
-
-        virtual void addPortGroup(const std::string &name,
-                                  const std::string &portMember)
-        {
-            mRouteMgr->addPortGroup(name, portMember);
-        }
-
-        virtual void addAudioRoute(const std::string &name,
-                                   const std::string &portSrc, const std::string &portDst,
-                                   bool isOut)
-        {
-            mRouteMgr->addRoute<AudioRoute>(name, portSrc, portDst, isOut, mRouteMgr->mRouteMap);
-        }
-
-        virtual void addAudioStreamRoute(const std::string &name,
-                                         const std::string &portSrc, const std::string &portDst,
-                                         bool isOut)
-        {
-            mRouteMgr->addRoute<AudioStreamRoute>(name, portSrc, portDst, isOut,
-                                                  mRouteMgr->mStreamRouteMap);
-        }
-
-        virtual void updateStreamRouteConfig(const std::string &name,
-                                             const StreamRouteConfig &config)
-        {
-            mRouteMgr->updateStreamRouteConfig(name, config);
-        }
-
-        virtual void addRouteSupportedEffect(const std::string &name, const std::string &effect)
-        {
-            mRouteMgr->addRouteSupportedEffect(name, effect);
-        }
-
-        virtual void setRouteApplicable(const std::string &name, bool isApplicable)
-        {
-            mRouteMgr->setRouteApplicable(name, isApplicable);
-        }
-
-        virtual void setRouteNeedReconfigure(const std::string &name, bool needReconfigure)
-        {
-            mRouteMgr->setRouteNeedReconfigure(name, needReconfigure);
-        }
-
-        virtual void setRouteNeedReroute(const std::string &name, bool needReroute)
-        {
-            mRouteMgr->setRouteNeedReroute(name, needReroute);
-        }
-
-        virtual void setPortBlocked(const std::string &name, bool isBlocked)
-        {
-            mRouteMgr->setPortBlocked(name, isBlocked);
-        }
-
-        virtual bool addAudioCriterionType(const std::string &name,
-                                           bool isInclusive)
-        {
-            return mRouteMgr->addCriterionType(name, isInclusive);
-        }
-
-        virtual void addAudioCriterionTypeValuePair(const std::string &name,
-                                                    const std::string &literal,
-                                                    uint32_t value)
-        {
-            mRouteMgr->addCriterionTypeValuePair(name, literal, value);
-        }
-
-        virtual void addAudioCriterion(const std::string &name, const std::string &criteriaType,
-                                       const std::string &defaultLiteralValue = "")
-        {
-            mRouteMgr->addCriterion(name, criteriaType, defaultLiteralValue);
-        }
-
-        virtual void setParameter(const std::string &name, uint32_t value)
-        {
-            mRouteMgr->setAudioCriterion<uint32_t>(name, value);
-        }
-
-    private:
-        AudioRouteManager *mRouteMgr;
-    } mRouteInterface;
-
-    class StreamInterfaceImpl : public IStreamInterface
+        return setAudioCriterion<std::string>(name, literalValue);
+    }
+    virtual bool setAudioCriterion(const std::string &name, uint32_t value)
     {
-    public:
-        StreamInterfaceImpl(AudioRouteManager *audioRouteManager)
-            : mRouteMgr(audioRouteManager) {}
+        return setAudioCriterion<uint32_t>(name, value);
+    }
+    virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const
+    {
+        return getAudioCriterion<std::string>(name, literalValue);
+    }
+    virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const
+    {
+        return getAudioCriterion<uint32_t>(name, value);
+    }
+    virtual bool setAudioParameter(const std::string &path, const uint32_t &value)
+    {
+        return setAudioParameter<uint32_t>(path, value);
+    }
+    virtual bool setAudioParameter(const std::string &path, const std::string &value)
+    {
+        return setAudioParameter<std::string>(path, value);
+    }
+    virtual bool setAudioParameter(const std::string &path, const double &value)
+    {
+        return setAudioParameter<double>(path, value);
+    }
+    virtual bool getAudioParameter(const std::string &path, uint32_t &value) const
+    {
+        return getAudioParameter<uint32_t>(path, value);
+    }
+    virtual bool getAudioParameter(const std::string &path, std::string &value) const
+    {
+        return getAudioParameter<std::string>(path, value);
+    }
+    virtual bool getAudioParameter(const std::string &path, double &value) const
+    {
+        return getAudioParameter<double>(path, value);
+    }
 
-        virtual android::status_t startService()
-        {
-            return mRouteMgr->startService();
-        }
+    /// From Route Interface
+    virtual void addPort(const std::string &name);
+    virtual void addPortGroup(const std::string &name,
+                              const std::string &portMember);
+    virtual void addAudioRoute(const std::string &name,
+                               const std::string &portSrc, const std::string &portDst,
+                               bool isOut)
+    {
+        addRoute<AudioRoute>(name, portSrc, portDst, isOut, mRouteMap);
+    }
 
-        virtual android::status_t stopService()
-        {
-            return mRouteMgr->stopService();
-        }
+    virtual void addAudioStreamRoute(const std::string &name,
+                                     const std::string &portSrc, const std::string &portDst,
+                                     bool isOut)
+    {
+        addRoute<AudioStreamRoute>(name, portSrc, portDst, isOut, mStreamRouteMap);
+    }
 
-        virtual void addStream(IoStream *stream)
-        {
-            return mRouteMgr->addStream(stream);
-        }
-
-        virtual void removeStream(IoStream *stream)
-        {
-            return mRouteMgr->removeStream(stream);
-        }
-
-        virtual void reconsiderRouting(bool isSynchronous)
-        {
-            return mRouteMgr->reconsiderRouting(isSynchronous);
-        }
-
-        virtual android::status_t setVoiceVolume(float gain)
-        {
-            return mRouteMgr->setVoiceVolume(gain);
-        }
-
-        virtual IoStream *getVoiceOutputStream()
-        {
-            return mRouteMgr->getVoiceOutputStream();
-        }
-
-        virtual uint32_t getLatencyInUs(const IoStream *stream) const
-        {
-            return mRouteMgr->getLatencyInUs(stream);
-        }
-
-        virtual uint32_t getPeriodInUs(const IoStream *stream) const
-        {
-            return mRouteMgr->getPeriodInUs(stream);
-        }
-
-        virtual bool addCriterionType(const std::string &name,
-                                      bool isInclusive)
-        {
-            return mRouteMgr->addCriterionType(name, isInclusive);
-        }
-
-        virtual void addCriterionTypeValuePair(const std::string &name,
-                                               const std::string &literal,
-                                               uint32_t value)
-        {
-            mRouteMgr->addCriterionTypeValuePair(name, literal, value);
-        }
-
-        virtual void addCriterion(const std::string &name, const std::string &criteriaType,
-                                  const std::string &defaultLiteralValue = "")
-        {
-            mRouteMgr->addCriterion(name, criteriaType, defaultLiteralValue);
-        }
-
-        virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue)
-        {
-            return mRouteMgr->setAudioCriterion<std::string>(name, literalValue);
-        }
-
-        virtual bool setAudioCriterion(const std::string &name, uint32_t value)
-        {
-            return mRouteMgr->setAudioCriterion<uint32_t>(name, value);
-        }
-
-        virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const
-        {
-            return mRouteMgr->getAudioCriterion<std::string>(name, literalValue);
-        }
-
-        virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const
-        {
-            return mRouteMgr->getAudioCriterion<uint32_t>(name, value);
-        }
-
-        virtual bool setAudioParameter(const std::string &paramPath, const uint32_t &value)
-        {
-            return mRouteMgr->setAudioParameter<uint32_t>(paramPath, value);
-        }
-
-        virtual bool setAudioParameter(const std::string &paramPath, const std::string &value)
-        {
-            return mRouteMgr->setAudioParameter<std::string>(paramPath, value);
-        }
-
-        virtual bool setAudioParameter(const std::string &paramPath, const double &value)
-        {
-            return mRouteMgr->setAudioParameter<double>(paramPath, value);
-        }
-
-        virtual bool getAudioParameter(const std::string &paramPath, uint32_t &value) const
-        {
-            return mRouteMgr->getAudioParameter<uint32_t>(paramPath, value);
-        }
-
-        virtual bool getAudioParameter(const std::string &paramPath, std::string &value) const
-        {
-            return mRouteMgr->getAudioParameter<std::string>(paramPath, value);
-        }
-
-        virtual bool getAudioParameter(const std::string &paramPath, double &value) const
-        {
-            return mRouteMgr->getAudioParameter<double>(paramPath, value);
-        }
-
-    private:
-        AudioRouteManager *mRouteMgr;
-    } mStreamInterface;
-
-private:
-    /**
-     * Commit the criteria those value has been set by Route PFW.
-     * It also apply the configuration to take these criteria into account.
-     */
-    void commitCriteriaAndApply();
+    virtual void updateStreamRouteConfig(const std::string &name,
+                                         const StreamRouteConfig &config);
+    virtual void addRouteSupportedEffect(const std::string &name, const std::string &effect);
+    virtual void setRouteApplicable(const std::string &name, bool isApplicable);
+    virtual void setRouteNeedReconfigure(const std::string &name,
+                                         bool needReconfigure);
+    virtual void setRouteNeedReroute(const std::string &name,
+                                     bool needReroute);
+    virtual void setPortBlocked(const std::string &name, bool isBlocked);
+    virtual bool addAudioCriterionType(const std::string &name, bool isInclusive)
+    {
+        return addCriterionType(name, isInclusive);
+    }
+    virtual void addAudioCriterionTypeValuePair(const std::string &name, const std::string &literal,
+                                                uint32_t value)
+    {
+        addCriterionTypeValuePair(name, literal, value);
+    }
+    virtual void addAudioCriterion(const std::string &name, const std::string &criterionType,
+                                   const std::string &defaultLiteralValue = "")
+    {
+        addCriterion(name, criterionType, defaultLiteralValue);
+    }
+    virtual void setParameter(const std::string &name, uint32_t value)
+    {
+        setAudioCriterion<uint32_t>(name, value);
+    }
 
     /**
      * Gets an audio parameter manager criterion value.
@@ -355,21 +228,6 @@ private:
     bool setAudioCriterion(const std::string &name, const T &value);
 
     /**
-     * Add a new port to route manager.
-     *
-     * @param[in] name port name.
-     */
-    void addPort(const std::string &name);
-
-    /**
-     * Add a new port group or / and port belonging to this group to route manager.
-     *
-     * @param[in] name port name.
-     * @param[in] portMember port belonging to the port group.
-     */
-    void addPortGroup(const std::string &name, const std::string &portMember);
-
-    /**
      * Add an Audio Route to route manager.
      * Called at audio platform discovery.
      *
@@ -388,122 +246,10 @@ private:
                   std::map<std::string, T *> &elementsMap);
 
     /**
-     * Update the configuration of a stream route.
-     * Configuration is not only the card, device to open, but also the pcm configuration to use.
-     *
-     * @param[in] name: route name.
-     * @param[in] config: Route configuration.
+     * Commit the criteria those value has been set by Route PFW.
+     * It also applies the configuration to take these criteria into account.
      */
-    void updateStreamRouteConfig(const std::string &name, const StreamRouteConfig &config);
-
-    /**
-     * Add an HW effect supported by a route.
-     * It sets the capability of a route to provide audio effect. The route manager will always
-     * prefer using HW effect when supported by the route than using SW effects.
-     *
-     * @param[in] name: name of the route supporting the HW effect.
-     * @param[in] name: name of the Effect supported by the audio route.
-     */
-    void addRouteSupportedEffect(const std::string &name, const std::string &effect);
-
-    /**
-     * Adds a criterion type.
-     * Called at audio platform discovery.
-     *
-     * @param[in] name: name of the criterion type.
-     * @param[in] isInclusive: true if criterion is inclusive, false if exclusive.
-     *
-     * @return true if criterion type has already been added, false otherwise.
-     */
-    bool addCriterionType(const std::string &name, bool isInclusive);
-
-    /**
-     * Adds a value pair for a given criterion type.
-     * Called at audio platform discovery.
-     *
-     * @param[in] name: name of the criterion type.
-     * @param[in] literal part of the value pair to add.
-     * @param[in] value numerical part of the value pair to add.
-     *
-     * @return true if criterion type added, false if criterion type is already added.
-     */
-    void addCriterionTypeValuePair(const std::string &name,
-                                   const std::string &literal,
-                                   uint32_t value);
-
-    /**
-     * Add a new criterion.
-     * Add a new criterion with a specific type. If already added, it will assert.
-     * The criterion type must have been added previously unless, it will assert.
-     *
-     * @param[in] name criterion name.
-     * @param[in] criteriaTypeName criterion type referred by its name.
-     * @param[in] defaultLiteralValue default literal value of the criterion.
-     */
-    void addCriterion(const std::string &name, const std::string &criteriaTypeName,
-                      const std::string &defaultLiteralValue = "");
-
-    /**
-     * Add a stream to route manager.
-     * The route manager keep tracks of streams opened in order to route / unroute them.
-     *
-     * @param[in] stream stream to be added (for future routing purpose).
-     */
-    void addStream(IoStream *stream);
-
-    /**
-     * Remove a stream from route manager.
-     * The route manager keep tracks of streams opened in order to route / unroute them.
-     *
-     * @param[in] stream to be removed.
-     */
-    void removeStream(IoStream *streamToRemove);
-
-    /**
-     * Starts the route manager service.
-     *
-     * @return OK if success, error code otherwise.
-     */
-    android::status_t startService();
-
-    /**
-     * Stops the route manager service.
-     *
-     * @return OK if success, error code otherwise.
-     */
-    android::status_t stopService();
-
-    /**
-     * Sets the voice volume.
-     * Called from AudioSystem/Policy to apply the volume on the voice call stream which is
-     * platform dependent.
-     *
-     * @param[in] gain the volume to set in float format in the expected range [0 .. 1.0].
-     *                 Note that any attempt to set a value outside this range will return -ERANGE.
-     *
-     * @return OK if success, error code otherwise.
-     */
-    android::status_t setVoiceVolume(float gain);
-
-    /**
-     * Get the latency introduced by the route for a given stream flags.
-     * If no flag is provided, in output only, it will try to return the latency of PRIMARY.
-     *
-     * @param stream for which the latency is requested.
-     *
-     * @return  latency in microseconds.
-     */
-    uint32_t getLatencyInUs(const IoStream *stream) const;
-
-    /**
-     * Get the period size used by the route for a given stream flags.
-     * If no flag is provided, in output only, it will try to return the period of PRIMARY.
-     *
-     * @param stream for which the period is requested.
-     *
-     * @return  period in microseconds.
-     */
-    uint32_t getPeriodInUs(const IoStream *stream) const;
+    void commitCriteriaAndApply();
 
     /**
      * Find the most suitable route for a given stream according to its attributes, ie flags,
@@ -514,46 +260,6 @@ private:
      * @return valid stream route if found, NULL otherwise.
      */
     const AudioStreamRoute *findMatchingRouteForStream(const IoStream *stream) const;
-
-    /**
-     * Sets the applicable attribute of an audio route.
-     * Based upon settings file of the Route Manager plugin, this function informs the route
-     * manager whether a route is applicable or not.
-     *
-     * @param[in] name: name of the route applicable.
-     * @param[in] isApplicable: true if applicable, false otherwise.
-     */
-    void setRouteApplicable(const std::string &name, bool isApplicable);
-
-    /**
-     * Sets the need reconfigure attribute of an audio route.
-     * Based upon settings file of the Route Manager plugin, this function informs the route
-     * manager whether a route needs to be reconfigure or not.
-     *
-     * @param[in] name: name of the route that needs reconfiguration.
-     * @param[in] needReconfigure: reconfiguration flag.
-     */
-    void setRouteNeedReconfigure(const std::string &name, bool needReconfigure);
-
-    /**
-     * Sets the need reroute attribute of an audio route.
-     * Based upon settings file of the Route Manager plugin, this function informs the route
-     * manager whether a route needs to be closed/reopened or not.
-     *
-     * @param[in] name: name of the route that needs rerouting.
-     * @param[in] needReroute: rerouting flag.
-     */
-    void setRouteNeedReroute(const std::string &name, bool needReroute);
-
-    /**
-     * Sets the blocked attribute of an audio port.
-     * Based upon settings file of the Route Manager plugin, this function informs the route
-     * manager whether a port is blocked or not.
-     *
-     * @param[in] name: name of the port to be blocked/unblocked.
-     * @param[in] isBlocked: true if blocked, false otherwise.
-     */
-    void setPortBlocked(const std::string &name, bool isBlocked);
 
     /**
      * Sets a bit referred by an index within a mask.
@@ -574,21 +280,6 @@ private:
      */
     template <bool isOut>
     inline bool routingHasChanged();
-
-    /**
-     * Handle a routing reconsideration.
-     *
-     * @param[in] isSynchronous synchronous routing reconsideration requested.
-     */
-    void reconsiderRouting(bool isSynchronous);
-
-    /**
-     * Returns the voice output stream. Used by Input stream to identify the provider of
-     * echo reference in case of SW Echo Cancellation.
-     *
-     * @return valid stream pointer if found, NULL otherwise.
-     */
-    IoStream *getVoiceOutputStream();
 
     /**
      * From worker thread context

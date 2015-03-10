@@ -22,19 +22,17 @@
  */
 #pragma once
 
-#include "Interface.h"
 #include "StreamRouteConfig.hpp"
 #include <utils/Errors.h>
+#include <string>
 
 namespace intel_audio
 {
 
 class IoStream;
 
-struct IStreamInterface : public NInterfaceProvider::IInterface
+struct IStreamInterface
 {
-    INTERFACE_NAME("StreamInterface");
-
     /**
      * Starts the route manager service.
      */
@@ -258,6 +256,9 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioParameter(const std::string &path, double &value) const = 0;
+
+protected:
+    virtual ~IStreamInterface() {}
 };
 
 } // namespace intel_audio

@@ -51,7 +51,6 @@ LOCAL_STATIC_LIBRARIES := \
     libaudio_comms_convert \
     liblpepreprocessinghelper \
     libaudiocomms_naive_tokenizer \
-    libinterface-provider-lib_static \
     libproperty_static \
     audio.routemanager.includes \
     libmedia_helper \

@@ -32,7 +32,7 @@
 #include <hardware/audio.h>
 #include "Property.h"
 #include <Parameters.hpp>
-#include <InterfaceProviderLib.h>
+#include <RouteManagerInstance.hpp>
 #include <hardware/audio_effect.h>
 #include <media/AudioRecord.h>
 #include <utilities/Log.hpp>
@@ -46,8 +46,6 @@ using audio_comms::utilities::Mutex;
 
 namespace intel_audio
 {
-const char *const Device::mRouteLibPropName = "audiocomms.routeLib";
-const char *const Device::mRouteLibPropDefaultValue = "audio.routemanager.so";
 const char *const Device::mRestartingKey = "restarting";
 const char *const Device::mRestartingRequested = "true";
 
@@ -58,16 +56,8 @@ Device::Device()
       mStreamInterface(NULL),
       mCompressOffloadDevices(AUDIO_DEVICE_NONE)
 {
-    /// Get the Stream Interface of the Route manager
-    NInterfaceProvider::IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<string>(mRouteLibPropName,
-                                               mRouteLibPropDefaultValue).getValue().c_str());
-    if (!interfaceProvider) {
-        Log::Error() << __FUNCTION__ << ": Could not connect to interface provider";
-        return;
-    }
     // Retrieve the Stream Interface
-    mStreamInterface = interfaceProvider->queryInterface<IStreamInterface>();
+    mStreamInterface = RouteManagerInstance::getStreamInterface();
     if (mStreamInterface == NULL) {
         Log::Error() << "Failed to get Stream Interface on RouteMgr";
         return;

@@ -24,7 +24,6 @@
 
 #include "AudioRouteManager.hpp"
 #include "AudioRouteManagerObserver.hpp"
-#include "InterfaceProviderLib.h"
 #include "Property.h"
 #include <Observer.hpp>
 #include <IoStream.hpp>
@@ -40,7 +39,6 @@
 
 using android::status_t;
 using namespace std;
-using NInterfaceProvider::CInterfaceProviderImpl;
 using audio_comms::utilities::BitField;
 using audio_comms::utilities::Log;
 
@@ -120,9 +118,7 @@ template <>
 struct AudioRouteManager::routingElementSupported<Criterion> {};
 
 AudioRouteManager::AudioRouteManager()
-    : mRouteInterface(this),
-      mStreamInterface(this),
-      mAudioPfwConnectorLogger(new CParameterMgrPlatformConnectorLogger),
+    : mAudioPfwConnectorLogger(new CParameterMgrPlatformConnectorLogger),
       mEventThread(new CEventThread(this)),
       mIsStarted(false)
 {
@@ -175,13 +171,6 @@ AudioRouteManager::~AudioRouteManager()
 
     // Remove connector
     delete mAudioPfwConnector;
-}
-
-// Interface populate
-void AudioRouteManager::getImplementedInterfaces(CInterfaceProviderImpl &interfaceProvider)
-{
-    interfaceProvider.addInterface(&mRouteInterface);
-    interfaceProvider.addInterface(&mStreamInterface);
 }
 
 status_t AudioRouteManager::stopService()

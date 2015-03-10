@@ -22,7 +22,6 @@
  */
 #pragma once
 
-#include "Interface.h"
 #include "StreamRouteConfig.hpp"
 #include <string>
 
@@ -31,10 +30,8 @@ namespace intel_audio
 
 class StreamRouteConfig;
 
-struct IRouteInterface : public NInterfaceProvider::IInterface
+struct IRouteInterface
 {
-    INTERFACE_NAME("RouteInterface");
-
     /**
      * Add a port to route manager.
      * Called at audio platform discovery.
@@ -193,6 +190,10 @@ struct IRouteInterface : public NInterfaceProvider::IInterface
      * @param[in] name: value to set.
      */
     virtual void setParameter(const std::string &name, uint32_t value) = 0;
+
+
+protected:
+    virtual ~IRouteInterface() {}
 };
 
 } // namespace intel_audio

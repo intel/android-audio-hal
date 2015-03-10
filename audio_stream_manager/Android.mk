@@ -89,11 +89,10 @@ audio_stream_manager_shared_lib_target += \
     libaudioresample \
     libaudioutils \
     libproperty \
-    libinterface-provider-lib \
+    libaudioroutemanager \
 
 audio_stream_manager_include_dirs_from_static_libraries := \
     libevent-listener_static \
-    libinterface-provider-lib_static \
     libproperty_static
 
 audio_stream_manager_include_dirs_from_static_libraries_target := \
@@ -117,7 +116,6 @@ LOCAL_MODULE_TAGS := optional
 
 LOCAL_REQUIRED_MODULES := \
     audio.primary.$(TARGET_BOARD_PLATFORM) \
-    audio.routemanager \
     liblpepreprocessing \
     route_criteria.conf
 

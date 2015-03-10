@@ -20,9 +20,9 @@
  * express and approved by Intel in writing.
  *
  */
-#include "AudioRouteManager.hpp"
-#include <InterfaceImplementer.h>
-#include <InterfaceProvider.h>
+
+#include <IStreamInterface.hpp>
+#include <RouteInterface.hpp>
 #include <NonCopyable.hpp>
 
 #pragma once
@@ -30,8 +30,9 @@
 namespace intel_audio
 {
 
-class RouteManagerInstance : public NInterfaceProvider::IInterfaceProvider,
-                             public audio_comms::utilities::NonCopyable
+class AudioRouteManager;
+
+class RouteManagerInstance : public audio_comms::utilities::NonCopyable
 {
 protected:
     RouteManagerInstance();
@@ -40,34 +41,18 @@ public:
     virtual ~RouteManagerInstance();
 
     /**
+     * Interface getters.
+     */
+    static IStreamInterface *getStreamInterface();
+    static IRouteInterface *getRouteInterface();
+
+private:
+    /**
      * Get Route Manager instance.
      *
      * @return pointer to Route Manager Instance object.
      */
     static RouteManagerInstance *getInstance();
-
-    /**
-     * Interface query.
-     * Inherited from IInterfaceProvider
-     */
-    virtual NInterfaceProvider::IInterface *queryInterface(
-        const std::string &strInterfaceName) const;
-
-    /**
-     * Get Interfaces list.
-     */
-    std::string getInterfaceList() const;
-
-protected:
-    /**
-     * Get ModemAudioManager instance.
-     *
-     * @return Route Manager singleton.
-     */
-    AudioRouteManager *getAudioRouteManager() const;
-
-private:
-    NInterfaceProvider::CInterfaceProviderImpl mInterfaceProvider;
 
     /**< Audio route manager singleton */
     AudioRouteManager *mAudioRouteManager;

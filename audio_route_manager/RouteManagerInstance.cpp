@@ -21,9 +21,7 @@
  *
  */
 #include "RouteManagerInstance.hpp"
-
-using namespace std;
-using namespace NInterfaceProvider;
+#include "AudioRouteManager.hpp"
 
 namespace intel_audio
 {
@@ -31,7 +29,6 @@ namespace intel_audio
 RouteManagerInstance::RouteManagerInstance()
     : mAudioRouteManager(new AudioRouteManager())
 {
-    mInterfaceProvider.addImplementedInterfaces(*mAudioRouteManager);
 }
 
 RouteManagerInstance *RouteManagerInstance::getInstance()
@@ -45,22 +42,14 @@ RouteManagerInstance::~RouteManagerInstance()
     delete mAudioRouteManager;
 }
 
-// Get AudioRouteManager instance
-AudioRouteManager *RouteManagerInstance::getAudioRouteManager() const
+IStreamInterface *RouteManagerInstance::getStreamInterface()
 {
-    return mAudioRouteManager;
+    return getInstance()->mAudioRouteManager;
 }
 
-// Interface query
-IInterface *RouteManagerInstance::queryInterface(const string &strInterfaceName) const
+IRouteInterface *RouteManagerInstance::getRouteInterface()
 {
-    return mInterfaceProvider.queryInterface(strInterfaceName);
-}
-
-// Interface list
-string RouteManagerInstance::getInterfaceList() const
-{
-    return mInterfaceProvider.getInterfaceList();
+    return getInstance()->mAudioRouteManager;
 }
 
 } // namespace intel_audio
