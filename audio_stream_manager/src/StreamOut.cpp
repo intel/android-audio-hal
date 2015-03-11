@@ -224,7 +224,7 @@ status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &t
     if (!isRoutedL()) {
         return android::INVALID_OPERATION;
     }
-    uint32_t avail;
+    size_t avail;
     status_t error = getFramesAvailable(avail, timestamp);
     if (error != android::OK) {
         return error;
