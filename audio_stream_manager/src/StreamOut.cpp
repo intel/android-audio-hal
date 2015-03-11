@@ -286,7 +286,7 @@ void StreamOut::removeEchoReference(struct echo_reference_itfe *reference)
 
 int StreamOut::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer)
 {
-    uint32_t kernelFrames;
+    size_t kernelFrames;
     int status;
     status = getFramesAvailable(kernelFrames, buffer->time_stamp);
     if (status != android::OK) {
