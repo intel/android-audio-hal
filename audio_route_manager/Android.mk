@@ -84,7 +84,6 @@ audio_route_manager_shared_lib_target += \
     libevent-listener \
     libaudioutils \
     libproperty \
-    libgmin_audio_hardwaredetection \
     libinterface-provider \
     libinterface-provider-lib
 
@@ -100,6 +99,10 @@ audio_route_manager_include_dirs_from_static_libraries_host := \
     $(foreach lib, $(audio_route_manager_include_dirs_from_static_libraries), $(lib)_host)
 
 audio_route_manager_cflags := -Wall -Werror
+
+ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
+audio_route_manager_cflags += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
+endif
 
 #######################################################################
 # Build for target

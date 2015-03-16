@@ -64,10 +64,12 @@ LOCAL_STATIC_LIBRARIES := \
     libevent-listener_static \
     libparameter_includes
 
-LOCAL_SHARED_LIBRARIES := \
-    libgmin_audio_hardwaredetection
-
 LOCAL_CFLAGS := -Wall -Werror -Wextra -Wno-unused-parameter
+
+ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
+LOCAL_CFLAGS += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
+endif
+
 LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
