@@ -256,8 +256,8 @@ TEST_F(DeviceTest, StreamOut)
     EXPECT_EQ(stream_out->common.dump(stream, 453), 4);
 
     EXPECT_CALL(*out, getDevice())
-    .WillOnce(Return(static_cast<audio_devices_t>(AUDIO_DEVICE_OUT_WIDI)));
-    EXPECT_EQ(stream_out->common.get_device(stream), AUDIO_DEVICE_OUT_WIDI);
+    .WillOnce(Return(static_cast<audio_devices_t>(AUDIO_DEVICE_OUT_HDMI)));
+    EXPECT_EQ(stream_out->common.get_device(stream), AUDIO_DEVICE_OUT_HDMI);
 
     EXPECT_CALL(*out, setDevice(AUDIO_DEVICE_IN_AMBIENT))
     .WillOnce(Return(235));
@@ -460,8 +460,8 @@ TEST_F(DeviceTest, StreamIn)
     EXPECT_EQ(stream_in->common.dump(stream, 453), 4);
 
     EXPECT_CALL(*in, getDevice())
-    .WillOnce(Return(static_cast<audio_devices_t>(AUDIO_DEVICE_OUT_WIDI)));
-    EXPECT_EQ(stream_in->common.get_device(stream), AUDIO_DEVICE_OUT_WIDI);
+    .WillOnce(Return(static_cast<audio_devices_t>(AUDIO_DEVICE_OUT_HDMI)));
+    EXPECT_EQ(stream_in->common.get_device(stream), AUDIO_DEVICE_OUT_HDMI);
 
     EXPECT_CALL(*in, setDevice(AUDIO_DEVICE_IN_AMBIENT))
     .WillOnce(Return(235));

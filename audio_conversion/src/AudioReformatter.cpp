@@ -70,7 +70,7 @@ status_t AudioReformatter::convertS16toS24over32(const void *src,
                                                  const size_t inFrames,
                                                  size_t *outFrames)
 {
-    uint32_t frameIndex;
+    size_t frameIndex;
     const int16_t *src16 = (const int16_t *)src;
     uint32_t *dst32 = (uint32_t *)dst;
     size_t n = inFrames * mSsSrc.getChannelCount();
@@ -94,7 +94,7 @@ status_t AudioReformatter::convertS24over32toS16(const void *src,
 {
     const uint32_t *src32 = (const uint32_t *)src;
     int16_t *dst16 = (int16_t *)dst;
-    uint32_t frameIndex;
+    size_t frameIndex;
 
     size_t n = inFrames * mSsSrc.getChannelCount();
 

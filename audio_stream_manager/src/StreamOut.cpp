@@ -159,6 +159,10 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     bytes = streamSampleSpec().convertFramesToBytes(
         AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
 
+    if (mFrameCount > (std::numeric_limits<uint64_t>::max() - srcFrames)) {
+        Log::Error() << __FUNCTION__ << ": overflow detected, resetting framecount";
+        mFrameCount = 0;
+    }
     mFrameCount += srcFrames;
     mStreamLock.unlock();
     return status;
@@ -220,7 +224,7 @@ status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &t
     if (!isRoutedL()) {
         return android::INVALID_OPERATION;
     }
-    uint32_t avail;
+    size_t avail;
     status_t error = getFramesAvailable(avail, timestamp);
     if (error != android::OK) {
         return error;
@@ -282,7 +286,7 @@ void StreamOut::removeEchoReference(struct echo_reference_itfe *reference)
 
 int StreamOut::getPlaybackDelay(ssize_t frames, struct echo_reference_buffer *buffer)
 {
-    uint32_t kernelFrames;
+    size_t kernelFrames;
     int status;
     status = getFramesAvailable(kernelFrames, buffer->time_stamp);
     if (status != android::OK) {

@@ -67,25 +67,17 @@ public:
     void stop();
 
 private:
-    /**
-     * Modem Audio Manager callback to notify of a change of the audio status on the modem.
-     * Inherited from IModemAudioManagerObserver.
-     */
     virtual void onModemAudioStatusChanged();
-    /**
-     * Modem Audio Manager callback to notify of a change of the modem state.
-     * Inherited from IModemAudioManagerObserver.
-     */
     virtual void onModemStateChanged();
-    /**
-     * Modem Audio Manager callback to notify of a change of the audio band of the CSV call.
-     * Inherited from IModemAudioManagerObserver.
-     */
     virtual void onModemAudioBandChanged();
 
     const std::string isModemAlive(void *context) const;
-
-    const std::string isModemAudioAvailable(void *context) const;
+    /**
+     * Get the status of the Audio link
+     * @param[in] context
+     * @return @see AudioStatus
+     */
+    const std::string getModemAudioStatus(void *context) const;
 
     const std::string getAudioBand(void *context) const;
 

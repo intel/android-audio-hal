@@ -186,7 +186,8 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * Sets an audio parameter manager rogue parameter.
      *
      * @param[in] path: parameter path.
-     * @param[in] value: numerical value to set. Only String and Integer are supported until now.
+     * @param[in] value: numerical value to set. Only String, Integer and Double are supported
+     *                   until now.
      *
      * @return true if operation successful, false otherwise.
      */
@@ -196,18 +197,30 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * Sets an audio parameter manager rogue parameter.
      *
      * @param[in] path: parameter path.
-     * @param[in] value: literal value to set. Only String and Integer are supported until now.
+     * @param[in] value: literal value to set. Only String, Integer and Double are supported
+     *                   until now.
      *
      * @return true if operation successful, false otherwise.
      */
     virtual bool setAudioParameter(const std::string &path, const std::string &value) = 0;
 
     /**
+     * Sets an audio parameter manager rogue parameter.
+     *
+     * @param[in] path: parameter path.
+     * @param[in] value: literal value to set. Only String, Integer and Double are supported
+     *                   until now.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    virtual bool setAudioParameter(const std::string &path, const double &value) = 0;
+
+    /**
      * Gets an audio parameter manager rogue parameter.
      *
      * @param[in] path: parameter path.
-     * @param[in] value: numerical value to get. Only String and Integer are supported until now.
-     *                   The value is correctly set if return code is true.
+     * @param[in] value: numerical value to get. Only String, Integer and Double are supported
+     *                   until now. The value is correctly set if return code is true.
      *
      * @return true if operation successful, false otherwise.
      */
@@ -217,12 +230,23 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * Gets an audio parameter manager rogue parameter.
      *
      * @param[in] path: parameter path
-     * @param[in] value: literal value to get. Only String and Integer are supported until now.
-     *                   The value is correctly set if return code is true.
+     * @param[in] value: literal value to get. Only String, Integer and Double are supported
+     *                   until now. The value is correctly set if return code is true.
      *
      * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioParameter(const std::string &path, std::string &value) const = 0;
+
+    /**
+     * Gets an audio parameter manager rogue parameter.
+     *
+     * @param[in] path: parameter path
+     * @param[in] value: literal value to get. Only String, Integer and Double are supported
+     *                   until now. The value is correctly set if return code is true.
+     *
+     * @return true if operation successful, false otherwise.
+     */
+    virtual bool getAudioParameter(const std::string &path, double &value) const = 0;
 };
 
 } // namespace intel_audio

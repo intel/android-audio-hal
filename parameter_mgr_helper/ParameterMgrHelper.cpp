@@ -54,7 +54,17 @@ template <>
 bool ParameterMgrHelper::setAsTypedValue<uint32_t>(CParameterHandle *parameterHandle,
                                                    const uint32_t &value, string &error)
 {
-    if (!parameterHandle->setAsInteger(value, error)) {
+    bool success;
+    if (parameterHandle->isArray()) {
+        vector<uint32_t> arrayValue(parameterHandle->getArrayLength(), value);
+        success = parameterHandle->setAsIntegerArray(arrayValue, error);
+    } else {
+
+        success = parameterHandle->setAsInteger(value, error);
+    }
+
+    if (!success) {
+
         Log::Error() << "Unable to set value: " << error
                      << ", from parameter path: " << parameterHandle->getPath();
         return false;
@@ -105,6 +115,55 @@ bool ParameterMgrHelper::getAsTypedValue<string>(CParameterHandle *parameterHand
 {
     if (!parameterHandle->getAsString(value, error)) {
         Log::Error() << "Unable to get value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::setAsTypedValue<double>(CParameterHandle *parameterHandle,
+                                                   const double &value, string &error)
+{
+    bool success;
+    if (parameterHandle->isArray()) {
+        vector<double> arrayValue(parameterHandle->getArrayLength(), value);
+        success = parameterHandle->setAsDoubleArray(arrayValue, error);
+    } else {
+
+        success = parameterHandle->setAsDouble(value, error);
+    }
+
+    if (!success) {
+
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::getAsTypedValue<double>(CParameterHandle *parameterHandle,
+                                                   double &value, string &error)
+{
+    if (!parameterHandle->getAsDouble(value, error)) {
+
+        Log::Error() << "Unable to set value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::setAsTypedValue<vector<double> >(CParameterHandle *parameterHandle,
+                                                            const vector<double> &value,
+                                                            string &error)
+{
+    if (!parameterHandle->setAsDoubleArray(value, error)) {
+
+        Log::Error() << "Unable to set value: " << error
                      << ", from parameter path: " << parameterHandle->getPath();
         return false;
     }
