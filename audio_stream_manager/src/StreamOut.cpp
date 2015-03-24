@@ -328,18 +328,7 @@ void StreamOut::pushEchoReference(const void *buffer, ssize_t frames)
 
 status_t StreamOut::setDevice(audio_devices_t device)
 {
-    /*
-     * Why do we need to filter AUDIO_DEVICE_NONE?
-     * When for example A2DP Headset is disconnected, the policy manager sends routing=0.
-     * When the stream is started again, the policy does not force the routing as it
-     * considers that the new device elected is the same than the previous one.
-     * In fact, selecting device=AUDIO_DEVICE_NONE does not update the device member of output
-     * descriptor, leading the policy to think that no changes happened on the routing.
-     *
-     * Ignoring AUDIO_DEVICE_NONE fixes the issue in the audio HAL as it avoids reseting the routing
-     * information at HAL layer.
-     */
-    if (!audio_is_output_devices(device) || device == AUDIO_DEVICE_NONE) {
+    if (!audio_is_output_devices(device)) {
         Log::Error() << __FUNCTION__ << ": invalid output device " << device;
         return android::BAD_VALUE;
     }
