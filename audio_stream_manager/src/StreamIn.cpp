@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -40,8 +40,8 @@ namespace intel_audio
 
 const std::string StreamIn::mHwEffectImplementor = "IntelLPE";
 
-StreamIn::StreamIn(Device *parent, audio_source_t source)
-    : Stream(parent),
+StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, audio_source_t source)
+    : Stream(parent, handle),
       mFramesLost(0),
       mFramesIn(0),
       mProcessingFramesIn(0),
@@ -406,19 +406,6 @@ bool StreamIn::isHwEffectL(effect_handle_t effect)
         return false;
     }
     return implementor == mHwEffectImplementor;
-}
-
-status_t StreamIn::setParameters(const string &keyValuePairs)
-{
-    KeyValuePairs pairs(keyValuePairs);
-    int inputSource;
-    string key(AUDIO_PARAMETER_STREAM_INPUT_SOURCE);
-    if (pairs.get(key, inputSource) == android::OK) {
-        setInputSource(static_cast<audio_source_t>(inputSource));
-        // Removes this input stream specific key
-        pairs.remove(key);
-    }
-    return Stream::setParameters(pairs.toString());
 }
 
 status_t StreamIn::setDevice(audio_devices_t device)

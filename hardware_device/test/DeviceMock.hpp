@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2014 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2014-2015 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include <gmock/gmock.h>
 #include <DeviceInterface.hpp>
+#include <StreamMock.hpp>
 
 namespace intel_audio
 {
@@ -33,61 +33,99 @@ namespace intel_audio
 class DeviceMock : public DeviceInterface
 {
 public:
-    MOCK_METHOD6(openOutputStream,
-                 android::status_t(audio_io_handle_t handle,
-                                   audio_devices_t devices,
-                                   audio_output_flags_t flags,
-                                   audio_config_t &config,
-                                   StreamOutInterface *&stream,
-                                   const std::string &address));
-    MOCK_METHOD1(closeOutputStream,
-                 void(StreamOutInterface *stream));
-    MOCK_METHOD7(openInputStream,
-                 android::status_t(audio_io_handle_t handle,
-                                   audio_devices_t devices,
-                                   audio_config_t &config,
-                                   StreamInInterface *&stream,
-                                   audio_input_flags_t flags,
-                                   const std::string &address,
-                                   audio_source_t source));
-    MOCK_METHOD1(closeInputStream,
-                 void(StreamInInterface *stream));
-    MOCK_CONST_METHOD0(initCheck,
-                       android::status_t());
-    MOCK_METHOD1(setVoiceVolume,
-                 android::status_t(float volume));
-    MOCK_METHOD1(setMasterVolume,
-                 android::status_t(float volume));
-    MOCK_CONST_METHOD1(getMasterVolume,
-                       android::status_t(float &volume));
-    MOCK_METHOD1(setMasterMute,
-                 android::status_t(bool mute));
-    MOCK_CONST_METHOD1(getMasterMute,
-                       android::status_t(bool &muted));
-    MOCK_METHOD1(setMode,
-                 android::status_t(audio_mode_t mode));
-    MOCK_METHOD1(setMicMute,
-                 android::status_t(bool state));
-    MOCK_CONST_METHOD1(getMicMute,
-                       android::status_t(bool &state));
-    MOCK_METHOD1(setParameters,
-                 android::status_t(const std::string &keyValuePairs));
-    MOCK_CONST_METHOD1(getParameters,
-                       std::string(const std::string &keys));
-    MOCK_CONST_METHOD1(getInputBufferSize,
-                       size_t(const audio_config_t &config));
-    MOCK_CONST_METHOD1(dump,
-                       android::status_t(const int fd));
-    MOCK_METHOD5(createAudioPatch,
-                 android::status_t(uint32_t sourcesCount, const struct audio_port_config *sources,
-                                   uint32_t sinksCount, const struct audio_port_config *sinks,
-                                   audio_patch_handle_t *handle));
-    MOCK_METHOD1(releaseAudioPatch,
-                 android::status_t(audio_patch_handle_t handle));
-    MOCK_CONST_METHOD1(getAudioPort,
-                       android::status_t(struct audio_port &port));
-    MOCK_METHOD1(setAudioPortConfig,
-                 android::status_t(const struct audio_port_config &config));
+    static const char *AudioHalName;
+    virtual android::status_t openOutputStream(audio_io_handle_t /*handle*/,
+                                               audio_devices_t /*devices*/,
+                                               audio_output_flags_t /*flags*/,
+                                               audio_config_t & /*config*/,
+                                               StreamOutInterface * &stream,
+                                               const std::string & /*address*/)
+    {
+        stream = new StreamOutMock();
+        return android::OK;
+    }
+
+    virtual void closeOutputStream(StreamOutInterface *stream)
+    {
+        delete stream;
+    }
+    virtual android::status_t openInputStream(audio_io_handle_t handle,
+                                              audio_devices_t devices,
+                                              audio_config_t &config,
+                                              StreamInInterface * &stream,
+                                              audio_input_flags_t flags,
+                                              const std::string &address,
+                                              audio_source_t source)
+    {
+        stream = new StreamInMock();
+        return android::OK;
+    }
+
+    virtual void closeInputStream(StreamInInterface *stream)
+    {
+        delete stream;
+    }
+
+    virtual android::status_t initCheck() const
+    { return android::OK; }
+
+    virtual android::status_t setVoiceVolume(float volume)
+    { return android::OK; }
+
+    virtual android::status_t setMasterVolume(float volume)
+    { return android::OK; }
+
+    virtual android::status_t getMasterVolume(float &volume) const
+    { return android::OK; }
+
+    virtual android::status_t setMasterMute(bool mute)
+    { return android::OK; }
+
+    virtual android::status_t getMasterMute(bool &muted) const
+    {
+        muted = true;
+        return android::OK;
+    }
+
+    virtual android::status_t setMode(audio_mode_t mode)
+    { return android::OK; }
+
+    virtual android::status_t setMicMute(bool mute)
+    { return android::OK; }
+
+    virtual android::status_t getMicMute(bool &muted) const
+    {
+        return false;
+        return android::OK;
+    }
+
+    virtual android::status_t setParameters(const std::string &keyValuePairs)
+    { return android::OK; }
+
+    virtual std::string getParameters(const std::string &keys) const
+    { return strdup("Bla"); }
+
+    virtual size_t getInputBufferSize(const audio_config_t &config) const
+    { return 1234u; }
+
+    virtual android::status_t dump(const int fd) const
+    { return android::OK; }
+
+    virtual android::status_t createAudioPatch(size_t sourcesCount,
+                                               const struct audio_port_config *sources,
+                                               size_t sinksCount,
+                                               const struct audio_port_config *sinks,
+                                               audio_patch_handle_t &handle)
+    { return android::OK; }
+
+    virtual android::status_t releaseAudioPatch(audio_patch_handle_t)
+    { return android::OK; }
+
+    virtual android::status_t setAudioPortConfig(const struct audio_port_config &)
+    { return android::OK; }
+
+    virtual android::status_t getAudioPort(struct audio_port &) const
+    { return android::OK; }
 };
 
 } // namespace intel_audio

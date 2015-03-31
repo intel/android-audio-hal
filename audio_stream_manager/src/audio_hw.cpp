@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -18,22 +18,32 @@
  * of the Materials, either expressly, by implication, inducement, estoppel or
  * otherwise. Any license under such intellectual property rights must be
  * express and approved by Intel in writing.
+ *
  */
 
-#pragma once
+#include "Device.hpp"
+#include <DeviceWrapper.hpp>
+#include <hardware/hardware.h>
 
-#include <DeviceMock.hpp>
-#include <hardware/audio.h>
-#include <gtest/gtest.h>
-
-
-class DeviceTest : public ::testing::Test
+extern "C"
 {
-private:
-    virtual void SetUp();
-    virtual void TearDown();
 
-public:
-    audio_hw_device_t *mDevice;
-    intel_audio::DeviceMock *mDeviceMock;
+static struct hw_module_methods_t audio_module_methods = {
+open: intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_3_0>::open
 };
+
+struct hw_module_t HAL_MODULE_INFO_SYM = {
+tag: HARDWARE_MODULE_TAG,
+module_api_version: AUDIO_MODULE_API_VERSION_0_1,
+hal_api_version: HARDWARE_HAL_API_VERSION,
+id: AUDIO_HARDWARE_MODULE_ID,
+name: "Intel Audio HW HAL",
+author: "Intel Corporation",
+methods: &audio_module_methods,
+dso: NULL,
+reserved:
+    {
+        0
+    },
+};
+} // extern "C"

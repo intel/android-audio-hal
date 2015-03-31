@@ -29,9 +29,12 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 
 audio_stream_manager_src_files :=  \
     src/Stream.cpp \
+    src/audio_hw.cpp \
     src/Device.cpp \
     src/StreamIn.cpp \
     src/StreamOut.cpp \
+    src/Patch.cpp \
+    src/Port.cpp \
     src/AudioParameterHandler.cpp
 
 audio_stream_manager_includes_dir := \
@@ -166,7 +169,7 @@ LOCAL_STATIC_LIBRARIES += \
 LOCAL_WHOLE_STATIC_LIBRARIES := $(audio_stream_manager_whole_static_lib)
 LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
 LOCAL_CFLAGS := $(audio_stream_manager_cflags)
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudio_stream_manager_static_host
 LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
@@ -201,7 +204,7 @@ LOCAL_MODULE := audio-hal-functional_test
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_CFLAGS := -Wall -Werror -Wextra
+LOCAL_CFLAGS := -Wall -Werror -Wextra -O0 -ggdb
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_NATIVE_TEST)

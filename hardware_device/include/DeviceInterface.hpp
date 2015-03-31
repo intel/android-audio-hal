@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -31,11 +31,6 @@
 namespace intel_audio
 {
 
-extern "C" {
-extern struct audio_module HAL_MODULE_INFO_SYM;
-}
-
-
 /**
  * Class that handles audio HAL interface.
  *
@@ -64,7 +59,7 @@ public:
                                                audio_devices_t devices,
                                                audio_output_flags_t flags,
                                                audio_config_t &config,
-                                               StreamOutInterface *&stream,
+                                               StreamOutInterface * &stream,
                                                const std::string &address) = 0;
 
     /** Closes and frees the audio hardware output stream.
@@ -84,7 +79,7 @@ public:
     virtual android::status_t openInputStream(audio_io_handle_t handle,
                                               audio_devices_t devices,
                                               audio_config_t &config,
-                                              StreamInInterface *&stream,
+                                              StreamInInterface * &stream,
                                               audio_input_flags_t flags,
                                               const std::string &address,
                                               audio_source_t source) = 0;
@@ -211,11 +206,11 @@ public:
      *                    audio HAL module.
      * @return OK if succeed, error code else.
      */
-    virtual android::status_t createAudioPatch(unsigned int sourcesCount,
-                                               const struct audio_port_config *sources,
-                                               unsigned int sinksCount,
-                                               const struct audio_port_config *sinks,
-                                               audio_patch_handle_t *handle) = 0;
+    virtual android::status_t createAudioPatch(size_t sourcesCount,
+                                               const struct audio_port_config sources[],
+                                               size_t sinksCount,
+                                               const struct audio_port_config sinks[],
+                                               audio_patch_handle_t &handle) = 0;
 
     /** Releases an audio patch.
      *
@@ -241,67 +236,6 @@ public:
      * @return OK if succeed, error code else.
      */
     virtual android::status_t setAudioPortConfig(const struct audio_port_config &config) = 0;
-
-public:
-    /* This section should have been private as they declared for internal use only.
-     * It has to be declared public to allow access from C code. */
-
-    /** Extended audio hardware device structure. For wrapper internal use only.
-     *  That structure allows the wrapper to translate C environment from/to C++ environment.
-     */
-    struct ext
-    {
-        audio_hw_device_t device; /**< C device struct */
-        struct DeviceInterface *obj;  /**< C++ device interface */
-    };
-
-    /* Helpers that convert C calls into C++ calls */
-    static int wrapOpen(const hw_module_t *module, const char *name, hw_device_t **device);
-    static int wrapClose(hw_device_t *device);
-    static int wrapOpenOutputStream(audio_hw_device_t *dev,
-                                    audio_io_handle_t handle,
-                                    audio_devices_t devices,
-                                    audio_output_flags_t flags,
-                                    audio_config_t *config,
-                                    audio_stream_out_t **stream_out,
-                                    const char *address);
-    static void wrapCloseOutputStream(audio_hw_device_t *dev,
-                                      audio_stream_out_t *stream);
-    static int wrapOpenInputStream(audio_hw_device_t *dev,
-                                   audio_io_handle_t handle,
-                                   audio_devices_t devices,
-                                   audio_config_t *config,
-                                   audio_stream_in_t **stream_in,
-                                   audio_input_flags_t flags,
-                                   const char *address,
-                                   audio_source_t source);
-    static void wrapCloseInputStream(audio_hw_device_t *dev,
-                                     audio_stream_in_t *stream);
-    static int wrapInitCheck(const audio_hw_device_t *dev);
-    static int wrapSetVoiceVolume(audio_hw_device_t *dev, float volume);
-    static int wrapSetMasterVolume(audio_hw_device_t *dev, float volume);
-    static int wrapGetMasterVolume(audio_hw_device_t *dev, float *volume);
-    static int wrapSetMasterMute(struct audio_hw_device *dev, bool mute);
-    static int wrapGetMasterMute(struct audio_hw_device *dev, bool *muted);
-    static int wrapSetMode(audio_hw_device_t *dev, audio_mode_t mode);
-    static int wrapSetMicMute(audio_hw_device_t *dev, bool state);
-    static int wrapGetMicMute(const audio_hw_device_t *dev, bool *state);
-    static int wrapSetParameters(audio_hw_device_t *dev, const char *keyValuePairs);
-    static char *wrapGetParameters(const audio_hw_device_t *dev, const char *keys);
-    static size_t wrapGetInputBufferSize(const audio_hw_device_t *dev,
-                                         const audio_config_t *config);
-    static int wrapDump(const audio_hw_device_t *dev, int fd);
-    static int wrapCreateAudioPatch(struct audio_hw_device *dev,
-                                    unsigned int num_sources,
-                                    const struct audio_port_config *sources,
-                                    unsigned int num_sinks,
-                                    const struct audio_port_config *sinks,
-                                    audio_patch_handle_t *handle);
-    static int wrapReleaseAudioPatch(struct audio_hw_device *dev, audio_patch_handle_t handle);
-    static int wrapGetAudioPort(struct audio_hw_device *dev, struct audio_port *port);
-    static int wrapSetAudioPortConfig(struct audio_hw_device *dev,
-                                      const struct audio_port_config *config);
-
 };
 
 } // namespace intel_audio

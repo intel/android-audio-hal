@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -74,8 +74,10 @@ public:
     virtual android::status_t addAudioEffect(effect_handle_t /*effect*/) { return android::OK; }
     /** @note API not implemented in stream base class, input specific implementation only. */
     virtual android::status_t removeAudioEffect(effect_handle_t /*effect*/) { return android::OK; }
+    /** @note API not used anymore for routing since Routing Control API 3.0. */
     virtual android::status_t setParameters(const std::string &keyValuePairs);
-    virtual std::string getParameters(const std::string &keys) const;
+    /** @note API not used anymore for routing since Routing Control API 3.0. */
+    virtual std::string getParameters(const std::string &keys) const { return keys; }
 
     // From TinyAlsaIoStream
     virtual bool isRoutedByPolicy() const;
@@ -83,8 +85,24 @@ public:
     virtual bool isStarted() const;
     virtual bool isOut() const = 0;
 
+    audio_io_handle_t getIoHandle() const { return mHandle; }
+
+    /**
+     * Set the patch in which this stream (which is considered by the policy as a MIX Port)
+     * is involved.
+     *
+     * @param[in] patch that connects this mix port to/from one or more device Port.
+     */
+    void setPatchHandle(audio_patch_handle_t patchHandle);
+
+    /**
+     * @return the patch in which the stream (considered by the policy as a MIX Port)
+     *                    is involved
+     */
+    audio_patch_handle_t getPatchHandle() const { return mPatchHandle; }
+
 protected:
-    Stream(Device *parent);
+    Stream(Device *parent, audio_io_handle_t handle);
 
     /**
      * Set the stream state.
@@ -318,5 +336,12 @@ private:
 
     /** Ratio between nanoseconds and microseconds */
     static const uint32_t mNsecPerUsec = 1000;
+
+    audio_io_handle_t mHandle; /**< Unique IO handle identifier assigned by the audio policy. */
+
+    /**
+     * Unique Patch Handle involving this stream (which is considered as a MIX Port by Policy).
+     */
+    audio_patch_handle_t mPatchHandle;
 };
 } // namespace intel_audio

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -39,7 +39,7 @@ private:
     typedef std::list<effect_handle_t>::iterator AudioEffectsListIterator;
 
 public:
-    StreamIn(Device *parent, audio_source_t source);
+    StreamIn(Device *parent, audio_io_handle_t handle, audio_source_t source);
     virtual ~StreamIn();
 
     // From AudioStreamIn
@@ -49,7 +49,6 @@ public:
     virtual int setGain(float /* gain */) { return android::OK; }
     virtual android::status_t read(void *buffer, size_t &bytes);
     virtual uint32_t getInputFramesLost() const;
-    virtual android::status_t setParameters(const std::string &keyValuePairs);
     virtual android::status_t setDevice(audio_devices_t device);
 
     // From AudioBufferProvider
@@ -70,6 +69,14 @@ public:
         return false;
     }
 
+    /**
+     * Set the input source.
+     * This function is non-reetrant, intended to be called by the HW device (Routing 3.0 APIs)
+     *
+     * @param[in] inputSource: input source to be used by this stream.
+     */
+    void setInputSource(audio_source_t inputSource);
+
 protected:
     /**
      * Callback of route attachement called by the stream lib. (and so route manager).
@@ -88,14 +95,6 @@ protected:
     virtual android::status_t detachRouteL();
 
 private:
-    /**
-     * Set the input source.
-     * This function is non-reetrant.
-     *
-     * @param[in] inputSource: input source to be used by this stream.
-     */
-    void setInputSource(audio_source_t inputSource);
-
     android::status_t readHwFrames(void *buffer, size_t frames);
 
     /**

@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -23,7 +23,6 @@
 #pragma once
 
 #include <StreamInterface.hpp>
-#include <gmock/gmock.h>
 
 
 namespace intel_audio
@@ -32,99 +31,74 @@ namespace intel_audio
 class StreamOutMock : public StreamOutInterface
 {
 public:
-    MOCK_CONST_METHOD0(getSampleRate,
-                       uint32_t());
-    MOCK_METHOD1(setSampleRate,
-                 android::status_t(uint32_t rate));
-    MOCK_CONST_METHOD0(getBufferSize,
-                       size_t());
-    MOCK_CONST_METHOD0(getChannels,
-                       audio_channel_mask_t());
-    MOCK_CONST_METHOD0(getFormat,
-                       audio_format_t());
-    MOCK_METHOD1(setFormat,
-                 android::status_t(audio_format_t format));
-    MOCK_METHOD0(standby,
-                 android::status_t());
-    MOCK_CONST_METHOD1(dump,
-                       android::status_t(int fd));
-    MOCK_CONST_METHOD0(getDevice,
-                       audio_devices_t());
-    MOCK_METHOD1(setDevice,
-                 android::status_t(audio_devices_t device));
-    MOCK_CONST_METHOD1(getParameters,
-                       std::string(const std::string &keys));
-    MOCK_METHOD1(setParameters,
-                 android::status_t(const std::string &keyValuePairs));
-    MOCK_METHOD1(addAudioEffect,
-                 android::status_t(effect_handle_t effect));
-    MOCK_METHOD1(removeAudioEffect,
-                 android::status_t(effect_handle_t effect));
-    MOCK_METHOD0(getLatency,
-                 uint32_t());
-    MOCK_METHOD2(setVolume,
-                 android::status_t(float left, float right));
-    MOCK_METHOD2(write,
-                 android::status_t(const void *buffer, size_t &bytes));
-    MOCK_CONST_METHOD1(getRenderPosition,
-                       android::status_t(uint32_t &dspFrames));
-    MOCK_CONST_METHOD1(getNextWriteTimestamp,
-                       android::status_t(int64_t &timestamp));
-    MOCK_METHOD0(flush,
-                 android::status_t());
-    MOCK_METHOD2(setCallback,
-                 android::status_t(stream_callback_t callback, void *cookie));
-    MOCK_METHOD0(pause,
-                 android::status_t());
-    MOCK_METHOD0(resume,
-                 android::status_t());
-    MOCK_METHOD1(drain,
-                 android::status_t(audio_drain_type_t type));
-    MOCK_CONST_METHOD2(getPresentationPosition,
-                       android::status_t(uint64_t &frames, struct timespec &timestamp));
+    virtual uint32_t getSampleRate() const { return 1234u; }
+    virtual android::status_t setSampleRate(uint32_t rate) { return android::OK; }
+    virtual size_t getBufferSize() const { return 54321u; }
+    virtual audio_channel_mask_t getChannels() const { return 7; }
+    virtual audio_format_t getFormat() const { return AUDIO_FORMAT_PCM_32_BIT; }
+    virtual android::status_t setFormat(audio_format_t format) { return android::OK; }
+    virtual android::status_t standby() { return android::OK; }
+    virtual android::status_t dump(int fd) const { return android::OK; }
+    virtual audio_devices_t getDevice() const { return AUDIO_DEVICE_OUT_HDMI; }
+    virtual android::status_t setDevice(audio_devices_t device) { return android::OK; }
+    virtual std::string getParameters(const std::string &keys) const { return "glaaaa"; }
+    virtual android::status_t setParameters(const std::string &keyValuePairs)
+    {
+        return android::OK;
+    }
+    virtual android::status_t addAudioEffect(effect_handle_t effect) { return android::OK; }
+    virtual android::status_t removeAudioEffect(effect_handle_t effect) { return android::OK; }
+
+    virtual uint32_t getLatency() { return 888u; }
+    virtual android::status_t setVolume(float left, float right) { return android::OK; }
+    virtual android::status_t write(const void *buffer, size_t &bytes) { return android::OK; }
+    virtual android::status_t getRenderPosition(uint32_t &dspFrames) const { return android::OK; }
+    virtual android::status_t getNextWriteTimestamp(int64_t &timestamp) const
+    {
+        return android::OK;
+    }
+    virtual android::status_t flush() { return android::OK; }
+    virtual android::status_t setCallback(stream_callback_t callback,
+                                          void *cookie) { return android::OK; }
+    virtual android::status_t pause() { return android::OK; }
+    virtual android::status_t resume() { return android::OK; }
+    virtual android::status_t drain(audio_drain_type_t type) { return android::OK; }
+    virtual android::status_t getPresentationPosition(uint64_t &frames,
+                                                      struct timespec &timestamp) const
+    {
+        return android::OK;
+    }
 };
 
 class StreamInMock : public StreamInInterface
 {
 public:
-    StreamInMock() {}
-    virtual ~StreamInMock() {}
+    virtual uint32_t getSampleRate() const { return 1234u; }
+    virtual android::status_t setSampleRate(uint32_t rate) { return android::OK; }
+    virtual size_t getBufferSize() const { return 11155u; }
+    virtual audio_channel_mask_t getChannels() const { return 5; }
+    virtual audio_format_t getFormat() const { return AUDIO_FORMAT_PCM_16_BIT; }
+    virtual android::status_t setFormat(audio_format_t format) { return android::OK; }
+    virtual android::status_t standby() { return android::OK; }
+    virtual android::status_t dump(int fd) const { return android::OK; }
+    virtual audio_devices_t getDevice() const { return AUDIO_DEVICE_OUT_AUX_DIGITAL; }
+    virtual android::status_t setDevice(audio_devices_t device) { return android::OK; }
+    virtual std::string getParameters(const std::string &keys) const { return "Input"; }
+    virtual android::status_t setParameters(const std::string &keyValuePairs)
+    {
+        return android::OK;
+    }
+    virtual android::status_t addAudioEffect(effect_handle_t effect) { return android::OK; }
+    virtual android::status_t removeAudioEffect(effect_handle_t effect) { return android::OK; }
 
-    MOCK_CONST_METHOD0(getSampleRate,
-                       uint32_t());
-    MOCK_METHOD1(setSampleRate,
-                 android::status_t(uint32_t rate));
-    MOCK_CONST_METHOD0(getBufferSize,
-                       size_t());
-    MOCK_CONST_METHOD0(getChannels,
-                       audio_channel_mask_t());
-    MOCK_CONST_METHOD0(getFormat,
-                       audio_format_t());
-    MOCK_METHOD1(setFormat,
-                 android::status_t(audio_format_t format));
-    MOCK_METHOD0(standby,
-                 android::status_t());
-    MOCK_CONST_METHOD1(dump,
-                       android::status_t(int fd));
-    MOCK_CONST_METHOD0(getDevice,
-                       audio_devices_t());
-    MOCK_METHOD1(setDevice,
-                 android::status_t(audio_devices_t device));
-    MOCK_CONST_METHOD1(getParameters,
-                       std::string(const std::string &keys));
-    MOCK_METHOD1(setParameters,
-                 android::status_t(const std::string &keyValuePairs));
-    MOCK_METHOD1(addAudioEffect,
-                 android::status_t(effect_handle_t effect));
-    MOCK_METHOD1(removeAudioEffect,
-                 android::status_t(effect_handle_t effect));
-
-    MOCK_METHOD1(setGain,
-                 android::status_t(float gain));
-    MOCK_METHOD2(read,
-                 android::status_t(void *buffer, size_t &bytes));
-    MOCK_CONST_METHOD0(getInputFramesLost,
-                       uint32_t());
+    virtual android::status_t getPresentationPosition(uint64_t &frames,
+                                                      struct timespec &timestamp) const
+    {
+        return android::OK;
+    }
+    virtual android::status_t setGain(float gain) { return android::OK; }
+    virtual android::status_t read(void *buffer, size_t &bytes) { return android::OK; }
+    virtual uint32_t getInputFramesLost() const { return 15; }
 };
 
 } // namespace intel_audio

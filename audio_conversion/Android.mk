@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
+# Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -172,7 +172,7 @@ LOCAL_MODULE := audio_conversion_fcttest_host
 LOCAL_MODULE_OWNER := intel
 LOCAL_STATIC_LIBRARIES += libaudioconversion_static_host
 $(call make_audio_conversion_functional_test,_host)
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 LOCAL_LDFLAGS += -pthread
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag

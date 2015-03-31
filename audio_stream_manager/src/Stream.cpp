@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -54,7 +54,7 @@ const std::string Stream::dumpAfterConvProps[Direction::_nbDirections] = {
     "media.dump_input.aftconv", "media.dump_output.aftconv"
 };
 
-Stream::Stream(Device *parent)
+Stream::Stream(Device *parent, audio_io_handle_t handle)
     : mParent(parent),
       mStandby(true),
       mDevices(0),
@@ -62,7 +62,9 @@ Stream::Stream(Device *parent)
       mLatencyMs(0),
       mApplicabilityMask(0),
       mDumpBeforeConv(NULL),
-      mDumpAfterConv(NULL)
+      mDumpAfterConv(NULL),
+      mHandle(handle),
+      mPatchHandle(AUDIO_PATCH_HANDLE_NONE)
 {
 }
 
@@ -190,7 +192,7 @@ audio_devices_t Stream::getDevice() const
 
 bool Stream::isRoutedByPolicy() const
 {
-    return mDevices != 0;
+    return mPatchHandle != AUDIO_PATCH_HANDLE_NONE;
 }
 
 uint32_t Stream::getApplicabilityMask() const
@@ -208,39 +210,8 @@ status_t Stream::setDevice(audio_devices_t device)
 
 status_t Stream::setParameters(const string &keyValuePairs)
 {
-    KeyValuePairs pairs(keyValuePairs);
-    // Routing device is added as an integer by the policy, so it has to be retrieved in the same
-    // type to handle the sign "-" literal...
-    int32_t routingDevice;
-    string key(AUDIO_PARAMETER_STREAM_ROUTING);
-
-    // Replace the routing key by the input / output device key
-    if (pairs.get(key, routingDevice) == android::OK) {
-        pairs.remove(key);
-        // Remove the sign bit for the input device only.
-        status_t status = setDevice(routingDevice);
-        if (status != android::OK) {
-            return status;
-        }
-        pairs.add(isOut() ? AudioPlatformState::mKeyDeviceOut : AudioPlatformState::mKeyDeviceIn,
-                  getDevice());
-    }
-    // Give a chance to parent to handle the change
-    return mParent->setStreamParameters(this, pairs.toString());
-}
-
-string Stream::getParameters(const string &keys) const
-{
-    KeyValuePairs pairs(keys);
-    string value;
-    string key(AUDIO_PARAMETER_STREAM_ROUTING);
-
-    if (pairs.get(key, value) == android::OK) {
-        audio_devices_t device = isOut() ? getDevice() : (getDevice() | AUDIO_DEVICE_BIT_IN);
-        pairs.add<int32_t>(key, device);
-    }
-    Log::Verbose() << __FUNCTION__ << ": " << pairs.toString();
-    return pairs.toString();
+    Log::Error() << __FUNCTION__ << ": Unhandled keys: " << keyValuePairs;
+    return android::INVALID_OPERATION;
 }
 
 size_t Stream::getBufferSize() const
@@ -406,6 +377,11 @@ bool Stream::safeSleep(uint32_t sleepTimeUs)
     tim.tv_nsec = sleepTimeUs * mNsecPerUsec;
 
     return nanosleep(&tim, NULL) > 0;
+}
+
+void Stream::setPatchHandle(audio_patch_handle_t patchHandle)
+{
+    mPatchHandle = patchHandle;
 }
 
 } // namespace intel_audio

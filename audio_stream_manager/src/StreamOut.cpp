@@ -20,15 +20,13 @@
  * express and approved by Intel in writing.
  *
  */
-#include <utilities/Log.hpp>
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
+
 #define LOG_TAG "AudioStreamOut"
 
 #include "StreamOut.hpp"
 #include <AudioCommsAssert.hpp>
 #include <HalAudioDump.hpp>
+#include <utilities/Log.hpp>
 
 using namespace std;
 using android::status_t;
@@ -41,8 +39,8 @@ const uint32_t StreamOut::mMaxAgainRetry = 2;
 const uint32_t StreamOut::mWaitBeforeRetryUs = 10000; // 10ms
 const uint32_t StreamOut::mUsecPerMsec = 1000;
 
-StreamOut::StreamOut(Device *parent, uint32_t streamFlagsMask)
-    : Stream(parent),
+StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t streamFlagsMask)
+    : Stream(parent, handle),
       mFrameCount(0),
       mEchoReference(NULL)
 {
@@ -125,6 +123,7 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
             }
 
             if (++retryCount > mMaxReadWriteRetried) {
+                mStreamLock.unlock();
                 Log::Error() << __FUNCTION__ << ": Hardware not responding";
                 return android::DEAD_OBJECT;
             }
@@ -329,18 +328,7 @@ void StreamOut::pushEchoReference(const void *buffer, ssize_t frames)
 
 status_t StreamOut::setDevice(audio_devices_t device)
 {
-    /*
-     * Why do we need to filter AUDIO_DEVICE_NONE?
-     * When for example A2DP Headset is disconnected, the policy manager sends routing=0.
-     * When the stream is started again, the policy does not force the routing as it
-     * considers that the new device elected is the same than the previous one.
-     * In fact, selecting device=AUDIO_DEVICE_NONE does not update the device member of output
-     * descriptor, leading the policy to think that no changes happened on the routing.
-     *
-     * Ignoring AUDIO_DEVICE_NONE fixes the issue in the audio HAL as it avoids reseting the routing
-     * information at HAL layer.
-     */
-    if (!audio_is_output_devices(device) || device == AUDIO_DEVICE_NONE) {
+    if (!audio_is_output_devices(device)) {
         Log::Error() << __FUNCTION__ << ": invalid output device " << device;
         return android::BAD_VALUE;
     }

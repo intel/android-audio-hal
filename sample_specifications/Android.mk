@@ -73,7 +73,7 @@ endef
 include $(CLEAR_VARS)
 LOCAL_MODULE := libsamplespec_static_host
 LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
 $(call make_sample_specifications_lib,host)
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)

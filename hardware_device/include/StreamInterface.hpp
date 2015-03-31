@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -29,10 +29,6 @@
 
 namespace intel_audio
 {
-
-/* Forward declarations needed for StreamInterface::ext struct declaration */
-class StreamOutInterface;
-class StreamInInterface;
 
 /** Stream interface common to input and output streams. */
 class StreamInterface
@@ -145,53 +141,6 @@ public:
      * @return OK if succeed, error code else.
      */
     virtual android::status_t removeAudioEffect(effect_handle_t effect) = 0;
-
-public:
-    /* This section should have been private as they declared for internal use only.
-     * It has to be declared public to allow access from C code. */
-
-    /** Stream direction. For wrapper internal use only. */
-    enum stream_direction
-    {
-        input,
-        output
-    };
-
-    /** Extended stream structure. For wrapper internal use only.
-     * That structure allows the wrapper to translate C environment from/to C++ environment.
-     */
-    struct ext
-    {
-        union
-        {
-            audio_stream_out_t out; /**< C output stream struct */
-            audio_stream_in_t in;   /**< C input stream struct */
-        } stream;
-        union
-        {
-            StreamOutInterface *out;    /**< C++ output stream object */
-            StreamInInterface *in;      /**< C++ input stream object */
-        } obj;
-        stream_direction dir;       /**< Direction */
-    };
-
-    /* Helpers that convert C calls into C++ calls */
-    static uint32_t wrapGetSampleRate(const audio_stream_t *stream);
-    static int wrapSetSampleRate(audio_stream_t *stream, uint32_t rate);
-    static size_t wrapGetBufferSize(const audio_stream_t *stream);
-    static audio_channel_mask_t wrapGetChannels(const audio_stream_t *stream);
-    static audio_format_t wrapGetFormat(const audio_stream_t *stream);
-    static int wrapSetFormat(audio_stream_t *stream, audio_format_t format);
-    static int wrapStandby(audio_stream_t *stream);
-    static int wrapDump(const audio_stream_t *stream, int fd);
-    static audio_devices_t wrapGetDevice(const audio_stream_t *stream);
-    static int wrapSetDevice(audio_stream_t *stream, audio_devices_t device);
-    static char *wrapGetParameters(const audio_stream_t *stream, const char *keys);
-    static int wrapSetParameters(audio_stream_t *stream, const char *kvpairs);
-    static int wrapAddAudioEffect(const audio_stream_t *stream,
-                                  effect_handle_t effect);
-    static int wrapRemoveAudioEffect(const audio_stream_t *stream,
-                                     effect_handle_t effect);
 };
 
 /** Audio output stream interface. */
@@ -331,27 +280,7 @@ public:
      */
     virtual android::status_t getPresentationPosition(uint64_t &frames,
                                                       struct timespec &timestamp) const = 0;
-
-public:
-    /* This section should have been private as they declared for internal use only.
-     * It has to be declared public to allow access from C code. */
-
-    /* Helpers that convert C calls into C++ calls */
-    static uint32_t wrapGetLatency(const audio_stream_out_t *stream);
-    static int wrapSetVolume(audio_stream_out_t *stream, float left, float right);
-    static ssize_t wrapWrite(audio_stream_out_t *stream, const void *buffer, size_t bytes);
-    static int wrapGetRenderPosition(const audio_stream_out_t *stream, uint32_t *dspFrames);
-    static int wrapGetNextWriteTimestamp(const audio_stream_out_t *stream, int64_t *timestamp);
-    static int wrapFlush(audio_stream_out_t *stream);
-    static int wrapSetCallback(audio_stream_out_t *stream,
-                               stream_callback_t callback, void *cookie);
-    static int wrapPause(audio_stream_out_t *stream);
-    static int wrapResume(audio_stream_out_t *stream);
-    static int wrapDrain(audio_stream_out_t *stream, audio_drain_type_t type);
-    static int wrapGetPresentationPosition(const audio_stream_out_t *stream,
-                                           uint64_t *frames, struct timespec *timestamp);
 };
-
 
 /** Audio input stream interface. */
 class StreamInInterface : public virtual StreamInterface
@@ -384,15 +313,6 @@ public:
      *         last call of this function.
      */
     virtual uint32_t getInputFramesLost() const = 0;
-
-public:
-    /* This section should have been private as they declared for internal use only.
-     * It has to be declared public to allow access from C code. */
-
-    /* Helpers that convert C calls into C++ calls */
-    static int wrapSetGain(audio_stream_in_t *stream, float gain);
-    static ssize_t wrapRead(audio_stream_in_t *stream, void *buffer, size_t bytes);
-    static uint32_t wrapGetInputFramesLost(audio_stream_in_t *stream);
 };
 
 } // namespace intel_audio
