@@ -70,10 +70,6 @@ const char *const AudioRouteManager::mAudioPfwConfFilePropName = "persist.audio.
 
 const char *const AudioRouteManager::mAudioPfwDefaultConfFileName =
     "AudioParameterFramework.xml";
-const char *const AudioRouteManager::mAudioPfwConfPathPropName = "AudioComms.PFW.ConfPath";
-
-const char *const AudioRouteManager::mAudioPfwDefaultConfFilePath = PFW_CONF_FILE_PATH;
-
 
 class CParameterMgrPlatformConnectorLogger : public CParameterMgrPlatformConnector::ILogger
 {
@@ -136,8 +132,7 @@ AudioRouteManager::AudioRouteManager()
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string audioPfwConfigurationFilePath = TProperty<string>(mAudioPfwConfPathPropName,
-                                                             mAudioPfwDefaultConfFilePath);
+    string audioPfwConfigurationFilePath = PFW_CONF_FILE_PATH;
     audioPfwConfigurationFilePath += TProperty<string>(mAudioPfwConfFilePropName,
                                                        mAudioPfwDefaultConfFileName);
 

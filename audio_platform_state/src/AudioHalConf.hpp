@@ -27,12 +27,10 @@
 namespace intel_audio
 {
 
-static const char *const gAudioHalScalableConfFilePath =
-    "/local_cfg/audiocomms_config/route_criteria.conf";
+static const char *const gAudioHalConfFilePath =
+    "/system/etc/route_criteria.conf";
 static const char *const gAudioHalVendorConfFilePath =
     "/vendor/etc/route_criteria.conf";
-static const char *const gAudioHalFallbackConfFilePath =
-    "/system/etc/route_criteria.conf";
 
 /**
  * PFW instances tags
