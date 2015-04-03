@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -58,7 +58,7 @@ const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
     availMin :              0
 };
 
-AudioStreamRoute::AudioStreamRoute(const string &mappingValue,
+AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
                                    CInstanceConfigurableElement *instanceConfigurableElement,
                                    const CMappingContext &context)
     : CFormattedSubsystemObject(instanceConfigurableElement,
@@ -172,7 +172,7 @@ bool AudioStreamRoute::sendToHW(string & /*error*/)
 
     streamConfig.channelsPolicy.erase(streamConfig.channelsPolicy.begin(),
                                       streamConfig.channelsPolicy.end());
-    streamConfig.channelsPolicy = parseChannelPolicyString(string(config.channelsPolicy));
+    streamConfig.channelsPolicy = parseChannelPolicyString(std::string(config.channelsPolicy));
 
     Tokenizer effectTok(string(config.effectSupported), mStringDelimiter);
     std::vector<string> subStrings = effectTok.split();

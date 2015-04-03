@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -41,7 +41,7 @@ const AudioRoute::Status AudioRoute::mDefaultStatus = {
     needReroute     : false
 };
 
-AudioRoute::AudioRoute(const string &mappingValue,
+AudioRoute::AudioRoute(const std::string &mappingValue,
                        CInstanceConfigurableElement *instanceConfigurableElement,
                        const CMappingContext &context)
     : CFormattedSubsystemObject(instanceConfigurableElement,
