@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -78,7 +78,7 @@ private:
 
 public:
     CParameterMgrPlatformConnectorLogger()
-        : mVerbose(TProperty<string>("media.pfw.verbose", "false"))
+        : mVerbose(TProperty<string>("persist.media.pfw.verbose", "false"))
     {}
 
     virtual void log(bool isWarning, const string &log)
@@ -847,16 +847,16 @@ bool AudioRouteManager::setAudioCriterion(const std::string &name, const T &valu
     return getElement<Criterion>(name, mCriteriaMap)->setValue<T>(value);
 }
 
-bool AudioRouteManager::getAudioCriterion(const std::string &name, std::string &value) const
+template <typename T>
+bool AudioRouteManager::getAudioCriterion(const std::string &name, T &value) const
 {
     AutoR lock(mRoutingLock);
-    Log::Verbose() << __FUNCTION__ << ": (" << name << ", " << value << ")";
     CriteriaMapConstIterator it = mCriteriaMap.find(name);
     if (it == mCriteriaMap.end()) {
         Log::Warning() << __FUNCTION__ << ": Criterion " << name << " does not exist";
         return false;
     }
-    value = it->second->getFormattedValue();
+    value = it->second->getValue<T>();
     return true;
 }
 

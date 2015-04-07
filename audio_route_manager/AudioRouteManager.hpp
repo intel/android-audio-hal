@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -261,9 +261,19 @@ private:
             return mRouteMgr->setAudioCriterion<std::string>(name, literalValue);
         }
 
+        virtual bool setAudioCriterion(const std::string &name, uint32_t value)
+        {
+            return mRouteMgr->setAudioCriterion<uint32_t>(name, value);
+        }
+
         virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const
         {
-            return mRouteMgr->getAudioCriterion(name, literalValue);
+            return mRouteMgr->getAudioCriterion<std::string>(name, literalValue);
+        }
+
+        virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const
+        {
+            return mRouteMgr->getAudioCriterion<uint32_t>(name, value);
         }
 
         virtual bool setAudioParameter(const std::string &paramPath, const uint32_t &value)
@@ -310,12 +320,14 @@ private:
     /**
      * Gets an audio parameter manager criterion value.
      *
+     * @tparam T type of the value to set, uint32_t and string supported
      * @param[in] name: criterion name.
-     * @param[in] literalValue: the value is correctly set if return code is true.
+     * @param[out] value: the value is correctly set if return code is true.
      *
      * @return true if operation successful, false otherwise.
      */
-    bool getAudioCriterion(const std::string &name, std::string &value) const;
+    template <typename T>
+    bool getAudioCriterion(const std::string &name, T &value) const;
 
     /**
      * Sets an audio parameter manager parameter value.
@@ -824,10 +836,12 @@ private:
      */
     inline uint32_t routeToMask(AudioRoute *route) const
     {
-        audio_comms::utilities::Direction::Directions dir = route->isOut()?
+        audio_comms::utilities::Direction::Directions dir = route->isOut() ?
                     audio_comms::utilities::Direction::Output :
                     audio_comms::utilities::Direction::Input;
-        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName());
+        int numeric;
+        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName(), numeric) ?
+               numeric : 0;
     }
 
     /**

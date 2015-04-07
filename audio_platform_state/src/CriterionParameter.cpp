@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -66,27 +66,15 @@ bool RouteCriterionParameter::setValue(const std::string &value)
         return false;
     }
     Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
-    bool succeed = false;
-    int32_t numericValue;
-    // A criterion might either be sent as a numerical (converted to string) or a literal value.
-    // Try first to convert it into a numerical value, if it fails, consider it as a literal.
-    if (audio_comms::utilities::convertTo(literalValue, numericValue)) {
-        succeed = mCriterion->setCriterionState(numericValue);
-    } else {
-        succeed = mCriterion->setCriterionState(literalValue);
+    if (!mCriterion->setCriterionState(literalValue)) {
+        return false;
     }
-    // by construction, only "failing" case happens when the value of the criterion did not
-    // change. It is internal choice to report false in this case, no need to propagate to upper
-    // layer.
-    if (succeed) {
-        CriterionParameter::set(literalValue);
-    }
-    return true;
+    return CriterionParameter::set(literalValue);
 }
 
 bool RouteCriterionParameter::getValue(std::string &value) const
 {
-    std::string criterionLiteralValue = mCriterion->getFormattedValue();
+    std::string criterionLiteralValue = mCriterion->getValue<std::string>();
 
     return getParamFromLiteralValue(value, criterionLiteralValue);
 }

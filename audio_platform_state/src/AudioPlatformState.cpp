@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -84,7 +84,7 @@ private:
 
 public:
     ParameterMgrPlatformConnectorLogger()
-        : mVerbose(TProperty<string>("media.pfw.verbose", "false"))
+        : mVerbose(TProperty<string>("persist.media.pfw.verbose", "false"))
     {}
 
     virtual void log(bool isWarning, const string &log)
@@ -105,8 +105,7 @@ const std::string AudioPlatformState::mOutputFlagsCriterionName = "OutputFlags";
 const std::string AudioPlatformState::mInputDevicesCriterionName = "InputDevices";
 const std::string AudioPlatformState::mAndroidModeCriterionName = "AndroidMode";
 const std::string AudioPlatformState::mInputSourcesCriterionName = "InputSources";
-const std::string AudioPlatformState::mPreProcRequestedByActiveInputCriterionName =
-    "PreProcessorRequestedByActiveInput";
+const std::string AudioPlatformState::mPreProcRequestedCriterionName = "PreProcEnabled";
 const std::string AudioPlatformState::mKeyAndroidMode =  "android_mode";
 const std::string AudioPlatformState::mKeyDeviceOut = "output_devices";
 const std::string AudioPlatformState::mKeyDeviceIn =  "input_devices";
@@ -223,7 +222,7 @@ template <>
 void AudioPlatformState::addCriterionType<AudioPlatformState::Route>(const string &typeName,
                                                                      bool isInclusive)
 {
-    AUDIOCOMMS_ASSERT(mRouteCriterionTypeMap.find(typeName) == mRouteCriterionTypeMap.end(),
+    AUDIOCOMMS_ASSERT(!collectionHasElement<CriterionType *>(typeName, mRouteCriterionTypeMap),
                       "CriterionType " << typeName << " already added");
 
     Log::Debug() << __FUNCTION__ << ": Adding new criterionType " << typeName << " for Route PFW";
@@ -247,7 +246,7 @@ void AudioPlatformState::addCriterionTypeValuePair<AudioPlatformState::Route>(
     uint32_t numericValue,
     const string &literalValue)
 {
-    AUDIOCOMMS_ASSERT(mRouteCriterionTypeMap.find(typeName) != mRouteCriterionTypeMap.end(),
+    AUDIOCOMMS_ASSERT(collectionHasElement<CriterionType *>(typeName, mRouteCriterionTypeMap),
                       "CriterionType " << typeName.c_str() << "not found");
     Log::Verbose() << __FUNCTION__ << ": Adding new value pair (" << numericValue
                    << "," << literalValue << ") for criterionType " << typeName << " for Route PFW";
@@ -264,7 +263,7 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
 
         AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
         const char *typeName = node->name;
-        char *valueNames = (char *)node->value;
+        char *valueNames = strndup(node->value, strlen(node->value));
 
         addCriterionType<pfw>(typeName, isInclusive);
 
@@ -284,8 +283,17 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
                                       (second != NULL) && (strlen(second) != 0),
                                       "invalid value pair");
 
-                    if (!convertTo<string, uint32_t>(first, index)) {
-                        Log::Error() << __FUNCTION__ << ": Invalid index(" << first << ") found";
+                    bool isValueProvidedAsHexa = !string(first).compare(0, 2, "0x");
+                    if (isValueProvidedAsHexa) {
+                        if (!convertTo<string, uint32_t>(first, index)) {
+                            Log::Error() << __FUNCTION__ << ": Invalid value(" << first << ")";
+                        }
+                    } else {
+                        int32_t signedIndex = 0;
+                        if (!convertTo<string, int32_t>(first, signedIndex)) {
+                            Log::Error() << __FUNCTION__ << ": Invalid value(" << first << ")";
+                        }
+                        index = signedIndex;
                     }
                     Log::Verbose() << __FUNCTION__ << ": name=" << typeName << ", index=" << index
                                    << ", value=" << second;
@@ -301,6 +309,7 @@ void AudioPlatformState::loadCriterionType(cnode *root, bool isInclusive)
             }
             valueName = strtok_r(NULL, ",", &ctx);
         }
+        free(valueNames);
     }
 }
 
@@ -390,7 +399,7 @@ void AudioPlatformState::addRouteCriterion(Criterion *routeCriterion)
 {
     AUDIOCOMMS_ASSERT(routeCriterion != NULL, "Invalid Route Criterion");
     const string criterionName = routeCriterion->getName();
-    AUDIOCOMMS_ASSERT(mRouteCriterionMap.find(criterionName) == mRouteCriterionMap.end(),
+    AUDIOCOMMS_ASSERT(!collectionHasElement<Criterion *>(criterionName, mRouteCriterionMap),
                       "Route Criterion " << criterionName << " already added");
     mRouteCriterionTypeMap[mStateChangedCriterionName]->addValuePair(1 << mRouteCriterionMap.size(),
                                                                      criterionName);
@@ -491,6 +500,14 @@ void AudioPlatformState::loadRogueParameterTypeList(cnode *root)
 }
 
 template <typename T>
+bool AudioPlatformState::collectionHasElement(const string &name,
+                                              const map<string, T> &collection) const
+{
+    typename map<string, T>::const_iterator it = collection.find(name);
+    return it != collection.end();
+}
+
+template <typename T>
 T *AudioPlatformState::getElement(const string &name, map<string, T *> &elementsMap)
 {
     parameterManagerElementSupported<T>();
@@ -528,7 +545,7 @@ vector<AudioPlatformState::AndroidParamMappingValuePair> AudioPlatformState::par
     const char *values)
 {
     AUDIOCOMMS_ASSERT(values != NULL, "error in parsing file");
-    char *mappingPairs = (char *)(values);
+    char *mappingPairs = strndup(values, strlen(values));
     char *ctx;
     vector<AndroidParamMappingValuePair> valuePairs;
 
@@ -546,6 +563,7 @@ vector<AudioPlatformState::AndroidParamMappingValuePair> AudioPlatformState::par
         }
         mappingPair = strtok_r(NULL, ",", &ctx);
     }
+    free(mappingPairs);
     return valuePairs;
 }
 
@@ -554,7 +572,10 @@ void AudioPlatformState::addCriterion<AudioPlatformState::Audio>(const string &n
                                                                  const string &typeName,
                                                                  const string &defaultLiteralValue)
 {
+    AUDIOCOMMS_ASSERT(!collectionHasElement<string>(name, mAudioCriterionMap),
+                      "Criterion " << name << " already added for Audio PFW");
     mStreamInterface->addCriterion(name, typeName, defaultLiteralValue);
+    mAudioCriterionMap[name] = typeName;
 }
 
 template <>
@@ -562,6 +583,9 @@ void AudioPlatformState::addCriterion<AudioPlatformState::Route>(const string &n
                                                                  const string &typeName,
                                                                  const string &defaultLiteralValue)
 {
+
+    AUDIOCOMMS_ASSERT(!collectionHasElement<Criterion *>(name, mRouteCriterionMap),
+                      "Criterion " << name << " already added for Route PFW");
     CriterionType *criterionType = getElement<CriterionType>(typeName, mRouteCriterionTypeMap);
     addRouteCriterion(new Criterion(name, criterionType, mRoutePfwConnector, defaultLiteralValue));
 }
@@ -571,9 +595,6 @@ void AudioPlatformState::loadCriterion(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     const char *criterionName = root->name;
-
-    AUDIOCOMMS_ASSERT(mRouteCriterionMap.find(criterionName) == mRouteCriterionMap.end(),
-                      "Criterion " << criterionName << " already added");
 
     vector<AndroidParamMappingValuePair> valuePairs;
     string paramKeyName = "";
@@ -614,12 +635,22 @@ template <AudioPlatformState::PfwInstance pfw>
 void AudioPlatformState::loadConfig(cnode *root)
 {
     AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, getPfwInstanceName<pfw>().c_str());
-    if (node == NULL) {
-        Log::Warning() << __FUNCTION__
-                       << ": Could not find node for pfw=" << getPfwInstanceName<pfw>();
-        return;
+    cnode *node = config_find(root, gCommonConfTag.c_str());
+    if (node != NULL) {
+        Log::Verbose() << __FUNCTION__ << " Load common conf for " << getPfwInstanceName<pfw>();
+        loadConfigFor<pfw>(node);
     }
+    node = config_find(root, getPfwInstanceName<pfw>().c_str());
+    if (node != NULL) {
+        Log::Verbose() << __FUNCTION__ << " Load specific conf for " << getPfwInstanceName<pfw>();
+        loadConfigFor<pfw>(node);
+    }
+}
+
+template <AudioPlatformState::PfwInstance pfw>
+void AudioPlatformState::loadConfigFor(cnode *node)
+{
+    AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
     Log::Debug() << __FUNCTION__ << " Loading conf for pfw " << getPfwInstanceName<pfw>();
 
     loadInclusiveCriterionType<pfw>(node);
@@ -777,11 +808,15 @@ bool AudioPlatformState::hasPlatformStateChanged() const
     AUDIOCOMMS_ASSERT(it != mRouteCriterionMap.end(),
                       "state " << mStateChangedCriterionName << " not found");
 
-    return (it->second->getValue() != 0) || mAudioPfwHasChanged;
+    return (it->second->getValue<uint32_t>() != 0) || mAudioPfwHasChanged;
 }
 
 void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
 {
+    if (!collectionHasElement<Criterion *>(mStateChangedCriterionName, mRouteCriterionMap)) {
+        Log::Warning() << __FUNCTION__ << ": no state changed criterion available.";
+        return;
+    }
     Criterion *stateChange = getElement<Criterion>(mStateChangedCriterionName, mRouteCriterionMap);
 
     // Checks if eventState name is a possible value of HasChanged criteria
@@ -793,7 +828,7 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
         // If not, consider that this event is related to Audio PFW Instance.
         mAudioPfwHasChanged = true;
     }
-    uint32_t platformEventChanged = stateChange->getValue() | eventId;
+    uint32_t platformEventChanged = stateChange->getValue<uint32_t>() | eventId;
     stateChange->setValue<uint32_t>(platformEventChanged);
 }
 
@@ -835,7 +870,7 @@ void AudioPlatformState::updateActiveStreamsParameters(bool isOut)
     }
     setValue(streamsMask, isOut ? mOutputFlagsCriterionName : mInputSourcesCriterionName);
     if (!isOut) {
-        setValue(effectRequested, mPreProcRequestedByActiveInputCriterionName);
+        setValue(effectRequested, mPreProcRequestedCriterionName);
     }
     applyPlatformConfiguration();
 }
@@ -880,15 +915,27 @@ void AudioPlatformState::applyPlatformConfiguration()
 
 void AudioPlatformState::setValue(int value, const string &stateName)
 {
-    if (getElement<Criterion>(stateName, mRouteCriterionMap)->setCriterionState(value)) {
-
+    if (collectionHasElement<Criterion *>(stateName, mRouteCriterionMap)
+        && getElement<Criterion>(stateName, mRouteCriterionMap)->setCriterionState(value)) {
+        setPlatformStateEvent(stateName);
+    }
+    if (collectionHasElement<string>(stateName, mAudioCriterionMap)
+        && mStreamInterface->setAudioCriterion(stateName, value)) {
         setPlatformStateEvent(stateName);
     }
 }
 
 int AudioPlatformState::getValue(const std::string &stateName) const
 {
-    return getElement<Criterion>(stateName, mRouteCriterionMap)->getValue();
+    if (collectionHasElement<Criterion *>(stateName, mRouteCriterionMap)) {
+        return getElement<Criterion>(stateName, mRouteCriterionMap)->getValue<uint32_t>();
+    }
+    if (collectionHasElement<string>(stateName, mAudioCriterionMap)) {
+        uint32_t value = 0;
+        mStreamInterface->getAudioCriterion(stateName, value);
+        return value;
+    }
+    return 0;
 }
 
 bool AudioPlatformState::isModemEmbedded() const

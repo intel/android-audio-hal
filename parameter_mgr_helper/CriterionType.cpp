@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -22,6 +22,7 @@
  */
 #include "CriterionType.hpp"
 #include "ParameterMgrPlatformConnector.h"
+#include <convert.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 
@@ -69,15 +70,37 @@ bool CriterionType::hasValuePairByName(const std::string &name)
     return getTypeInterface()->getNumericalValue(name, value);
 }
 
-int CriterionType::getNumericalFromLiteral(const std::string &literalValue) const
+bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int &numerical) const
 {
-    int numericalValue = 0;
-    if (!literalValue.empty() &&
-        !mCriterionTypeInterface->getNumericalValue(literalValue,
-                                                    numericalValue)) {
-        Log::Error() << __FUNCTION__
-                     << ": could not retrieve numerical value " << literalValue
-                     << " for criterion " << mName;
+    if (literalValue.empty()) {
+        Log::Error() << __FUNCTION__ << ": empty string given for criterion type " << getName();
+        return false;
     }
-    return numericalValue;
+    // First check if the literal value is a known value from the criterion type
+    if (mCriterionTypeInterface->getNumericalValue(literalValue, numerical)) {
+        return true;
+    }
+    // The literal value does not belong to the value declared for this criterion type.
+    // The literal may represent the numerical converted as a string
+    bool isValueProvidedAsHexa = !literalValue.compare(0, 2, "0x");
+    if (isValueProvidedAsHexa) {
+        uint32_t numericalUValue = 0;
+        if (!audio_comms::utilities::convertTo(literalValue, numericalUValue)) {
+            return false;
+        }
+        numerical = numericalUValue;
+    } else {
+        if (!audio_comms::utilities::convertTo(literalValue, numerical)) {
+            return false;
+        }
+    }
+    // We succeeded to convert the literal value as an numerical, checking now that this numerical
+    // value is a valid value for this criterion type
+    return isNumericValueValid(numerical);
+}
+
+bool CriterionType::isNumericValueValid(int valueToCheck) const
+{
+    string literalValue;
+    return mCriterionTypeInterface->getLiteralValue(valueToCheck, literalValue);
 }

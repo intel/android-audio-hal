@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -72,10 +72,8 @@ public:
      *
      * @return value of the criterion.
      */
-    int getValue() const
-    {
-        return mValue;
-    }
+    template <typename T>
+    T getValue() const;
 
     /**
      * Set the local value to the parameter manager.
@@ -92,13 +90,6 @@ public:
      */
     template <typename T>
     bool setCriterionState(const T &value);
-
-    /**
-     * Get the literal value of the criterion.
-     *
-     * @return the literal value associated to the numerical local value.
-     */
-    std::string getFormattedValue() const;
 
     /**
      * Get the criterion type handler.
@@ -122,12 +113,16 @@ private:
     /**
      * Helper function to retrieve the numerical value from the literal representation of the
      * criterion.
+     * Note that the literal value may either be the literal value associated to the criterion
+     * or the numerical value converted to string. It may be the case when receiving parameters
+     * from the policy like devices.
      *
      * @param[in] literalValue: literal representation of the criterion.
+     * @param[out] numerical representation of the criterion.
      *
-     * @return numerical value of the criterion associated to this literal.
+     * @return true if the literal value was translated to a valid numerical, false otherwise.
      */
-    int getNumericalFromLiteral(const std::string &literalValue) const;
+    bool getNumericalFromLiteral(const std::string &literalValue, int &numerical) const;
 
     /**
      * criterion interface for parameter manager operations.

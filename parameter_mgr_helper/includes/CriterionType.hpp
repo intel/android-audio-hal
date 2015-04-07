@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -95,10 +95,21 @@ public:
      * Get the numerical value of the criterion.
      *
      * @param[in] literalValue to convert
+     * @param[out] numerical representation of the criterion.
      *
-     * @return the numerical value associated to the literal value.
+     * @return true if the literal value was translated to a valid numerical, false otherwise.
      */
-    int getNumericalFromLiteral(const std::string &literalValue) const;
+    bool getNumericalFromLiteral(const std::string &literalValue, int &numerical) const;
+
+    /**
+     * Check the validity of a numerical value, i.e. this value belongs to the possible values
+     * declared for this criterion type.
+     *
+     * @param[out] numerical value to check for this criterion type.
+     *
+     * @return true if the numerical value is valid, false otherwise.
+     */
+    bool isNumericValueValid(int valueToCheck) const;
 
 private:
     /**
