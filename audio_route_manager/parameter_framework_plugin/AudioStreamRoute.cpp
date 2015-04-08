@@ -70,7 +70,7 @@ AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
       mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem())),
       mRouteInterface(mRouteSubsystem->getRouteInterface()),
-      _config(mDefaultConfig),
+      mConfig(mDefaultConfig),
       mCardName(context.getItem(MappingKeyCard)),
       mDevice(context.getItemAsInteger(MappingKeyDevice)),
       mIsOut(context.getItem(MappingKeyDirection) == mOutputDirection),
@@ -81,19 +81,19 @@ AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
     StreamRouteConfig config;
     config.cardName = mCardName.c_str();
     config.deviceId = mDevice;
-    config.requirePreEnable = _config.requirePreEnable;
-    config.requirePostDisable = _config.requirePostDisable;
-    config.channels = _config.channel;
-    config.rate = _config.rate;
-    config.periodSize = _config.periodSize;
-    config.periodCount = _config.periodCount;
-    config.format = static_cast<audio_format_t>(_config.format);
-    config.startThreshold = _config.startThreshold;
-    config.stopThreshold = _config.stopThreshold;
-    config.silenceThreshold = _config.silenceThreshold;
-    config.silencePrologInMs = _config.silencePrologInMs;
-    config.flagMask = _config.flagMask;
-    config.useCaseMask = _config.useCaseMask;
+    config.requirePreEnable = mConfig.requirePreEnable;
+    config.requirePostDisable = mConfig.requirePostDisable;
+    config.channels = mConfig.channel;
+    config.rate = mConfig.rate;
+    config.periodSize = mConfig.periodSize;
+    config.periodCount = mConfig.periodCount;
+    config.format = static_cast<audio_format_t>(mConfig.format);
+    config.startThreshold = mConfig.startThreshold;
+    config.stopThreshold = mConfig.stopThreshold;
+    config.silenceThreshold = mConfig.silenceThreshold;
+    config.silencePrologInMs = mConfig.silencePrologInMs;
+    config.flagMask = mConfig.flagMask;
+    config.useCaseMask = mConfig.useCaseMask;
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
@@ -145,7 +145,7 @@ AudioStreamRoute::parseChannelPolicyString(const std::string &channelPolicy)
 
 bool AudioStreamRoute::receiveFromHW(string & /*error*/)
 {
-    blackboardWrite(&_config, sizeof(_config));
+    blackboardWrite(&mConfig, sizeof(mConfig));
 
     return true;
 }

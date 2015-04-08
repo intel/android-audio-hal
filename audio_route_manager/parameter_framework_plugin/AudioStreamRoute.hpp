@@ -108,7 +108,7 @@ private:
     intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
 
     static const Config mDefaultConfig; /**< default route stream configuration at construction. */
-    Config _config; /**< stream route configuration. */
+    Config mConfig; /**< stream route configuration. */
 
     std::string mRouteName; /**< stream route name. */
     std::string mCardName; /**< card name used by the stream route. */
