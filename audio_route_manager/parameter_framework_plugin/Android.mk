@@ -44,7 +44,6 @@ LOCAL_C_INCLUDES += external/tinyalsa/include \
 LOCAL_SHARED_LIBRARIES := \
     libparameter \
     libxmlserializer \
-    libproperty \
     liblog \
     libaudioroutemanager \
 

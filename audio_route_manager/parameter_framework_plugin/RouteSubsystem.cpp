@@ -29,7 +29,6 @@
 #include "AudioPort.hpp"
 #include "AudioStreamRoute.hpp"
 #include "Criterion.hpp"
-#include "Property.h"
 #include <RouteManagerInstance.hpp>
 #include <RouteInterface.hpp>
 #include <AudioCommsAssert.hpp>
