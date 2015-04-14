@@ -115,6 +115,12 @@ status_t Device::initCheck() const
 
 status_t Device::setVoiceVolume(float volume)
 {
+    if (mMode == AUDIO_MODE_IN_COMMUNICATION) {
+        Log::Debug() << __FUNCTION__
+                     << ": Mode in COMMUNICATION: set HW voice volume to Max instead of: "
+                     << volume;
+        volume = 1.0;
+    }
     return mStreamInterface->setVoiceVolume(volume);
 }
 
