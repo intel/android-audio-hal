@@ -22,11 +22,13 @@
 #
 
 LOCAL_PATH := $(call my-dir)
+include $(OPTIONAL_QUALITY_ENV_SETUP)
 
-include $(CLEAR_VARS)
+# Component build
+#######################################################################
+# Common variables
 
-
-LOCAL_SRC_FILES := \
+component_src_files :=  \
     RouteSubsystemBuilder.cpp \
     RouteSubsystem.cpp \
     AudioPort.cpp \
@@ -34,29 +36,78 @@ LOCAL_SRC_FILES := \
     AudioStreamRoute.cpp \
     Criterion.cpp
 
-LOCAL_CFLAGS += \
-    -Wall \
-    -Werror \
-    -Wextra \
+component_common_includes_dir := \
+    external/tinyalsa/include \
 
-LOCAL_C_INCLUDES += external/tinyalsa/include \
-
-LOCAL_SHARED_LIBRARIES := \
-    libparameter \
-    libxmlserializer \
-    liblog \
-    libaudioroutemanager \
-
-LOCAL_STATIC_LIBRARIES := \
+component_static_lib := \
     libaudio_comms_utilities \
-    audio.routemanager.includes \
     libsamplespec_static \
     libpfw_utility \
 
+component_static_lib_target := \
+    $(component_static_lib) \
+    $(component_static_lib_common)
+
+component_static_lib_host := \
+    $(foreach lib, $(component_static_lib), $(lib)_host) \
+    $(component_static_lib_common)
+
+component_shared_lib:= \
+    libparameter \
+    libxmlserializer \
+    libaudioroutemanager \
+
+component_shared_lib_common := \
+    liblog \
+
+component_shared_lib_target := \
+    $(component_shared_lib_common) \
+    $(component_shared_lib)
+
+component_shared_lib_host := \
+    $(foreach lib, $(component_shared_lib), $(lib)_host) \
+    $(component_shared_lib_common)
+
+component_cflags := -Wall -Werror -Wextra
+
+#######################################################################
+# Host Component Build
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libroute-subsystem_host
+LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
+
+LOCAL_C_INCLUDES := $(component_common_includes_dir)
+
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_host)
+
+LOCAL_CFLAGS := $(component_cflags)
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
+include $(BUILD_HOST_SHARED_LIBRARY)
+
+#######################################################################
+# Target Component Build
+
+include $(CLEAR_VARS)
+
 LOCAL_MODULE := libroute-subsystem
 LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_C_INCLUDES :=  $(component_common_includes_dir)
+
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
+
+LOCAL_CFLAGS := $(component_cflags)
 
 include external/stlport/libstlport.mk
-include $(BUILD_SHARED_LIBRARY)
 
+include $(BUILD_SHARED_LIBRARY)

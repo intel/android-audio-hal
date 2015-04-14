@@ -27,6 +27,7 @@
 #include "RouteMappingKeys.hpp"
 #include "RouteSubsystem.hpp"
 #include <AudioCommsAssert.hpp>
+#include <cstring>
 
 using std::memcmp;
 using std::string;
