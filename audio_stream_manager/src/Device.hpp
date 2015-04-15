@@ -206,6 +206,19 @@ private:
     uint32_t getDeviceFromStream(const Stream &stream) const;
 
     /**
+     * Update synchronously the streams parameters according to the change of source and or sink
+     * devices.
+     * @param[in] updateSourceDevice: if set, we shall update the parameter linked to output devices
+     * @param[in] updateSinkDevice: if set, we shall update the parameter linked to input devices
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateParametersSync(bool updateSourceDevice, bool updateSinkDevice)
+    {
+        return updateParameters(updateSourceDevice, updateSinkDevice, true);
+    }
+
+    /**
      * Update the streams parameters according to the change of source and or sink devices.
      *
      * @param[in] updateSourceDevice: if set, we shall update the parameter linked to output devices

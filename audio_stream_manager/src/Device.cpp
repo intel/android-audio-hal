@@ -32,6 +32,7 @@
 #include <string>
 #include <cutils/properties.h>
 
+
 using namespace std;
 using android::status_t;
 using audio_comms::utilities::Log;
@@ -495,8 +496,8 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     patch.addPorts(sourcesCount, sources, sinksCount, sinks);
     mPatchCollectionLock.unlock();
 
-    return updateParameters(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
-                            patch.hasDevice(AUDIO_PORT_ROLE_SINK));
+    return updateParametersSync(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
+                                patch.hasDevice(AUDIO_PORT_ROLE_SINK));
 }
 
 status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
@@ -515,7 +516,7 @@ status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
     mPatches.erase(handle);
     mPatchCollectionLock.unlock();
 
-    return updateParameters(involvedSourceDevices, involvedSinkDevices);
+    return updateParametersSync(involvedSourceDevices, involvedSinkDevices);
 }
 
 status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice, bool synchronous)
