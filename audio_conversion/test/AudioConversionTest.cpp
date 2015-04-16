@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2014 Intel
+ * Copyright (c) 2014-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -27,6 +27,7 @@
 #include <AudioUtils.hpp>
 #include <media/AudioBufferProvider.h>
 #include <gtest/gtest.h>
+#include <utils/Errors.h>
 
 namespace intel_audio
 {
@@ -65,8 +66,8 @@ TEST_P(AudioConversionT, audioConversion)
     const uint8_t *expectedDstBuf = (uint8_t *)std::tr1::get<4>(GetParam());
     size_t expectedDstBufSize = std::tr1::get<5>(GetParam());
     const size_t expextedDstFrames = AudioUtils::convertSrcToDstInFrames(inputFrames,
-                                                                           sampleSpecSrc,
-                                                                           sampleSpecDst);
+                                                                         sampleSpecSrc,
+                                                                         sampleSpecDst);
 
     if (expectedDstBuf != NULL) {
 
@@ -80,8 +81,8 @@ TEST_P(AudioConversionT, audioConversion)
     if (allocateBuffer) {
 
         size_t dstSizeInBytes = AudioUtils::convertSrcToDstInBytes(sourceBufSize,
-                                                                     sampleSpecSrc,
-                                                                     sampleSpecDst);
+                                                                   sampleSpecSrc,
+                                                                   sampleSpecDst);
 
         if (expectedDstBuf != NULL) {
 
@@ -653,14 +654,6 @@ const uint16_t sourceBuf12[] = {
     0x00FF, 0xFF00
 };
 
-const uint16_t expectedDstBuf12[] = {
-    0, 0,
-    0, 1,
-    4, 7,
-    8, 12,
-    7, 25
-};
-
 /**
  * Test a resample from 48kHz to 24kHz in S16 format, stereo with allocated destination
  * buffer.
@@ -673,8 +666,8 @@ INSTANTIATE_TEST_CASE_P(resampleWithAllocatedMemoryFrom48kTo24kInS16le,
                                 SampleSpec(2, AUDIO_FORMAT_PCM_16_BIT, 24000),
                                 sourceBuf12,
                                 sizeof(sourceBuf12),
-                                expectedDstBuf12,
-                                sizeof(expectedDstBuf12),
+                                NULL,
+                                0,
                                 true
                                 )
                             )
@@ -742,6 +735,212 @@ TEST(AudioConversion, memoryTest)
     delete audioConversion;
 }
 
+/**
+ * Test a configure for every couple of source and destination frequency rates
+ * usually used.
+ */
+
+typedef std::pair<uint32_t, uint32_t> frequence;
+
+class AudioConversionFreqZeroT : public ::testing::TestWithParam<frequence>
+{
+};
+
+TEST_P(AudioConversionFreqZeroT, freqtestzero)
+{
+    const SampleSpec sampleSpecSrc(2, AUDIO_FORMAT_PCM_16_BIT, GetParam().first);
+    const SampleSpec sampleSpecDst(2, AUDIO_FORMAT_PCM_16_BIT, GetParam().second);
+
+    AudioConversion audioConversion;
+    EXPECT_EQ(android::BAD_VALUE, audioConversion.configure(sampleSpecSrc, sampleSpecDst));
+}
+
+INSTANTIATE_TEST_CASE_P(allfreq_vs_zero,
+                        AudioConversionFreqZeroT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 0)),
+                            frequence(std::make_pair(11025, 0)),
+                            frequence(std::make_pair(12000, 0)),
+                            frequence(std::make_pair(16000, 0)),
+                            frequence(std::make_pair(22050, 0)),
+                            frequence(std::make_pair(24000, 0)),
+                            frequence(std::make_pair(32000, 0)),
+                            frequence(std::make_pair(44100, 0)),
+                            frequence(std::make_pair(48000, 0))
+                            )
+                        );
+
+INSTANTIATE_TEST_CASE_P(allfreq_zero_vs,
+                        AudioConversionFreqZeroT,
+                        ::testing::Values(
+                            frequence(std::make_pair(0, 8000)),
+                            frequence(std::make_pair(0, 11025)),
+                            frequence(std::make_pair(0, 12000)),
+                            frequence(std::make_pair(0, 16000)),
+                            frequence(std::make_pair(0, 22050)),
+                            frequence(std::make_pair(0, 24000)),
+                            frequence(std::make_pair(0, 32000)),
+                            frequence(std::make_pair(0, 44100)),
+                            frequence(std::make_pair(0, 48000))
+                            )
+                        );
+
+class AudioConversionFreqT : public ::testing::TestWithParam<frequence>
+{
+};
+
+TEST_P(AudioConversionFreqT, freqtest)
+{
+    const SampleSpec sampleSpecSrc(2, AUDIO_FORMAT_PCM_16_BIT, GetParam().first);
+    const SampleSpec sampleSpecDst(2, AUDIO_FORMAT_PCM_16_BIT, GetParam().second);
+
+    AudioConversion audioConversion;
+    EXPECT_EQ(0, audioConversion.configure(sampleSpecSrc, sampleSpecDst));
+}
+
+// 9 frequencies to test, each one against all frequencies:
+// 8000 , 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000
+
+INSTANTIATE_TEST_CASE_P(allfreq_vs_48000,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 48000)),
+                            frequence(std::make_pair(11025, 48000)),
+                            frequence(std::make_pair(12000, 48000)),
+                            frequence(std::make_pair(16000, 48000)),
+                            frequence(std::make_pair(22050, 48000)),
+                            frequence(std::make_pair(24000, 48000)),
+                            frequence(std::make_pair(32000, 48000)),
+                            frequence(std::make_pair(44100, 48000)),
+                            frequence(std::make_pair(48000, 48000))
+
+                            )
+                        );
+
+INSTANTIATE_TEST_CASE_P(allfreq_vs_44100,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 44100)),
+                            frequence(std::make_pair(11025, 44100)),
+                            frequence(std::make_pair(12000, 44100)),
+                            frequence(std::make_pair(16000, 44100)),
+                            frequence(std::make_pair(22050, 44100)),
+                            frequence(std::make_pair(24000, 44100)),
+                            frequence(std::make_pair(32000, 44100)),
+                            frequence(std::make_pair(44100, 44100)),
+                            frequence(std::make_pair(48000, 44100))
+
+                            )
+                        );
+
+
+INSTANTIATE_TEST_CASE_P(allfreq_vs_32000,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 32000)),
+                            frequence(std::make_pair(11025, 32000)),
+                            frequence(std::make_pair(12000, 32000)),
+                            frequence(std::make_pair(16000, 32000)),
+                            frequence(std::make_pair(22050, 32000)),
+                            frequence(std::make_pair(24000, 32000)),
+                            frequence(std::make_pair(32000, 32000)),
+                            frequence(std::make_pair(44100, 32000)),
+                            frequence(std::make_pair(48000, 32000))
+
+                            )
+                        );
+
+INSTANTIATE_TEST_CASE_P(allfreq_vs_24000,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 24000)),
+                            frequence(std::make_pair(11025, 24000)),
+                            frequence(std::make_pair(12000, 24000)),
+                            frequence(std::make_pair(16000, 24000)),
+                            frequence(std::make_pair(22050, 24000)),
+                            frequence(std::make_pair(24000, 24000)),
+                            frequence(std::make_pair(32000, 24000)),
+                            frequence(std::make_pair(44100, 24000)),
+                            frequence(std::make_pair(48000, 24000))
+
+                            )
+                        );
+
+INSTANTIATE_TEST_CASE_P(allfreq_vs_22050,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 22050)),
+                            frequence(std::make_pair(11025, 22050)),
+                            frequence(std::make_pair(12000, 22050)),
+                            frequence(std::make_pair(16000, 22050)),
+                            frequence(std::make_pair(22050, 22050)),
+                            frequence(std::make_pair(24000, 22050)),
+                            frequence(std::make_pair(32000, 22050)),
+                            frequence(std::make_pair(44100, 22050)),
+                            frequence(std::make_pair(48000, 22050))
+
+                            )
+                        );
+INSTANTIATE_TEST_CASE_P(allfreq_vs_16000,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 16000)),
+                            frequence(std::make_pair(11025, 16000)),
+                            frequence(std::make_pair(12000, 16000)),
+                            frequence(std::make_pair(16000, 16000)),
+                            frequence(std::make_pair(22050, 16000)),
+                            frequence(std::make_pair(24000, 16000)),
+                            frequence(std::make_pair(32000, 16000)),
+                            frequence(std::make_pair(44100, 16000)),
+                            frequence(std::make_pair(48000, 16000))
+
+                            )
+                        );
+INSTANTIATE_TEST_CASE_P(allfreq_vs_12000,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 12000)),
+                            frequence(std::make_pair(11025, 12000)),
+                            frequence(std::make_pair(12000, 12000)),
+                            frequence(std::make_pair(16000, 12000)),
+                            frequence(std::make_pair(22050, 12000)),
+                            frequence(std::make_pair(24000, 12000)),
+                            frequence(std::make_pair(32000, 12000)),
+                            frequence(std::make_pair(44100, 12000)),
+                            frequence(std::make_pair(48000, 12000))
+
+                            )
+                        );
+INSTANTIATE_TEST_CASE_P(allfreq_vs_11025,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 11025)),
+                            frequence(std::make_pair(11025, 11025)),
+                            frequence(std::make_pair(12000, 11025)),
+                            frequence(std::make_pair(16000, 11025)),
+                            frequence(std::make_pair(22050, 11025)),
+                            frequence(std::make_pair(24000, 11025)),
+                            frequence(std::make_pair(32000, 11025)),
+                            frequence(std::make_pair(44100, 11025)),
+                            frequence(std::make_pair(48000, 11025))
+
+                            )
+                        );
+INSTANTIATE_TEST_CASE_P(allfreq_vs_8000,
+                        AudioConversionFreqT,
+                        ::testing::Values(
+                            frequence(std::make_pair(8000, 8000)),
+                            frequence(std::make_pair(11025, 8000)),
+                            frequence(std::make_pair(12000, 8000)),
+                            frequence(std::make_pair(16000, 8000)),
+                            frequence(std::make_pair(22050, 8000)),
+                            frequence(std::make_pair(24000, 8000)),
+                            frequence(std::make_pair(32000, 8000)),
+                            frequence(std::make_pair(44100, 8000)),
+                            frequence(std::make_pair(48000, 8000))
+
+                            )
+                        );
 
 /**
  * Test the ability of the conversion library to return exactly the number of frames requested.
@@ -762,10 +961,10 @@ TEST(AudioConversion, frameExactApi)
         10, 20, 5, 1, 3, 8, 12, 15, 10, 20, 5, 1, 3, 8, 12, 15, 10, 20
     };
     const size_t inputFrames = sizeof(sourceBuf) /
-                                 (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
+                               (sizeof(uint16_t) * sampleSpecSrc.getChannelCount());
     const size_t expectedDstFrames = AudioUtils::convertSrcToDstInFrames(inputFrames,
-                                                                           sampleSpecSrc,
-                                                                           sampleSpecDst);
+                                                                         sampleSpecSrc,
+                                                                         sampleSpecDst);
 
     uint16_t dstBuf[sampleSpecDst.convertFramesToBytes(expectedDstFrames)];
     MyAudioBufferProvider bufferProvider(&sourceBuf[0], sizeof(sourceBuf) / sizeof(uint16_t));

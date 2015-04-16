@@ -69,6 +69,8 @@ const char *const AudioPlatformState::mRoutePfwConfFileNamePropName =
 const char *const AudioPlatformState::mRoutePfwDefaultConfFileName =
     "RouteParameterFramework.xml";
 
+const char *const AudioPlatformState::mRoutePfwDefaultConfFilePath = PFW_CONF_FILE_PATH;
+
 const std::string AudioPlatformState::mHwDebugFilesPathList =
     "/Route/debug_fs/debug_files/path_list/";
 
@@ -125,7 +127,8 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string routePfwConfFilePath = PFW_CONF_FILE_PATH;
+    string routePfwConfFilePath = TProperty<string>(mRoutePfwConfFilePathPropName,
+                                                    mRoutePfwDefaultConfFilePath);
     routePfwConfFilePath += TProperty<string>(mRoutePfwConfFileNamePropName,
                                               mRoutePfwDefaultConfFileName);
 
@@ -143,10 +146,14 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
                                                                  mRoutePfwConnector);
     mRouteCriterionTypeMap[mStateChangedCriterionName] = stateChangedCriterionType;
 
-    if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
-        (loadAudioHalConfig(gAudioHalConfFilePath) != android::OK)) {
-        Log::Error() << "Neither vendor conf file (" << gAudioHalVendorConfFilePath
-                     << ") nor system conf file (" << gAudioHalConfFilePath << ") could be found";
+    if ((loadAudioHalConfig(gAudioHalScalableConfFilePath) != android::OK) &&
+        (loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
+        (loadAudioHalConfig(gAudioHalFallbackConfFilePath) != android::OK)) {
+
+        Log::Error() << "route_criteria.conf: scalable conf file (" << gAudioHalScalableConfFilePath
+                     << ") or vendor conf file (" << gAudioHalVendorConfFilePath
+                     << ") or default system conf file (" << gAudioHalFallbackConfFilePath
+                     << ") cannot be found! ";
     }
 
     /// Creates hasChanged route criterion

@@ -33,22 +33,17 @@ audio_conversion_src_files :=  \
     src/AudioReformatter.cpp \
     src/AudioRemapper.cpp \
     src/AudioResampler.cpp \
-    src/Resampler.cpp
-
-audio_conversion_includes_dir := \
-    libaudioresample
 
 audio_conversion_includes_common := \
     $(LOCAL_PATH)/include \
     $(call include-path-for, frameworks-av) \
+    $(call include-path-for, audio-utils) \
     external/tinyalsa/include
 
 audio_conversion_includes_dir_host := \
-    $(foreach inc, $(audio_conversion_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
     $(call include-path-for, libc-kernel)
 
 audio_conversion_includes_dir_target := \
-    $(foreach inc, $(audio_conversion_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
     $(call include-path-for, bionic)
 
 audio_conversion_static_lib += \
@@ -56,8 +51,7 @@ audio_conversion_static_lib += \
     libaudio_comms_utilities
 
 audio_conversion_static_lib_host += \
-    $(foreach lib, $(audio_conversion_static_lib), $(lib)_host) \
-    libaudioresample_static_host
+    $(foreach lib, $(audio_conversion_static_lib), $(lib)_host)
 
 audio_conversion_static_lib_target += \
     $(audio_conversion_static_lib)
@@ -121,17 +115,18 @@ audio_conversion_fcttest_c_includes_host += \
 
 audio_conversion_fcttest_static_lib_host += \
     $(foreach lib, $(audio_conversion_fcttest_static_lib), $(lib)_host) \
-    libaudioresample_static_host \
-    liblog \
     libgtest_host \
-    libgtest_main_host
+    libgtest_main_host \
+    libaudioutils \
+    libspeexresampler \
+    liblog
 
 audio_conversion_fcttest_static_lib_target += \
     $(audio_conversion_fcttest_static_lib)
 
 audio_conversion_fcttest_shared_lib_target += \
     libstlport libcutils \
-    libaudioresample
+    libaudioutils
 
 # $(1): "_target" or "_host"
 define make_audio_conversion_functional_test

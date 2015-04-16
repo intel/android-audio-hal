@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
+# Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -105,9 +105,6 @@ sample_specifications_functional_test_export_c_includes += \
     mock
 
 # Android gtest and gmock
-sample_specifications_functional_test_c_includes += \
-    $(ANDROID_BUILD_TOP)/vendor/intel/hardware/PRIVATE/audiocomms/tests/external/gmock/include
-
 sample_specifications_functional_test_static_lib += \
     libgmock
 

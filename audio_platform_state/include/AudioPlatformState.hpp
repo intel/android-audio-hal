@@ -636,9 +636,16 @@ private:
     ParameterMgrPlatformConnectorLogger *mRoutePfwConnectorLogger; /**< Route PFW logger. */
 
     /**
-     * Defines the name of the Android property describing the name of the PFW configuration file.
+     * Defines the Android property describing the name of the PFW configuration file.
      */
     static const char *const mRoutePfwConfFileNamePropName;
+
+    /**
+     * Defines the Android property describing the path of the PFW configuration file.
+     */
+    static const char *const mRoutePfwConfFilePathPropName;
+
+    static const char *const mRoutePfwDefaultConfFilePath; /**< default PFW conf file path. */
     static const char *const mRoutePfwDefaultConfFileName; /**< default PFW conf file name. */
     static const std::string mStateChangedCriterionName;  /**< StateChanged route criterion. */
     static const std::string mVoipBandCriterionName; /**< VoIP band criterion name. */

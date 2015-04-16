@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -23,9 +23,10 @@
 #define LOG_TAG "AudioResampler"
 
 #include "AudioResampler.hpp"
-#include "Resampler.hpp"
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
+#include <audio_utils/resampler.h>
+#include <limits.h>
 
 using audio_comms::utilities::Log;
 using namespace android;
@@ -35,97 +36,94 @@ namespace intel_audio
 
 AudioResampler::AudioResampler(SampleSpecItem sampleSpecItem)
     : AudioConverter(sampleSpecItem),
-      mResampler(new Resampler(RateSampleSpecItem)),
-      mPivotResampler(new Resampler(RateSampleSpecItem)),
-      mActiveResamplerList()
+      mResampler(NULL)
 {
 }
 
 AudioResampler::~AudioResampler()
 {
-    mActiveResamplerList.clear();
-    delete mResampler;
-    delete mPivotResampler;
+    if (mResampler != NULL) {
+        release_resampler(mResampler);
+        mResampler = NULL;
+    }
 }
 
 status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    mActiveResamplerList.clear();
+    Log::Debug() << __FUNCTION__ << ": SOURCE rate=" << ssSrc.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssSrc.getFormat())
+                 << " channels=" << ssSrc.getChannelCount();
+    Log::Debug() << __FUNCTION__ << ": DST rate=" << ssDst.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssDst.getFormat())
+                 << " channels=" << ssDst.getChannelCount();
+
+    if ((ssSrc.getSampleRate() == mSsSrc.getSampleRate()) &&
+        (ssDst.getSampleRate() == mSsDst.getSampleRate()) &&
+        (mResampler != NULL)) {
+        mResampler->reset(mResampler);
+        return NO_ERROR;
+    }
+
+    if ((ssSrc.getSampleRate() == 0) ||
+        (ssDst.getSampleRate() == 0)) {
+        return BAD_VALUE;
+    }
 
     status_t status = AudioConverter::configure(ssSrc, ssDst);
     if (status != NO_ERROR) {
 
         return status;
     }
-
-    status = mResampler->configure(ssSrc, ssDst);
-    if (status != NO_ERROR) {
-
-        //
-        // Our resampling lib does not support all conversions
-        // using 2 resamplers
-        //
-        Log::Debug() << __FUNCTION__ << ": trying to use working sample rate @ 48kHz";
-        SampleSpec pivotSs = ssDst;
-        pivotSs.setSampleRate(mPivotSampleRate);
-
-        status = mPivotResampler->configure(ssSrc, pivotSs);
-        if (status != NO_ERROR) {
-            Log::Debug() << __FUNCTION__ << ": trying to use pivot sample rate @"
-                         << mPivotSampleRate << "kHz: FAILED";
-            return status;
-        }
-
-        mActiveResamplerList.push_back(mPivotResampler);
-
-        status = mResampler->configure(pivotSs, ssDst);
-        if (status != NO_ERROR) {
-            Log::Debug() << __FUNCTION__ << ": trying to use pivot sample rate @ 48kHz: FAILED";
-            return status;
-        }
+    if (mResampler != NULL) {
+        release_resampler(mResampler);
+        mResampler = NULL;
+    }
+    //  resampler_buffer_provider is NULL since we will be driven by the input...
+    status = create_resampler(ssSrc.getSampleRate(), ssDst.getSampleRate(),
+                              ssSrc.getChannelCount(), RESAMPLER_QUALITY_DEFAULT, NULL,
+                              &mResampler);
+    if (status != OK) {
+        Log::Error() << "cannot instantiate resampler handle, status=" << status;
+        return status;
     }
 
-    mActiveResamplerList.push_back(mResampler);
+    AUDIOCOMMS_ASSERT(mResampler != NULL, "NULL resampler handler");
 
-    return NO_ERROR;
+    mConvertSamplesFct = static_cast<SampleConverter>(&AudioResampler::resampleFrames);
+    return OK;
 }
 
-status_t AudioResampler::convert(const void *src,
-                                 void **dst,
-                                 size_t inFrames,
-                                 size_t *outFrames)
+status_t AudioResampler::resampleFrames(const void *src,
+                                        void *dst,
+                                        const size_t inFrames,
+                                        size_t *outFrames)
 {
-    AUDIOCOMMS_ASSERT(src != NULL, "NULL source buffer");
-    const void *srcBuf = static_cast<const void *>(src);
-    void *dstBuf = NULL;
-    size_t srcFrames = inFrames;
-    size_t dstFrames = 0;
+    // here we need to cast src and inFrames due to resample_from_input interface
+    int16_t *bufferSrc = static_cast<int16_t *>(const_cast<void *>(src));
+    size_t frameSrc = inFrames;
+    status_t status;
 
-    ResamplerListIterator it;
-    for (it = mActiveResamplerList.begin(); it != mActiveResamplerList.end(); ++it) {
+    *outFrames = convertSrcToDstInFrames(inFrames);
 
-        Resampler *conv = *it;
-        dstFrames = 0;
+    status = mResampler->resample_from_input(mResampler,
+                                             bufferSrc,
+                                             &frameSrc,
+                                             static_cast<int16_t *>(dst), outFrames);
 
-        if (*dst && (conv == mActiveResamplerList.back())) {
-
-            // Last converter must output within the provided buffer (if provided!!!)
-            dstBuf = *dst;
-        }
-
-        status_t status = conv->convert(srcBuf, &dstBuf, srcFrames, &dstFrames);
-        if (status != NO_ERROR) {
-
-            return status;
-        }
-
-        srcBuf = dstBuf;
-        srcFrames = dstFrames;
+    /* According to resample_from_input() documentation: "[*frameSrc]
+     * and [*outFrames] are updated respectively with the number of
+     * frames remaining in input and written to output."
+     * According to resample_from_input() code, *framesSrc is updated
+     * with the number of frames processed (not "remaining") from
+     * input and *outFrames is updated with the number of frames
+     * successfully written to output.
+     * Relying on the code, on success frameSrc is equal to inFrames.
+     */
+    if (frameSrc != inFrames) {
+        Log::Warning() << __FUNCTION__ << ": buffer not fully consumed ("
+                       << frameSrc << " frames left)";
     }
 
-    *dst = dstBuf;
-    *outFrames = dstFrames;
-
-    return NO_ERROR;
+    return status;
 }
 }  // namespace intel_audio

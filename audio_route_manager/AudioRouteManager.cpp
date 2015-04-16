@@ -70,6 +70,10 @@ const char *const AudioRouteManager::mAudioPfwConfFilePropName = "persist.audio.
 
 const char *const AudioRouteManager::mAudioPfwDefaultConfFileName =
     "AudioParameterFramework.xml";
+const char *const AudioRouteManager::mAudioPfwConfPathPropName = "AudioComms.PFW.ConfPath";
+
+const char *const AudioRouteManager::mAudioPfwDefaultConfFilePath = PFW_CONF_FILE_PATH;
+
 
 class CParameterMgrPlatformConnectorLogger : public CParameterMgrPlatformConnector::ILogger
 {
@@ -132,7 +136,8 @@ AudioRouteManager::AudioRouteManager()
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
-    string audioPfwConfigurationFilePath = PFW_CONF_FILE_PATH;
+    string audioPfwConfigurationFilePath = TProperty<string>(mAudioPfwConfPathPropName,
+                                                             mAudioPfwDefaultConfFilePath);
     audioPfwConfigurationFilePath += TProperty<string>(mAudioPfwConfFilePropName,
                                                        mAudioPfwDefaultConfFileName);
 
@@ -238,7 +243,7 @@ status_t AudioRouteManager::startService()
     // Routing stage criterion is initialised to Configure | Path | Flow to apply all pending
     // configuration for init and minimalize cold latency at first playback / capture
     mRoutingStageCriterion = new Criterion(mRoutingStage, routageStageCriterionType,
-                                           mAudioPfwConnector, Configure | Path | Flow);
+                                           mAudioPfwConnector, ConfigureMask | PathMask | FlowMask);
 
     // Start PFW
     std::string strError;
@@ -851,6 +856,7 @@ template <typename T>
 bool AudioRouteManager::getAudioCriterion(const std::string &name, T &value) const
 {
     AutoR lock(mRoutingLock);
+    Log::Verbose() << __FUNCTION__ << ": (" << name << ", " << value << ")";
     CriteriaMapConstIterator it = mCriteriaMap.find(name);
     if (it == mCriteriaMap.end()) {
         Log::Warning() << __FUNCTION__ << ": Criterion " << name << " does not exist";

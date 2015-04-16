@@ -210,7 +210,8 @@ status_t Stream::setDevice(audio_devices_t device)
 
 status_t Stream::setParameters(const string &keyValuePairs)
 {
-    Log::Error() << __FUNCTION__ << ": Unhandled keys: " << keyValuePairs;
+    Log::Warning() << __FUNCTION__ << ": " << keyValuePairs
+                   << ": Not implemented, Using routing API 3.0";
     return android::INVALID_OPERATION;
 }
 
@@ -223,9 +224,12 @@ size_t Stream::getBufferSize() const
 
     size_t bytes = mSampleSpec.convertFramesToBytes(size);
     if (bytes == 0) {
-        Log::Error() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
+        Log::Error() << __FUNCTION__ << ": null buffer size for "
                      << (isOut() ? "output" : "input") << " stream.";
+        return 0;
     }
+    Log::Debug() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
+                 << (isOut() ? "output" : "input") << " stream.";
     return bytes;
 }
 

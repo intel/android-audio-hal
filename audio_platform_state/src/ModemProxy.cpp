@@ -24,7 +24,6 @@
 
 #include "ModemProxy.hpp"
 #include "Value.hpp"
-#include <AudioBand.h>
 #include <convert.hpp>
 #include <ModemCollection.hpp>
 #include <AudioCommsAssert.hpp>
@@ -76,7 +75,7 @@ ModemProxy::ModemProxy(const string &libraryName,
 
     // Creates its own values and add them
     Value *value = new Value(mKeyState + mInstance,
-                             reinterpret_cast<Value::GetValueCallback>(&ModemProxy::isModemAlive),
+                             reinterpret_cast<Value::GetValueCallback>(&ModemProxy::getModemState),
                              this);
     addValue(value);
     value = new Value(mKeyCallStatus + mInstance,
@@ -112,16 +111,14 @@ void ModemProxy::onModemAudioBandChanged()
     notifyValueChange(mKeyBandType + mInstance);
 }
 
-const std::string ModemProxy::isModemAlive(void *context) const
+const std::string ModemProxy::getModemState(void *context) const
 {
     ModemProxy *proxy = static_cast<ModemProxy *>(context);
     AUDIOCOMMS_ASSERT(proxy != NULL, "NULL context given back");
     if (proxy->mModemAudioManagerInterface == NULL) {
         return mLiteralFalseValue;
     }
-    string modemAlive;
-    convertTo(proxy->mModemAudioManagerInterface->isAlive(), modemAlive);
-    return modemAlive;
+    return ModemState::toLiteral(proxy->mModemAudioManagerInterface->getState());
 }
 
 const std::string ModemProxy::getModemAudioStatus(void *context) const

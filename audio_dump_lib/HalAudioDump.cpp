@@ -156,6 +156,10 @@ const char *HalAudioDump::streamDirectionStr(bool isOut) const
 status_t HalAudioDump::checkDumpFile(ssize_t bytes)
 {
     struct stat stDump;
+    /** klocwork complains it may access st_size unitialized, even if fstat succeeded.
+     * This failure pattern happens when given object as output parameter by reference.
+     */
+    stDump.st_size = 0;
     if (mDumpFile && fstat(fileno(mDumpFile), &stDump) == 0
         && (stDump.st_size + bytes) > mMaxDumpFileSize) {
         Log::Error() << __FUNCTION__ << ": Max size reached";

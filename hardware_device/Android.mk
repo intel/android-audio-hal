@@ -68,7 +68,6 @@ include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := \
     $(LOCAL_PATH)/test \
     external/gtest/include \
-    vendor/intel/hardware/PRIVATE/audiocomms/tests/external/gmock/include
 
 LOCAL_SRC_FILES := \
     test/DeviceWrapperTest.cpp \

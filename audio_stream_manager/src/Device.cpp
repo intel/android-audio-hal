@@ -482,6 +482,7 @@ void Device::onPortReleased(const audio_patch_handle_t &patchHandle,
     if (!portToRelease.isUsed()) {
         mPorts.erase(portHandle);
     }
+
     Stream *stream = NULL;
     if (!getStream(streamHandle, stream)) {
         Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";

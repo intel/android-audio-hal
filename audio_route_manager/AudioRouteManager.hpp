@@ -866,7 +866,10 @@ private:
      * audio PFW configuration file.
      */
     static const char *const mAudioPfwConfFilePropName;
+    static const char *const mAudioPfwConfPathPropName;
     static const char *const mAudioPfwDefaultConfFileName;
+    static const char *const mAudioPfwDefaultConfFilePath;
+
     static const char *const
     mClosingRouteCriterion[audio_comms::utilities::Direction::_nbDirections];
     static const char *const

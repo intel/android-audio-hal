@@ -443,7 +443,6 @@ status_t StreamIn::addAudioEffect(effect_handle_t effect)
         Log::Error() << __FUNCTION__ << ": Invalid argument (" << effect << ")";
         return android::BAD_VALUE;
     }
-
     // Called from different context than the stream,
     // so effect Lock must be held
     AutoW lock(mPreProcEffectLock);
@@ -490,7 +489,6 @@ status_t StreamIn::removeAudioEffect(effect_handle_t effect)
         Log::Error() << __FUNCTION__ << ": Invalid argument (" << effect << ")";
         return android::BAD_VALUE;
     }
-
     // Called from different context than the stream,
     // so effect Lock must be held.
     AutoW lock(mPreProcEffectLock);

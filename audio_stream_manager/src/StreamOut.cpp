@@ -57,23 +57,23 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
         Log::Error() << __FUNCTION__ << ": NULL client buffer";
         return android::BAD_VALUE;
     }
-
     setStandby(false);
 
     mStreamLock.readLock();
     status_t status;
+    const ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
+
     // Check if the audio route is available for this stream
     if (!isRoutedL()) {
         Log::Warning() << __FUNCTION__ << ": (buffer=" << buffer << ", bytes=" << bytes
                        << ") No route available. Trashing samples for stream " << this;
 
         status = generateSilence(bytes);
-        mFrameCount += streamSampleSpec().convertBytesToFrames(bytes);
+        mFrameCount += srcFrames;
         mStreamLock.unlock();
         return status;
     }
 
-    ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
     size_t dstFrames = 0;
     char *dstBuf = NULL;
     uint32_t retryCount = 0;
@@ -155,9 +155,6 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                                                    routeSampleSpec().getChannelCount(),
                                                    "after_conversion");
     }
-    bytes = streamSampleSpec().convertFramesToBytes(
-        AudioUtils::convertSrcToDstInFrames(dstFrames, routeSampleSpec(), streamSampleSpec()));
-
     if (mFrameCount > (std::numeric_limits<uint64_t>::max() - srcFrames)) {
         Log::Error() << __FUNCTION__ << ": overflow detected, resetting framecount";
         mFrameCount = 0;
@@ -237,7 +234,6 @@ status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &t
                      << ": mFrameCount=" << mFrameCount
                      << ": kernelBufferSize=" << kernelBufferSize
                      << ": avail=" << avail;
-
         return android::BAD_VALUE;
     }
     frames = signedFrames;

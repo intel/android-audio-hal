@@ -1,6 +1,6 @@
 /*
  * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
+ * Copyright (c) 2013-2015 Intel
  * Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
@@ -21,23 +21,15 @@
  *
  */
 #pragma once
-
 #include "AudioConverter.hpp"
+#include <audio_utils/resampler.h>
 #include <list>
 
 namespace intel_audio
 {
 
-class Resampler;
-
 class AudioResampler : public AudioConverter
 {
-
-private:
-    /**
-     * Iterator on resamplers list.
-     */
-    typedef std::list<Resampler *>::iterator ResamplerListIterator;
 
 public:
     /**
@@ -51,56 +43,37 @@ public:
 
 private:
     /**
-     * Configures the resampling operations.
+     * Configures the resampler.
+     * It configures the resampler that may be used to convert samples from the source
+     * to destination sample rate, with option 'RESAMPLER_QUALITY_DEFAULT'.
      *
-     * Sets the resampler(s) to use, based on destination sample spec, on
-     * source sample spec as well as supported resampling operations.
-     *
-     * @param[in] ssSrc source sample specification.
+     * @param[in] ssSrc source sample specifications.
      * @param[in] ssDst destination sample specification.
      *
-     * @return status NO_ERROR, error code otherwise.
+     * @return status OK, error code otherwise.
      */
     virtual android::status_t configure(const SampleSpec &ssSrc, const SampleSpec &ssDst);
 
     /**
-     * Resamples audio samples.
+     * Resamples buffer from source to destination sample rate.
+     * Resamples input frames of the provided input buffer into the destination buffer already
+     * allocated by the converter or given by the client.
+     * Before using this function, configure must have been called.
      *
-     * It resamples audio samples using the resamplers list set when configure was called.
+     * @param[in] src the source buffer.
+     * @param[out] dst the destination buffer, caller to ensure the destination
+     *             is large enough.
+     * @param[in] inFrames number of input frames.
+     * @param[out] outFrames output frames processed.
      *
-     * @param[in] src  buffer of samples to resample.
-     * @param[out] dst destination samples buffer. If no error is returned, the ouput buffer
-     *                 will contain valid data until next convert call or configure.
-     *
-     * @param[in] inFrames number of frames in the source sample specification to convert.
-     * @param[out] outFrames number of frames in the destination sample specification converted.
-     *
-     * @return status NO_ERROR, error code otherwise.
+     * @return error code.
      */
-    virtual android::status_t convert(const void *src,
-                                      void **dst,
-                                      size_t inFrames,
-                                      size_t *outFrames);
+    android::status_t resampleFrames(const void *src,
+                                     void *dst,
+                                     const size_t inFrames,
+                                     size_t *outFrames);
 
-    /**
-     * Resampler to use for all conversions.
-     */
-    Resampler *mResampler;
+    struct resampler_itfe *mResampler;
 
-    /**
-     * Resampler to use when desired conversion is not supported.
-     * It defaults to 48Khz conversion.
-     */
-    Resampler *mPivotResampler;
-
-    /**
-     * List of enabled audio converters.
-     */
-    std::list<Resampler *> mActiveResamplerList;
-
-    /**
-     * Reference sample rate.
-     */
-    static const uint32_t mPivotSampleRate = 48000;
 };
 }  // namespace intel_audio
