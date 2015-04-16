@@ -763,6 +763,11 @@ bool AudioRouteManager::routingHasChanged()
 bool AudioRouteManager::addCriterionType(const std::string &name, bool isInclusive)
 {
     AutoW lock(mRoutingLock);
+    return addCriterionTypeUnsafe(name, isInclusive);
+}
+
+bool AudioRouteManager::addCriterionTypeUnsafe(const std::string &name, bool isInclusive)
+{
     if (mAudioPfwConnector->isStarted()) {
         Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
         return true;
@@ -784,6 +789,13 @@ void AudioRouteManager::addCriterionTypeValuePair(const string &name,
                                                   uint32_t value)
 {
     AutoW lock(mRoutingLock);
+    addCriterionTypeValuePairUnsafe(name, literal, value);
+}
+
+void AudioRouteManager::addCriterionTypeValuePairUnsafe(const string &name,
+                                                        const string &literal,
+                                                        uint32_t value)
+{
     if (mAudioPfwConnector->isStarted()) {
         Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
         return;
@@ -902,8 +914,8 @@ void AudioRouteManager::addRoute(const string &name,
             mRouteMap[mapKeyName] = route;
         }
         // Add Route criterion type value pair
-        addCriterionType(mRouteCriterionType[isOut], true);
-        addCriterionTypeValuePair(mRouteCriterionType[isOut], name, 1 << count[isOut]++);
+        addCriterionTypeUnsafe(mRouteCriterionType[isOut], true);
+        addCriterionTypeValuePairUnsafe(mRouteCriterionType[isOut], name, 1 << count[isOut]++);
     }
 }
 

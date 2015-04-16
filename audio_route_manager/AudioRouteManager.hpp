@@ -84,6 +84,9 @@ private:
     virtual bool addCriterionType(const std::string &name, bool isInclusive);
     virtual void addCriterionTypeValuePair(const std::string &name, const std::string &literal,
                                            uint32_t value);
+    bool addCriterionTypeUnsafe(const std::string &name, bool isInclusive);
+    void addCriterionTypeValuePairUnsafe(const std::string &name, const std::string &literal,
+                                         uint32_t value);
     virtual void addCriterion(const std::string &name, const std::string &criterionType,
                               const std::string &defaultLiteralValue = "");
     virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue)
