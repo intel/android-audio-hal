@@ -149,11 +149,19 @@ AudioRouteManager::~AudioRouteManager()
     }
     delete mEventThread;
 
+    CriteriaMapIterator criteriaIter;
+    for (criteriaIter = mCriteriaMap.begin(); criteriaIter != mCriteriaMap.end(); ++criteriaIter) {
+        delete criteriaIter->second;
+    }
+    CriteriaTypeMapIterator typesIter;
+    for (typesIter = mCriterionTypesMap.begin(); typesIter != mCriterionTypesMap.end();
+         ++typesIter) {
+        delete typesIter->second;
+    }
     // Delete all routes
-    RouteMapIterator it;
-    for (it = mRouteMap.begin(); it != mRouteMap.end(); ++it) {
-
-        delete it->second;
+    RouteMapIterator routeIter;
+    for (routeIter = mRouteMap.begin(); routeIter != mRouteMap.end(); ++routeIter) {
+        delete routeIter->second;
     }
 
     // Unset logger

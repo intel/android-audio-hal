@@ -55,7 +55,7 @@ private:
         ParamRogue
     } ParameterType;
 
-    typedef std::pair<const char *, const char *> AndroidParamMappingValuePair;
+    typedef std::pair<std::string, std::string> AndroidParamMappingValuePair;
     typedef std::pair<int, const char *> CriterionTypeValuePair;
     typedef std::vector<Parameter *>::iterator ParamIterator;
     typedef std::map<std::string, Criterion *>::iterator CriterionMapIterator;
