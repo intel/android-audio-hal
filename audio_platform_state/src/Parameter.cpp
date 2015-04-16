@@ -44,8 +44,8 @@ bool Parameter::getLiteralValueFromParam(const string &androidParam, string &lit
     }
     if (!isAndroidParameterValueValid(androidParam)) {
 
-        Log::Verbose() << __FUNCTION__ << ": unknown parameter value(" << androidParam
-                       << ") for " << mAndroidParameterKey << "";
+        Log::Verbose() << __FUNCTION__ << ": unknown parameter value \"" << androidParam
+                       << "\" for " << mAndroidParameterKey;
         return false;
     }
     MappingValuesMapConstIterator it = mMappingValuesMap.find(androidParam);

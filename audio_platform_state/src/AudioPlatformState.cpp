@@ -35,8 +35,6 @@
 #include <utilities/Log.hpp>
 #include <fstream>
 
-#define DIRECT_STREAM_FLAGS (AUDIO_OUTPUT_FLAG_DIRECT | AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)
-
 #ifndef PFW_CONF_FILE_PATH
 #define PFW_CONF_FILE_PATH  "/etc/parameter-framework/"
 #endif
