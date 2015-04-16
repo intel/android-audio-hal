@@ -1,28 +1,22 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #pragma once
 
 #include <SampleSpec.hpp>
+#include <system/audio.h>
 #include <utils/RWLock.h>
 #include <string>
 
@@ -75,6 +69,14 @@ public:
     virtual bool isOut() const = 0;
 
     /**
+     * A stream is considered as a MIX Port with a given role.
+     * An output stream is a Source Mix Port, an input stream is a Sink Mix Port.
+     *
+     * @return role of the stream (mix port).
+     */
+    virtual audio_port_role_t getRole() const = 0;
+
+    /**
      * get stream state.
      * Note that true=playing, false=standby|stopped.
      * @return true if started, false otherwise.
@@ -89,13 +91,22 @@ public:
     virtual bool isRoutedByPolicy() const = 0;
 
     /**
-     * Applicability mask.
-     * For an input stream, applicability mask is the ID of the input source
-     * For an output stream, applicability mask is the output flags
+     * Flag mask.
+     * For an input stream, the input flags are the prefered attribute like fast tracks, hotword
+     * For an output stream, the output flags are the attribute like primary, fast, deep, ...
      *
-     * @return applicability mask.
+     * @return flags mask.
      */
-    virtual uint32_t getApplicabilityMask() const = 0;
+    virtual uint32_t getFlagMask() const = 0;
+
+    /**
+     * Use Case.
+     * For an input stream, use case is known as the input source.
+     * For an output stream: still not propagated to audio hal.
+     *
+     * @return use case.
+     */
+    virtual uint32_t getUseCaseMask() const = 0;
 
     /**
      * Get output silence to be appended before playing.

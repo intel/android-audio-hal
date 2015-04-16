@@ -1,24 +1,20 @@
-# INTEL CONFIDENTIAL
 #
-# Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
 #
-# The source code contained or described herein and all documents related to
-# the source code ("Material") are owned by Intel Corporation or its suppliers
-# or licensors.
+# Copyright (C) Intel 2013-2015
 #
-# Title to the Material remains with Intel Corporation or its suppliers and
-# licensors. The Material contains trade secrets and proprietary and
-# confidential information of Intel or its suppliers and licensors. The
-# Material is protected by worldwide copyright and trade secret laws and treaty
-# provisions. No part of the Material may be used, copied, reproduced,
-# modified, published, uploaded, posted, transmitted, distributed, or disclosed
-# in any way without Intel's prior express written permission.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
-# No license under any patent, copyright, trade secret or other intellectual
-# property right is granted to or conferred upon you by disclosure or delivery
-# of the Materials, either expressly, by implication, inducement, estoppel or
-# otherwise. Any license under such intellectual property rights must be
-# express and approved by Intel in writing.
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 
 
 LOCAL_PATH := $(call my-dir)
@@ -33,22 +29,17 @@ audio_conversion_src_files :=  \
     src/AudioReformatter.cpp \
     src/AudioRemapper.cpp \
     src/AudioResampler.cpp \
-    src/Resampler.cpp
-
-audio_conversion_includes_dir := \
-    libaudioresample
 
 audio_conversion_includes_common := \
     $(LOCAL_PATH)/include \
     $(call include-path-for, frameworks-av) \
+    $(call include-path-for, audio-utils) \
     external/tinyalsa/include
 
 audio_conversion_includes_dir_host := \
-    $(foreach inc, $(audio_conversion_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
     $(call include-path-for, libc-kernel)
 
 audio_conversion_includes_dir_target := \
-    $(foreach inc, $(audio_conversion_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
     $(call include-path-for, bionic)
 
 audio_conversion_static_lib += \
@@ -56,8 +47,7 @@ audio_conversion_static_lib += \
     libaudio_comms_utilities
 
 audio_conversion_static_lib_host += \
-    $(foreach lib, $(audio_conversion_static_lib), $(lib)_host) \
-    libaudioresample_static_host
+    $(foreach lib, $(audio_conversion_static_lib), $(lib)_host)
 
 audio_conversion_static_lib_target += \
     $(audio_conversion_static_lib)
@@ -121,17 +111,18 @@ audio_conversion_fcttest_c_includes_host += \
 
 audio_conversion_fcttest_static_lib_host += \
     $(foreach lib, $(audio_conversion_fcttest_static_lib), $(lib)_host) \
-    libaudioresample_static_host \
-    liblog \
     libgtest_host \
-    libgtest_main_host
+    libgtest_main_host \
+    libaudioutils \
+    libspeexresampler \
+    liblog
 
 audio_conversion_fcttest_static_lib_target += \
     $(audio_conversion_fcttest_static_lib)
 
 audio_conversion_fcttest_shared_lib_target += \
     libstlport libcutils \
-    libaudioresample
+    libaudioutils
 
 # $(1): "_target" or "_host"
 define make_audio_conversion_functional_test

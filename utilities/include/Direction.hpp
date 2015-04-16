@@ -13,33 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #pragma once
 
-#include <NonCopyable.hpp>
-#include <stdint.h>
-#include <string>
+#include <sys/types.h>
 
 namespace intel_audio
 {
 
-class RoutingElement : public audio_comms::utilities::NonCopyable
+class Direction
 {
 public:
-    RoutingElement(const std::string &name);
-    virtual ~RoutingElement();
+    enum Values
+    {
+        Input = 0,
+        Output
+    };
 
-    /**
-     * Returns identifier of current routing element
-     *
-     * @returns string representing the name of the routing element
-     */
-    const std::string &getName() const { return mName; }
-
-    virtual void resetAvailability() {}
-
-private:
-    /** Unique Identifier of a routing element */
-    std::string mName;
+    static const size_t gNbDirections = 2;
 };
 
 } // namespace intel_audio

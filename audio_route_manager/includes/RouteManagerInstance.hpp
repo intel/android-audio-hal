@@ -13,33 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
 
+#include <IStreamInterface.hpp>
+#include <RouteInterface.hpp>
 #include <NonCopyable.hpp>
-#include <stdint.h>
-#include <string>
+
+#pragma once
 
 namespace intel_audio
 {
 
-class RoutingElement : public audio_comms::utilities::NonCopyable
+class AudioRouteManager;
+
+class RouteManagerInstance : public audio_comms::utilities::NonCopyable
 {
+protected:
+    RouteManagerInstance();
+
 public:
-    RoutingElement(const std::string &name);
-    virtual ~RoutingElement();
+    virtual ~RouteManagerInstance();
 
     /**
-     * Returns identifier of current routing element
-     *
-     * @returns string representing the name of the routing element
+     * Interface getters.
      */
-    const std::string &getName() const { return mName; }
-
-    virtual void resetAvailability() {}
+    static IStreamInterface *getStreamInterface();
+    static IRouteInterface *getRouteInterface();
 
 private:
-    /** Unique Identifier of a routing element */
-    std::string mName;
+    /**
+     * Get Route Manager instance.
+     *
+     * @return pointer to Route Manager Instance object.
+     */
+    static RouteManagerInstance *getInstance();
+
+    /**< Audio route manager singleton */
+    AudioRouteManager *mAudioRouteManager;
 };
 
 } // namespace intel_audio
