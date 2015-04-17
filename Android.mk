@@ -20,6 +20,8 @@
 # otherwise. Any license under such intellectual property rights must be
 # express and approved by Intel in writing.
 
+ifneq ($(INTEL_AUDIO_HAL),imc)
+
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
 
@@ -45,3 +47,5 @@ SUBDIRS := audio_conversion \
 include $(call named-subdir-makefiles, $(SUBDIRS))
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
+
+endif # INTEL_AUDIO_HAL
