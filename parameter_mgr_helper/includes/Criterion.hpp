@@ -95,15 +95,6 @@ public:
         return mCriterionType;
     }
 
-private:
-    /**
-     * Initialize the criterion, i.e. get the criterion interface and set the criterion
-     * init value.
-     *
-     * @param[in] defaultValue Default numerical value of the criterion.
-     */
-    void init(int32_t defaultValue);
-
     /**
      * Helper function to retrieve the numerical value from the literal representation of the
      * criterion.
@@ -117,6 +108,15 @@ private:
      * @return true if the literal value was translated to a valid numerical, false otherwise.
      */
     bool getNumericalFromLiteral(const std::string &literalValue, int &numerical) const;
+
+private:
+    /**
+     * Initialize the criterion, i.e. get the criterion interface and set the criterion
+     * init value.
+     *
+     * @param[in] defaultValue Default numerical value of the criterion.
+     */
+    void init(int32_t defaultValue);
 
     /**
      * criterion interface for parameter manager operations.

@@ -394,8 +394,6 @@ private:
 
     struct echo_reference_itfe *mEchoReference; /**< Echo reference to use for AEC effect. */
 
-    AudioPlatformState *mPlatformState; /**< Platform state pointer. */
-
     AudioParameterHandler *mAudioParameterHandler; /**< backup and restore audio parameters. */
 
     IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */

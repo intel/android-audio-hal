@@ -36,9 +36,9 @@ CriterionType::~CriterionType()
 {
 }
 
-string CriterionType::getFormattedState(uint32_t value)
+string CriterionType::getFormattedState(uint32_t value) const
 {
-    return getTypeInterface()->getFormattedState(value);
+    return mCriterionTypeInterface->getFormattedState(value);
 }
 
 void CriterionType::addValuePair(int numerical, const string &literal)

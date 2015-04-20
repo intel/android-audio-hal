@@ -56,14 +56,12 @@ component_static_lib += \
     libstream_static \
     libparametermgr_static \
     libaudioparameters \
-    libaudioplatformstate \
     libaudio_hal_utilities \
     libproperty \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libhalaudiodump \
     liblpepreprocessinghelper \
-    libaudiocomms_naive_tokenizer \
 
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host) \

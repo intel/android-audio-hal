@@ -225,6 +225,13 @@ public:
         mIsOut = isOut;
     }
 
+    void setMask(uint32_t mask)
+    {
+        mMask = mask;
+    }
+
+    uint32_t getMask() const { return mMask; }
+
 private:
     AudioPort *mPort[ENbPorts]; /**< Route is connected to 2 ports. NULL if no mutual exclusion*/
 
@@ -244,6 +251,8 @@ protected:
      * Bitfield definition from RoutingStage enum.
      */
     std::bitset<gNbRoutingStages> mRoutingStageRequested;
+
+    uint32_t mMask; /**< A route is identified with a mask, it helps for criteria representation. */
 };
 
 } // namespace intel_audio

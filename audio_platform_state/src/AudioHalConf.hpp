@@ -15,19 +15,20 @@
  */
 #pragma once
 
+#include <Direction.hpp>
 #include <string>
 
 namespace intel_audio
 {
 #ifndef HAL_CONF_FILE_PATH
-#define HAL_CONF_FILE_PATH  "/system/etc"
+#define HAL_CONF_FILE_PATH  "/vendor/etc"
 #endif
 
 static const char *const gAudioHalConfFilePath =
-    HAL_CONF_FILE_PATH"/route_criteria.conf";
+    "/system/etc/route_criteria.conf";
 
 static const char *const gAudioHalVendorConfFilePath =
-    "/vendor/etc/route_criteria.conf";
+    HAL_CONF_FILE_PATH"/route_criteria.conf";
 
 /**
  * PFW instances tags
@@ -63,5 +64,24 @@ static const std::string gValueSet = "ValueSet";
 static const std::string gModemValueSet = "ModemValueSet";
 static const std::string gInterfaceLibraryName = "InterfaceLibrary";
 static const std::string gInterfaceLibraryInstance = "Instance";
+
+/**
+ * Mandatory Criteria / Criterion types / Rogue Parameters path.
+ */
+static const std::string gAndroidModeCriterion = "AndroidMode";
+static const std::string gStateChangedCriterionType = "StatesChangedType";
+static const std::string gStateChangedCriterion = "StatesChanged";
+static const std::string gRoutingStageCriterion = "RoutageState";
+static const std::string gClosingRouteCriterion[Direction::gNbDirections] = {
+    "ClosingCaptureRoutes", "ClosingPlaybackRoutes"
+};
+static const std::string gOpenedRouteCriterion[Direction::gNbDirections] = {
+    "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
+};
+static const std::string gRouteCriterionType[Direction::gNbDirections] = {
+    "RouteCaptureType", "RoutePlaybackType"
+};
+static const std::string gVoiceVolume = "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
+
 
 } // namespace intel_audio

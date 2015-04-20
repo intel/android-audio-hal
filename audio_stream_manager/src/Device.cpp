@@ -20,7 +20,6 @@
 #include "AudioParameterHandler.hpp"
 #include "StreamIn.hpp"
 #include "StreamOut.hpp"
-#include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
 #include <Parameters.hpp>
@@ -42,7 +41,6 @@ const char *const Device::mRestartingRequested = "true";
 
 Device::Device()
     : mEchoReference(NULL),
-      mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
       mPrimaryOutput(NULL),
@@ -54,30 +52,15 @@ Device::Device()
         Log::Error() << "Failed to get Stream Interface on RouteMgr";
         return;
     }
-
-    /// Construct the platform state component and start it
-    mPlatformState = new AudioPlatformState(mStreamInterface);
-    if (mPlatformState->start() != android::OK) {
-        Log::Error() << __FUNCTION__ << ": could not start Platform State";
-        mStreamInterface = NULL;
-        delete mPlatformState;
-        mPlatformState = NULL;
-        return;
-    }
-
     /// Start Routing service
     if (mStreamInterface->startService() != android::OK) {
         Log::Error() << __FUNCTION__ << ": Could not start Route Manager stream service";
         // Reset interface pointer to give a chance for initCheck to catch any issue
         // with the RouteMgr.
         mStreamInterface = NULL;
-        delete mPlatformState;
-        mPlatformState = NULL;
         return;
     }
-    mPlatformState->sync();
-
-    mStreamInterface->reconsiderRouting();
+    mStreamInterface->reconsiderRouting(true);
 
     Log::Debug() << __FUNCTION__ << ": Route Manager Service successfully started";
 }
@@ -87,14 +70,11 @@ Device::~Device()
     mStreamInterface->stopService();
     // Remove parameter handler
     delete mAudioParameterHandler;
-    // Remove Platform State component
-    delete mPlatformState;
 }
 
 status_t Device::initCheck() const
 {
-    return (mStreamInterface && mPlatformState && mPlatformState->isStarted()) ?
-           android::OK : android::NO_INIT;
+    return mStreamInterface ? android::OK : android::NO_INIT;
 }
 
 status_t Device::setVoiceVolume(float volume)
@@ -226,12 +206,12 @@ status_t Device::setMicMute(bool mute)
     if (status != android::OK) {
         return status;
     }
-    return mPlatformState->setParameters(pair.toString());
+    return mStreamInterface->setParameters(pair.toString());
 }
 
 status_t Device::getMicMute(bool &muted) const
 {
-    KeyValuePairs pair(mPlatformState->getParameters(Parameters::gKeyMicMute));
+    KeyValuePairs pair(mStreamInterface->getParameters(Parameters::gKeyMicMute));
     return pair.get(Parameters::gKeyMicMute, muted);
 }
 
@@ -289,10 +269,10 @@ status_t Device::setParameters(const string &keyValuePairs)
     }
     status = pairs.get(Parameters::gKeyCompressOffloadRouting, mCompressOffloadDevices);
     if (status == android::OK) {
-        pairs.remove(key);
+        pairs.remove(Parameters::gKeyCompressOffloadRouting);
         updateStreamsParametersSync(AUDIO_PORT_ROLE_SOURCE);
     }
-    status = mPlatformState->setParameters(pairs.toString());
+    status = mStreamInterface->setParameters(pairs.toString());
     if (status == android::OK) {
         Log::Verbose() << __FUNCTION__
                        << ": saving the parameters to recover in case of media server crash";
@@ -304,7 +284,7 @@ status_t Device::setParameters(const string &keyValuePairs)
 string Device::getParameters(const string &keys) const
 {
     Log::Verbose() << __FUNCTION__ << ": requested keys " << keys;
-    return mPlatformState->getParameters(keys);
+    return mStreamInterface->getParameters(keys);
 }
 
 android::status_t Device::setMode(audio_mode_t mode)
@@ -372,7 +352,7 @@ struct echo_reference_itfe *Device::getEchoReference(const SampleSpec &inputSamp
 
 void Device::printPlatformFwErrorInfo()
 {
-    mPlatformState->printPlatformFwErrorInfo();
+    mStreamInterface->printPlatformFwErrorInfo();
 }
 
 bool Device::hasStream(const audio_io_handle_t &streamHandle)
@@ -540,7 +520,7 @@ status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice
         return android::OK;
     }
     Log::Verbose() << __FUNCTION__ << ": Parameters:" << pairs.toString();
-    return mPlatformState->setParameters(pairs.toString(), synchronous);
+    return mStreamInterface->setParameters(pairs.toString(), synchronous);
 }
 
 status_t Device::getAudioPort(struct audio_port & /*port*/) const

@@ -28,10 +28,6 @@
 
 #include <utilities/Log.hpp>
 
-#ifndef PFW_CONF_FILE_PATH
-#define PFW_CONF_FILE_PATH  "/etc/parameter-framework/"
-#endif
-
 using android::status_t;
 using namespace std;
 using audio_comms::utilities::BitField;
@@ -44,63 +40,6 @@ typedef android::RWLock::AutoWLock AutoW;
 namespace intel_audio
 {
 
-const char *const AudioRouteManager::mVoiceVolume =
-    "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
-
-const char *const AudioRouteManager::mClosingRouteCriterion[Direction::gNbDirections] = {
-    "ClosingCaptureRoutes", "ClosingPlaybackRoutes"
-};
-const char *const AudioRouteManager::mOpenedRouteCriterion[Direction::gNbDirections] = {
-    "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
-};
-const char *const AudioRouteManager::mRouteCriterionType[Direction::gNbDirections] = {
-    "RoutePlaybackType", "RouteCaptureType"
-};
-const char *const AudioRouteManager::mRoutingStage = "RoutageState";
-
-const char *const AudioRouteManager::mAudioPfwConfFilePropName = "persist.audio.audioConf";
-
-const char *const AudioRouteManager::mAudioPfwDefaultConfFileName =
-    "AudioParameterFramework.xml";
-
-class CParameterMgrPlatformConnectorLogger : public CParameterMgrPlatformConnector::ILogger
-{
-private:
-    string mVerbose;
-
-public:
-    CParameterMgrPlatformConnectorLogger()
-        : mVerbose(Property<string>("persist.media.pfw.verbose", "false").getValue())
-    {}
-
-    virtual void log(bool isWarning, const string &log)
-    {
-        const static string format("audio-parameter-manager: ");
-
-        if (isWarning) {
-            Log::Warning() << format << log;
-        } else if (mVerbose == "true") {
-            Log::Debug() << format << log;
-        }
-    }
-};
-
-/**
- * Routing stage criteria.
- *
- * A Flow stage on ClosingRoutes leads to Mute.
- * A Flow stage on OpenedRoutes leads to Unmute.
- * A Path stage on ClosingRoutes leads to Disable.
- * A Path stage on OpenedRoutes leads to Enable.
- * A Configure stage on ClosingRoutes leads to resetting the configuration.
- * A Configure stage on OpenedRoute lead to setting the configuration.
- */
-const pair<int, const char *> AudioRouteManager::mRoutingStageValuePairs[] = {
-    make_pair(FlowMask,       "Flow"),
-    make_pair(PathMask,       "Path"),
-    make_pair(ConfigureMask,  "Configure")
-};
-
 template <>
 struct AudioRouteManager::routingElementSupported<AudioPort> {};
 template <>
@@ -109,32 +48,13 @@ template <>
 struct AudioRouteManager::routingElementSupported<AudioRoute> {};
 template <>
 struct AudioRouteManager::routingElementSupported<AudioStreamRoute> {};
-template <>
-struct AudioRouteManager::routingElementSupported<Criterion> {};
 
 AudioRouteManager::AudioRouteManager()
-    : mAudioPfwConnectorLogger(new CParameterMgrPlatformConnectorLogger),
-      mEventThread(new CEventThread(this)),
-      mIsStarted(false)
+    : mEventThread(new CEventThread(this)),
+      mIsStarted(false),
+      mPlatformState(NULL)
 {
     memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::gNbDirections);
-
-    /// Connector
-    // Fetch the name of the PFW configuration file: this name is stored in an Android property
-    // and can be different for each hardware
-    string audioPfwConfigurationFilePath = PFW_CONF_FILE_PATH;
-    audioPfwConfigurationFilePath += Property<string>(mAudioPfwConfFilePropName,
-                                                      mAudioPfwDefaultConfFileName).getValue();
-
-    Log::Info() << __FUNCTION__
-                << ": audio PFW using configuration file: " << audioPfwConfigurationFilePath;
-
-    mAudioPfwConnector = new CParameterMgrPlatformConnector(audioPfwConfigurationFilePath);
-
-    mParameterHelper = new ParameterMgrHelper(mAudioPfwConnector);
-
-    // Logger
-    mAudioPfwConnector->setLogger(mAudioPfwConnectorLogger);
 }
 
 AudioRouteManager::~AudioRouteManager()
@@ -145,41 +65,33 @@ AudioRouteManager::~AudioRouteManager()
         // Synchronous stop of the event thread must be called with NOT held lock as pending request
         // may need to be served
         mRoutingLock.unlock();
-        mEventThread->stop();
+        stopService();
         mRoutingLock.writeLock();
     }
     delete mEventThread;
+}
 
-    CriteriaMapIterator criteriaIter;
-    for (criteriaIter = mCriteriaMap.begin(); criteriaIter != mCriteriaMap.end(); ++criteriaIter) {
-        delete criteriaIter->second;
-    }
-    CriteriaTypeMapIterator typesIter;
-    for (typesIter = mCriterionTypesMap.begin(); typesIter != mCriterionTypesMap.end();
-         ++typesIter) {
-        delete typesIter->second;
-    }
-    // Delete all routes
-    RouteMapIterator routeIter;
-    for (routeIter = mRouteMap.begin(); routeIter != mRouteMap.end(); ++routeIter) {
-        delete routeIter->second;
-    }
-
-    // Unset logger
-    mAudioPfwConnector->setLogger(NULL);
-    delete mParameterHelper;
-
-    // Remove logger
-    delete mAudioPfwConnectorLogger;
-
-    // Remove connector
-    delete mAudioPfwConnector;
+template <Direction::Values dir>
+inline const std::string AudioRouteManager::routeMaskToString(uint32_t mask) const
+{
+    return mPlatformState->getFormattedState<Audio>(gRouteCriterionType[dir], mask);
 }
 
 status_t AudioRouteManager::stopService()
 {
     AutoW lock(mRoutingLock);
+    Log::Debug() << __FUNCTION__;
     if (mIsStarted) {
+        delete mPlatformState;
+        mPlatformState = NULL;
+
+        // Delete all routes
+        for (RouteMapIterator it = mRouteMap.begin(); it != mRouteMap.end(); ++it) {
+            delete it->second;
+        }
+        mRouteMap.clear();
+        mStreamRouteMap.clear();
+
         // Synchronous stop of the event thread must be called with NOT held lock as pending request
         // may need to be served
         mRoutingLock.unlock();
@@ -192,53 +104,23 @@ status_t AudioRouteManager::stopService()
 
 status_t AudioRouteManager::startService()
 {
-    AutoW lock(mRoutingLock);
-
-    AUDIOCOMMS_ASSERT(mIsStarted != true, "Route Manager service already started!");
-    AUDIOCOMMS_ASSERT(mEventThread->start(), "failure when starting event thread!");
-
-    if (mAudioPfwConnector->isStarted()) {
-        Log::Debug() << __FUNCTION__ << ": Audio PFW is already started, bailing out";
-        mIsStarted = true;
-        return android::OK;
+    {
+        AutoW lock(mRoutingLock);
+        AUDIOCOMMS_ASSERT(mIsStarted != true, "Route Manager service already started!");
+        AUDIOCOMMS_ASSERT(mEventThread->start(), "failure when starting event thread!");
+        mPlatformState = new AudioPlatformState();
     }
 
-    // Route Criteria
-    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-        // Routes Criterion Type
-        if (mCriterionTypesMap.find(mRouteCriterionType[i]) == mCriterionTypesMap.end()) {
-            Log::Error() << "CriterionType " << mRouteCriterionType[i] << " not found";
-            return android::NO_INIT;
-        }
-        CriterionType *routeCriterionType = mCriterionTypesMap[mRouteCriterionType[i]];
-
-        mSelectedOpenedRoutes[i] = new Criterion(mOpenedRouteCriterion[i],
-                                                 routeCriterionType,
-                                                 mAudioPfwConnector);
-        mSelectedClosingRoutes[i] = new Criterion(mClosingRouteCriterion[i],
-                                                  routeCriterionType,
-                                                  mAudioPfwConnector);
-    }
-
-    CriterionType *routageStageCriterionType = new CriterionType(mRoutingStage, true,
-                                                                 mAudioPfwConnector);
-    mCriterionTypesMap[mRoutingStage] = routageStageCriterionType;
-    routageStageCriterionType->addValuePairs(mRoutingStageValuePairs,
-                                             sizeof(mRoutingStageValuePairs) /
-                                             sizeof(mRoutingStageValuePairs[0]));
-    // Routing stage criterion is initialised to Configure | Path | Flow to apply all pending
-    // configuration for init and minimalize cold latency at first playback / capture
-    mRoutingStageCriterion = new Criterion(mRoutingStage, routageStageCriterionType,
-                                           mAudioPfwConnector, ConfigureMask | PathMask | FlowMask);
-
-    // Start PFW
-    std::string strError;
-    if (!mAudioPfwConnector->start(strError)) {
-        Log::Error() << "parameter-manager start error: " << strError;
-        mEventThread->stop();
+    /// Construct the platform state component and start it
+    if (mPlatformState->start() != android::OK) {
+        Log::Error() << __FUNCTION__ << ": could not start Platform State";
+        delete mPlatformState;
+        mPlatformState = NULL;
         return android::NO_INIT;
     }
-    Log::Debug() << __FUNCTION__ << ": parameter-manager successfully started!";
+    Log::Debug() << __FUNCTION__ << ": success";
+
+    AutoW lock(mRoutingLock);
     mIsStarted = true;
     return android::OK;
 }
@@ -246,7 +128,11 @@ status_t AudioRouteManager::startService()
 void AudioRouteManager::reconsiderRouting(bool isSynchronous)
 {
     AutoW lock(mRoutingLock);
+    reconsiderRoutingUnsafe(isSynchronous);
+}
 
+void AudioRouteManager::reconsiderRoutingUnsafe(bool isSynchronous)
+{
     if (!mIsStarted) {
         Log::Warning() << __FUNCTION__
                        << ": Could not serve this request as Route Manager is not started";
@@ -256,11 +142,9 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous)
     AUDIOCOMMS_ASSERT(!mEventThread->inThreadContext(), "Failure: not in correct thread context!");
 
     if (!isSynchronous) {
-
         // Trigs the processing of the list
         mEventThread->trig(NULL);
     } else {
-
         // Create a route manager observer
         AudioRouteManagerObserver obs;
 
@@ -287,11 +171,10 @@ void AudioRouteManager::reconsiderRouting(bool isSynchronous)
 void AudioRouteManager::doReconsiderRouting()
 {
     if (!checkAndPrepareRouting()) {
-
         // No need to reroute. Some criterion might have changed, update all criteria and apply
         // the conf in order to take for example tuning configuration that are glitch free and do
         // not need to go through the 5-steps routing.
-        commitCriteriaAndApply();
+        mPlatformState->commitCriteriaAndApplyConfiguration<Audio>();
         return;
     }
     Log::Debug() << __FUNCTION__
@@ -375,8 +258,8 @@ bool AudioRouteManager::checkAndPrepareRouting()
 
         AudioRoute *route =  it->second;
         prepareRoute(route);
-        setBit(route->needReflow(), routeToMask(route), mRoutes[route->isOut()].needReflow);
-        setBit(route->needRepath(), routeToMask(route), mRoutes[route->isOut()].needRepath);
+        setBit(route->needReflow(), route->getMask(), mRoutes[route->isOut()].needReflow);
+        setBit(route->needRepath(), route->getMask(), mRoutes[route->isOut()].needRepath);
     }
 
     return routingHasChanged<Direction::Output>() | routingHasChanged<Direction::Input>();
@@ -390,7 +273,7 @@ void AudioRouteManager::prepareRoute(AudioRoute *route)
                         setStreamForRoute(static_cast<AudioStreamRoute *>(route)) :
                         route->isApplicable();
     route->setUsed(isApplicable);
-    setBit(isApplicable, routeToMask(route), mRoutes[route->isOut()].enabled);
+    setBit(isApplicable, route->getMask(), mRoutes[route->isOut()].enabled);
 }
 
 bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
@@ -420,26 +303,26 @@ bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
 void AudioRouteManager::executeMuteRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
-    mRoutingStageCriterion->setCriterionState<int32_t>(FlowMask);
+
+    mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, FlowMask);
     setRouteCriteriaForMute();
-    mAudioPfwConnector->applyConfigurations();
+    mPlatformState->applyConfiguration<Audio>();
 }
 
 void AudioRouteManager::executeDisableRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
-    mRoutingStageCriterion->setCriterionState<int32_t>(PathMask);
+    mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask);
     setRouteCriteriaForDisable();
     doDisableRoutes();
-    mAudioPfwConnector->applyConfigurations();
+    mPlatformState->applyConfiguration<Audio>();
     doPostDisableRoutes();
 }
 
 void AudioRouteManager::executeConfigureRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
-    mRoutingStageCriterion->setCriterionState<int32_t>(ConfigureMask);
-
+    mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, ConfigureMask);
     StreamRouteMapIterator routeIt;
     for (routeIt = mStreamRouteMap.begin(); routeIt != mStreamRouteMap.end(); ++routeIt) {
 
@@ -451,32 +334,31 @@ void AudioRouteManager::executeConfigureRoutingStage()
     }
 
     setRouteCriteriaForConfigure();
-
-    commitCriteriaAndApply();
+    mPlatformState->commitCriteriaAndApplyConfiguration<Audio>();
 }
 
 void AudioRouteManager::executeEnableRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
-    mRoutingStageCriterion->setCriterionState<int32_t>(PathMask | ConfigureMask);
+    mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask | ConfigureMask);
     doPreEnableRoutes();
-    mAudioPfwConnector->applyConfigurations();
+    mPlatformState->applyConfiguration<Audio>();
     doEnableRoutes();
 }
 
 void AudioRouteManager::executeUnmuteRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
-    mRoutingStageCriterion->setCriterionState<int32_t>(ConfigureMask | PathMask | FlowMask);
-    mAudioPfwConnector->applyConfigurations();
+    mPlatformState->setCriterion<Audio>(gRoutingStageCriterion,
+                                        ConfigureMask | PathMask | FlowMask);
+    mPlatformState->applyConfiguration<Audio>();
 }
 
 void AudioRouteManager::setRouteCriteriaForConfigure()
 {
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-
-        mSelectedClosingRoutes[i]->setCriterionState<int32_t>(0);
-        mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(enabledRoutes(i));
+        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], 0);
+        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], enabledRoutes(i));
     }
 }
 
@@ -487,8 +369,8 @@ void AudioRouteManager::setRouteCriteriaForMute()
         uint32_t unmutedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needReflowRoutes(i);
         uint32_t routesToMute = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needReflowRoutes(i);
 
-        mSelectedClosingRoutes[i]->setCriterionState<int32_t>(routesToMute);
-        mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(unmutedRoutes);
+        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], routesToMute);
+        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], unmutedRoutes);
     }
 }
 
@@ -499,8 +381,8 @@ void AudioRouteManager::setRouteCriteriaForDisable()
         uint32_t openedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needRepathRoutes(i);
         uint32_t routesToDisable = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needRepathRoutes(i);
 
-        mSelectedClosingRoutes[i]->setCriterionState<int32_t>(routesToDisable);
-        mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(openedRoutes);
+        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], routesToDisable);
+        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], openedRoutes);
     }
 }
 
@@ -543,10 +425,6 @@ bool AudioRouteManager::addElement(const string &key,
                                    const string &name,
                                    map<string, T *> &elementsMap)
 {
-    if (mAudioPfwConnector->isStarted()) {
-        Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
-        return false;
-    }
     routingElementSupported<T>();
     if (elementsMap.find(key) != elementsMap.end()) {
         Log::Warning() << __FUNCTION__ << ": element(" << key << " already added";
@@ -566,7 +444,7 @@ T *AudioRouteManager::getElement(const string &name, map<string, T *> &elementsM
 }
 
 template <typename T>
-T *AudioRouteManager::findElementByName(const std::string &name, map<string, T *> elementsMap)
+T *AudioRouteManager::findElementByName(const std::string &name, map<string, T *> &elementsMap)
 {
     routingElementSupported<T>();
     typename map<string, T *>::iterator it;
@@ -575,12 +453,11 @@ T *AudioRouteManager::findElementByName(const std::string &name, map<string, T *
 }
 
 template <typename T>
-void AudioRouteManager::resetAvailability(map<string, T *> elementsMap)
+void AudioRouteManager::resetAvailability(map<string, T *> &elementsMap)
 {
     routingElementSupported<T>();
     typename map<string, T *>::iterator it;
     for (it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-
         it->second->resetAvailability();
     }
 }
@@ -631,7 +508,8 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
         return -ERANGE;
     }
     Log::Debug() << __FUNCTION__ << ": gain=" << gain;
-    CParameterHandle *voiceVolumeHandle = mParameterHelper->getDynamicParameterHandle(mVoiceVolume);
+    CParameterHandle *voiceVolumeHandle =
+        mPlatformState->getDynamicParameterHandle<Audio>(gVoiceVolume);
 
     if (!voiceVolumeHandle) {
         Log::Error() << "Could not retrieve volume path handle";
@@ -761,125 +639,11 @@ bool AudioRouteManager::routingHasChanged()
            (needReflowRoutes(isOut) != 0) || (needRepathRoutes(isOut) != 0);
 }
 
-bool AudioRouteManager::addCriterionType(const std::string &name, bool isInclusive)
+bool AudioRouteManager::setAudioCriterion(const std::string &name, uint32_t value)
 {
     AutoW lock(mRoutingLock);
-    return addCriterionTypeUnsafe(name, isInclusive);
-}
+    return mPlatformState->stageCriterion<Audio>(name, value);
 
-bool AudioRouteManager::addCriterionTypeUnsafe(const std::string &name, bool isInclusive)
-{
-    if (mAudioPfwConnector->isStarted()) {
-        Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
-        return true;
-    }
-    CriteriaTypeMapIterator it;
-    if ((it = mCriterionTypesMap.find(name)) == mCriterionTypesMap.end()) {
-        Log::Verbose() << __FUNCTION__ << ": adding " << name
-                       << " criterion [" << (isInclusive ? "inclusive" : "exclusive") << "]";
-        mCriterionTypesMap[name] = new CriterionType(name, isInclusive, mAudioPfwConnector);
-        return false;
-    }
-    Log::Verbose() << __FUNCTION__ << ": already added " << name
-                   << " criterion [" << (isInclusive ? "inclusive" : "exclusive") << "]";
-    return true;
-}
-
-void AudioRouteManager::addCriterionTypeValuePair(const string &name,
-                                                  const string &literal,
-                                                  uint32_t value)
-{
-    AutoW lock(mRoutingLock);
-    addCriterionTypeValuePairUnsafe(name, literal, value);
-}
-
-void AudioRouteManager::addCriterionTypeValuePairUnsafe(const string &name,
-                                                        const string &literal,
-                                                        uint32_t value)
-{
-    if (mAudioPfwConnector->isStarted()) {
-        Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
-        return;
-    }
-    AUDIOCOMMS_ASSERT(mCriterionTypesMap.find(name) != mCriterionTypesMap.end(),
-                      "CriterionType " << name << " not found");
-
-    CriterionType *criterionType = mCriterionTypesMap[name];
-
-    if (criterionType->hasValuePairByName(literal)) {
-        Log::Verbose() << __FUNCTION__ << ": value pair already added";
-        return;
-    }
-    Log::Verbose() << __FUNCTION__ << ": appending new value pair (" << literal << "," << value
-                   << ")of criterion type " << name;
-    criterionType->addValuePair(value, literal);
-}
-
-void AudioRouteManager::addCriterion(const string &name, const string &criterionTypeName,
-                                     const string &defaultLiteralValue /* = "" */)
-{
-    AutoW lock(mRoutingLock);
-    if (mAudioPfwConnector->isStarted()) {
-        Log::Warning() << __FUNCTION__ << ": Not allowed while Audio Parameter Manager running";
-        return;
-    }
-    Log::Verbose() << __FUNCTION__ << ": name=" << name << " criterionType=" << criterionTypeName;
-    AUDIOCOMMS_ASSERT(mCriteriaMap.find(name) == mCriteriaMap.end(),
-                      "Criterion " << name << "of type " << criterionTypeName << " already added");
-
-    // Retrieve criteria Type object
-    CriteriaTypeMapIterator it = mCriterionTypesMap.find(criterionTypeName);
-
-    AUDIOCOMMS_ASSERT(it != mCriterionTypesMap.end(),
-                      "type " << criterionTypeName << "not found for " << name << " criterion");
-
-    mCriteriaMap[name] = new Criterion(name, it->second, mAudioPfwConnector, defaultLiteralValue);
-}
-
-template <typename T>
-bool AudioRouteManager::setAudioCriterion(const std::string &name, const T &value)
-{
-    AutoW lock(mRoutingLock);
-    return getElement<Criterion>(name, mCriteriaMap)->setValue<T>(value);
-}
-
-template <typename T>
-bool AudioRouteManager::getAudioCriterion(const std::string &name, T &value) const
-{
-    AutoR lock(mRoutingLock);
-    Log::Verbose() << __FUNCTION__ << ": (" << name << ", " << value << ")";
-    CriteriaMapConstIterator it = mCriteriaMap.find(name);
-    if (it == mCriteriaMap.end()) {
-        Log::Warning() << __FUNCTION__ << ": Criterion " << name << " does not exist";
-        return false;
-    }
-    value = it->second->getValue<T>();
-    return true;
-}
-
-template <typename T>
-bool AudioRouteManager::setAudioParameter(const std::string &paramPath, const T &value)
-{
-    AutoW lock(mRoutingLock);
-    return ParameterMgrHelper::setParameterValue<T>(mAudioPfwConnector, paramPath, value);
-}
-
-template <typename T>
-bool AudioRouteManager::getAudioParameter(const std::string &paramPath, T &value) const
-{
-    AutoW lock(mRoutingLock);
-    return ParameterMgrHelper::getParameterValue<T>(mAudioPfwConnector, paramPath, value);
-}
-
-void AudioRouteManager::commitCriteriaAndApply()
-{
-    CriteriaMapIterator it;
-    for (it = mCriteriaMap.begin(); it != mCriteriaMap.end(); ++it) {
-
-        it->second->setCriterionState();
-    }
-
-    mAudioPfwConnector->applyConfigurations();
 }
 
 static uint32_t count[Direction::gNbDirections] = {
@@ -901,6 +665,7 @@ void AudioRouteManager::addRoute(const string &name,
         Log::Debug() << __FUNCTION__ << ": Name=" << mapKeyName
                      << " ports used= " << portSrc << " ," << portDst;
         route->setDirection(isOut);
+        route->setMask(1 << count[isOut]);
         if (!portSrc.empty()) {
             route->addPort(findElementByName<AudioPort>(portSrc, mPortMap));
         }
@@ -914,9 +679,10 @@ void AudioRouteManager::addRoute(const string &name,
                               "Fatal: route " << mapKeyName << " already added to route list!");
             mRouteMap[mapKeyName] = route;
         }
-        // Add Route criterion type value pair
-        addCriterionTypeUnsafe(mRouteCriterionType[isOut], true);
-        addCriterionTypeValuePairUnsafe(mRouteCriterionType[isOut], name, 1 << count[isOut]++);
+        // Populate Route criterion type value pair for Audio PFW (values provided by Route Plugin)
+        mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[isOut],
+                                                         name,
+                                                         1 << count[isOut]++);
     }
 }
 
@@ -938,6 +704,24 @@ void AudioRouteManager::addPortGroup(const string &name, const string &portMembe
         AudioPort *port = findElementByName<AudioPort>(portMember, mPortMap);
         portGroup->addPortToGroup(port);
     }
+}
+
+status_t AudioRouteManager::setParameters(const std::string &keyValuePair, bool isSynchronous)
+{
+    AutoW lock(mRoutingLock);
+    bool hasChanged = false;
+    status_t ret = mPlatformState->setParameters(keyValuePair, hasChanged);
+    if (!hasChanged) {
+        return ret;
+    }
+    reconsiderRoutingUnsafe(isSynchronous);
+    return ret;
+}
+
+std::string AudioRouteManager::getParameters(const std::string &keys) const
+{
+    AutoR lock(mRoutingLock);
+    return mPlatformState->getParameters(keys);
 }
 
 } // namespace intel_audio

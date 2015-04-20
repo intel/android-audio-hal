@@ -107,151 +107,18 @@ struct IStreamInterface
      */
     virtual uint32_t getPeriodInUs(const IoStream *stream) const = 0;
 
+    virtual android::status_t setParameters(const std::string &keyValuePair,
+                                            bool isSynchronous = false) = 0;
+
+    virtual std::string getParameters(const std::string &keys) const = 0;
 
     /**
-     * Adds a criterion type to route manager.
-     * Called at audio platform discovery.
-     *
-     * @param[in] name: name of the criterion type.
-     * @param[in] isInclusive: true if criterion is inclusive, false if exclusive.
-     *
-     * @return true if criterion type added, false if criterion type is already added.
+     * Print debug information from target debug files
      */
-    virtual bool addCriterionType(const std::string &name,
-                                  bool isInclusive) = 0;
+    virtual void printPlatformFwErrorInfo() const = 0;
 
-    /**
-     * Adds a criterion type value pair to route manager.
-     * Called at audio platform discovery.
-     *
-     * @param[in] name: name of the criterion type.
-     * @param[in] literal: name of the criterion value pair.
-     * @param[in] value: value of the criterion value pair.
-     */
-    virtual void addCriterionTypeValuePair(const std::string &name,
-                                           const std::string &literal,
-                                           uint32_t value) = 0;
-
-    /**
-     * Adds a criterion to route manager.
-     * Called at audio platform discovery.
-     *
-     * @param[in] name: name of the criterion.
-     * @param[in] criteriaType: name of the criterion type used for this criterion.
-     *
-     * @return true if criterion type added, false if criterion type is already added.
-     */
-    virtual void addCriterion(const std::string &name, const std::string &criterionType,
-                              const std::string &defaultLiteralValue = "") = 0;
-
-    /**
-     * Sets an audio parameter manager criterion value.
-     *
-     * @param[in] name: criterion name.
-     * @param[in] literalValue: value to set.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue) = 0;
-
-    /**
-     * Sets an audio parameter manager criterion value.
-     *
-     * @param[in] name: criterion name.
-     * @param[in] value: to set (numeric).
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool setAudioCriterion(const std::string &name, uint32_t value) = 0;
-
-    /**
-     * Gets an audio parameter manager criterion value.
-     *
-     * @param[in] name: criterion name.
-     * @param[in] literalValue: the value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const = 0;
-
-    /**
-     * Gets an audio parameter manager criterion value.
-     *
-     * @param[in] name: criterion name.
-     * @param[in] value: the value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const = 0;
-
-    /**
-     * Sets an audio parameter manager rogue parameter.
-     *
-     * @param[in] path: parameter path.
-     * @param[in] value: numerical value to set. Only String, Integer and Double are supported
-     *                   until now.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool setAudioParameter(const std::string &path, const uint32_t &value) = 0;
-
-    /**
-     * Sets an audio parameter manager rogue parameter.
-     *
-     * @param[in] path: parameter path.
-     * @param[in] value: literal value to set. Only String, Integer and Double are supported
-     *                   until now.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool setAudioParameter(const std::string &path, const std::string &value) = 0;
-
-    /**
-     * Sets an audio parameter manager rogue parameter.
-     *
-     * @param[in] path: parameter path.
-     * @param[in] value: literal value to set. Only String, Integer and Double are supported
-     *                   until now.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool setAudioParameter(const std::string &path, const double &value) = 0;
-
-    /**
-     * Gets an audio parameter manager rogue parameter.
-     *
-     * @param[in] path: parameter path.
-     * @param[in] value: numerical value to get. Only String, Integer and Double are supported
-     *                   until now. The value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool getAudioParameter(const std::string &path, uint32_t &value) const = 0;
-
-    /**
-     * Gets an audio parameter manager rogue parameter.
-     *
-     * @param[in] path: parameter path
-     * @param[in] value: literal value to get. Only String, Integer and Double are supported
-     *                   until now. The value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool getAudioParameter(const std::string &path, std::string &value) const = 0;
-
-    /**
-     * Gets an audio parameter manager rogue parameter.
-     *
-     * @param[in] path: parameter path
-     * @param[in] value: literal value to get. Only String, Integer and Double are supported
-     *                   until now. The value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    virtual bool getAudioParameter(const std::string &path, double &value) const = 0;
-
-protected:
-    virtual ~IStreamInterface() {}
+    protected:
+        virtual ~IStreamInterface() {}
 };
 
 } // namespace intel_audio

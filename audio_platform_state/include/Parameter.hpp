@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "ParameterChangedObserver.hpp"
 #include <NonCopyable.hpp>
 #include <map>
 #include <string>
@@ -33,21 +32,27 @@ namespace intel_audio
 class Parameter : private audio_comms::utilities::NonCopyable
 {
 public:
+    enum Type
+    {
+        RogueParameter,
+        CriterionParameter
+    };
+
     typedef std::map<std::string, std::string>::iterator MappingValuesMapIterator;
     typedef std::map<std::string, std::string>::const_iterator MappingValuesMapConstIterator;
 
-    Parameter(ParameterChangedObserver *observer,
-              const std::string &key,
+    Parameter(const std::string &key,
               const std::string &name,
               const std::string &defaultValue)
-        : mObserver(observer),
-          mDefaultLiteralValue(defaultValue),
+        : mDefaultLiteralValue(defaultValue),
           mAndroidParameterKey(key),
           mAndroidParameter(name)
     {
     }
 
     virtual ~Parameter() {}
+
+    virtual Type getType() const = 0;
 
     /**
      * Get the key of the android parameter associated to the PFW parameter.
@@ -144,11 +149,6 @@ protected:
      * to the parameter / criterion without any validity check.
      */
     std::map<std::string, std::string> mMappingValuesMap;
-
-    /**
-     * Observer handle to notify any change on this parameter.
-     */
-    ParameterChangedObserver *mObserver;
 
 private:
     /**

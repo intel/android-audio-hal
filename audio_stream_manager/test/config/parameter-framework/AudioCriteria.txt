@@ -1,2 +1,3 @@
+InclusiveCriterion  RoutageState          :    Configure        Flow             Path
 ExclusiveCriterion Volume                 :    muted            max
 ExclusiveCriterion ScreenState            :    False            True

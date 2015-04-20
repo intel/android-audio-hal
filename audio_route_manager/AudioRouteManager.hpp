@@ -23,6 +23,7 @@
 #include "RoutingStage.hpp"
 #include "RouteInterface.hpp"
 #include "IStreamInterface.hpp"
+#include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
 #include "ParameterMgrPlatformConnector.h"
 #include <ParameterMgrHelper.hpp>
@@ -42,7 +43,6 @@ namespace intel_audio
 
 class IoStream;
 struct pcm_config;
-class CParameterMgrPlatformConnectorLogger;
 
 class AudioRouteManager : public IStreamInterface,
                           public IRouteInterface,
@@ -81,54 +81,11 @@ private:
     virtual IoStream *getVoiceOutputStream();
     virtual uint32_t getLatencyInUs(const IoStream *stream) const;
     virtual uint32_t getPeriodInUs(const IoStream *stream) const;
-    virtual bool addCriterionType(const std::string &name, bool isInclusive);
-    virtual void addCriterionTypeValuePair(const std::string &name, const std::string &literal,
-                                           uint32_t value);
-    bool addCriterionTypeUnsafe(const std::string &name, bool isInclusive);
-    void addCriterionTypeValuePairUnsafe(const std::string &name, const std::string &literal,
-                                         uint32_t value);
-    virtual void addCriterion(const std::string &name, const std::string &criterionType,
-                              const std::string &defaultLiteralValue = "");
-    virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue)
-    {
-        return setAudioCriterion<std::string>(name, literalValue);
-    }
-    virtual bool setAudioCriterion(const std::string &name, uint32_t value)
-    {
-        return setAudioCriterion<uint32_t>(name, value);
-    }
-    virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const
-    {
-        return getAudioCriterion<std::string>(name, literalValue);
-    }
-    virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const
-    {
-        return getAudioCriterion<uint32_t>(name, value);
-    }
-    virtual bool setAudioParameter(const std::string &path, const uint32_t &value)
-    {
-        return setAudioParameter<uint32_t>(path, value);
-    }
-    virtual bool setAudioParameter(const std::string &path, const std::string &value)
-    {
-        return setAudioParameter<std::string>(path, value);
-    }
-    virtual bool setAudioParameter(const std::string &path, const double &value)
-    {
-        return setAudioParameter<double>(path, value);
-    }
-    virtual bool getAudioParameter(const std::string &path, uint32_t &value) const
-    {
-        return getAudioParameter<uint32_t>(path, value);
-    }
-    virtual bool getAudioParameter(const std::string &path, std::string &value) const
-    {
-        return getAudioParameter<std::string>(path, value);
-    }
-    virtual bool getAudioParameter(const std::string &path, double &value) const
-    {
-        return getAudioParameter<double>(path, value);
-    }
+    virtual android::status_t setParameters(const std::string &keyValuePair,
+                                            bool isSynchronous = false);
+
+    virtual std::string getParameters(const std::string &keys) const;
+    virtual void printPlatformFwErrorInfo() const {}
 
     /// From Route Interface
     virtual void addPort(const std::string &name);
@@ -159,69 +116,33 @@ private:
     virtual void setPortBlocked(const std::string &name, bool isBlocked);
     virtual bool addAudioCriterionType(const std::string &name, bool isInclusive)
     {
-        return addCriterionType(name, isInclusive);
+        return mPlatformState->addCriterionType<Audio>(name, isInclusive);
     }
     virtual void addAudioCriterionTypeValuePair(const std::string &name, const std::string &literal,
                                                 uint32_t value)
     {
-        addCriterionTypeValuePair(name, literal, value);
+        mPlatformState->addCriterionTypeValuePair<Audio>(name, literal, value);
     }
     virtual void addAudioCriterion(const std::string &name, const std::string &criterionType,
                                    const std::string &defaultLiteralValue = "")
     {
-        addCriterion(name, criterionType, defaultLiteralValue);
+        mPlatformState->addCriterion<Audio>(name, criterionType, defaultLiteralValue);
     }
     virtual void setParameter(const std::string &name, uint32_t value)
     {
-        setAudioCriterion<uint32_t>(name, value);
+        setAudioCriterion(name, value);
     }
 
     /**
-     * Gets an audio parameter manager criterion value.
+     * Sets an audio parameter manager criterion value. Note that it just stage the value.
+     * The criterion will be set only at configure stage.
      *
-     * @tparam T type of the value to set, uint32_t and string supported
-     * @param[in] name: criterion name.
-     * @param[out] value: the value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    template <typename T>
-    bool getAudioCriterion(const std::string &name, T &value) const;
-
-    /**
-     * Sets an audio parameter manager parameter value.
-     *
-     * @tparam T type of the value to set, uint32_t and string supported
-     * @param[in] name: parameter name.
-     * @param[in] value: value to set.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    template <typename T>
-    bool setAudioParameter(const std::string &name, const T &value);
-
-    /**
-     * Gets an audio parameter manager parameter value.
-     *
-     * @param[in] name: parameter name.
-     * @param[in] literalValue: the value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    template <typename T>
-    bool getAudioParameter(const std::string &name, T &value) const;
-
-    /**
-     * Sets an audio parameter manager criterion value.
-     *
-     * @tparam T type of the value to set, uint32_t and string supported
      * @param[in] name: criterion name.
      * @param[in] value: value to set.
      *
      * @return true if operation successful, false otherwise.
      */
-    template <typename T>
-    bool setAudioCriterion(const std::string &name, const T &value);
+    bool setAudioCriterion(const std::string &name, uint32_t value);
 
     /**
      * Add an Audio Route to route manager.
@@ -240,12 +161,6 @@ private:
                   const std::string &portDst,
                   bool isOut,
                   std::map<std::string, T *> &elementsMap);
-
-    /**
-     * Commit the criteria those value has been set by Route PFW.
-     * It also applies the configuration to take these criteria into account.
-     */
-    void commitCriteriaAndApply();
 
     /**
      * Find the most suitable route for a given stream according to its attributes, ie flags,
@@ -283,6 +198,13 @@ private:
      * after a mode change, a modem event ...
      */
     void doReconsiderRouting();
+
+    /**
+     * Trigs a routing reconsideration. Must be called with Routing Lock held in W Mode
+     *
+     * @param[in] synchronous: if set, re routing shall be synchronous.
+     */
+    void reconsiderRoutingUnsafe(bool isSynchronous = false);
 
     /**
      *
@@ -465,7 +387,7 @@ private:
      * @return valid pointer on element if found, NULL otherwise.
      */
     template <typename T>
-    T *findElementByName(const std::string &name, std::map<std::string, T *> elementsMap);
+    T *findElementByName(const std::string &name, std::map<std::string, T *> &elementsMap);
 
     /**
      * Reset the availability of routing elements belonging to a map. Routing Elements are ports,
@@ -477,24 +399,7 @@ private:
      * @return valid pointer on element if found, NULL otherwise.
      */
     template <typename T>
-    void resetAvailability(std::map<std::string, T *> elementsMap);
-
-    /**
-     * Returns the handle on the route criterion type associated to the direction.
-     *
-     * @param[in] dir Direction of the route
-     *
-     * @return route criterion type handle.
-     */
-    inline CriterionType *getRouteCriterionType(Direction::Values dir)
-    const
-    {
-        CriteriaTypeMapConstIterator it = mCriterionTypesMap.find(mRouteCriterionType[dir]);
-        AUDIOCOMMS_ASSERT(it != mCriterionTypesMap.end(), "Route CriterionType not found");
-        CriterionType *criterionType = it->second;
-        AUDIOCOMMS_ASSERT(criterionType != NULL, "Invalid route criterion type");
-        return criterionType;
-    }
+    void resetAvailability(std::map<std::string, T *> &elementsMap);
 
     /**
      * Returns the formatted state of the route criterion according to the mask.
@@ -505,25 +410,7 @@ private:
      * @return litteral values of the route separated by a "|".
      */
     template <Direction::Values dir>
-    inline const std::string routeMaskToString(uint32_t mask) const
-    {
-        return getRouteCriterionType(dir)->getFormattedState(mask);
-    }
-
-    /**
-     * Returns the numeric part of the route criterion according to the mask.
-     *
-     * @param[in] name of the route to convert into a mask.
-     *
-     * @return associated mask (or numerical part) of the route criterion.
-     */
-    inline uint32_t routeToMask(AudioRoute *route) const
-    {
-        Direction::Values dir = route->isOut() ? Direction::Output : Direction::Input;
-        int numeric;
-        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName(), numeric) ?
-                    numeric : 0;
-    }
+    inline const std::string routeMaskToString(uint32_t mask) const;
 
     /**
      * Reset the routing conditions.
@@ -540,42 +427,10 @@ private:
     virtual void onPollError();
     virtual bool onProcess(void *, uint32_t);
 
-    static const std::pair<int, const char *> mRoutingStageValuePairs[];
-
-    /**
-     * Defines the name of the Android property describing the name of the *
-     * audio PFW configuration file.
-     */
-    static const char *const mAudioPfwConfFilePropName;
-    static const char *const mAudioPfwDefaultConfFileName;
-    static const char *const
-    mClosingRouteCriterion[Direction::gNbDirections];
-    static const char *const
-    mOpenedRouteCriterion[Direction::gNbDirections];
-    static const char *const mRouteCriterionType[Direction::gNbDirections];
-    static const char *const mRoutingStage;
-    static const char *const mVoiceVolume;
-
-    CParameterMgrPlatformConnector *mAudioPfwConnector; /**< parameter manager connector */
-    CParameterMgrPlatformConnectorLogger *mAudioPfwConnectorLogger; /**< PFW logger. */
-
-    /**
-     * Map of criteria used to pilot the audio PFW.
-     */
-    std::map<std::string, Criterion *> mCriteriaMap;
-
-    Criterion *mRoutingStageCriterion;
-    Criterion *mSelectedClosingRoutes[Direction::gNbDirections];
-    Criterion *mSelectedOpenedRoutes[Direction::gNbDirections];
-
-    ParameterMgrHelper *mParameterHelper;
-
     /**
      * array of list of streams opened.
      */
     std::list<IoStream *> mStreamsList[Direction::gNbDirections];
-
-    std::map<std::string, CriterionType *> mCriterionTypesMap; /**< criterion types map. */
 
     std::map<std::string, AudioRoute *> mRouteMap; /**< map of audio route to manage. */
 
@@ -661,6 +516,8 @@ private:
      */
     template <typename T>
     struct routingElementSupported;
+
+    AudioPlatformState *mPlatformState; /**< Platform state handler for Route / Audio PFW. */
 };
 
 } // namespace intel_audio

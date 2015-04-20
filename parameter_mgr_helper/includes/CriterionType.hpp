@@ -83,7 +83,7 @@ public:
      *
      * @return the literal value associated to the numerical local value.
      */
-    std::string getFormattedState(uint32_t value);
+    std::string getFormattedState(uint32_t value) const;
 
     /**
      * Get the numerical value of the criterion.
