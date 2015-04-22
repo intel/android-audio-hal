@@ -210,18 +210,7 @@ bool AudioStreamRoute::isMatchingWithStream(const IoStream *stream) const
 
 inline bool AudioStreamRoute::areFlagsMatching(uint32_t streamFlagMask) const
 {
-    /**
-     * Note that if the streamFlagsMask not 0 (one or more flags are requested), the route selected
-     * must expose all flags requested by the stream.
-     */
-    if (streamFlagMask != 0) {
-        return (streamFlagMask & getFlagsMask()) == streamFlagMask;
-    }
-    /**
-     * Note that if the streamFlagsMask is 0 (no particular flags requested), the route selected
-     * must not expose also any particular flags to avoid using a dedicated pipe for example.
-     */
-    return getFlagsMask() == 0;
+    return (streamFlagMask & getFlagsMask()) == streamFlagMask;
 }
 
 inline bool AudioStreamRoute::areUseCasesMatching(uint32_t streamUseCaseMask) const
