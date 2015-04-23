@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2015
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,12 @@
 # limitations under the License.
 #
 
-# Recursive call sub-folder Android.mk
+LOCAL_PATH := $(call my-dir)
 
-include $(call all-subdir-makefiles)
+include $(CLEAR_VARS)
 
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+
+LOCAL_MODULE := libaudio_hal_utilities
+
+include $(BUILD_STATIC_LIBRARY)

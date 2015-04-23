@@ -1,32 +1,23 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #pragma once
 
-#include "AudioBand.h"
 #include "ParameterChangedObserver.hpp"
 #include "Parameter.hpp"
 #include <NonCopyable.hpp>
-#include <Direction.hpp>
 #include <KeyValuePairs.hpp>
 #include <IStreamInterface.hpp>
 #include <AudioCommsAssert.hpp>
@@ -46,8 +37,6 @@ namespace intel_audio
 {
 
 class IoStream;
-class ModemProxy;
-class ParameterAdapter;
 
 class ParameterMgrPlatformConnectorLogger;
 
@@ -244,8 +233,12 @@ public:
      *      - Set the FM state.
      *      - Set the screen state.
      *
+     * @param[in] keyValuePairs semicolon separated list of key=value.
+     * @param[in] synchronous if set, application of these parameters shall be synchronous.
+     *
+     * @return OK if these parameters were applyied correctly, error code otherwise.
      */
-    android::status_t setParameters(const std::string &keyValuePairs);
+    android::status_t setParameters(const std::string &keyValuePairs, bool isSynchronous = false);
 
     /**
      * Get the global parameters of Audio HAL.
@@ -272,31 +265,7 @@ public:
     bool isModemEmbedded() const;
 
     /**
-     * Informs that a stream is started.
-     * It adds the stream to active stream list.
-     * Platform states use this list to provide the outputflags/inputsource bitfield criteria
-     * only when the stream using the flag/source is active.
-     *
-     * @param startedStream stream to be added to the list.
-     */
-    void startStream(const IoStream *startedStream);
-
-    /**
-     * Informs that a stream is stopped.
-     * It removes the stream to active stream list and update the outputflags or input sources.
-     * criterion according to the direction of the stream.
-     *
-     * @param startedStream stream to be added to the list.
-     */
-    void stopStream(const IoStream *stoppedStream);
-
-    /**
-     * Update the requested effects.
-     */
-    void updateRequestedEffect();
-
-    /**
-     * Checks if Platform state has changed i.e. at leat one of the criterion of one of PFW instance
+     * Checks if Platform state has changed i.e. at least one of the criterion of one PFW instance
      * has changed.
      */
     bool hasPlatformStateChanged() const;
@@ -305,11 +274,6 @@ public:
      * Print debug information from target debug files
      */
     void printPlatformFwErrorInfo() const;
-
-    static const std::string mKeyAndroidMode; /**< Android Mode Parameter Key. */
-    static const std::string mKeyDeviceOut; /**< Output Device Parameter Key. */
-    static const std::string mKeyDeviceIn; /**< Input Device Parameter Key. */
-    static const std::string mKeyMicMute; /**< Mic Mute Parameter Key. */
 
 private:
     /**
@@ -331,16 +295,6 @@ private:
      * @param[in,out] pairs: {key, value} collection.
      */
     void clearKeys(KeyValuePairs *pairs);
-
-    /**
-     * Set the Voice Band Type.
-     * Voice band type is inferred by the rate of the input stream (which is a "direct" stream, ie
-     * running at the same rate than the VoIP application).
-     *
-     * @param[in] activeStream: current active input stream (i.e. input stream that has a valid
-     *                          input device as per policy implementation.
-     */
-    void setVoipBandType(const IoStream *activeStream);
 
     /**
      * Load the criterion configuration file.
@@ -484,24 +438,6 @@ private:
     void loadCriterionType(cnode *root, bool isInclusive);
 
     /**
-     * Parse and load the ValueSet and their respective attributes from configuration file.
-     *
-     * @tparam[in] valueSet class type.
-     * @param[in] root node of the configuration file
-     */
-    template <class valueSet>
-    void loadValueSet(cnode *root);
-
-    /**
-     * Parse and load the ValueSet list and their respective attributes from configuration file.
-     *
-     * @tparam[in] valueSet class type.
-     * @param[in] root node of the configuration file
-     */
-    template <class valueSet>
-    void loadValueSetList(cnode *root);
-
-    /**
      * Parse and load the chidren node from a given root node.
      *
      * @param[in] root node of the configuration file
@@ -605,27 +541,6 @@ private:
      */
     void setPlatformStateEvent(const std::string &eventStateName);
 
-    /**
-     * Update the streams mask.
-     * This function parses all active streams and concatenate their mask into a bit field.
-     * For input streams:
-     * It not only updates the requested preproc criterion but also the band type.
-     * Only one input stream may be active at one time.
-     * However, it does not mean that both are not started, but only one has a valid
-     * device given by the policy so that the other may not be routed.
-     * Find this active stream with valid device and set the parameters
-     * according to what was requested from this input.
-     *
-     * @param[in] isOut direction of streams.
-     */
-    void updateActiveStreamsParameters(bool isOut);
-
-    /**
-     * Input/Output Streams list.
-     */
-    std::list<const IoStream *>
-    mActiveStreamsList[audio_comms::utilities::Direction::_nbDirections];
-
     std::map<std::string, CriterionType *> mRouteCriterionTypeMap;
     std::map<std::string, Criterion *> mRouteCriterionMap; /**< Route Criterion Map. */
     /** Audio Criterion Map indexed by the name of criterion and storing the name of the type */
@@ -641,21 +556,7 @@ private:
     static const char *const mRoutePfwConfFileNamePropName;
     static const char *const mRoutePfwDefaultConfFileName; /**< default PFW conf file name. */
     static const std::string mStateChangedCriterionName;  /**< StateChanged route criterion. */
-    static const std::string mVoipBandCriterionName; /**< VoIP band criterion name. */
-    static const std::string mOutputFlagsCriterionName; /**< Output flags criterion name. */
-    static const std::string mInputSourcesCriterionName; /**< Input sources criterion name. */
-    static const std::string mInputDevicesCriterionName; /**< Input sources criterion name. */
     static const std::string mAndroidModeCriterionName; /**< Input sources criterion name. */
-
-    /**
-     * requested preprocessors criterion name
-     */
-    static const std::string mPreProcRequestedCriterionName;
-
-    /**
-     * Stream Rate associated with narrow band in case of VoIP.
-     */
-    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
 
     /**
      * String containing a list of paths to the hardware debug files on target
@@ -684,16 +585,6 @@ private:
      * criteria.
      */
     bool mAudioPfwHasChanged;
-
-    /**
-     * Parameter Adapter handle to retrieve parameters from external interfaces (e.g. modem IF).
-     */
-    ParameterAdapter *mParameterAdapter;
-
-    /**
-     * Vector of modem proxies to handle start / stop of modem proxy services.
-     */
-    std::vector<ModemProxy *> mModemProxyVector;
 
     /**
      * PFW concurrency protection - to garantee atomic operation only.

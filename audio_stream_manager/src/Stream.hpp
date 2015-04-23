@@ -1,24 +1,17 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #pragma once
 
@@ -81,7 +74,8 @@ public:
 
     // From TinyAlsaIoStream
     virtual bool isRoutedByPolicy() const;
-    virtual uint32_t getApplicabilityMask() const;
+    virtual uint32_t getFlagMask() const;
+    virtual uint32_t getUseCaseMask() const;
     virtual bool isStarted() const;
     virtual bool isOut() const = 0;
 
@@ -102,7 +96,7 @@ public:
     audio_patch_handle_t getPatchHandle() const { return mPatchHandle; }
 
 protected:
-    Stream(Device *parent, audio_io_handle_t handle);
+    Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask);
 
     /**
      * Set the stream state.
@@ -114,12 +108,13 @@ protected:
     android::status_t setStandby(bool isSet);
 
     /**
-     * Set the Applicability mask.
+     * Set the use case mask, which is an input source mask for an input stream, and still
+     * not used for output streams.
      * This function is non-reetrant.
      *
-     * @param[in] applicabilityMask: ID of input source if input, stream flags if output.
+     * @param[in] useCaseMask
      */
-    void setApplicabilityMask(uint32_t applicabilityMask);
+    void setUseCaseMask(uint32_t useCaseMask);
 
     /**
      * Callback of route attachement called by the stream lib. (and so route manager)
@@ -296,14 +291,23 @@ private:
     uint32_t mLatencyMs; /**< Latency associated with the current flag of the stream. */
 
     /**
-     * Applicability mask is either:
+     * Flags mask is either:
      *  -for output streams: stream flags, from audio_output_flags_t in audio.h file.
      *                       Note that the stream flags are given at output creation and will not
      *                       changed until output is destroyed.
-     *  -for input streams: input source (bitfield done from audio_source_t in audio.h file.
+     *  -for input streams: audio_input_flags_t.
+     *          Note that 0 will be taken as none.
+     * The values must match audio.h file definitions.
+     */
+    uint32_t mFlagMask;
+
+    /**
+     * Use case mask is either:
+     *  -for output streams: Not used.
+     *  -for input streams: input source translated into a bit.
      *          Note that 0 will be taken as none.
      */
-    uint32_t mApplicabilityMask;
+    uint32_t mUseCaseMask;
 
     static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
     static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */
@@ -324,12 +328,12 @@ private:
     /**
      * Array of property names before conversion
      */
-    static const std::string dumpBeforeConvProps[audio_comms::utilities::Direction::_nbDirections];
+    static const std::string dumpBeforeConvProps[Direction::gNbDirections];
 
     /**
      * Array of property names after conversion
      */
-    static const std::string dumpAfterConvProps[audio_comms::utilities::Direction::_nbDirections];
+    static const std::string dumpAfterConvProps[Direction::gNbDirections];
 
     /** maximum sleep time to be allowed by HAL, in microseconds. */
     static const uint32_t mMaxSleepTime = 1000000UL;

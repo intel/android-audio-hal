@@ -1,24 +1,17 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #pragma once
 
@@ -138,14 +131,31 @@ public:
     virtual bool isApplicable(const IoStream *stream = NULL) const;
 
     /**
-     * Returns the applicable mask of the route
-     * Note that applicable mask has a different meaning according to the direction:
-     * -inputSource for input route
-     * -outputflags for output route.
+     * Checks if the stream route matches the given stream attributes, i.e. the flags, the use case.
+     *
+     * @param stream candidate for using this route.
+     *
+     * @return true if the route matches, false otherwise.
      */
-    uint32_t getApplicableMask() const
+    bool isMatchingWithStream(const IoStream *stream) const;
+
+    /**
+     * Returns the applicable flags mask of the route
+     */
+    uint32_t getFlagsMask() const
     {
-        return mConfig.applicabilityMask;
+        return mConfig.flagMask;
+    }
+
+    /**
+     * Returns the applicable use cases mask of the route
+     * Note that use case mask has a different meaning according to the direction:
+     * -inputSource for input route
+     * -not used until now for output route.
+     */
+    uint32_t getUseCaseMask() const
+    {
+        return mConfig.useCaseMask;
     }
 
     /**
@@ -226,14 +236,32 @@ protected:
 
 private:
     /**
+     * Checks if the use cases supported by this route are matching with the stream use case mask.
+     *
+     * @param[in] streamUseCaseMask mask of the use case requested by a stream
+     *
+     * @return true if the route supports the stream use case, false otherwise.
+     */
+    inline bool areUseCasesMatching(uint32_t streamUseCaseMask) const;
+
+    /**
+     * Checks if the flags supported by the route are matching with the given stream flags mask.
+     *
+     * @param[in] streamFlagMask mask of the flags requested by a stream
+     *
+     * @return true if the route supports the stream flags, false otherwise.
+     */
+    inline bool areFlagsMatching(uint32_t streamFlagMask) const;
+
+    /**
      * Checks if route implements all effects in the mask.
      *
-     * @param[in] effectsMask mask of the effects to check.
+     * @param[in] effectMask mask of the effects to check.
      *
      * @return true if all effects in the mask are supported by the stream route,
      *          false otherwise
      */
-    bool implementsEffects(uint32_t effectsMask) const;
+    bool implementsEffects(uint32_t effectMask) const;
 
     /**
      * Get the id of current pcm device.
