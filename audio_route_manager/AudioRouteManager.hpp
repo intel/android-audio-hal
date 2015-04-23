@@ -95,14 +95,14 @@ private:
                                const std::string &portSrc, const std::string &portDst,
                                bool isOut)
     {
-        addRoute<AudioRoute>(name, portSrc, portDst, isOut, mRouteMap);
+        addRoute<AudioRoute>(name, portSrc, portDst, isOut);
     }
 
     virtual void addAudioStreamRoute(const std::string &name,
                                      const std::string &portSrc, const std::string &portDst,
                                      bool isOut)
     {
-        addRoute<AudioStreamRoute>(name, portSrc, portDst, isOut, mStreamRouteMap);
+        addRoute<AudioStreamRoute>(name, portSrc, portDst, isOut);
     }
 
     virtual void updateStreamRouteConfig(const std::string &name,
@@ -153,14 +153,12 @@ private:
      * @param[in] portSrc: source port used by route, may be null if no protection needed.
      * @param[in] portDst: destination port used by route, may be null if no protection needed.
      * @param[in] isOut: route direction (true for output, false for input).
-     * @param[in] elementsMap: list in which this route needs to be added.
      */
     template <typename T>
     void addRoute(const std::string &name,
                   const std::string &portSrc,
                   const std::string &portDst,
-                  bool isOut,
-                  std::map<std::string, T *> &elementsMap);
+                  bool isOut);
 
     /**
      * Find the most suitable route for a given stream according to its attributes, ie flags,
@@ -354,14 +352,11 @@ private:
      * @tparam T type of routing element to add.
      * @param[in] key to be used for indexing the map.
      * @param[in] name of the routing element to add.
-     * @param[in] elementsMap maps of routing elements to add to.
      *
-     * @return true if added, false otherwise (already added or PFW already started).
+     * @return Newly created and added element, NULL otherwise.
      */
     template <typename T>
-    bool addElement(const std::string &key,
-                    const string &name,
-                    std::map<std::string, T *> &elementsMap);
+    T *addElement(const std::string &key, const string &name);
 
     /**
      * Get a routing element from a map by its name. Routing Elements are ports, port
@@ -369,12 +364,11 @@ private:
      *
      * @tparam T type of routing element to search.
      * @param[in] name name of the routing element to find.
-     * @param[in] elementsMap maps of routing elements to search into.
      *
      * @return valid pointer on routing element if found, assert if element not found.
      */
     template <typename T>
-    T *getElement(const std::string &name, std::map<std::string, T *> &elementsMap);
+    T *getElement(const std::string &name);
 
     /**
      * Find a routing element from a map by its name. Routing Elements are ports, port
@@ -382,24 +376,22 @@ private:
      *
      * @tparam T type of routing element to search.
      * @param[in] name name of the routing element to find.
-     * @param[in] elementsMap maps of routing elements to search into.
      *
      * @return valid pointer on element if found, NULL otherwise.
      */
     template <typename T>
-    T *findElementByName(const std::string &name, std::map<std::string, T *> &elementsMap);
+    T *findElementByName(const std::string &name);
 
     /**
      * Reset the availability of routing elements belonging to a map. Routing Elements are ports,
      * port, groups, route and stream route. Compile time error generated if called with wrong type.
      *
      * @tparam T type of routing element.
-     * @param[in] elementsMap maps of routing elements to search into.
      *
      * @return valid pointer on element if found, NULL otherwise.
      */
     template <typename T>
-    void resetAvailability(std::map<std::string, T *> &elementsMap);
+    void resetAvailability();
 
     /**
      * Returns the formatted state of the route criterion according to the mask.
@@ -431,6 +423,9 @@ private:
      * array of list of streams opened.
      */
     std::list<IoStream *> mStreamsList[Direction::gNbDirections];
+
+    template <class T>
+    std::map<std::string, T *> &getMap();
 
     std::map<std::string, AudioRoute *> mRouteMap; /**< map of audio route to manage. */
 

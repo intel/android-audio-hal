@@ -41,6 +41,30 @@ namespace intel_audio
 {
 
 template <>
+std::map<std::string, AudioRoute *> &AudioRouteManager::getMap()
+{
+    return mRouteMap;
+}
+
+template <>
+std::map<std::string, AudioStreamRoute *> &AudioRouteManager::getMap()
+{
+    return mStreamRouteMap;
+}
+
+template <>
+std::map<std::string, AudioPort *> &AudioRouteManager::getMap()
+{
+    return mPortMap;
+}
+
+template <>
+std::map<std::string, AudioPortGroup *> &AudioRouteManager::getMap()
+{
+    return mPortGroupMap;
+}
+
+template <>
 struct AudioRouteManager::routingElementSupported<AudioPort> {};
 template <>
 struct AudioRouteManager::routingElementSupported<AudioPortGroup> {};
@@ -229,8 +253,8 @@ void AudioRouteManager::resetRouting()
         mRoutes[i].needRepath = 0;
     }
 
-    resetAvailability<AudioRoute>(mRouteMap);
-    resetAvailability<AudioPort>(mPortMap);
+    resetAvailability<AudioRoute>();
+    resetAvailability<AudioPort>();
 }
 
 void AudioRouteManager::addStream(IoStream *stream)
@@ -421,41 +445,52 @@ void AudioRouteManager::doEnableRoutes(bool isPreEnable)
 }
 
 template <typename T>
-bool AudioRouteManager::addElement(const string &key,
-                                   const string &name,
-                                   map<string, T *> &elementsMap)
+T *AudioRouteManager::addElement(const string &key, const string &name)
 {
     routingElementSupported<T>();
+    map<string, T *> &elementsMap = getMap<T>();
+
     if (elementsMap.find(key) != elementsMap.end()) {
         Log::Warning() << __FUNCTION__ << ": element(" << key << " already added";
-        return false;
+        return NULL;
     }
-    elementsMap[key] = new T(name);
-    return true;
+    T *element = new T(name);
+    elementsMap[key] = element;
+    return element;
 }
 
 template <typename T>
-T *AudioRouteManager::getElement(const string &name, map<string, T *> &elementsMap)
+T *AudioRouteManager::getElement(const string &name)
 {
     routingElementSupported<T>();
+
+    map<string, T *> &elementsMap = getMap<T>();
+
     typename map<string, T *>::iterator it = elementsMap.find(name);
+
     AUDIOCOMMS_ASSERT(it != elementsMap.end(), "Element " << name << " not found");
     return it->second;
 }
 
 template <typename T>
-T *AudioRouteManager::findElementByName(const std::string &name, map<string, T *> &elementsMap)
+T *AudioRouteManager::findElementByName(const std::string &name)
 {
     routingElementSupported<T>();
-    typename map<string, T *>::iterator it;
-    it = elementsMap.find(name);
-    return (it == elementsMap.end()) ? NULL : it->second;
+
+    map<string, T *> &elementsMap = getMap<T>();
+
+    typename map<string, T *>::iterator it = elementsMap.find(name);
+
+    return (elementsMap.find(name) == elementsMap.end()) ? NULL : it->second;
 }
 
 template <typename T>
-void AudioRouteManager::resetAvailability(map<string, T *> &elementsMap)
+void AudioRouteManager::resetAvailability()
 {
     routingElementSupported<T>();
+
+    map<string, T *> &elementsMap = getMap<T>();
+
     typename map<string, T *>::iterator it;
     for (it = elementsMap.begin(); it != elementsMap.end(); ++it) {
         it->second->resetAvailability();
@@ -597,39 +632,39 @@ void AudioRouteManager::setRouteApplicable(const string &name, bool isApplicable
 {
     Log::Verbose() << __FUNCTION__ << ": " << name;
     AutoW lock(mRoutingLock);
-    getElement<AudioRoute>(name, mRouteMap)->setApplicable(isApplicable);
+    getElement<AudioRoute>(name)->setApplicable(isApplicable);
 }
 
 void AudioRouteManager::setRouteNeedReconfigure(const string &name, bool needReconfigure)
 {
     Log::Verbose() << __FUNCTION__ << ": " << name;
     AutoW lock(mRoutingLock);
-    getElement<AudioRoute>(name, mRouteMap)->setNeedReconfigure(needReconfigure);
+    getElement<AudioRoute>(name)->setNeedReconfigure(needReconfigure);
 }
 
 void AudioRouteManager::setRouteNeedReroute(const string &name, bool needReroute)
 {
     Log::Verbose() << __FUNCTION__ << ": " << name;
     AutoW lock(mRoutingLock);
-    getElement<AudioRoute>(name, mRouteMap)->setNeedReroute(needReroute);
+    getElement<AudioRoute>(name)->setNeedReroute(needReroute);
 }
 
 void AudioRouteManager::updateStreamRouteConfig(const string &name,
                                                 const StreamRouteConfig &config)
 {
     AutoW lock(mRoutingLock);
-    getElement<AudioStreamRoute>(name, mStreamRouteMap)->updateStreamRouteConfig(config);
+    getElement<AudioStreamRoute>(name)->updateStreamRouteConfig(config);
 }
 
 void AudioRouteManager::addRouteSupportedEffect(const string &name, const string &effect)
 {
-    getElement<AudioStreamRoute>(name, mStreamRouteMap)->addEffectSupported(effect);
+    getElement<AudioStreamRoute>(name)->addEffectSupported(effect);
 }
 
 void AudioRouteManager::setPortBlocked(const string &name, bool isBlocked)
 {
     AutoW lock(mRoutingLock);
-    getElement<AudioPort>(name, mPortMap)->setBlocked(isBlocked);
+    getElement<AudioPort>(name)->setBlocked(isBlocked);
 }
 
 template <bool isOut>
@@ -643,7 +678,6 @@ bool AudioRouteManager::setAudioCriterion(const std::string &name, uint32_t valu
 {
     AutoW lock(mRoutingLock);
     return mPlatformState->stageCriterion<Audio>(name, value);
-
 }
 
 static uint32_t count[Direction::gNbDirections] = {
@@ -654,23 +688,24 @@ template <typename T>
 void AudioRouteManager::addRoute(const string &name,
                                  const string &portSrc,
                                  const string &portDst,
-                                 bool isOut,
-                                 map<string, T *> &elementsMap)
+                                 bool isOut)
 {
     std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
 
     AutoW lock(mRoutingLock);
-    if (addElement<T>(mapKeyName, name, elementsMap)) {
-        T *route = elementsMap[mapKeyName];
+
+    T *route = addElement<T>(mapKeyName, name);
+
+    if (route != NULL) {
         Log::Debug() << __FUNCTION__ << ": Name=" << mapKeyName
                      << " ports used= " << portSrc << " ," << portDst;
         route->setDirection(isOut);
         route->setMask(1 << count[isOut]);
         if (!portSrc.empty()) {
-            route->addPort(findElementByName<AudioPort>(portSrc, mPortMap));
+            route->addPort(findElementByName<AudioPort>(portSrc));
         }
         if (!portDst.empty()) {
-            route->addPort(findElementByName<AudioPort>(portDst, mPortMap));
+            route->addPort(findElementByName<AudioPort>(portDst));
         }
         if (route->isStreamRoute()) {
 
@@ -690,18 +725,18 @@ void AudioRouteManager::addPort(const string &name)
 {
     AutoW lock(mRoutingLock);
     Log::Debug() << __FUNCTION__ << ": Name=" << name;
-    addElement<AudioPort>(name, name, mPortMap);
+    addElement<AudioPort>(name, name);
 }
 
 void AudioRouteManager::addPortGroup(const string &name, const string &portMember)
 {
     AutoW lock(mRoutingLock);
-    if (addElement<AudioPortGroup>(name, name, mPortGroupMap)) {
-        Log::Debug() << __FUNCTION__ << ": Group=" << name << " PortMember to add=" << portMember;
-        AudioPortGroup *portGroup = mPortGroupMap[name];
-        AUDIOCOMMS_ASSERT(portGroup != NULL, "Fatal: invalid port group!");
+    AudioPortGroup *portGroup = addElement<AudioPortGroup>(name, name);
 
-        AudioPort *port = findElementByName<AudioPort>(portMember, mPortMap);
+    if (portGroup != NULL) {
+        Log::Debug() << __FUNCTION__ << ": Group=" << name << " PortMember to add=" << portMember;
+
+        AudioPort *port = findElementByName<AudioPort>(portMember);
         portGroup->addPortToGroup(port);
     }
 }
