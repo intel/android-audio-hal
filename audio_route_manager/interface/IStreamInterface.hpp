@@ -1,40 +1,31 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #pragma once
 
-#include "Interface.h"
 #include "StreamRouteConfig.hpp"
 #include <utils/Errors.h>
+#include <string>
 
 namespace intel_audio
 {
 
 class IoStream;
 
-struct IStreamInterface : public NInterfaceProvider::IInterface
+struct IStreamInterface
 {
-    INTERFACE_NAME("StreamInterface");
-
     /**
      * Starts the route manager service.
      */
@@ -61,19 +52,10 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
 
     /**
      * Trigs a routing reconsideration.
-     */
-    virtual void reconsiderRouting() = 0;
-
-    /**
-     * Informs that a new stream is started.
-     */
-    virtual void startStream() = 0;
-
-    /**
      *
-     * Informs that a stream is stopped.
+     * @param[in] synchronous: if set, re routing shall be synchronous.
      */
-    virtual void stopStream() = 0;
+    virtual void reconsiderRouting(bool isSynchronous = false) = 0;
 
     /**
      * Sets the voice volume.
@@ -102,28 +84,28 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * Upon creation, streams need to provide latency. As stream are not attached
      * to any route at creation, they must get a latency dependant of the
      * platform to provide information of latency and buffersize (inferred from ALSA ring buffer).
+     * This latency depends on the route that will be assigned to the stream. The route manager
+     * will return the route matching those stream attributes. If no route is found, it returns 0.
      *
-     * @param[in] isOut direction of the stream requesting the configuration
-     * @param[in] flags only valid for output stream, depends on flag, might use different
-     *                    buffering model.
+     * @param[in] stream requesting the latency
      *
      * @return latency in microseconds
      */
-    virtual uint32_t getLatencyInUs(bool isOut, uint32_t flags = 0) const = 0;
+    virtual uint32_t getLatencyInUs(const IoStream *stream) const = 0;
 
     /**
      * Get the period size.
      * Upon creation, streams need to provide buffer size. As stream are not attached
      * to any route at creation, they must get a latency dependant of the
      * platform to provide information of latency and buffersize (inferred from ALSA ring buffer).
+     * This period depends on the route that will be assigned to the stream. The route manager
+     * will return the route matching those stream attributes. If no route is found, it returns 0.
      *
-     * @param[in] isOut direction of the stream requesting the configuration
-     * @param[in] flags only valid for output stream, depends on flag, might use different
-     *                    buffering model.
+     * @param[in] stream requesting the period
      *
      * @return period size in microseconds
      */
-    virtual uint32_t getPeriodInUs(bool isOut, uint32_t flags = 0) const = 0;
+    virtual uint32_t getPeriodInUs(const IoStream *stream) const = 0;
 
 
     /**
@@ -267,6 +249,9 @@ struct IStreamInterface : public NInterfaceProvider::IInterface
      * @return true if operation successful, false otherwise.
      */
     virtual bool getAudioParameter(const std::string &path, double &value) const = 0;
+
+protected:
+    virtual ~IStreamInterface() {}
 };
 
 } // namespace intel_audio

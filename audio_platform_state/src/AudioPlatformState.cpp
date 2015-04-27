@@ -1,24 +1,17 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #define LOG_TAG "AudioIntelHal/AudioPlatformState"
 
@@ -26,8 +19,6 @@
 #include "AudioHalConf.hpp"
 #include "CriterionParameter.hpp"
 #include "RogueParameter.hpp"
-#include "ModemProxy.hpp"
-#include "ParameterAdapter.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include "VolumeKeys.hpp"
 #include <IoStream.hpp>
@@ -100,16 +91,7 @@ public:
 };
 
 const std::string AudioPlatformState::mStateChangedCriterionName = "StatesChanged";
-const std::string AudioPlatformState::mVoipBandCriterionName = "VoIPBandType";
-const std::string AudioPlatformState::mOutputFlagsCriterionName = "OutputFlags";
-const std::string AudioPlatformState::mInputDevicesCriterionName = "InputDevices";
 const std::string AudioPlatformState::mAndroidModeCriterionName = "AndroidMode";
-const std::string AudioPlatformState::mInputSourcesCriterionName = "InputSources";
-const std::string AudioPlatformState::mPreProcRequestedCriterionName = "PreProcEnabled";
-const std::string AudioPlatformState::mKeyAndroidMode =  "android_mode";
-const std::string AudioPlatformState::mKeyDeviceOut = "output_devices";
-const std::string AudioPlatformState::mKeyDeviceIn =  "input_devices";
-const std::string AudioPlatformState::mKeyMicMute = "mic_mute";
 
 template <>
 struct AudioPlatformState::parameterManagerElementSupported<Criterion> {};
@@ -119,8 +101,7 @@ struct AudioPlatformState::parameterManagerElementSupported<CriterionType> {};
 AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     : mStreamInterface(streamInterface),
       mRoutePfwConnectorLogger(new ParameterMgrPlatformConnectorLogger),
-      mAudioPfwHasChanged(false),
-      mParameterAdapter(new ParameterAdapter(this))
+      mAudioPfwHasChanged(false)
 {
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
@@ -158,14 +139,6 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
 
 AudioPlatformState::~AudioPlatformState()
 {
-    /// Stop All Modem Proxies
-    for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
-        mModemProxyVector[index]->stop();
-    }
-
-    mParameterAdapter->stop();
-    delete mParameterAdapter;
-
     // Delete All criterion
     CriterionMapIterator it;
     for (it = mRouteCriterionMap.begin(); it != mRouteCriterionMap.end(); ++it) {
@@ -197,13 +170,6 @@ status_t AudioPlatformState::start()
         return android::NO_INIT;
     }
     Log::Debug() << __FUNCTION__ << ": Route PFW successfully started!";
-
-    /// Start All Modem Proxies
-    for (uint32_t index = 0; index < mModemProxyVector.size(); index++) {
-        mModemProxyVector[index]->start();
-    }
-    /// Start ParameterAdapter
-    mParameterAdapter->start();
 
     return android::OK;
 }
@@ -359,9 +325,9 @@ void AudioPlatformState::addParameter<AudioPlatformState::Audio, AudioPlatformSt
                                                      mStreamInterface,
                                                      defaultValue);
     } else if (typeName == gDoubleTypeTag) {
-         rogueParam= new AudioRogueParameter<double>(this, paramKey, name,
-                                                    mStreamInterface,
-                                                    defaultValue);
+        rogueParam = new AudioRogueParameter<double>(this, paramKey, name,
+                                                     mStreamInterface,
+                                                     defaultValue);
     } else {
         Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
         return;
@@ -659,56 +625,6 @@ void AudioPlatformState::loadConfigFor(cnode *node)
     loadRogueParameterTypeList<pfw>(node);
 }
 
-/**
- * ModemProxy loadValueSet specialization. Only this one is available until now.
- */
-template <>
-void AudioPlatformState::loadValueSet<ModemProxy>(cnode *root)
-{
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    string libraryName;
-    string libraryInstance;
-    cnode *node;
-    for (node = root->first_child; node != NULL; node = node->next) {
-        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
-
-        if (string(node->name) == gInterfaceLibraryName) {
-            libraryName = node->value;
-        } else if (string(node->name) == gInterfaceLibraryInstance) {
-            libraryInstance = node->value;
-        } else {
-            Log::Error() << __FUNCTION__
-                         << ": Unrecognized " << node->name << " " << node->value << " node ";
-        }
-    }
-    Log::Verbose() << __FUNCTION__ << ": Instantiate (lib=" << libraryName
-                   << ", Instance=" << libraryInstance << ") ValueSet ";
-    ModemProxy *modemProxy = new ModemProxy(libraryName,
-                                            libraryInstance,
-                                            mParameterAdapter,
-                                            mParameterAdapter);
-    mModemProxyVector.push_back(modemProxy);
-}
-
-/**
- * ModemProxy loadValueSet specialization. Only this one is available until now.
- */
-template <>
-void AudioPlatformState::loadValueSetList<ModemProxy>(cnode *root)
-{
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, gModemValueSet.c_str());
-    if (node == NULL) {
-        Log::Warning() << __FUNCTION__ << ": Could not find node for ValueSet=" << gModemValueSet;
-        return;
-    }
-    Log::Verbose() << __FUNCTION__ << ": Loading conf for ValueSet=" << gModemValueSet;
-    for (node = node->first_child; node != NULL; node = node->next) {
-        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
-        loadValueSet<ModemProxy>(node);
-    }
-}
-
 status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 {
     AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
@@ -725,7 +641,6 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 
     loadConfig<Audio>(root);
     loadConfig<Route>(root);
-    loadValueSetList<ModemProxy>(root);
 
     config_free(root);
     free(root);
@@ -751,7 +666,7 @@ void AudioPlatformState::clearKeys(KeyValuePairs *pairs)
     }
 }
 
-status_t AudioPlatformState::setParameters(const string &keyValuePairs)
+status_t AudioPlatformState::setParameters(const string &keyValuePairs, bool isSynchronous)
 {
     mPfwLock.writeLock();
 
@@ -774,7 +689,7 @@ status_t AudioPlatformState::setParameters(const string &keyValuePairs)
     mPfwLock.unlock();
 
     // Trig the route manager
-    mStreamInterface->reconsiderRouting();
+    mStreamInterface->reconsiderRouting(isSynchronous);
 
     return status;
 }
@@ -784,8 +699,6 @@ void AudioPlatformState::parameterHasChanged(const std::string &event)
     // Handle particular cases, event is the criterion name, not the key
     if (event == mAndroidModeCriterionName) {
         VolumeKeys::wakeup(getValue(mAndroidModeCriterionName) == AUDIO_MODE_IN_CALL);
-    } else if (event == mInputDevicesCriterionName) {
-        updateActiveStreamsParameters(false);
     }
     setPlatformStateEvent(event);
 }
@@ -832,67 +745,6 @@ void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
     stateChange->setValue<uint32_t>(platformEventChanged);
 }
 
-void AudioPlatformState::setVoipBandType(const IoStream *activeStream)
-{
-    CAudioBand::Type band = CAudioBand::EWide;
-    if (activeStream->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing) {
-
-        band = CAudioBand::ENarrow;
-    }
-    setValue(band, mVoipBandCriterionName);
-}
-
-void AudioPlatformState::updateRequestedEffect()
-{
-    AutoW lock(mPfwLock);
-    updateActiveStreamsParameters(false);
-}
-
-void AudioPlatformState::updateActiveStreamsParameters(bool isOut)
-{
-    StreamListConstIterator it;
-    uint32_t streamsMask = 0;
-    uint32_t effectRequested = 0;
-
-    for (it = mActiveStreamsList[isOut].begin(); it != mActiveStreamsList[isOut].end(); ++it) {
-        const IoStream *stream = *it;
-        if (stream->isRoutedByPolicy()) {
-            streamsMask |= stream->getApplicabilityMask();
-            if (!isOut) {
-                // Set the requested effect from this active input.
-                effectRequested = stream->getEffectRequested();
-                // Set the band type according to this active input.
-                setVoipBandType(stream);
-                // One and only one input stream must be active. @todo: check for L-dessert.
-                break;
-            }
-        }
-    }
-    setValue(streamsMask, isOut ? mOutputFlagsCriterionName : mInputSourcesCriterionName);
-    if (!isOut) {
-        setValue(effectRequested, mPreProcRequestedCriterionName);
-    }
-    applyPlatformConfiguration();
-}
-
-void AudioPlatformState::startStream(const IoStream *startedStream)
-{
-    AUDIOCOMMS_ASSERT(startedStream != NULL, "NULL stream");
-    AutoW lock(mPfwLock);
-    bool isOut = startedStream->isOut();
-    mActiveStreamsList[isOut].push_back(startedStream);
-    updateActiveStreamsParameters(isOut);
-}
-
-void AudioPlatformState::stopStream(const IoStream *stoppedStream)
-{
-    AUDIOCOMMS_ASSERT(stoppedStream != NULL, "NULL stream");
-    AutoW lock(mPfwLock);
-    bool isOut = stoppedStream->isOut();
-    mActiveStreamsList[isOut].remove(stoppedStream);
-    updateActiveStreamsParameters(isOut);
-}
-
 void AudioPlatformState::clearPlatformStateEvents()
 {
     mRouteCriterionMap[mStateChangedCriterionName]->setValue<uint32_t>(0);
@@ -936,11 +788,6 @@ int AudioPlatformState::getValue(const std::string &stateName) const
         return value;
     }
     return 0;
-}
-
-bool AudioPlatformState::isModemEmbedded() const
-{
-    return !mModemProxyVector.empty();
 }
 
 void AudioPlatformState::printPlatformFwErrorInfo() const

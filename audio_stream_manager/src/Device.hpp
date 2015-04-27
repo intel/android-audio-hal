@@ -1,36 +1,31 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #pragma once
 
 #include "Patch.hpp"
 #include "Port.hpp"
-#include <InterfaceProviderImpl.h>
 #include <IStreamInterface.hpp>
+#include <KeyValuePairs.hpp>
+#include <Direction.hpp>
 #include <audio_effects/effect_aec.h>
 #include <audio_utils/echo_reference.h>
 #include <hardware/audio_effect.h>
 #include <hardware/hardware.h>
 #include <DeviceInterface.hpp>
+#include <AudioBand.h>
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <NonCopyable.hpp>
@@ -124,6 +119,32 @@ public:
 
 protected:
     /**
+     * Update the streams parameters upon start / stop / change of devices events on streams.
+     * in a synchronous manner.
+     *
+     * @param[in] streamMixPortRole role of the stream (acting as a mix port).
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateStreamsParametersSync(audio_port_role_t streamPortRole)
+    {
+        return updateStreamsParameters(streamPortRole, true);
+    }
+
+    /**
+     * Update the streams parameters upon start / stop / change of devices events on streams.
+     * in an asynchronous manner.
+     *
+     * @param[in] streamMixPortRole role of the stream (acting as a mix port).
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateStreamsParametersAsync(audio_port_role_t streamPortRole)
+    {
+        return updateStreamsParameters(streamPortRole, false);
+    }
+
+    /**
      * Returns the stream interface of the route manager.
      * As a AudioHAL creator must ensure HAL is started to performs any action on AudioHAL,
      * this function leaves if the stream interface was not created successfully upon start of HAL.
@@ -148,6 +169,104 @@ protected:
 
 private:
     /**
+     * Update the streams parameters upon start / stop / change of devices events on streams.
+     * This function parses all streams and concatenate their mask into a bit field.
+     * For input streams:
+     * It not only updates the requested preproc criterion but also the band type.
+     * Only one input stream may be active at one time by design of android audio policy.
+     * Find this active stream with valid device and set the parameters
+     * according to what was requested from this input.
+     *
+     * @param[in] isOut direction of stream from which the events is issued.
+     * @param[in] isSynchronous: need to update the settings in a synchronous way or not.
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateStreamsParameters(audio_port_role_t streamPortRole, bool isSynchronous)
+    {
+        // If a stream is a sink mix port: we need to update source devices.
+        // If a stream is a source mix port: we need to update parameters related to sink devices.
+        return updateParameters(streamPortRole == AUDIO_PORT_ROLE_SINK,
+                                streamPortRole == AUDIO_PORT_ROLE_SOURCE,
+                                isSynchronous);
+    }
+
+    inline audio_port_role_t getOppositeRole(audio_port_role_t role) const
+    {
+        return role == AUDIO_PORT_ROLE_SINK ? AUDIO_PORT_ROLE_SOURCE : AUDIO_PORT_ROLE_SINK;
+    }
+
+    /**
+     * Retrieve the device mask from a given stream.
+     *
+     * @param[in] stream for which the request applies to.
+     *
+     * @return devices mask associated to the stream.
+     */
+    uint32_t getDeviceFromStream(const Stream &stream) const;
+
+    /**
+     * Update the streams parameters according to the change of source and or sink devices.
+     *
+     * @param[in] updateSourceDevice: if set, we shall update the parameter linked to output devices
+     * @param[in] updateSinkDevice: if set, we shall update the parameter linked to input devices
+     * @param[in] isSynchronous: need to update the settings in a synchronous way or not.
+     *
+     * @return OK if successfully updated streams parameters, error code otherwise.
+     */
+    android::status_t updateParameters(bool updateSourceDevice, bool updateSinkDevice,
+                                       bool isSynchronous = false);
+
+    /**
+     * Prepare the streams parameters to be sent to the parameter framework for routing.
+     *
+     * @param[in] streamPortRole direction of stream from which the events is issued.
+     * @param[out] pairs: parameters as collection of {key,value} pairs.
+     */
+    void prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs);
+
+    /**
+     * Extract from a given stream the parameters that needs to be updated.
+     *
+     * @param[in] stream for which the request apply to.
+     * @param[in|out] flagMask of the active streams.
+     * @param[in|out] useCaseMask of the active streams.
+     * @param[in|out] devicesMask involved in stream operations.
+     * @param[in|out] requestedEffectMask of the active streams.
+     */
+    void updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
+                                    uint32_t &useCaseMask, uint32_t &deviceMask,
+                                    uint32_t &requestedEffectMask);
+
+    /**
+     * Selects the output devices from streams devices and internal devices. It also take into
+     * account the specific role of the primary output and the compress (as not handled by
+     * primary HAL BUT routed by primary).
+     *
+     * @param[in] internalDeviceMask Devices that are connected internal (without streams).
+     * @param[in] streamDeviceMask involved in stream operations.
+     *
+     * @return selected output devices to be routed.
+     */
+    uint32_t selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask);
+
+    /**
+     * Checks if the stream is the primary output stream, i.e. it has PRIMARY flags.
+     *
+     * @param[in] stream to check
+     *
+     * @return true if stream is the primary output, false otherwise.
+     */
+    bool isPrimaryOutput(const Stream &stream) const;
+
+    /**
+     * Infer the band from a stream, using its sample rate information.
+     *
+     * @return audio band associated to this stream.
+     */
+    inline CAudioBand::Type getBandFromActiveInput() const;
+
+    /**
      * @return true if the collection of stream managed by the HW Device has a stream tracked by the
      *         given stream handle, false otherwise.
      */
@@ -165,7 +284,7 @@ private:
      * @return true if the collection of patch managed by the HW Device has a patch tracked by the
      *         given patch handle, false otherwise.
      */
-    bool hasPatchUnsafe(const audio_patch_handle_t &patchHandle);
+    bool hasPatchUnsafe(const audio_patch_handle_t &patchHandle) const;
 
     /**
      * Retrieve a stream from a stream handle from the collection managed by the HW Device.
@@ -192,6 +311,7 @@ private:
      *
      * @return Patch tracked by the given Patch handle.
      */
+    const Patch &getPatchUnsafe(const audio_patch_handle_t &patchHandle) const;
     Patch &getPatchUnsafe(const audio_patch_handle_t &patchHandle);
 
     virtual Port &getPortFromHandle(const audio_port_handle_t &portHandle);
@@ -212,30 +332,23 @@ private:
     }
 
     /**
-     * Handle a stream start request.
-     * It results in a routing reconsideration. It must be SYNCHRONOUS to avoid loosing samples.
-     *
-     * @param[in] stream requester Stream.
-     *
-     * @return OK if stream started successfully, error code otherwise.
+     * @return true if the system is in CSV call, false otherwise.
      */
-    android::status_t startStream(Stream *stream);
+    inline bool isInCall() const
+    {
+        return mMode == AUDIO_MODE_IN_CALL;
+    }
 
-    /**
-     * Handle a stream stop request.
-     * It results in a routing reconsideration.
-     *
-     * @param[in] stream requester Stream.
-     *
-     * @return OK if stream stopped successfully, error code otherwise.
-     */
-    android::status_t stopStream(Stream *stream);
+    inline Direction::Values getDirectionFromMix(audio_port_role_t streamPortRole) const
+    {
+        return streamPortRole == AUDIO_PORT_ROLE_SOURCE ? Direction::Output : Direction::Input;
+    }
 
-    /**
-     * Handle a change of requested effect.
-     * It results in a routing reconsideration.
-     */
-    void updateRequestedEffect();
+    inline audio_output_flags_t getCompressOffloadFlags() const
+    {
+        return mCompressOffloadDevices != AUDIO_DEVICE_NONE ?
+               AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD : AUDIO_OUTPUT_FLAG_NONE;
+    }
 
     /**
      * Resets an echo reference.
@@ -268,15 +381,25 @@ private:
     StreamCollection mStreams; /**< Collection of opened streams. */
     PatchCollection mPatches; /**< Collection of connected patches. */
     PortCollection mPorts; /**< Collection of audio ports. */
+    Stream *mPrimaryOutput; /**< Primary output stream, which has a leading routing role. */
+
+    /**
+     * Until compress is in a separated HAL, keep track of its device as primary HAL is
+     * of routing the compress use case.
+     */
+    audio_devices_t mCompressOffloadDevices;
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
-    static const char *const mRouteLibPropName;  /**< Route Manager name property. */
-    static const char *const mRouteLibPropDefaultValue;  /**< Route Manager lib default value. */
     static const char *const mRestartingKey; /**< Restart key parameter. */
     static const char *const mRestartingRequested; /**< Restart key parameter value. */
 
     static const uint32_t mRecordingBufferTimeUsec = 20000;
+
+    /**
+     * Stream Rate associated with narrow band in case of VoIP.
+     */
+    static const uint32_t mVoiceStreamRateForNarrowBandProcessing = 8000;
 
     /**
      * Protect concurrent access to routing control API to protect concurrent access to

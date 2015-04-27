@@ -1,24 +1,17 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2014 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #define LOG_TAG "RouteManager/StreamRoute"
 
@@ -61,7 +54,7 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
                    << "\n\t  deviceId=" << config.deviceId
                    << "\n\t  rate=" << config.rate
                    << "\n\t  silencePrologInMs=" << config.silencePrologInMs
-                   << "\n\t  applicabilityMask=" << config.applicabilityMask
+                   << "\n\t  flagMask=" << config.flagMask
                    << "\n\t  channels=" << config.channels
                    << "\n\t  rate=" << config.rate
                    << "\n\t  format=" << static_cast<int32_t>(config.format);
@@ -186,21 +179,48 @@ void AudioStreamRoute::setStream(IoStream *stream)
 
 bool AudioStreamRoute::isApplicable(const IoStream *stream) const
 {
-    AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
-    uint32_t mask = stream->getApplicabilityMask();
-    Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
-                   << "\n\t\t\t isOut=" << (isOut() ? "output" : "input")
-                   << " && uiMask=" << mask
-                   << " & _uiApplicableMask[" << (isOut() ? "output" : "input")
-                   << "]=" << mConfig.applicabilityMask;
+    return AudioRoute::isApplicable() && !isUsed() && isMatchingWithStream(stream);
+}
 
-    return AudioRoute::isApplicable() && !isUsed() && (mask & mConfig.applicabilityMask) &&
+bool AudioStreamRoute::isMatchingWithStream(const IoStream *stream) const
+{
+    AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
+    uint32_t streamFlagMask = stream->getFlagMask();
+    uint32_t streamUseCaseMask = stream->getUseCaseMask();
+
+    if (stream->isOut()) {
+        // If no flags is provided for output, take primary by default
+        streamFlagMask = !streamFlagMask ?
+                         static_cast<uint32_t>(AUDIO_OUTPUT_FLAG_PRIMARY) : streamFlagMask;
+    }
+
+    Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
+                   << "\n\t\t\t route direction=" << (isOut() ? "output" : "input")
+                   << " stream direction=" << (stream->isOut() ? "output" : "input") << std::hex
+                   << " && stream flags mask=0x" << streamFlagMask
+                   << " & route applicable flags mask=0x" << getFlagsMask()
+                   << " && stream use case mask=0x" << streamUseCaseMask
+                   << " & route applicable use case mask=0x" << getUseCaseMask();
+
+    return (stream->isOut() == isOut()) &&
+           areFlagsMatching(streamFlagMask) &&
+           areUseCasesMatching(streamUseCaseMask) &&
            implementsEffects(stream->getEffectRequested());
 }
 
-bool AudioStreamRoute::implementsEffects(uint32_t effectsMask) const
+inline bool AudioStreamRoute::areFlagsMatching(uint32_t streamFlagMask) const
 {
-    return (mEffectSupportedMask & effectsMask) == effectsMask;
+    return (streamFlagMask & getFlagsMask()) == streamFlagMask;
+}
+
+inline bool AudioStreamRoute::areUseCasesMatching(uint32_t streamUseCaseMask) const
+{
+    return (streamUseCaseMask & getUseCaseMask()) == streamUseCaseMask;
+}
+
+bool AudioStreamRoute::implementsEffects(uint32_t effectMask) const
+{
+    return (mEffectSupportedMask & effectMask) == effectMask;
 }
 
 android::status_t AudioStreamRoute::attachNewStream()

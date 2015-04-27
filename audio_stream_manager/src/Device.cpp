@@ -1,24 +1,17 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 #define LOG_TAG "AudioIntelHal"
 
@@ -31,7 +24,8 @@
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
 #include "Property.h"
-#include <InterfaceProviderLib.h>
+#include <Parameters.hpp>
+#include <RouteManagerInstance.hpp>
 #include <hardware/audio_effect.h>
 #include <media/AudioRecord.h>
 #include <utilities/Log.hpp>
@@ -45,8 +39,6 @@ using audio_comms::utilities::Mutex;
 
 namespace intel_audio
 {
-const char *const Device::mRouteLibPropName = "audiocomms.routeLib";
-const char *const Device::mRouteLibPropDefaultValue = "audio.routemanager.so";
 const char *const Device::mRestartingKey = "restarting";
 const char *const Device::mRestartingRequested = "true";
 
@@ -54,18 +46,11 @@ Device::Device()
     : mEchoReference(NULL),
       mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
-      mStreamInterface(NULL)
+      mStreamInterface(NULL),
+      mCompressOffloadDevices(AUDIO_DEVICE_NONE)
 {
-    /// Get the Stream Interface of the Route manager
-    NInterfaceProvider::IInterfaceProvider *interfaceProvider =
-        getInterfaceProvider(TProperty<string>(mRouteLibPropName,
-                                               mRouteLibPropDefaultValue).getValue().c_str());
-    if (!interfaceProvider) {
-        Log::Error() << __FUNCTION__ << ": Could not connect to interface provider";
-        return;
-    }
     // Retrieve the Stream Interface
-    mStreamInterface = interfaceProvider->queryInterface<IStreamInterface>();
+    mStreamInterface = RouteManagerInstance::getStreamInterface();
     if (mStreamInterface == NULL) {
         Log::Error() << "Failed to get Stream Interface on RouteMgr";
         return;
@@ -152,6 +137,10 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     }
     mStreams[handle] = out;
 
+    if (isPrimaryOutput(*out)) {
+        mPrimaryOutput = out;
+    }
+
     // Informs the route manager of stream creation
     mStreamInterface->addStream(out);
     stream = out;
@@ -170,6 +159,9 @@ void Device::closeOutputStream(StreamOutInterface *out)
         Log::Error() << __FUNCTION__ << ": requesting to deleted an output stream with io handle= "
                      << handle << " not tracked by Primary HAL";
     } else {
+        if (isPrimaryOutput(*mStreams[handle])) {
+            mPrimaryOutput = NULL;
+        }
         mStreams.erase(handle);
     }
     delete out;
@@ -179,18 +171,18 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
                                           audio_devices_t devices,
                                           audio_config_t &config,
                                           StreamInInterface * &stream,
-                                          audio_input_flags_t /*flags*/,
+                                          audio_input_flags_t flags,
                                           const std::string & /*address*/,
                                           audio_source_t source)
 {
     Log::Debug() << __FUNCTION__ << ": handle=" << handle << ", devices: 0x" << std::hex << devices
-                 << " and input source: 0x" << static_cast<uint32_t>(source);
+                 << ", input source: 0x" << static_cast<uint32_t>(source)
+                 << ", input flags: 0x" << static_cast<uint32_t>(flags);
     if (!audio_is_input_device(devices)) {
         Log::Error() << __FUNCTION__ << ": called with bad device " << devices;
         return android::BAD_VALUE;
     }
-
-    StreamIn *in = new StreamIn(this, handle, source);
+    StreamIn *in = new StreamIn(this, handle, flags, source);
     status_t err = in->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": Set err";
@@ -231,7 +223,7 @@ status_t Device::setMicMute(bool mute)
 {
     Log::Verbose() << __FUNCTION__ << ": " << (mute ? "true" : "false");
     KeyValuePairs pair;
-    status_t status = pair.add(AudioPlatformState::mKeyMicMute, mute);
+    status_t status = pair.add(Parameters::gKeyMicMute, mute);
     if (status != android::OK) {
         return status;
     }
@@ -240,8 +232,8 @@ status_t Device::setMicMute(bool mute)
 
 status_t Device::getMicMute(bool &muted) const
 {
-    KeyValuePairs pair(mPlatformState->getParameters(AudioPlatformState::mKeyMicMute));
-    return pair.get(AudioPlatformState::mKeyMicMute, muted);
+    KeyValuePairs pair(mPlatformState->getParameters(Parameters::gKeyMicMute));
+    return pair.get(Parameters::gKeyMicMute, muted);
 }
 
 size_t Device::getInputBufferSize(const struct audio_config &config) const
@@ -296,6 +288,11 @@ status_t Device::setParameters(const string &keyValuePairs)
             pairs = backupedPairs;
         }
     }
+    status = pairs.get(Parameters::gKeyCompressOffloadRouting, mCompressOffloadDevices);
+    if (status == android::OK) {
+        pairs.remove(key);
+        updateStreamsParametersSync(AUDIO_PORT_ROLE_SOURCE);
+    }
     status = mPlatformState->setParameters(pairs.toString());
     if (status == android::OK) {
         Log::Verbose() << __FUNCTION__
@@ -315,31 +312,6 @@ android::status_t Device::setMode(audio_mode_t mode)
 {
     mMode = mode;
     return android::OK;
-}
-
-
-status_t Device::startStream(Stream *stream)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
-    mPlatformState->startStream(stream);
-    getStreamInterface()->startStream();
-    return android::OK;
-}
-
-status_t Device::stopStream(Stream *stream)
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "Null stream");
-    Log::Debug() << __FUNCTION__ << ": " << (stream->isOut() ? "output" : "input") << " stream.";
-    mPlatformState->stopStream(stream);
-    getStreamInterface()->stopStream();
-    return android::OK;
-}
-
-void Device::updateRequestedEffect()
-{
-    mPlatformState->updateRequestedEffect();
-    getStreamInterface()->reconsiderRouting();
 }
 
 void Device::resetEchoReference(struct echo_reference_itfe *reference)
@@ -414,7 +386,7 @@ bool Device::hasPort(const audio_port_handle_t &portHandle)
     return mPorts.find(portHandle) != mPorts.end();
 }
 
-bool Device::hasPatchUnsafe(const audio_patch_handle_t &patchHandle)
+bool Device::hasPatchUnsafe(const audio_patch_handle_t &patchHandle) const
 {
     return mPatches.find(patchHandle) != mPatches.end();
 }
@@ -432,6 +404,12 @@ Port &Device::getPort(const audio_port_handle_t &portHandle)
 {
     AUDIOCOMMS_ASSERT(hasPort(portHandle), "Port not found within collection");
     return mPorts[portHandle];
+}
+
+const Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle) const
+{
+    AUDIOCOMMS_ASSERT(hasPatchUnsafe(patchHandle), "Patch not found within collection");
+    return mPatches.find(patchHandle)->second;
 }
 
 Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle)
@@ -488,6 +466,7 @@ void Device::onPortReleased(const audio_patch_handle_t &patchHandle,
     if (!portToRelease.isUsed()) {
         mPorts.erase(portHandle);
     }
+
     Stream *stream = NULL;
     if (!getStream(streamHandle, stream)) {
         Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
@@ -507,67 +486,55 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     if (handle == AUDIO_PATCH_HANDLE_NONE) {
         handle = Patch::nextUniqueHandle();
     }
-    Mutex::Locker locker(mPatchCollectionLock);
+    mPatchCollectionLock.lock();
 
     std::pair<PatchCollection::iterator, bool> ret;
     ret = mPatches.insert(std::pair<audio_patch_handle_t, Patch>(handle, Patch(handle, this)));
 
     Patch &patch = ret.first->second;
     patch.addPorts(sourcesCount, sources, sinksCount, sinks);
+    mPatchCollectionLock.unlock();
 
-    // Update now the routing, i.e. the devices in input and/or output
-    // This is a simple first step implementation that matches that used to be
-    // done within Legacy routing. It has to evolve in parallel of the Audio Policy.
-    // Shall we loop on "active" ports to get the new devices?
-    KeyValuePairs pairs;
-    audio_devices_t newSourceDevices = patch.getSourceDevices();
-    audio_devices_t newSinkDevices = patch.getSinkDevices();
-
-    if (newSourceDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyDeviceIn, newSourceDevices);
-    }
-    if (newSinkDevices != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
-        pairs.add(AudioPlatformState::mKeyDeviceOut, newSinkDevices);
-    }
-    if (pairs.toString().empty()) {
-        return android::OK;
-    }
-    Log::Verbose() << __FUNCTION__ << ": handle:" << handle << ", Devices:" << pairs.toString();
-    return mPlatformState->setParameters(pairs.toString());
+    return updateParameters(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
+                            patch.hasDevice(AUDIO_PORT_ROLE_SINK));
 }
 
 status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
 {
-    Mutex::Locker locker(mPatchCollectionLock);
+    mPatchCollectionLock.lock();
     if (!hasPatchUnsafe(handle)) {
         Log::Error() << __FUNCTION__ << " Patch handle " << handle
                      << " not found within Primary HAL";
+        mPatchCollectionLock.unlock();
         return android::BAD_VALUE;
     }
     Log::Verbose() << __FUNCTION__ << ": releasing patch handle:" << handle;
     Patch &patch = getPatchUnsafe(handle);
-
-    // Update now the routing, i.e. the devices in input and/or output that were in use by the
-    // released patch. This is a simple first step implementation that matches that used to be
-    // done within Legacy routing. It has to evolve in parallel of the Audio Policy.
-    // Shall we loop on "active" ports to get the new devices?
-    KeyValuePairs pairs;
-    if (patch.getSourceDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyDeviceIn, static_cast<int>(AUDIO_DEVICE_NONE));
-    }
-    if (patch.getSinkDevices() != AUDIO_DEVICE_NONE) {
-        pairs.add(AudioPlatformState::mKeyAndroidMode, mode());
-        pairs.add(AudioPlatformState::mKeyDeviceOut, static_cast<int>(AUDIO_DEVICE_NONE));
-    }
-
+    bool involvedSourceDevices = patch.hasDevice(AUDIO_PORT_ROLE_SOURCE);
+    bool involvedSinkDevices = patch.hasDevice(AUDIO_PORT_ROLE_SINK);
     mPatches.erase(handle);
+    mPatchCollectionLock.unlock();
 
+    return updateParameters(involvedSourceDevices, involvedSinkDevices);
+}
+
+status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice, bool synchronous)
+{
+    KeyValuePairs pairs;
+    // Update now the routing, i.e. the devices in input and/or output
+    if (updateSourceDevice) {
+        // Source Port update requested: it may impact input streams parameters
+        prepareStreamsParameters(AUDIO_PORT_ROLE_SINK, pairs);
+    }
+    if (updateSinkDevice) {
+        // Sink Port update requested: it may impact output streams parameters
+        prepareStreamsParameters(AUDIO_PORT_ROLE_SOURCE, pairs);
+    }
     if (pairs.toString().empty()) {
         return android::OK;
     }
-    Log::Verbose() << __FUNCTION__ << ": handle:" << handle << ", Devices:" << pairs.toString();
-    return mPlatformState->setParameters(pairs.toString());
+    Log::Verbose() << __FUNCTION__ << ": Parameters:" << pairs.toString();
+    return mPlatformState->setParameters(pairs.toString(), synchronous);
 }
 
 status_t Device::getAudioPort(struct audio_port & /*port*/) const
@@ -580,6 +547,118 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
 {
     Log::Warning() << __FUNCTION__ << ": no implementation provided yet";
     return android::INVALID_OPERATION;
+}
+
+uint32_t Device::getDeviceFromStream(const Stream &stream) const
+{
+    if (!stream.isRoutedByPolicy()) {
+        return AUDIO_DEVICE_NONE;
+    }
+    const Patch &patch = getPatchUnsafe(stream.getPatchHandle());
+    return patch.getDevices(getOppositeRole(stream.getRole()));
+}
+
+void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
+                                        uint32_t &useCaseMask, uint32_t &deviceMask,
+                                        uint32_t &requestedEffectMask)
+{
+    if (stream.isStarted() && stream.isRoutedByPolicy()) {
+        if (!isPrimaryOutput(stream)) {
+            // Primary devices are not appended as primary output plays a "special" role.
+            deviceMask |= getDeviceFromStream(stream);
+        }
+        flagMask |= stream.getFlagMask();
+        useCaseMask |= stream.getUseCaseMask();
+        requestedEffectMask |= stream.getEffectRequested();
+    }
+}
+
+uint32_t Device::selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask)
+{
+    uint32_t selectedDeviceMask = streamDeviceMask;
+    // Compress is not handled by primary HAL, so append compress device (none if inactive)
+    selectedDeviceMask |= mCompressOffloadDevices;
+
+    AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
+    // Take the device of the primary output if :
+    // primary is active OR no other streams are active OR in call
+    if (mPrimaryOutput->isStarted() || selectedDeviceMask == AUDIO_DEVICE_NONE || isInCall()) {
+        selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
+    }
+    selectedDeviceMask |= internalDeviceMask;
+    return selectedDeviceMask;
+}
+
+void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs)
+{
+    audio_devices_t deviceMask = AUDIO_DEVICE_NONE;
+    audio_devices_t internalDeviceMask = AUDIO_DEVICE_NONE;
+    uint32_t streamsFlagMask = 0;
+    uint32_t streamsUseCaseMask = 0;
+    uint32_t requestedEffectMask = 0;
+
+    Mutex::Locker locker(mPatchCollectionLock);
+    // Loop on all patches that involve source mix ports (i.e. output streams)
+    for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
+        const Patch &patch = it->second;
+        audio_port_role_t devicePortRole = getOppositeRole(streamPortRole);
+        const Port *mixPort = patch.getMixPort(streamPortRole);
+
+        // Only 1 source port is supported (2 special case accross hw modules)
+        if (patch.getMixPort(devicePortRole) != NULL) {
+            // This patch is not a involving a stream with the same role as the requested role.
+            continue;
+        }
+        if (mixPort == NULL) {
+            // This patch is connecting 2 device ports to one another, so append sink devices
+            internalDeviceMask |= patch.getDevices(devicePortRole);
+            continue;
+        }
+        audio_io_handle_t streamHandle = mixPort->getMixIoHandle();
+        Stream *stream = NULL;
+        if (!getStream(streamHandle, stream)) {
+            Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
+            continue;
+        }
+        updateParametersFromStream(*stream, streamsFlagMask, streamsUseCaseMask, deviceMask,
+                                   requestedEffectMask);
+    }
+
+    if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
+        deviceMask = selectOutputDevices(internalDeviceMask, deviceMask);
+        // Compress is not handled by primary HAL, so append compress device (none if inactive)
+        streamsFlagMask |= getCompressOffloadFlags();
+
+        pairs.add(Parameters::gKeyAndroidMode, mode());
+    } else {
+        pairs.add<int>(Parameters::gKeyVoipBandType, getBandFromActiveInput());
+        pairs.add(Parameters::gKeyPreProcRequested, requestedEffectMask);
+    }
+    pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
+    pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)], deviceMask);
+    pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
+}
+
+CAudioBand::Type Device::getBandFromActiveInput() const
+{
+    const Stream *activeInput = NULL;
+    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
+        const Stream *stream = it->second;
+        if (!stream->isOut() && stream->isStarted() && stream->isRoutedByPolicy()) {
+            AUDIOCOMMS_ASSERT(activeInput == NULL, "More than one input is active");
+            activeInput = stream;
+        }
+    }
+    return (activeInput != NULL &&
+            activeInput->getSampleRate() == mVoiceStreamRateForNarrowBandProcessing) ?
+           CAudioBand::ENarrow : CAudioBand::EWide;
+}
+
+bool Device::isPrimaryOutput(const Stream &stream) const
+{
+    return stream.isOut() &&
+           (stream.getFlagMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
+           AUDIO_OUTPUT_FLAG_PRIMARY;
 }
 
 } // namespace intel_audio

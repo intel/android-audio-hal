@@ -1,30 +1,23 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 #define LOG_TAG "RouteManager"
 
 #include "AudioRouteManager.hpp"
 #include "AudioRouteManagerObserver.hpp"
-#include "InterfaceProviderLib.h"
 #include "Property.h"
 #include <Observer.hpp>
 #include <IoStream.hpp>
@@ -40,9 +33,7 @@
 
 using android::status_t;
 using namespace std;
-using NInterfaceProvider::CInterfaceProviderImpl;
 using audio_comms::utilities::BitField;
-using audio_comms::utilities::Direction;
 using audio_comms::utilities::Log;
 
 typedef android::RWLock::AutoRLock AutoR;
@@ -55,13 +46,13 @@ namespace intel_audio
 const char *const AudioRouteManager::mVoiceVolume =
     "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
 
-const char *const AudioRouteManager::mClosingRouteCriterion[Direction::_nbDirections] = {
+const char *const AudioRouteManager::mClosingRouteCriterion[Direction::gNbDirections] = {
     "ClosingCaptureRoutes", "ClosingPlaybackRoutes"
 };
-const char *const AudioRouteManager::mOpenedRouteCriterion[Direction::_nbDirections] = {
+const char *const AudioRouteManager::mOpenedRouteCriterion[Direction::gNbDirections] = {
     "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
 };
-const char *const AudioRouteManager::mRouteCriterionType[Direction::_nbDirections] = {
+const char *const AudioRouteManager::mRouteCriterionType[Direction::gNbDirections] = {
     "RoutePlaybackType", "RouteCaptureType"
 };
 const char *const AudioRouteManager::mRoutingStage = "RoutageState";
@@ -121,13 +112,11 @@ template <>
 struct AudioRouteManager::routingElementSupported<Criterion> {};
 
 AudioRouteManager::AudioRouteManager()
-    : mRouteInterface(this),
-      mStreamInterface(this),
-      mAudioPfwConnectorLogger(new CParameterMgrPlatformConnectorLogger),
+    : mAudioPfwConnectorLogger(new CParameterMgrPlatformConnectorLogger),
       mEventThread(new CEventThread(this)),
       mIsStarted(false)
 {
-    memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::_nbDirections);
+    memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::gNbDirections);
 
     /// Connector
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
@@ -178,13 +167,6 @@ AudioRouteManager::~AudioRouteManager()
     delete mAudioPfwConnector;
 }
 
-// Interface populate
-void AudioRouteManager::getImplementedInterfaces(CInterfaceProviderImpl &interfaceProvider)
-{
-    interfaceProvider.addInterface(&mRouteInterface);
-    interfaceProvider.addInterface(&mStreamInterface);
-}
-
 status_t AudioRouteManager::stopService()
 {
     AutoW lock(mRoutingLock);
@@ -213,7 +195,7 @@ status_t AudioRouteManager::startService()
     }
 
     // Route Criteria
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         // Routes Criterion Type
         if (mCriterionTypesMap.find(mRouteCriterionType[i]) == mCriterionTypesMap.end()) {
             Log::Error() << "CriterionType " << mRouteCriterionType[i] << " not found";
@@ -238,7 +220,7 @@ status_t AudioRouteManager::startService()
     // Routing stage criterion is initialised to Configure | Path | Flow to apply all pending
     // configuration for init and minimalize cold latency at first playback / capture
     mRoutingStageCriterion = new Criterion(mRoutingStage, routageStageCriterionType,
-                                           mAudioPfwConnector, Configure | Path | Flow);
+                                           mAudioPfwConnector, ConfigureMask | PathMask | FlowMask);
 
     // Start PFW
     std::string strError;
@@ -348,7 +330,7 @@ void AudioRouteManager::executeRouting()
 
 void AudioRouteManager::resetRouting()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         mRoutes[i].prevEnabled = mRoutes[i].enabled;
         mRoutes[i].enabled = 0;
         mRoutes[i].needReflow = 0;
@@ -482,7 +464,7 @@ void AudioRouteManager::executeUnmuteRoutingStage()
 
 void AudioRouteManager::setRouteCriteriaForConfigure()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
 
         mSelectedClosingRoutes[i]->setCriterionState<int32_t>(0);
         mSelectedOpenedRoutes[i]->setCriterionState<int32_t>(enabledRoutes(i));
@@ -491,7 +473,7 @@ void AudioRouteManager::setRouteCriteriaForConfigure()
 
 void AudioRouteManager::setRouteCriteriaForMute()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
 
         uint32_t unmutedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needReflowRoutes(i);
         uint32_t routesToMute = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needReflowRoutes(i);
@@ -503,7 +485,7 @@ void AudioRouteManager::setRouteCriteriaForMute()
 
 void AudioRouteManager::setRouteCriteriaForDisable()
 {
-    for (uint32_t i = 0; i < Direction::_nbDirections; i++) {
+    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
 
         uint32_t openedRoutes = prevEnabledRoutes(i) & enabledRoutes(i) & ~needRepathRoutes(i);
         uint32_t routesToDisable = (prevEnabledRoutes(i) & ~enabledRoutes(i)) | needRepathRoutes(i);
@@ -681,47 +663,40 @@ IoStream *AudioRouteManager::getVoiceOutputStream()
     return *it;
 }
 
-const AudioStreamRoute *AudioRouteManager::findMatchingRoute(bool isOut, uint32_t flags) const
+const AudioStreamRoute *AudioRouteManager::findMatchingRouteForStream(const IoStream *stream) const
 {
-    uint32_t mask = !flags ?
-                    (isOut ? static_cast<uint32_t>(AUDIO_OUTPUT_FLAG_PRIMARY) :
-                     static_cast<uint32_t>(BitField::indexToMask(AUDIO_SOURCE_DEFAULT)))
-                    : flags;
-
     StreamRouteMapConstIterator it;
     for (it = mStreamRouteMap.begin(); it != mStreamRouteMap.end(); ++it) {
-
         const AudioStreamRoute *streamRoute = it->second;
-        if ((streamRoute->isOut() == isOut) && (mask & streamRoute->getApplicableMask())) {
-
+        if (streamRoute->isMatchingWithStream(stream)) {
             return streamRoute;
         }
     }
     return NULL;
 }
 
-uint32_t AudioRouteManager::getPeriodInUs(bool isOut, uint32_t flags) const
+uint32_t AudioRouteManager::getPeriodInUs(const IoStream *stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = findMatchingRoute(isOut, flags);
-    if (route != NULL) {
-
-        return route->getPeriodInUs();
+    const AudioStreamRoute *route = findMatchingRouteForStream(stream);
+    if (route == NULL) {
+        Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
+                     << stream->getFlagMask() << ", use case =" << stream->getUseCaseMask();
+        return 0;
     }
-    Log::Error() << __FUNCTION__ << ": not route found, audio might not be functional";
-    return 0;
+    return route->getPeriodInUs();
 }
 
-uint32_t AudioRouteManager::getLatencyInUs(bool isOut, uint32_t flags) const
+uint32_t AudioRouteManager::getLatencyInUs(const IoStream *stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = findMatchingRoute(isOut, flags);
-    if (route != NULL) {
-
-        return route->getLatencyInUs();
+    const AudioStreamRoute *route = findMatchingRouteForStream(stream);
+    if (route == NULL) {
+        Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
+                     << stream->getFlagMask() << ", use case =" << stream->getUseCaseMask();
+        return 0;
     }
-    Log::Error() << __FUNCTION__ << ": not route found, audio might not be functional";
-    return 0;
+    return route->getLatencyInUs();
 }
 
 void AudioRouteManager::setBit(bool isSet, uint32_t index, uint32_t &mask)
@@ -851,6 +826,7 @@ template <typename T>
 bool AudioRouteManager::getAudioCriterion(const std::string &name, T &value) const
 {
     AutoR lock(mRoutingLock);
+    Log::Verbose() << __FUNCTION__ << ": (" << name << ", " << value << ")";
     CriteriaMapConstIterator it = mCriteriaMap.find(name);
     if (it == mCriteriaMap.end()) {
         Log::Warning() << __FUNCTION__ << ": Criterion " << name << " does not exist";
@@ -885,7 +861,7 @@ void AudioRouteManager::commitCriteriaAndApply()
     mAudioPfwConnector->applyConfigurations();
 }
 
-static uint32_t count[Direction::_nbDirections] = {
+static uint32_t count[Direction::gNbDirections] = {
     0, 0
 };
 

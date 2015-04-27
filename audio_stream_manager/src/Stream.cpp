@@ -1,25 +1,19 @@
 /*
- * INTEL CONFIDENTIAL
- * Copyright (c) 2013-2015 Intel
- * Corporation All Rights Reserved.
+ * Copyright (C) 2013-2015 Intel Corporation
  *
- * The source code contained or described herein and all documents related to
- * the source code ("Material") are owned by Intel Corporation or its suppliers
- * or licensors. Title to the Material remains with Intel Corporation or its
- * suppliers and licensors. The Material contains trade secrets and proprietary
- * and confidential information of Intel or its suppliers and licensors. The
- * Material is protected by worldwide copyright and trade secret laws and
- * treaty provisions. No part of the Material may be used, copied, reproduced,
- * modified, published, uploaded, posted, transmitted, distributed, or
- * disclosed in any way without Intel's prior express written permission.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * No license under any patent, copyright, trade secret or other intellectual
- * property right is granted to or conferred upon you by disclosure or delivery
- * of the Materials, either expressly, by implication, inducement, estoppel or
- * otherwise. Any license under such intellectual property rights must be
- * express and approved by Intel in writing.
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 #ifdef LOG_TAG
 #undef LOG_TAG
 #endif
@@ -27,7 +21,8 @@
 
 #include "Device.hpp"
 #include "Stream.hpp"
-#include <AudioPlatformState.hpp>
+#include <Parameters.hpp>
+#include <KeyValuePairs.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include "Property.h"
@@ -36,7 +31,6 @@
 #include <string>
 
 using android::status_t;
-using audio_comms::utilities::Direction;
 using audio_comms::utilities::Log;
 using namespace std;
 
@@ -46,21 +40,22 @@ namespace intel_audio
 /**
  * Audio dump properties management (set with setprop)
  */
-const std::string Stream::dumpBeforeConvProps[Direction::_nbDirections] = {
+const std::string Stream::dumpBeforeConvProps[Direction::gNbDirections] = {
     "media.dump_input.befconv", "media.dump_output.befconv"
 };
 
-const std::string Stream::dumpAfterConvProps[Direction::_nbDirections] = {
+const std::string Stream::dumpAfterConvProps[Direction::gNbDirections] = {
     "media.dump_input.aftconv", "media.dump_output.aftconv"
 };
 
-Stream::Stream(Device *parent, audio_io_handle_t handle)
+Stream::Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
     : mParent(parent),
       mStandby(true),
       mDevices(0),
       mAudioConversion(new AudioConversion),
       mLatencyMs(0),
-      mApplicabilityMask(0),
+      mFlagMask(flagMask),
+      mUseCaseMask(0),
       mDumpBeforeConv(NULL),
       mDumpAfterConv(NULL),
       mHandle(handle),
@@ -150,6 +145,7 @@ status_t Stream::set(audio_config_t &config)
     if (badChannelCount || badFormat) {
         return android::BAD_VALUE;
     }
+    updateLatency();
     return android::OK;
 }
 
@@ -195,10 +191,16 @@ bool Stream::isRoutedByPolicy() const
     return mPatchHandle != AUDIO_PATCH_HANDLE_NONE;
 }
 
-uint32_t Stream::getApplicabilityMask() const
+uint32_t Stream::getFlagMask() const
 {
     AutoR lock(mStreamLock);
-    return mApplicabilityMask;
+    return mFlagMask;
+}
+
+uint32_t Stream::getUseCaseMask() const
+{
+    AutoR lock(mStreamLock);
+    return mUseCaseMask;
 }
 
 status_t Stream::setDevice(audio_devices_t device)
@@ -210,22 +212,27 @@ status_t Stream::setDevice(audio_devices_t device)
 
 status_t Stream::setParameters(const string &keyValuePairs)
 {
-    Log::Error() << __FUNCTION__ << ": Unhandled keys: " << keyValuePairs;
+    Log::Warning() << __FUNCTION__ << ": " << keyValuePairs
+                   << ": Not implemented, Using routing API 3.0";
     return android::INVALID_OPERATION;
 }
 
 size_t Stream::getBufferSize() const
 {
+    AutoR lock(mStreamLock);
     size_t size = mSampleSpec.convertUsecToframes(
-        mParent->getStreamInterface()->getPeriodInUs(isOut(), getApplicabilityMask()));
+        mParent->getStreamInterface()->getPeriodInUs(this));
 
     size = AudioUtils::alignOn16(size);
 
     size_t bytes = mSampleSpec.convertFramesToBytes(size);
     if (bytes == 0) {
-        Log::Error() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
+        Log::Error() << __FUNCTION__ << ": null buffer size for "
                      << (isOut() ? "output" : "input") << " stream.";
+        return 0;
     }
+    Log::Debug() << __FUNCTION__ << ": " << bytes << " (in bytes) for "
+                 << (isOut() ? "output" : "input") << " stream.";
     return bytes;
 }
 
@@ -245,22 +252,22 @@ uint32_t Stream::getLatencyMs() const
     return mLatencyMs;
 }
 
-void Stream::setApplicabilityMask(uint32_t applicabilityMask)
+void Stream::setUseCaseMask(uint32_t useCaseMask)
 {
-    if (getApplicabilityMask() == applicabilityMask) {
+    if (getUseCaseMask() == useCaseMask) {
 
         return;
     }
     mStreamLock.writeLock();
-    mApplicabilityMask = applicabilityMask;
+    mUseCaseMask = useCaseMask;
     mStreamLock.unlock();
     updateLatency();
 }
 
 void Stream::updateLatency()
 {
-    mLatencyMs = AudioUtils::convertUsecToMsec(
-        mParent->getStreamInterface()->getLatencyInUs(isOut(), getApplicabilityMask()));
+    AutoR lock(mStreamLock);
+    mLatencyMs = AudioUtils::convertUsecToMsec(mParent->getStreamInterface()->getLatencyInUs(this));
 }
 
 status_t Stream::setStandby(bool isSet)
@@ -271,7 +278,11 @@ status_t Stream::setStandby(bool isSet)
     }
     setStarted(!isSet);
 
-    return isSet ? mParent->stopStream(this) : mParent->startStream(this);
+    Log::Debug() << __FUNCTION__ << ": " << (isSet ? "stopping " : "starting ")
+                 << (isOut() ? "output" : "input") << " stream";
+    // Start / Stop streams operation are expected to be synchronous, since we want to avoid loosing
+    // audio data before the stream is routed to its route, i.e. audio device.
+    return mParent->updateStreamsParametersSync(getRole());
 }
 
 status_t Stream::attachRouteL()
