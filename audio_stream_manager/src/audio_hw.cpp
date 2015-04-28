@@ -22,7 +22,11 @@ extern "C"
 {
 
 static struct hw_module_methods_t audio_module_methods = {
+#ifdef USE_LEGACY_ROUTING
+open: intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_2_0>::open
+#else
 open: intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_3_0>::open
+#endif
 };
 
 struct hw_module_t HAL_MODULE_INFO_SYM = {

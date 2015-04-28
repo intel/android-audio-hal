@@ -44,7 +44,10 @@ public:
     virtual android::status_t read(void *buffer, size_t &bytes);
     virtual uint32_t getInputFramesLost() const;
     virtual android::status_t setDevice(audio_devices_t device);
-
+#ifdef USE_LEGACY_ROUTING
+    /** @note API used for routing with AUDIO_DEVICE_API_VERSION < 3.0. */
+    virtual android::status_t setParameters(const std::string &keyValuePairs);
+#endif
     // From AudioBufferProvider
     virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer,
                                             int64_t presentationTimeStamp = kInvalidPTS);

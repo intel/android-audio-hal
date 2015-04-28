@@ -188,7 +188,11 @@ audio_devices_t Stream::getDevice() const
 
 bool Stream::isRoutedByPolicy() const
 {
+#ifdef USE_LEGACY_ROUTING
+    return (mDevices != AUDIO_DEVICE_NONE);
+#else
     return mPatchHandle != AUDIO_PATCH_HANDLE_NONE;
+#endif
 }
 
 uint32_t Stream::getFlagMask() const
@@ -210,11 +214,52 @@ status_t Stream::setDevice(audio_devices_t device)
     return android::OK;
 }
 
+
 status_t Stream::setParameters(const string &keyValuePairs)
 {
+#ifdef USE_LEGACY_ROUTING
+    KeyValuePairs pairs(keyValuePairs);
+    // Routing device is added as an integer by the policy, so it has to be retrieved in the same
+    // type to handle the sign "-" literal...
+    int32_t routingDevice;
+    string key(AUDIO_PARAMETER_STREAM_ROUTING);
+
+    // Replace the routing key by the input / output device key
+    if (pairs.get(key, routingDevice) == android::OK) {
+        pairs.remove(key);
+        // Remove the sign bit for the input device only.
+        status_t status = setDevice(routingDevice);
+        if (status != android::OK) {
+            return status;
+        }
+    }
+    // Give a chance to parent to handle the change
+    return mParent->updateStreamsParametersSync(getRole());
+#else
     Log::Warning() << __FUNCTION__ << ": " << keyValuePairs
                    << ": Not implemented, Using routing API 3.0";
     return android::INVALID_OPERATION;
+#endif
+}
+
+string Stream::getParameters(const string &keys) const
+{
+#ifdef USE_LEGACY_ROUTING
+    KeyValuePairs pairs(keys);
+    string value;
+    string key(AUDIO_PARAMETER_STREAM_ROUTING);
+
+    if (pairs.get(key, value) == android::OK) {
+        audio_devices_t device = isOut() ? getDevice() : (getDevice() | AUDIO_DEVICE_BIT_IN);
+        pairs.add<int32_t>(key, device);
+    }
+    Log::Verbose() << __FUNCTION__ << ": " << pairs.toString();
+    return pairs.toString();
+#else
+    Log::Warning() << __FUNCTION__ << ": " << keys
+                   << ": Not implemented, Using routing API 3.0";
+    return "";
+#endif
 }
 
 size_t Stream::getBufferSize() const
