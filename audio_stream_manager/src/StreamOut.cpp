@@ -113,6 +113,9 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                 setStandby(true);
                 return android::DEAD_OBJECT;
             }
+            AUDIOCOMMS_ASSERT(error.find(strerror(EBADF)) == std::string::npos,
+                              "Audio Device handle closed not by Audio HAL."
+                              " A corruption might have happenned, investigation required");
 
             if (++retryCount > mMaxReadWriteRetried) {
                 mStreamLock.unlock();
