@@ -33,6 +33,7 @@ namespace intel_audio
 class Parameter : private audio_comms::utilities::NonCopyable
 {
 public:
+    typedef std::map<std::string, std::string>::iterator MappingValuesMapIterator;
     typedef std::map<std::string, std::string>::const_iterator MappingValuesMapConstIterator;
 
     Parameter(ParameterChangedObserver *observer,

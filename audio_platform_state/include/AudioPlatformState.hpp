@@ -36,8 +36,6 @@ class cnode;
 namespace intel_audio
 {
 
-class IoStream;
-
 class ParameterMgrPlatformConnectorLogger;
 
 class AudioPlatformState
@@ -57,16 +55,13 @@ private:
         ParamRogue
     } ParameterType;
 
-    typedef std::pair<const char *, const char *> AndroidParamMappingValuePair;
+    typedef std::pair<std::string, std::string> AndroidParamMappingValuePair;
     typedef std::pair<int, const char *> CriterionTypeValuePair;
     typedef std::vector<Parameter *>::iterator ParamIterator;
     typedef std::map<std::string, Criterion *>::iterator CriterionMapIterator;
     typedef std::map<std::string, Criterion *>::const_iterator CriterionMapConstIterator;
     typedef std::map<std::string, CriterionType *>::iterator CriterionTypeMapIterator;
     typedef std::map<std::string, CriterionType *>::const_iterator CriteriaTypeMapConstIterator;
-
-    typedef std::list<IoStream *>::iterator StreamListIterator;
-    typedef std::list<const IoStream *>::const_iterator StreamListConstIterator;
 
     /**
      * This class defines a unary function to be used when looping on the vector of value pairs
@@ -256,13 +251,6 @@ public:
      * @return true if platform state is started correctly, false otherwise.
      */
     bool isStarted();
-
-    /**
-     * Get the modem embedded status.
-     *
-     * @return true if platform embeds a modem, false otherwise.
-     */
-    bool isModemEmbedded() const;
 
     /**
      * Checks if Platform state has changed i.e. at least one of the criterion of one PFW instance

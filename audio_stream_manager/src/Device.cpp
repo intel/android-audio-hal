@@ -496,8 +496,12 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     patch.addPorts(sourcesCount, sources, sinksCount, sinks);
     mPatchCollectionLock.unlock();
 
-    return updateParametersSync(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
-                                patch.hasDevice(AUDIO_PORT_ROLE_SINK));
+    updateParametersSync(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
+                         patch.hasDevice(AUDIO_PORT_ROLE_SINK));
+    // Patch has been created, even if updateParameters failed on one or more parameters, need to
+    // return OK to AudioFlinger, unless this patch will not be considered as created and will
+    // never be deleted (orphans patch within Audio HAL)
+    return android::OK;
 }
 
 status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
@@ -516,7 +520,10 @@ status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
     mPatches.erase(handle);
     mPatchCollectionLock.unlock();
 
-    return updateParametersSync(involvedSourceDevices, involvedSinkDevices);
+    updateParametersSync(involvedSourceDevices, involvedSinkDevices);
+    // Patch has been deleted, even if updateParameters failed on one or more parameters, need to
+    // return OK to AudioFlinger, unless this patch will not be considered as deleted.
+    return android::OK;
 }
 
 status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice, bool synchronous)

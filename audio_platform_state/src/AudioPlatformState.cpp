@@ -35,8 +35,6 @@
 #include <utilities/Log.hpp>
 #include <fstream>
 
-#define DIRECT_STREAM_FLAGS (AUDIO_OUTPUT_FLAG_DIRECT | AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD)
-
 #ifndef PFW_CONF_FILE_PATH
 #define PFW_CONF_FILE_PATH  "/etc/parameter-framework/"
 #endif
@@ -137,21 +135,31 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
                                                                    mRoutePfwConnector);
 }
 
+/**
+ * This class defines a unary function to be used when deleting the object pointer by vector
+ * of parameters.
+ */
+class DeleteParamHelper
+{
+public:
+    DeleteParamHelper() {}
+
+    void operator()(Parameter *param)
+    {
+        delete param;
+    }
+};
+
 AudioPlatformState::~AudioPlatformState()
 {
-    // Delete All criterion
-    CriterionMapIterator it;
-    for (it = mRouteCriterionMap.begin(); it != mRouteCriterionMap.end(); ++it) {
+    // Delete All criterion type
+    CriterionTypeMapIterator it;
+    for (it = mRouteCriterionTypeMap.begin(); it != mRouteCriterionTypeMap.end(); ++it) {
 
         delete it->second;
     }
-
-    // Delete All criterion type
-    CriterionTypeMapIterator iter;
-    for (iter = mRouteCriterionTypeMap.begin(); iter != mRouteCriterionTypeMap.end(); ++iter) {
-
-        delete iter->second;
-    }
+    // Delete all parameter, i.e. Rogue, Audio/Route Criterion Parameters...
+    std::for_each(mParameterVector.begin(), mParameterVector.end(), DeleteParamHelper());
 
     // Unset logger
     mRoutePfwConnector->setLogger(NULL);
