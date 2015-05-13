@@ -387,8 +387,9 @@ Port &Device::getPort(const audio_port_handle_t &portHandle)
 
 const Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle) const
 {
-    AUDIOCOMMS_ASSERT(hasPatchUnsafe(patchHandle), "Patch not found within collection");
-    return mPatches.find(patchHandle)->second;
+    PatchCollection::const_iterator it = mPatches.find(patchHandle);
+    AUDIOCOMMS_ASSERT(it != mPatches.end(), "Patch not found within collection");
+    return it->second;
 }
 
 Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle)

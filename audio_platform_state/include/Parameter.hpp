@@ -113,18 +113,6 @@ protected:
     /**
      * Checks the validity of an android parameter value.
      *
-     * @param[in] value android parameter value to check upon validity.
-     *
-     * @return true if value found in the mapping table, false otherwise.
-     */
-    bool isAndroidParameterValueValid(const std::string value) const
-    {
-        return mMappingValuesMap.find(value) != mMappingValuesMap.end();
-    }
-
-    /**
-     * Checks the validity of an android parameter value.
-     *
      * @param[in] androidParam android parameter to wrap.
      * @param[out] literalValue associated to the androidParam value. Set only if return is true.
      *
