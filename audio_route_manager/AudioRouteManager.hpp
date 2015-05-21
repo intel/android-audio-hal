@@ -356,7 +356,7 @@ private:
      * @return Newly created and added element, NULL otherwise.
      */
     template <typename T>
-    T *addElement(const std::string &key, const string &name);
+    T *addElement(const std::string &key, T *element);
 
     /**
      * Get a routing element from a map by its name. Routing Elements are ports, port

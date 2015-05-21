@@ -447,7 +447,7 @@ void AudioRouteManager::doEnableRoutes(bool isPreEnable)
 }
 
 template <typename T>
-T *AudioRouteManager::addElement(const string &key, const string &name)
+T *AudioRouteManager::addElement(const string &key, T *element)
 {
     routingElementSupported<T>();
     map<string, T *> &elementsMap = getMap<T>();
@@ -456,7 +456,6 @@ T *AudioRouteManager::addElement(const string &key, const string &name)
         Log::Warning() << __FUNCTION__ << ": element(" << key << " already added";
         return NULL;
     }
-    T *element = new T(name);
     elementsMap[key] = element;
     return element;
 }
@@ -696,7 +695,8 @@ void AudioRouteManager::addRoute(const string &name,
 
     AutoW lock(mRoutingLock);
 
-    T *route = addElement<T>(mapKeyName, name);
+    T *route = new T(name);
+    route = addElement<T>(mapKeyName, route);
 
     if (route != NULL) {
         Log::Debug() << __FUNCTION__ << ": Name=" << mapKeyName
@@ -725,21 +725,28 @@ void AudioRouteManager::addRoute(const string &name,
 
 void AudioRouteManager::addPort(const string &name)
 {
-    AutoW lock(mRoutingLock);
     Log::Debug() << __FUNCTION__ << ": Name=" << name;
-    addElement<AudioPort>(name, name);
+    AudioPort *port = new AudioPort(name);
+    if (!addElement<AudioPort>(name, port)) {
+        delete port;
+    }
 }
 
 void AudioRouteManager::addPortGroup(const string &name, const string &portMember)
 {
-    AutoW lock(mRoutingLock);
-    AudioPortGroup *portGroup = addElement<AudioPortGroup>(name, name);
+    AudioPortGroup *portGroup = new AudioPortGroup(name);
+    if (!addElement<AudioPortGroup>(name, portGroup)) {
+        delete portGroup;
+        return;
+    }
 
     if (portGroup != NULL) {
         Log::Debug() << __FUNCTION__ << ": Group=" << name << " PortMember to add=" << portMember;
 
-        AudioPort *port = findElementByName<AudioPort>(portMember);
-        portGroup->addPortToGroup(*port);
+        AudioPort *port = findElementByName<AudioPort>(portMember);;
+        if (!port) {
+            portGroup->addPortToGroup(*port);
+        }
     }
 }
 
