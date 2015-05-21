@@ -27,8 +27,10 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioRoute::AudioRoute(const string &name)
-    : RoutingElement(name),
+AudioRoute::AudioRoute(const string &name, bool isOut, uint32_t mask)
+    : mName(name),
+      mMask(mask),
+      mIsOut(isOut),
       mIsUsed(false),
       mPreviouslyUsed(false),
       mIsApplicable(false),
@@ -67,7 +69,7 @@ bool AudioRoute::isApplicable() const
 {
     Log::Verbose() << __FUNCTION__ << ": " << getName()
                    << "!isBlocked()=" << !isBlocked() << " && _isApplicable=" << mIsApplicable;
-    return !isBlocked() && mIsApplicable;
+    return !isBlocked() && !isUsed() && mIsApplicable;
 }
 
 void AudioRoute::setUsed(bool isUsed)
@@ -76,19 +78,17 @@ void AudioRoute::setUsed(bool isUsed)
 
         return;
     }
-    if (isApplicable()) {
-        Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
-                       << (mIsOut ? "PLAYBACK" : "CAPTURE");
-        mIsUsed = true;
+    Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
+                   << (mIsOut ? "PLAYBACK" : "CAPTURE");
+    mIsUsed = true;
 
-        // Propagate the in use attribute to the ports
-        // used by this route
-        for (int i = 0; i < ENbPorts; i++) {
+    // Propagate the in use attribute to the ports
+    // used by this route
+    for (int i = 0; i < ENbPorts; i++) {
 
-            if (mPort[i]) {
+        if (mPort[i]) {
 
-                mPort[i]->setUsed(*this);
-            }
+            mPort[i]->setUsed(*this);
         }
     }
 }

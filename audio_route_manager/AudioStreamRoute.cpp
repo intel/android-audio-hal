@@ -30,8 +30,8 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioStreamRoute::AudioStreamRoute(const string &name)
-    : AudioRoute(name),
+AudioStreamRoute::AudioStreamRoute(const string &name, bool isOut, uint32_t mask)
+    : AudioRoute(name, isOut, mask),
       mCurrentStream(NULL),
       mNewStream(NULL),
       mEffectSupported(0),
@@ -162,32 +162,26 @@ void AudioStreamRoute::configure()
 void AudioStreamRoute::resetAvailability()
 {
     if (mNewStream) {
-
         mNewStream->resetNewStreamRoute();
         mNewStream = NULL;
     }
     AudioRoute::resetAvailability();
 }
 
-android::status_t AudioStreamRoute::setStream(IoStream &stream)
+bool AudioStreamRoute::setStream(IoStream &stream)
 {
     if (stream.isOut() != isOut()) {
         Log::Error() << __FUNCTION__ << ": to route " << getName() << " which has not the same dir";
-        return android::BAD_TYPE;
+        return false;
     }
     if (mNewStream != NULL) {
         Log::Error() << __FUNCTION__ << ": route " << getName() << " is busy";
-        return android::INVALID_OPERATION;
+        return false;
     }
     Log::Verbose() << __FUNCTION__ << ": to " << getName() << " route";
     mNewStream = &stream;
     mNewStream->setNewStreamRoute(this);
-    return android::OK;
-}
-
-bool AudioStreamRoute::isApplicable(const IoStream &stream) const
-{
-    return AudioRoute::isApplicable() && !isUsed() && isMatchingWithStream(stream);
+    return true;
 }
 
 bool AudioStreamRoute::isMatchingWithStream(const IoStream &stream) const

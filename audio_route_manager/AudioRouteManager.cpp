@@ -40,45 +40,11 @@ typedef android::RWLock::AutoWLock AutoW;
 namespace intel_audio
 {
 
-template <>
-std::map<std::string, AudioRoute *> &AudioRouteManager::getMap()
-{
-    return mRouteMap;
-}
-
-template <>
-std::map<std::string, AudioStreamRoute *> &AudioRouteManager::getMap()
-{
-    return mStreamRouteMap;
-}
-
-template <>
-std::map<std::string, AudioPort *> &AudioRouteManager::getMap()
-{
-    return mPortMap;
-}
-
-template <>
-std::map<std::string, AudioPortGroup *> &AudioRouteManager::getMap()
-{
-    return mPortGroupMap;
-}
-
-template <>
-struct AudioRouteManager::routingElementSupported<AudioPort> {};
-template <>
-struct AudioRouteManager::routingElementSupported<AudioPortGroup> {};
-template <>
-struct AudioRouteManager::routingElementSupported<AudioRoute> {};
-template <>
-struct AudioRouteManager::routingElementSupported<AudioStreamRoute> {};
-
 AudioRouteManager::AudioRouteManager()
     : mEventThread(new CEventThread(this)),
       mIsStarted(false),
       mPlatformState(NULL)
 {
-    memset(mRoutes, 0, sizeof(mRoutes[0]) * Direction::gNbDirections);
 }
 
 AudioRouteManager::~AudioRouteManager()
@@ -109,12 +75,9 @@ status_t AudioRouteManager::stopService()
         delete mPlatformState;
         mPlatformState = NULL;
 
-        // Delete all routes
-        for (RouteMapIterator it = mRouteMap.begin(); it != mRouteMap.end(); ++it) {
-            delete it->second;
-        }
-        mRouteMap.clear();
-        mStreamRouteMap.clear();
+        mStreamRouteMap.reset();
+        mRouteMap.reset();
+        mPortMap.reset();
 
         // Synchronous stop of the event thread must be called with NOT held lock as pending request
         // may need to be served
@@ -201,6 +164,7 @@ void AudioRouteManager::reconsiderRoutingUnsafe(bool isSynchronous)
 
 void AudioRouteManager::doReconsiderRouting()
 {
+
     if (!checkAndPrepareRouting()) {
         // No need to reroute. Some criterion might have changed, update all criteria and apply
         // the conf in order to take for example tuning configuration that are glitch free and do
@@ -208,32 +172,31 @@ void AudioRouteManager::doReconsiderRouting()
         mPlatformState->commitCriteriaAndApplyConfiguration<Audio>();
         return;
     }
-    Log::Debug() << __FUNCTION__
-                 << ": Route state:"
-                 << "\n\t-Previously Enabled Route in Input = "
-                 << routeMaskToString<Direction::Input>(mRoutes[Direction::Input].prevEnabledRoutes())
-                 << "\n\t-Previously Enabled Route in Output = "
-                 << routeMaskToString<Direction::Output>(mRoutes[Direction::Output].prevEnabledRoutes())
-                 << "\n\t-Selected Route in Input = "
-                 << routeMaskToString<Direction::Input>(mRoutes[Direction::Input].enabledRoutes())
-                 << "\n\t-Selected Route in Output = "
-                 << routeMaskToString<Direction::Output>(mRoutes[Direction::Output].enabledRoutes())
-                 << (mRoutes[Direction::Input].needReflowRoutes() ?
-                    "\n\t-Route that need reconfiguration in Input = " +
-                    routeMaskToString<Direction::Input>(mRoutes[Direction::Input].needReflowRoutes())
-                    : "")
-                 << (mRoutes[Direction::Output].needReflowRoutes() ?
-                    "\n\t-Route that need reconfiguration in Output = "
-                    + routeMaskToString<Direction::Output>(mRoutes[Direction::Output].needReflowRoutes())
-                    : "")
-                 << (mRoutes[Direction::Input].needRepathRoutes() ?
-                    "\n\t-Route that need rerouting in Input = " +
-                    routeMaskToString<Direction::Input>(mRoutes[Direction::Input].needRepathRoutes())
-                    : "")
-                 << (mRoutes[Direction::Output].needRepathRoutes() ?
-                    "\n\t-Route that need rerouting in Output = "
-                    + routeMaskToString<Direction::Output>(mRoutes[Direction::Output].needRepathRoutes())
-                    : "");
+    Log::Debug() << __FUNCTION__ << ": Route state:"
+         << "\n\t-Previously Enabled Route in Input = "
+         << routeMaskToString<Direction::Input>(mRouteMap.prevEnabledRouteMask(Direction::Input))
+         << "\n\t-Previously Enabled Route in Output = "
+         << routeMaskToString<Direction::Output>(mRouteMap.prevEnabledRouteMask(Direction::Output))
+         << "\n\t-Selected Route in Input = "
+         << routeMaskToString<Direction::Input>(mRouteMap.enabledRouteMask(Direction::Input))
+         << "\n\t-Selected Route in Output = "
+         << routeMaskToString<Direction::Output>(mRouteMap.enabledRouteMask(Direction::Output))
+         << (mRouteMap.needReflowRouteMask(Direction::Input) ?
+            "\n\t-Route that need reconfiguration in Input = " +
+            routeMaskToString<Direction::Input>(mRouteMap.needReflowRouteMask(Direction::Input))
+            : "")
+         << (mRouteMap.needReflowRouteMask(Direction::Output) ?
+            "\n\t-Route that need reconfiguration in Output = "
+            + routeMaskToString<Direction::Output>(mRouteMap.needReflowRouteMask(Direction::Output))
+            : "")
+         << (mRouteMap.needRepathRouteMask(Direction::Input) ?
+            "\n\t-Route that need rerouting in Input = " +
+            routeMaskToString<Direction::Input>(mRouteMap.needRepathRouteMask(Direction::Input))
+            : "")
+         << (mRouteMap.needRepathRouteMask(Direction::Output) ?
+            "\n\t-Route that need rerouting in Output = "
+            + routeMaskToString<Direction::Output>(mRouteMap.needRepathRouteMask(Direction::Output))
+            : "");
     executeRouting();
     Log::Debug() << __FUNCTION__ << ": DONE";
 }
@@ -253,81 +216,21 @@ void AudioRouteManager::executeRouting()
 
 void AudioRouteManager::resetRouting()
 {
-    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-        mRoutes[i].reset();
-    }
-
-    resetAvailability<AudioRoute>();
-    resetAvailability<AudioPort>();
-}
-
-void AudioRouteManager::addStream(IoStream &stream)
-{
-    AutoW lock(mRoutingLock);
-    mStreamsList[stream.isOut()].push_back(&stream);
-}
-
-void AudioRouteManager::removeStream(IoStream &streamToRemove)
-{
-    AutoW lock(mRoutingLock);
-    mStreamsList[streamToRemove.isOut()].remove(&streamToRemove);
+    mRouteMap.resetAvailability();
+    mPortMap.resetAvailability();
 }
 
 bool AudioRouteManager::checkAndPrepareRouting()
 {
     resetRouting();
-
-    RouteMapIterator it;
-    for (it = mRouteMap.begin(); it != mRouteMap.end(); ++it) {
-
-        AudioRoute *route =  it->second;
-        prepareRoute(route);
-        mRoutes[route->isOut()].setNeedReflowRoute(route->needReflow(), route->getMask());
-        mRoutes[route->isOut()].setNeedRepathRoute(route->needRepath(), route->getMask());
-    }
-
-    return mRoutes[Direction::Output].routingHasChanged()
-           || mRoutes[Direction::Input].routingHasChanged();
-}
-
-void AudioRouteManager::prepareRoute(AudioRoute *route)
-{
-    AUDIOCOMMS_ASSERT(route != NULL, "Failure, invalid route parameter");
-
-    bool isApplicable = route->isStreamRoute() ?
-                        setStreamForRoute(static_cast<AudioStreamRoute *>(route)) :
-                        route->isApplicable();
-    route->setUsed(isApplicable);
-    mRoutes[route->isOut()].setEnabledRoute(isApplicable, route->getMask());
-}
-
-bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
-{
-    AUDIOCOMMS_ASSERT(route != NULL, "Failure, invalid route parameter");
-
-    bool isOut = route->isOut();
-
-    StreamListIterator it;
-    for (it = mStreamsList[isOut].begin(); it != mStreamsList[isOut].end(); ++it) {
-
-        IoStream &stream = **it;
-        if (stream.isStarted() && !stream.isNewRouteAvailable()) {
-
-            if (route->isApplicable(stream)) {
-                Log::Verbose() << __FUNCTION__
-                               << ": stream route " << route->getName() << " is applicable";
-                return route->setStream(stream) == android::OK;
-            }
-        }
-    }
-
-    return false;
+    mStreamRouteMap.prepareRouting();
+    mRouteMap.prepareRouting();
+    return mRouteMap.routingHasChanged();
 }
 
 void AudioRouteManager::executeMuteRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
-
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, FlowMask);
     setRouteCriteriaForMute();
     mPlatformState->applyConfiguration<Audio>();
@@ -338,25 +241,16 @@ void AudioRouteManager::executeDisableRoutingStage()
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask);
     setRouteCriteriaForDisable();
-    doDisableRoutes();
+    mStreamRouteMap.disableRoutes();
     mPlatformState->applyConfiguration<Audio>();
-    doPostDisableRoutes();
+    mStreamRouteMap.postDisableRoutes();
 }
 
 void AudioRouteManager::executeConfigureRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, ConfigureMask);
-    StreamRouteMapIterator routeIt;
-    for (routeIt = mStreamRouteMap.begin(); routeIt != mStreamRouteMap.end(); ++routeIt) {
-
-        AudioStreamRoute *streamRoute = routeIt->second;
-        if (streamRoute->needReflow()) {
-
-            streamRoute->configure();
-        }
-    }
-
+    mStreamRouteMap.configureRoutes();
     setRouteCriteriaForConfigure();
     mPlatformState->commitCriteriaAndApplyConfiguration<Audio>();
 }
@@ -365,9 +259,9 @@ void AudioRouteManager::executeEnableRoutingStage()
 {
     Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask | ConfigureMask);
-    doPreEnableRoutes();
+    mStreamRouteMap.preEnableRoutes();
     mPlatformState->applyConfiguration<Audio>();
-    doEnableRoutes();
+    mStreamRouteMap.enableRoutes();
 }
 
 void AudioRouteManager::executeUnmuteRoutingStage()
@@ -381,118 +275,29 @@ void AudioRouteManager::executeUnmuteRoutingStage()
 void AudioRouteManager::setRouteCriteriaForConfigure()
 {
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
+        Direction::Values dir = static_cast<Direction::Values>(i);
         mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], 0);
-        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], mRoutes[i].enabledRoutes());
+        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
+                                            mRouteMap.enabledRouteMask(dir));
     }
 }
 
 void AudioRouteManager::setRouteCriteriaForMute()
 {
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-
-        uint32_t unmutedRoutes = mRoutes[i].unmutedRoutes();
-        uint32_t routesToMute = mRoutes[i].routesToMute();
-
-        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], routesToMute);
-        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], unmutedRoutes);
+        Direction::Values dir = static_cast<Direction::Values>(i);
+        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], mRouteMap.routesToMute(dir));
+        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], mRouteMap.unmutedRoutes(dir));
     }
 }
 
 void AudioRouteManager::setRouteCriteriaForDisable()
 {
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-
-        uint32_t openedRoutes = mRoutes[i].openedRoutes();
-        uint32_t routesToDisable = mRoutes[i].routesToDisable();
-
-        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i], routesToDisable);
-        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], openedRoutes);
-    }
-}
-
-void AudioRouteManager::doDisableRoutes(bool isPostDisable)
-{
-    StreamRouteMapIterator it;
-    for (it = mStreamRouteMap.begin(); it != mStreamRouteMap.end(); ++it) {
-
-        AudioStreamRoute *streamRoute = it->second;
-
-        if ((streamRoute->previouslyUsed() && !streamRoute->isUsed()) ||
-            streamRoute->needRepath()) {
-            Log::Verbose() << __FUNCTION__
-                           << ": Route " << streamRoute->getName() << " to be disabled";
-            streamRoute->unroute(isPostDisable);
-        }
-    }
-}
-
-void AudioRouteManager::doEnableRoutes(bool isPreEnable)
-{
-    StreamRouteMapIterator it;
-    for (it = mStreamRouteMap.begin(); it != mStreamRouteMap.end(); ++it) {
-
-        AudioStreamRoute *streamRoute = it->second;
-
-        if ((!streamRoute->previouslyUsed() && streamRoute->isUsed()) ||
-            streamRoute->needRepath()) {
-            Log::Verbose() << __FUNCTION__
-                           << ": Route" << streamRoute->getName() << " to be enabled";
-            if (streamRoute->route(isPreEnable) != android::OK) {
-                Log::Error() << "\t error while routing " << streamRoute->getName();
-            }
-        }
-    }
-}
-
-template <typename T>
-T *AudioRouteManager::addElement(const string &key, T *element)
-{
-    routingElementSupported<T>();
-    map<string, T *> &elementsMap = getMap<T>();
-
-    if (elementsMap.find(key) != elementsMap.end()) {
-        Log::Warning() << __FUNCTION__ << ": element(" << key << " already added";
-        return NULL;
-    }
-    elementsMap[key] = element;
-    return element;
-}
-
-template <typename T>
-T *AudioRouteManager::getElement(const string &name)
-{
-    routingElementSupported<T>();
-
-    map<string, T *> &elementsMap = getMap<T>();
-
-    typename map<string, T *>::iterator it = elementsMap.find(name);
-
-    AUDIOCOMMS_ASSERT(it != elementsMap.end(), "Element " << name << " not found");
-    return it->second;
-}
-
-template <typename T>
-T *AudioRouteManager::findElementByName(const std::string &name)
-{
-    routingElementSupported<T>();
-
-    map<string, T *> &elementsMap = getMap<T>();
-
-    typename map<string, T *>::iterator it = elementsMap.find(name);
-
-    return (elementsMap.find(name) == elementsMap.end()) ? NULL : it->second;
-}
-
-template <typename T>
-void AudioRouteManager::resetAvailability()
-{
-    routingElementSupported<T>();
-
-    map<string, T *> &elementsMap = getMap<T>();
-
-    typename map<string, T *>::iterator it;
-    for (it = elementsMap.begin(); it != elementsMap.end(); ++it) {
-        it->second->resetAvailability();
+        Direction::Values dir = static_cast<Direction::Values>(i);
+        mPlatformState->setCriterion<Audio>(gClosingRouteCriterion[i],
+                                            mRouteMap.routesToDisable(dir));
+        mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i], mRouteMap.openedRoutes(dir));
     }
 }
 
@@ -571,35 +376,10 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
     return android::OK;
 }
 
-IoStream *AudioRouteManager::getVoiceOutputStream()
-{
-    AutoW lock(mRoutingLock);
-
-    StreamListIterator it;
-    // We take the first stream that corresponds to the primary output.
-    it = mStreamsList[Direction::Output].begin();
-    if (*it == NULL) {
-        Log::Error() << __FUNCTION__ << ": current stream NOT FOUND for echo ref";
-    }
-    return *it;
-}
-
-const AudioStreamRoute *AudioRouteManager::findMatchingRouteForStream(const IoStream &stream) const
-{
-    StreamRouteMapConstIterator it;
-    for (it = mStreamRouteMap.begin(); it != mStreamRouteMap.end(); ++it) {
-        const AudioStreamRoute *streamRoute = it->second;
-        if (streamRoute->isMatchingWithStream(stream)) {
-            return streamRoute;
-        }
-    }
-    return NULL;
-}
-
 uint32_t AudioRouteManager::getPeriodInUs(const IoStream &stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = findMatchingRouteForStream(stream);
+    const AudioStreamRoute *route = mStreamRouteMap.findMatchingRouteForStream(stream);
     if (route == NULL) {
         Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
                      << stream.getFlagMask() << ", use case =" << stream.getUseCaseMask();
@@ -611,7 +391,7 @@ uint32_t AudioRouteManager::getPeriodInUs(const IoStream &stream) const
 uint32_t AudioRouteManager::getLatencyInUs(const IoStream &stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = findMatchingRouteForStream(stream);
+    const AudioStreamRoute *route = mStreamRouteMap.findMatchingRouteForStream(stream);
     if (route == NULL) {
         Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
                      << stream.getFlagMask() << ", use case =" << stream.getUseCaseMask();
@@ -620,48 +400,17 @@ uint32_t AudioRouteManager::getLatencyInUs(const IoStream &stream) const
     return route->getLatencyInUs();
 }
 
-void AudioRouteManager::setRouteApplicable(const string &name, bool isApplicable)
-{
-    Log::Verbose() << __FUNCTION__ << ": " << name;
-    AutoW lock(mRoutingLock);
-    getElement<AudioRoute>(name)->setApplicable(isApplicable);
-}
-
-void AudioRouteManager::setRouteNeedReconfigure(const string &name, bool needReconfigure)
-{
-    Log::Verbose() << __FUNCTION__ << ": " << name;
-    AutoW lock(mRoutingLock);
-    getElement<AudioRoute>(name)->setNeedReconfigure(needReconfigure);
-}
-
-void AudioRouteManager::setRouteNeedReroute(const string &name, bool needReroute)
-{
-    Log::Verbose() << __FUNCTION__ << ": " << name;
-    AutoW lock(mRoutingLock);
-    getElement<AudioRoute>(name)->setNeedReroute(needReroute);
-}
-
-void AudioRouteManager::updateStreamRouteConfig(const string &name,
-                                                const StreamRouteConfig &config)
-{
-    AutoW lock(mRoutingLock);
-    getElement<AudioStreamRoute>(name)->updateStreamRouteConfig(config);
-}
-
-void AudioRouteManager::addRouteSupportedEffect(const string &name, const string &effect)
-{
-    getElement<AudioStreamRoute>(name)->addEffectSupported(effect);
-}
-
 void AudioRouteManager::setPortBlocked(const string &name, bool isBlocked)
 {
-    AutoW lock(mRoutingLock);
-    getElement<AudioPort>(name)->setBlocked(isBlocked);
+    AudioPort *port = mPortMap.getElement(name);
+    if (port == NULL) {
+        return;
+    }
+    port->setBlocked(isBlocked);
 }
 
 bool AudioRouteManager::setAudioCriterion(const std::string &name, uint32_t value)
 {
-    AutoW lock(mRoutingLock);
     return mPlatformState->stageCriterion<Audio>(name, value);
 }
 
@@ -669,49 +418,11 @@ static uint32_t count[Direction::gNbDirections] = {
     0, 0
 };
 
-template <typename T>
-void AudioRouteManager::addRoute(const string &name,
-                                 const string &portSrc,
-                                 const string &portDst,
-                                 bool isOut)
-{
-    std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
-
-    AutoW lock(mRoutingLock);
-
-    T *route = new T(name);
-    route = addElement<T>(mapKeyName, route);
-
-    if (route != NULL) {
-        Log::Debug() << __FUNCTION__ << ": Name=" << mapKeyName
-                     << " ports used= " << portSrc << " ," << portDst;
-        route->setDirection(isOut);
-        route->setMask(1 << count[isOut]);
-        if (!portSrc.empty()) {
-            route->addPort(*findElementByName<AudioPort>(portSrc));
-        }
-        if (!portDst.empty()) {
-            route->addPort(*findElementByName<AudioPort>(portDst));
-        }
-        if (route->isStreamRoute()) {
-
-            // Stream route must also be added in route list as well.
-            AUDIOCOMMS_ASSERT(mRouteMap.find(mapKeyName) == mRouteMap.end(),
-                              "Fatal: route " << mapKeyName << " already added to route list!");
-            mRouteMap[mapKeyName] = route;
-        }
-        // Populate Route criterion type value pair for Audio PFW (values provided by Route Plugin)
-        mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[isOut],
-                                                         name,
-                                                         1 << count[isOut]++);
-    }
-}
-
 void AudioRouteManager::addPort(const string &name)
 {
     Log::Debug() << __FUNCTION__ << ": Name=" << name;
     AudioPort *port = new AudioPort(name);
-    if (!addElement<AudioPort>(name, port)) {
+    if (!mPortMap.addElement(name, port)) {
         delete port;
     }
 }
@@ -719,7 +430,7 @@ void AudioRouteManager::addPort(const string &name)
 void AudioRouteManager::addPortGroup(const string &name, const string &portMember)
 {
     AudioPortGroup *portGroup = new AudioPortGroup(name);
-    if (!addElement<AudioPortGroup>(name, portGroup)) {
+    if (!mPortGroupMap.addElement(name, portGroup)) {
         delete portGroup;
         return;
     }
@@ -727,8 +438,8 @@ void AudioRouteManager::addPortGroup(const string &name, const string &portMembe
     if (portGroup != NULL) {
         Log::Debug() << __FUNCTION__ << ": Group=" << name << " PortMember to add=" << portMember;
 
-        AudioPort *port = findElementByName<AudioPort>(portMember);;
-        if (!port) {
+        AudioPort *port = mPortMap.getElement(portMember);
+        if (port != NULL) {
             portGroup->addPortToGroup(*port);
         }
     }
@@ -750,6 +461,23 @@ std::string AudioRouteManager::getParameters(const std::string &keys) const
 {
     AutoR lock(mRoutingLock);
     return mPlatformState->getParameters(keys);
+}
+
+template <typename T>
+T *AudioRouteManager::instantiateRoute(const string &name, const string &portSrc,
+                                       const string &portDst, bool isOut)
+{
+    T *route = new T(name, isOut, 1 << count[isOut]);
+    if (!portSrc.empty()) {
+        route->addPort(*mPortMap.getElement(portSrc));
+    }
+    if (!portDst.empty()) {
+        route->addPort(*mPortMap.getElement(portDst));
+    }
+    // Populate Route criterion type value pair for Audio PFW (values provided by Route Plugin)
+    mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[isOut], name,
+                                                     1 << count[isOut]++);
+    return route;
 }
 
 } // namespace intel_audio
