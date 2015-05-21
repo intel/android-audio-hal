@@ -171,26 +171,6 @@ private:
     const AudioStreamRoute *findMatchingRouteForStream(const IoStream &stream) const;
 
     /**
-     * Sets a bit referred by an index within a mask.
-     *
-     * @param[in] isSet if true, the bit will be set, if false, nop (bit will not be cleared).
-     * @param[in] index bit index to set.
-     * @param[in,out] mask in which the bit must be set.
-     */
-    void setBit(bool isSet, uint32_t index, uint32_t &mask);
-
-    /**
-     * Checks if the routing conditions changed in a given direction.
-     *
-     * @tparam isOut direction of the route to consider.
-     *
-     * @return  true if previously enabled routes is different from currently enabled routes
-     *               or if any route needs to be reconfigured.
-     */
-    template <bool isOut>
-    inline bool routingHasChanged();
-
-    /**
      * From worker thread context
      * This function requests to evaluate the routing for all the streams
      * after a mode change, a modem event ...
@@ -450,55 +430,119 @@ private:
         uint32_t needRepath;  /**< Bitfield of routes that needs to be disabled / enabled. */
         uint32_t enabled;     /**< Bitfield of enabled routes. */
         uint32_t prevEnabled; /**< Bitfield of previously enabled routes. */
+
+        /**
+         * Get the need reflow routes mask.
+         *
+         * @return reflow routes mask in the requested direction.
+         */
+        inline uint32_t needReflowRoutes() const
+        {
+            return needReflow;
+        }
+
+        inline void setNeedReflowRoute(bool isSet, uint32_t index)
+        {
+            setBit(isSet, index, needReflow);
+        }
+
+        inline void setNeedRepathRoute(bool isSet, uint32_t index)
+        {
+            setBit(isSet, index, needRepath);
+        }
+
+        inline void setEnabledRoute(bool isSet, uint32_t index)
+        {
+            setBit(isSet, index, enabled);
+        }
+
+        /**
+         * Sets a bit referred by an index within a mask.
+         *
+         * @param[in] isSet if true, the bit will be set, if false, nop (bit will not be cleared).
+         * @param[in] index bit index to set.
+         * @param[in,out] mask in which the bit must be set.
+         */
+        inline void setBit(bool isSet, uint32_t index, uint32_t &mask)
+        {
+            if (isSet) {
+                mask |= index;
+            }
+        }
+
+        /**
+         * Get the need repath routes mask.
+         *
+         * @return repath routes mask in the requested direction.
+         */
+        inline uint32_t needRepathRoutes() const
+        {
+            return needRepath;
+        }
+
+        /**
+         * Get the enabled routes mask.
+         *
+         * @return enabled routes mask in the requested direction.
+         */
+        inline uint32_t enabledRoutes() const
+        {
+            return enabled;
+        }
+
+        /**
+         * Get the prevously enabled routes mask.
+         *
+         * @return previously enabled routes mask in the requested direction.
+         */
+        inline uint32_t prevEnabledRoutes() const
+        {
+            return prevEnabled;
+        }
+
+        /**
+         * Checks if the routing conditions changed in a given direction.
+         *
+         * @tparam isOut direction of the route to consider.
+         *
+         * @return  true if previously enabled routes is different from currently enabled routes
+         *               or if any route needs to be reconfigured.
+         */
+        bool routingHasChanged()
+        {
+            return prevEnabledRoutes() != enabledRoutes()
+                   || needReflowRoutes() != 0
+                   || needRepathRoutes() != 0;
+        }
+
+        void reset()
+        {
+            prevEnabled = enabled;
+            enabled = 0;
+            needReflow = 0;
+            needRepath = 0;
+        }
+
+        uint32_t unmutedRoutes()
+        {
+            return prevEnabledRoutes() & enabledRoutes() & ~needReflowRoutes();
+        }
+
+        uint32_t routesToMute()
+        {
+            return (prevEnabledRoutes() & ~enabledRoutes()) | needReflowRoutes();
+        }
+
+        uint32_t openedRoutes()
+        {
+            return prevEnabledRoutes() & enabledRoutes() & ~needRepathRoutes();
+        }
+
+        uint32_t routesToDisable()
+        {
+            return (prevEnabledRoutes() & ~enabledRoutes()) | needRepathRoutes();
+        }
     } mRoutes[Direction::gNbDirections];
-
-    /**
-     * Get the need reflow routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return reflow routes mask in the requested direction.
-     */
-    inline uint32_t needReflowRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].needReflow;
-    }
-
-    /**
-     * Get the need repath routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return repath routes mask in the requested direction.
-     */
-    inline uint32_t needRepathRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].needRepath;
-    }
-
-    /**
-     * Get the enabled routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return enabled routes mask in the requested direction.
-     */
-    inline uint32_t enabledRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].enabled;
-    }
-
-    /**
-     * Get the prevously enabled routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return previously enabled routes mask in the requested direction.
-     */
-    inline uint32_t prevEnabledRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].prevEnabled;
-    }
 
     /**
      * provide a compile time error if no specialization is provided for a given type.
