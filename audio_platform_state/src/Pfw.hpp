@@ -143,14 +143,14 @@ public:
      *
      * @param[in] root node of the configuration file.
      */
-    void loadInclusiveCriterionType(cnode *root);
+    void loadInclusiveCriterionType(cnode &root);
 
     /**
      * Parse and load the exclusive criterion type from configuration file.
      *
      * @param[in] root node of the configuration file.
      */
-    void loadExclusiveCriterionType(cnode *root);
+    void loadExclusiveCriterionType(cnode &root);
 
     /**
      * Add a parameter and its mapping pairs to the Platform state.
@@ -194,28 +194,28 @@ public:
      *
      * @param[in] root node of the configuration file.
      */
-    void loadRogueParameterType(cnode *root, std::vector<Parameter *> &parameterVector);
+    void loadRogueParameterType(cnode &root, std::vector<Parameter *> &parameterVector);
 
     /**
      * Parse and load the rogue parameters type from configuration file and push them into a list.
      *
      * @param[in] root node of the configuration file.
      */
-    void loadRogueParameterTypeList(cnode *root, std::vector<Parameter *> &parameterVector);
+    void loadRogueParameterTypeList(cnode &root, std::vector<Parameter *> &parameterVector);
 
     /**
      * Parse and load the criteria from configuration file.
      *
      * @param[in] root node of the configuration file.
      */
-    void loadCriteria(cnode *root, std::vector<Parameter *> &parameterVector);
+    void loadCriteria(cnode &root, std::vector<Parameter *> &parameterVector);
 
     /**
      * Parse and load a criterion from configuration file.
      *
      * @param[in] root node of the configuration file.
      */
-    void loadCriterion(cnode *root, std::vector<Parameter *> &parameterVector);
+    void loadCriterion(cnode &root, std::vector<Parameter *> &parameterVector);
 
     /**
      * Parse and load the criterion types from configuration file.
@@ -223,7 +223,7 @@ public:
      * @param[in] root node of the configuration file
      * @param[in] isInclusive true if inclusive, false is exclusive.
      */
-    void loadCriterionType(cnode *root, bool isInclusive);
+    void loadCriterionType(cnode &root, bool isInclusive);
 
     /**
      * Parse and load the chidren node from a given root node.
@@ -235,10 +235,10 @@ public:
      * @param[out] type of the parameter manager element to retrieve.
      * @param[out] valuePairs pair of android value / parameter Manager value.
      */
-    void parseChildren(cnode *root, std::string &path, std::string &defaultValue, std::string &key,
+    void parseChildren(cnode &root, std::string &path, std::string &defaultValue, std::string &key,
                        std::string &type, std::vector<AndroidParamMappingValuePair> &valuePairs);
 
-    void loadConfig(cnode *root, std::vector<Parameter *> &parameterVector);
+    void loadConfig(cnode &root, std::vector<Parameter *> &parameterVector);
 
 private:
     CParameterMgrPlatformConnector *getConnector();

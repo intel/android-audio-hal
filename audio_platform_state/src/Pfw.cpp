@@ -90,9 +90,9 @@ public:
         const static string format = "-Instance: ";
 
         if (isWarning) {
-            Log::Warning() << mTag  << format << log;
+            Log::Warning() << mTag << format << log;
         } else if (mVerbose == "true") {
-            Log::Debug() << mTag  << format << log;
+            Log::Debug() << mTag << format << log;
         }
     }
 };
@@ -190,13 +190,10 @@ void Pfw<Trait>::addCriterionTypeValuePair(const string &typeName, uint32_t nume
 }
 
 template <class Trait>
-void Pfw<Trait>::loadCriterionType(cnode *root, bool isInclusive)
+void Pfw<Trait>::loadCriterionType(cnode &root, bool isInclusive)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     cnode *node;
-    for (node = root->first_child; node != NULL; node = node->next) {
-
-        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
+    for (node = root.first_child; node != NULL; node = node->next) {
         const char *typeName = node->name;
         char *valueNames = strndup(node->value, strlen(node->value));
 
@@ -249,25 +246,23 @@ void Pfw<Trait>::loadCriterionType(cnode *root, bool isInclusive)
 }
 
 template <class Trait>
-void Pfw<Trait>::loadInclusiveCriterionType(cnode *root)
+void Pfw<Trait>::loadInclusiveCriterionType(cnode &root)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, gInclusiveCriterionTypeTag.c_str());
+    cnode *node = config_find(&root, gInclusiveCriterionTypeTag.c_str());
     if (node == NULL) {
         return;
     }
-    loadCriterionType(node, true);
+    loadCriterionType(*node, true);
 }
 
 template <class Trait>
-void Pfw<Trait>::loadExclusiveCriterionType(cnode *root)
+void Pfw<Trait>::loadExclusiveCriterionType(cnode &root)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, gExclusiveCriterionTypeTag.c_str());
+    cnode *node = config_find(&root, gExclusiveCriterionTypeTag.c_str());
     if (node == NULL) {
         return;
     }
-    loadCriterionType(node, false);
+    loadCriterionType(*node, false);
 }
 
 /**
@@ -340,14 +335,11 @@ void Pfw<Trait>::addRogueParameter(const string &typeName, const string &paramKe
 }
 
 template <class Trait>
-void Pfw<Trait>::parseChildren(cnode *root, string &path, string &defaultValue, string &key,
+void Pfw<Trait>::parseChildren(cnode &root, string &path, string &defaultValue, string &key,
                                string &type, std::vector<AndroidParamMappingValuePair> &valuePairs)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     cnode *node;
-    for (node = root->first_child; node != NULL; node = node->next) {
-        AUDIOCOMMS_ASSERT(node != NULL, "error in parsing file");
-
+    for (node = root.first_child; node != NULL; node = node->next) {
         if (string(node->name) == gPathTag) {
             path = node->value;
         } else if (string(node->name) == gParameterDefaultTag) {
@@ -368,11 +360,9 @@ void Pfw<Trait>::parseChildren(cnode *root, string &path, string &defaultValue, 
 }
 
 template <class Trait>
-void Pfw<Trait>::loadRogueParameterType(cnode *root, std::vector<Parameter *> &parameterVector)
+void Pfw<Trait>::loadRogueParameterType(cnode &root, std::vector<Parameter *> &parameterVector)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-
-    const char *rogueParameterName = root->name;
+    const char *rogueParameterName = root.name;
 
     std::vector<AndroidParamMappingValuePair> valuePairs;
     string paramKeyName = "";
@@ -390,16 +380,15 @@ void Pfw<Trait>::loadRogueParameterType(cnode *root, std::vector<Parameter *> &p
 }
 
 template <class Trait>
-void Pfw<Trait>::loadRogueParameterTypeList(cnode *root, std::vector<Parameter *> &parameterVector)
+void Pfw<Trait>::loadRogueParameterTypeList(cnode &root, std::vector<Parameter *> &parameterVector)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, gRogueParameterTag.c_str());
+    cnode *node = config_find(&root, gRogueParameterTag.c_str());
     if (node == NULL) {
         Log::Warning() << __FUNCTION__ << ": no rogue parameter type found";
         return;
     }
     for (node = node->first_child; node != NULL; node = node->next) {
-        loadRogueParameterType(node, parameterVector);
+        loadRogueParameterType(*node, parameterVector);
     }
 }
 
@@ -431,17 +420,16 @@ const T *Pfw<Trait>::getElement(const string &name, const std::map<string, T *> 
 }
 
 template <class Trait>
-void Pfw<Trait>::loadCriteria(cnode *root, std::vector<Parameter *> &parameterVector)
+void Pfw<Trait>::loadCriteria(cnode &root, std::vector<Parameter *> &parameterVector)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    cnode *node = config_find(root, gCriterionTag.c_str());
+    cnode *node = config_find(&root, gCriterionTag.c_str());
 
     if (node == NULL) {
         Log::Warning() << __FUNCTION__ << ": no inclusive criteria found";
         return;
     }
     for (node = node->first_child; node != NULL; node = node->next) {
-        loadCriterion(node, parameterVector);
+        loadCriterion(*node, parameterVector);
     }
 }
 
@@ -521,10 +509,9 @@ uint32_t Pfw<Trait>::getCriterion(const string &name) const
 }
 
 template <class Trait>
-void Pfw<Trait>::loadCriterion(cnode *root, std::vector<Parameter *> &parameterVector)
+void Pfw<Trait>::loadCriterion(cnode &root, std::vector<Parameter *> &parameterVector)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
-    const char *criterionName = root->name;
+    const char *criterionName = root.name;
 
     std::vector<AndroidParamMappingValuePair> valuePairs;
     string paramKeyName = "";
@@ -547,34 +534,33 @@ void Pfw<Trait>::loadCriterion(cnode *root, std::vector<Parameter *> &parameterV
 }
 
 template <class Trait>
-void Pfw<Trait>::loadConfig(cnode *root, std::vector<Parameter *> &parameterVector)
+void Pfw<Trait>::loadConfig(cnode &root, std::vector<Parameter *> &parameterVector)
 {
-    AUDIOCOMMS_ASSERT(root != NULL, "error in parsing file");
     // Must load criterion type for both common and specific PFW tag before parsing criteria.
-    cnode *node = config_find(root, gCommonConfTag.c_str());
+    cnode *node = config_find(&root, gCommonConfTag.c_str());
     if (node != NULL) {
         Log::Verbose() << __FUNCTION__ << " Load common conf types for " << mTag;
-        loadInclusiveCriterionType(node);
-        loadExclusiveCriterionType(node);
+        loadInclusiveCriterionType(*node);
+        loadExclusiveCriterionType(*node);
     }
-    node = config_find(root, mTag.c_str());
+    node = config_find(&root, mTag.c_str());
     if (node != NULL) {
         Log::Verbose() << __FUNCTION__ << " Load specific conf types for " << mTag;
-        loadInclusiveCriterionType(node);
-        loadExclusiveCriterionType(node);
+        loadInclusiveCriterionType(*node);
+        loadExclusiveCriterionType(*node);
     }
 
-    node = config_find(root, gCommonConfTag.c_str());
+    node = config_find(&root, gCommonConfTag.c_str());
     if (node != NULL) {
         Log::Verbose() << __FUNCTION__ << " Load common conf for " << mTag;
-        loadCriteria(node, parameterVector);
-        loadRogueParameterTypeList(node, parameterVector);
+        loadCriteria(*node, parameterVector);
+        loadRogueParameterTypeList(*node, parameterVector);
     }
-    node = config_find(root, mTag.c_str());
+    node = config_find(&root, mTag.c_str());
     if (node != NULL) {
         Log::Verbose() << __FUNCTION__ << " Load specific conf for " << mTag;
-        loadCriteria(node, parameterVector);
-        loadRogueParameterTypeList(node, parameterVector);
+        loadCriteria(*node, parameterVector);
+        loadRogueParameterTypeList(*node, parameterVector);
     }
 }
 

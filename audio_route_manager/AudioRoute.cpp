@@ -43,18 +43,16 @@ AudioRoute::~AudioRoute()
 }
 
 
-void AudioRoute::addPort(AudioPort *port)
+void AudioRoute::addPort(AudioPort &port)
 {
-    AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
+    Log::Verbose() << __FUNCTION__ << ": " << port.getName() << " to route " << getName();
 
-    Log::Verbose() << __FUNCTION__ << ": " << port->getName() << " to route " << getName();
-
-    port->addRouteToPortUsers(this);
+    port.addRouteToPortUsers(*this);
     if (!mPort[EPortSource]) {
 
-        mPort[EPortSource] = port;
+        mPort[EPortSource] = &port;
     } else {
-        mPort[EPortDest] = port;
+        mPort[EPortDest] = &port;
     }
 }
 
@@ -78,10 +76,7 @@ void AudioRoute::setUsed(bool isUsed)
 
         return;
     }
-
-    AUDIOCOMMS_ASSERT(isBlocked() != true, "Requested route blocked");
-
-    if (!mIsUsed) {
+    if (isApplicable()) {
         Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
                        << (mIsOut ? "PLAYBACK" : "CAPTURE");
         mIsUsed = true;
@@ -92,7 +87,7 @@ void AudioRoute::setUsed(bool isUsed)
 
             if (mPort[i]) {
 
-                mPort[i]->setUsed(this);
+                mPort[i]->setUsed(*this);
             }
         }
     }

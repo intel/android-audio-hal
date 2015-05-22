@@ -58,7 +58,7 @@ public:
      *
      * @param[in] route Route that is in use and request to use the port.
      */
-    void setUsed(AudioRoute *route);
+    void setUsed(AudioRoute &route);
 
     /**
      * Resets the availability of the port.
@@ -79,7 +79,7 @@ public:
      *
      * @param[in] route Route using this port.
      */
-    void addRouteToPortUsers(AudioRoute *route);
+    void addRouteToPortUsers(AudioRoute &route);
 
     /**
      * Add a group to the port.
@@ -90,7 +90,7 @@ public:
      *
      * @param[in] portGroup Group to add.
      */
-    void addGroupToPort(AudioPortGroup *portGroup);
+    void addGroupToPort(AudioPortGroup &portGroup);
 
 private:
     std::list<AudioPortGroup *> mPortGroupList; /**< list of groups this port belongs to. */

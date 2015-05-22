@@ -108,7 +108,10 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
 
 int AudioUtils::getCardIndexByName(const char *name)
 {
-    AUDIOCOMMS_ASSERT(name != NULL, "Null card name");
+    if (name == NULL) {
+        Log::Error() << __FUNCTION__ << ": invalid card name";
+        return -1;
+    }
     char cardFilePath[PATH_MAX] = {
         0
     };

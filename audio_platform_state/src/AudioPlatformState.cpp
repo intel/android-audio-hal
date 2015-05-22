@@ -130,7 +130,10 @@ status_t AudioPlatformState::start()
 
 status_t AudioPlatformState::loadAudioHalConfig(const char *path)
 {
-    AUDIOCOMMS_ASSERT(path != NULL, "error in parsing file: empty path");
+    if (path == NULL) {
+        Log::Error() << __FUNCTION__ << ": invalid path ";
+        return android::BAD_VALUE;
+    }
     cnode *root;
     char *data;
     Log::Debug() << __FUNCTION__ << ": loading configuration file " << path;
@@ -139,11 +142,14 @@ status_t AudioPlatformState::loadAudioHalConfig(const char *path)
         return -ENODEV;
     }
     root = config_node("", "");
-    AUDIOCOMMS_ASSERT(root != NULL, "Unable to allocate a configuration node");
+    if (root == NULL) {
+        Log::Error() << __FUNCTION__ << ": failed to parse configuration file";
+        return android::BAD_VALUE;
+    }
     config_load(root, data);
 
-    getPfw<Audio>()->loadConfig(root, mParameterVector);
-    getPfw<Route>()->loadConfig(root, mParameterVector);
+    getPfw<Audio>()->loadConfig(*root, mParameterVector);
+    getPfw<Route>()->loadConfig(*root, mParameterVector);
 
     config_free(root);
     free(root);

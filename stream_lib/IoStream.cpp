@@ -19,7 +19,9 @@
 #include <AudioCommsAssert.hpp>
 #include <SampleSpec.hpp>
 #include <utils/RWLock.h>
+#include <utilities/Log.hpp>
 
+using audio_comms::utilities::Log;
 using std::string;
 
 namespace intel_audio
@@ -57,9 +59,11 @@ android::status_t IoStream::detachRoute()
 
 android::status_t IoStream::attachRouteL()
 {
-    AUDIOCOMMS_ASSERT(mNewStreamRoute != NULL, "NULL route pointer");
+    if (mNewStreamRoute == NULL) {
+        Log::Error() << __FUNCTION__ << ": Invalid new stream route to attach";
+        return android::BAD_VALUE;
+    }
     setCurrentStreamRouteL(mNewStreamRoute);
-    AUDIOCOMMS_ASSERT(mCurrentStreamRoute != NULL, "NULL route pointer");
     setRouteSampleSpecL(mCurrentStreamRoute->getSampleSpec());
     return android::OK;
 }
@@ -83,7 +87,10 @@ void IoStream::removeRequestedEffect(uint32_t effectId)
 
 uint32_t IoStream::getOutputSilencePrologMs() const
 {
-    AUDIOCOMMS_ASSERT(mCurrentStreamRoute != NULL, "NULL route pointer");
+    if (mCurrentStreamRoute == NULL) {
+        Log::Warning() << __FUNCTION__ << ": called from invalid context(No route), returning 0 ms";
+        return 0;
+    }
     return mCurrentStreamRoute->getOutputSilencePrologMs();
 }
 

@@ -53,6 +53,7 @@ void Criterion::init(int32_t defaultValue)
     AUDIOCOMMS_ASSERT(mCriterionType != NULL, "NULL criterion Type");
     mSelectionCriterionInterface =
         mParameterMgrConnector->createSelectionCriterion(mName, mCriterionType->getTypeInterface());
+    AUDIOCOMMS_ASSERT(mSelectionCriterionInterface != NULL, "NULL criterion interface");
     mValue = defaultValue;
     setCriterionState();
 }
@@ -93,7 +94,6 @@ bool Criterion::setValue<std::string>(const std::string &literalValue)
 
 void Criterion::setCriterionState()
 {
-    AUDIOCOMMS_ASSERT(mSelectionCriterionInterface != NULL, "NULL criterion interface");
     mSelectionCriterionInterface->setCriterionState(mValue);
 }
 
@@ -101,8 +101,6 @@ template <>
 bool Criterion::setCriterionState<int32_t>(const int32_t &value)
 {
     if (setValue<uint32_t>(value)) {
-
-        AUDIOCOMMS_ASSERT(mSelectionCriterionInterface != NULL, "NULL criterion interface");
         mSelectionCriterionInterface->setCriterionState(mValue);
         return true;
     }
@@ -122,6 +120,5 @@ bool Criterion::setCriterionState<string>(const string &value)
 
 bool Criterion::getNumericalFromLiteral(const std::string &literalValue, int &numerical) const
 {
-    AUDIOCOMMS_ASSERT(mCriterionType != NULL, "NULL criterion interface");
     return mCriterionType->getNumericalFromLiteral(literalValue, numerical);
 }

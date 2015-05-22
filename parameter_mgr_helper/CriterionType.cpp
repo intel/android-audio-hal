@@ -46,17 +46,6 @@ void CriterionType::addValuePair(int numerical, const string &literal)
     getTypeInterface()->addValuePair(numerical, literal.c_str());
 }
 
-void CriterionType::addValuePairs(const ValuePair *pairs, uint32_t nbPairs)
-{
-    AUDIOCOMMS_ASSERT(pairs != NULL, "NULL value pairs");
-    uint32_t index;
-    for (index = 0; index < nbPairs; index++) {
-
-        const ValuePair *valuePair = &pairs[index];
-        getTypeInterface()->addValuePair(valuePair->first, valuePair->second);
-    }
-}
-
 bool CriterionType::hasValuePairByName(const std::string &name)
 {
     int value = 0;

@@ -121,7 +121,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     }
 
     // Informs the route manager of stream creation
-    mStreamInterface->addStream(out);
+    mStreamInterface->addStream(*out);
     stream = out;
 
     Log::Debug() << __FUNCTION__ << ": output created with status=" << err;
@@ -130,9 +130,12 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
 
 void Device::closeOutputStream(StreamOutInterface *out)
 {
+    if (!out) {
+        Log::Error() << __FUNCTION__ << ": invalid stream handle";
+        return;
+    }
     // Informs the route manager of stream destruction
-    AUDIOCOMMS_ASSERT(out != NULL, "Invalid output stream to remove");
-    mStreamInterface->removeStream(static_cast<StreamOut *>(out));
+    mStreamInterface->removeStream(static_cast<StreamOut &>(*out));
     audio_io_handle_t handle = static_cast<StreamOut *>(out)->getIoHandle();
     if (mStreams.find(handle) == mStreams.end()) {
         Log::Error() << __FUNCTION__ << ": requesting to deleted an output stream with io handle= "
@@ -176,7 +179,7 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
     mStreams[handle] = in;
 
     // Informs the route manager of stream creation
-    mStreamInterface->addStream(in);
+    mStreamInterface->addStream(*in);
     stream = in;
 
     Log::Debug() << __FUNCTION__ << ": input created with status=" << err;
@@ -185,9 +188,12 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
 
 void Device::closeInputStream(StreamInInterface *in)
 {
+    if (!in) {
+        Log::Error() << __FUNCTION__ << ": invalid stream handle";
+        return;
+    }
     // Informs the route manager of stream destruction
-    AUDIOCOMMS_ASSERT(in != NULL, "Invalid input stream to remove");
-    mStreamInterface->removeStream(static_cast<StreamIn *>(in));
+    mStreamInterface->removeStream(static_cast<StreamIn &>(*in));
     audio_io_handle_t handle = static_cast<StreamIn *>(in)->getIoHandle();
     if (mStreams.find(handle) == mStreams.end()) {
         Log::Error() << __FUNCTION__ << ": requesting to deleted an input stream with io handle= "
@@ -307,7 +313,7 @@ void Device::resetEchoReference(struct echo_reference_itfe *reference)
     }
 
     // Get active voice output stream
-    IoStream *stream = getStreamInterface()->getVoiceOutputStream();
+    IoStream *stream = getStreamInterface().getVoiceOutputStream();
     if (stream == NULL) {
         Log::Error() << __FUNCTION__
                      << ": no voice output found"
@@ -326,7 +332,7 @@ struct echo_reference_itfe *Device::getEchoReference(const SampleSpec &inputSamp
     resetEchoReference(mEchoReference);
 
     // Get active voice output stream
-    IoStream *stream = getStreamInterface()->getVoiceOutputStream();
+    IoStream *stream = getStreamInterface().getVoiceOutputStream();
     if (stream == NULL) {
         Log::Error() << __FUNCTION__ << ": no voice output found,"
                      << " so problem to provide data reference for AEC effect!";

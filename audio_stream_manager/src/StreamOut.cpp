@@ -248,7 +248,6 @@ status_t StreamOut::flush()
 
 void StreamOut::addEchoReference(struct echo_reference_itfe *reference)
 {
-    AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
     AutoW lock(mPreProcEffectLock);
     Log::Debug() << __FUNCTION__ << ": (reference = " << reference
                  << "): note mEchoReference = " << mEchoReference;

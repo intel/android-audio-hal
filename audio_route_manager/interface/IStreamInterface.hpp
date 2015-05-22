@@ -41,14 +41,14 @@ struct IStreamInterface
      *
      * @param[in] stream: opened stream to be appended.
      */
-    virtual void addStream(IoStream *stream) = 0;
+    virtual void addStream(IoStream &stream) = 0;
 
     /**
      * Removes a streams from the list of opened streams.
      *
      * @param[in] stream: closed stream to be removed.
      */
-    virtual void removeStream(IoStream *stream) = 0;
+    virtual void removeStream(IoStream &stream) = 0;
 
     /**
      * Trigs a routing reconsideration.
@@ -91,7 +91,7 @@ struct IStreamInterface
      *
      * @return latency in microseconds
      */
-    virtual uint32_t getLatencyInUs(const IoStream *stream) const = 0;
+    virtual uint32_t getLatencyInUs(const IoStream &stream) const = 0;
 
     /**
      * Get the period size.
@@ -105,7 +105,7 @@ struct IStreamInterface
      *
      * @return period size in microseconds
      */
-    virtual uint32_t getPeriodInUs(const IoStream *stream) const = 0;
+    virtual uint32_t getPeriodInUs(const IoStream &stream) const = 0;
 
     virtual android::status_t setParameters(const std::string &keyValuePair,
                                             bool isSynchronous = false) = 0;

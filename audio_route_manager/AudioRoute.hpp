@@ -51,7 +51,7 @@ public:
      *
      * @param[in] port Port that this route is using.
      */
-    void addPort(AudioPort *port);
+    void addPort(intel_audio::AudioPort &port);
 
     /**
      * Reset the availability of the route.

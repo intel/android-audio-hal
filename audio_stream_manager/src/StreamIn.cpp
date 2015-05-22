@@ -184,8 +184,7 @@ int StreamIn::doProcessFrames(const void *buffer, ssize_t frames,
         for (it = mPreprocessorsHandlerList.begin(); it != mPreprocessorsHandlerList.end(); ++it) {
 
             if (it->mEchoReference != NULL) {
-
-                pushEchoReference(*processingFramesIn, it->mPreprocessor, it->mEchoReference);
+                pushEchoReference(*processingFramesIn, it->mPreprocessor, *it->mEchoReference);
             }
             // in_buf.frameCount and out_buf.frameCount indicate respectively
             // the maximum number of frames to be consumed and produced by process()
@@ -392,9 +391,9 @@ status_t StreamIn::detachRouteL()
 
 bool StreamIn::isHwEffectL(effect_handle_t effect)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
-
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     string implementor;
     status_t err = getAudioEffectImplementorFromHandle(effect, implementor);
     if (err != android::OK) {
@@ -434,11 +433,11 @@ void StreamIn::setInputSource(audio_source_t inputSource)
 
 status_t StreamIn::addAudioEffect(effect_handle_t effect)
 {
-    Log::Debug() << __FUNCTION__ << ": effect=" << effect;
     if (effect == NULL || *effect == NULL) {
         Log::Error() << __FUNCTION__ << ": Invalid argument (" << effect << ")";
         return android::BAD_VALUE;
     }
+    Log::Debug() << __FUNCTION__ << ": effect=" << effect;
     // Called from different context than the stream,
     // so effect Lock must be held
     AutoW lock(mPreProcEffectLock);
@@ -479,12 +478,11 @@ status_t StreamIn::addAudioEffect(effect_handle_t effect)
 
 status_t StreamIn::removeAudioEffect(effect_handle_t effect)
 {
-    Log::Debug() << __FUNCTION__ << ": effect=" << effect;
-
     if (effect == NULL || *effect == NULL) {
         Log::Error() << __FUNCTION__ << ": Invalid argument (" << effect << ")";
         return android::BAD_VALUE;
     }
+    Log::Debug() << __FUNCTION__ << ": effect=" << effect;
     // Called from different context than the stream,
     // so effect Lock must be held.
     AutoW lock(mPreProcEffectLock);
@@ -520,9 +518,9 @@ status_t StreamIn::removeAudioEffect(effect_handle_t effect)
 status_t StreamIn::addSwAudioEffectL(effect_handle_t effect,
                                      echo_reference_itfe *reference)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
-
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     // audio effects processing is very costy in term of CPU,
     // so useless to add the same effect more than one time
     vector<AudioEffectHandle>::const_iterator it;
@@ -542,9 +540,6 @@ status_t StreamIn::addSwAudioEffectL(effect_handle_t effect,
 
 status_t StreamIn::removeSwAudioEffectL(effect_handle_t effect)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
-
     vector<AudioEffectHandle>::iterator it;
     it = std::find_if(mPreprocessorsHandlerList.begin(), mPreprocessorsHandlerList.end(),
                       std::bind2nd(MatchEffect(), effect));
@@ -568,11 +563,11 @@ status_t StreamIn::removeSwAudioEffectL(effect_handle_t effect)
     return android::BAD_VALUE;
 }
 
-status_t StreamIn::getAudioEffectNameFromHandle(effect_handle_t effect,
-                                                string &name) const
+status_t StreamIn::getAudioEffectNameFromHandle(effect_handle_t effect, string &name) const
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
         Log::Error() << __FUNCTION__ << ": could not get effect descriptor";
@@ -586,8 +581,9 @@ status_t StreamIn::getAudioEffectNameFromHandle(effect_handle_t effect,
 status_t StreamIn::getAudioEffectImplementorFromHandle(effect_handle_t effect,
                                                        string &implementor) const
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
         Log::Error() << __FUNCTION__ << ": could not get effect descriptor";
@@ -600,8 +596,9 @@ status_t StreamIn::getAudioEffectImplementorFromHandle(effect_handle_t effect,
 
 bool StreamIn::isAecEffect(effect_handle_t effect)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     effect_descriptor_t desc;
     if ((*effect)->get_descriptor(effect, &desc) != 0) {
         Log::Error() << __FUNCTION__ << ": could not get effect descriptor";
@@ -649,12 +646,9 @@ void StreamIn::getCaptureDelay(struct echo_reference_buffer *buffer)
                    << "], kernel_frames:[" << kernel_frames << "]";
 }
 
-int32_t StreamIn::updateEchoReference(ssize_t frames,
-                                      struct echo_reference_itfe *reference)
+int32_t StreamIn::updateEchoReference(ssize_t frames, struct echo_reference_itfe &reference)
 {
     struct echo_reference_buffer b;
-
-    AUDIOCOMMS_ASSERT(reference != NULL, "Null reference handle");
 
     b.delay_ns = 0;
 
@@ -679,7 +673,7 @@ int32_t StreamIn::updateEchoReference(ssize_t frames,
 
         getCaptureDelay(&b);
 
-        if (reference->read(reference, &b) == 0) {
+        if (reference.read(&reference, &b) == 0) {
 
             mReferenceFramesIn += b.frame_count;
         } else {
@@ -690,15 +684,15 @@ int32_t StreamIn::updateEchoReference(ssize_t frames,
 }
 
 status_t StreamIn::pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
-                                     struct echo_reference_itfe *reference)
+                                     struct echo_reference_itfe &reference)
 {
     /* read frames from echo reference buffer and update echo delay
      * mReferenceFramesIn is updated with frames available in mReferenceBuffer */
     int32_t delay_us = updateEchoReference(frames, reference) / 1000;
 
-    AUDIOCOMMS_ASSERT(preprocessor != NULL, "Null preproc pointer");
-    AUDIOCOMMS_ASSERT(*preprocessor != NULL, "Null preproc");
-    AUDIOCOMMS_ASSERT(reference != NULL, "Null eference");
+    if (preprocessor == NULL || *preprocessor == NULL) {
+        return android::DEAD_OBJECT;
+    }
 
     if (mReferenceFramesIn < frames) {
 
@@ -731,31 +725,31 @@ status_t StreamIn::pushEchoReference(ssize_t frames, effect_handle_t preprocesso
     return processingReturn;
 }
 
-status_t StreamIn::setPreprocessorParam(effect_handle_t effect, effect_param_t *param)
+status_t StreamIn::setPreprocessorParam(effect_handle_t effect, effect_param_t &param)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
-    AUDIOCOMMS_ASSERT(param != NULL, "Null param");
-
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     status_t ret;
     uint32_t size = sizeof(int);
-    AUDIOCOMMS_ASSERT(param->psize >= 1, "Invalid parameter size");
-    uint32_t psize = ((param->psize - 1) / sizeof(int) + 1) * sizeof(int) + param->vsize;
+    AUDIOCOMMS_ASSERT(param.psize >= 1, "Invalid parameter size");
+    uint32_t psize = ((param.psize - 1) / sizeof(int) + 1) * sizeof(int) + param.vsize;
 
     ret = (*effect)->command(effect,
                              EFFECT_CMD_SET_PARAM,
                              sizeof(effect_param_t) + psize,
-                             param,
+                             &param,
                              &size,
-                             &param->status);
+                             &param.status);
 
-    return ret == 0 ? param->status : ret;
+    return ret == 0 ? param.status : ret;
 }
 
 status_t StreamIn::setPreprocessorEchoDelay(effect_handle_t effect, int32_t delayInUs)
 {
-    AUDIOCOMMS_ASSERT(effect != NULL, "NULL effect context");
-    AUDIOCOMMS_ASSERT(*effect != NULL, "NULL effect interface");
+    if (effect == NULL || *effect == NULL) {
+        return android::BAD_VALUE;
+    }
     /** effect_param_t contains extensible field "data"
      * in our case, it is necessary to "allocate" memory to store
      * AEC_PARAM_ECHO_DELAY and delay_us as uint32_t
@@ -778,7 +772,7 @@ status_t StreamIn::setPreprocessorEchoDelay(effect_handle_t effect, int32_t dela
     data->aecEchoDelay = AEC_PARAM_ECHO_DELAY;
     data->delayUs = delayInUs;
 
-    return setPreprocessorParam(effect, param);
+    return setPreprocessorParam(effect, *param);
 }
 
 status_t StreamIn::allocateProcessingMemory(ssize_t frames)

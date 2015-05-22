@@ -151,10 +151,10 @@ protected:
      *
      * @return stream interface of the route manager.
      */
-    IStreamInterface *getStreamInterface()
+    IStreamInterface &getStreamInterface()
     {
         AUDIOCOMMS_ASSERT(mStreamInterface != NULL, "Invalid stream interface");
-        return mStreamInterface;
+        return *mStreamInterface;
     }
 
     friend class StreamOut;

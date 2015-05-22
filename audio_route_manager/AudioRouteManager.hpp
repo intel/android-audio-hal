@@ -74,13 +74,13 @@ private:
     /// From Stream Interface
     virtual android::status_t startService();
     virtual android::status_t stopService();
-    virtual void addStream(IoStream *stream);
-    virtual void removeStream(IoStream *stream);
+    virtual void addStream(IoStream &stream);
+    virtual void removeStream(IoStream &stream);
     virtual void reconsiderRouting(bool isSynchronous = false);
     virtual android::status_t setVoiceVolume(float gain);
     virtual IoStream *getVoiceOutputStream();
-    virtual uint32_t getLatencyInUs(const IoStream *stream) const;
-    virtual uint32_t getPeriodInUs(const IoStream *stream) const;
+    virtual uint32_t getLatencyInUs(const IoStream &stream) const;
+    virtual uint32_t getPeriodInUs(const IoStream &stream) const;
     virtual android::status_t setParameters(const std::string &keyValuePair,
                                             bool isSynchronous = false);
 
@@ -168,7 +168,7 @@ private:
      *
      * @return valid stream route if found, NULL otherwise.
      */
-    const AudioStreamRoute *findMatchingRouteForStream(const IoStream *stream) const;
+    const AudioStreamRoute *findMatchingRouteForStream(const IoStream &stream) const;
 
     /**
      * Sets a bit referred by an index within a mask.

@@ -94,7 +94,7 @@ public:
      *
      * @param stream Stream to be attached to this route during routing process.
      */
-    void setStream(IoStream *stream);
+    android::status_t setStream(IoStream &stream);
 
     /**
      * route hook point.
@@ -128,7 +128,7 @@ public:
      *
      * @return true if the route is applicable, false otherwise.
      */
-    virtual bool isApplicable(const IoStream *stream = NULL) const;
+    bool isApplicable(const IoStream &stream) const;
 
     /**
      * Checks if the stream route matches the given stream attributes, i.e. the flags, the use case.
@@ -137,7 +137,7 @@ public:
      *
      * @return true if the route matches, false otherwise.
      */
-    bool isMatchingWithStream(const IoStream *stream) const;
+    bool isMatchingWithStream(const IoStream &stream) const;
 
     /**
      * Returns the applicable flags mask of the route
@@ -296,7 +296,7 @@ private:
      *
      * @return status. OK if successful, error code otherwise.
      */
-    void detachCurrentStream();
+    android::status_t detachCurrentStream();
 
     StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 

@@ -130,8 +130,15 @@ status_t AudioRouteManager::startService()
 {
     {
         AutoW lock(mRoutingLock);
-        AUDIOCOMMS_ASSERT(mIsStarted != true, "Route Manager service already started!");
-        AUDIOCOMMS_ASSERT(mEventThread->start(), "failure when starting event thread!");
+        if (mIsStarted) {
+            Log::Warning() << "Route Manager service already started.";
+            /* Ignore the start; consider this case is not critical */
+            return android::OK;
+        }
+        if (!mEventThread->start()) {
+            Log::Error() << "Failed to start event thread.";
+            return android::NO_INIT;
+        }
         mPlatformState = new AudioPlatformState();
     }
 
@@ -257,20 +264,16 @@ void AudioRouteManager::resetRouting()
     resetAvailability<AudioPort>();
 }
 
-void AudioRouteManager::addStream(IoStream *stream)
+void AudioRouteManager::addStream(IoStream &stream)
 {
-    AUDIOCOMMS_ASSERT(stream != NULL, "Failure, invalid stream parameter");
-
     AutoW lock(mRoutingLock);
-    mStreamsList[stream->isOut()].push_back(stream);
+    mStreamsList[stream.isOut()].push_back(&stream);
 }
 
-void AudioRouteManager::removeStream(IoStream *streamToRemove)
+void AudioRouteManager::removeStream(IoStream &streamToRemove)
 {
-    AUDIOCOMMS_ASSERT(streamToRemove != NULL, "Failure, invalid stream parameter");
-
     AutoW lock(mRoutingLock);
-    mStreamsList[streamToRemove->isOut()].remove(streamToRemove);
+    mStreamsList[streamToRemove.isOut()].remove(&streamToRemove);
 }
 
 bool AudioRouteManager::checkAndPrepareRouting()
@@ -309,14 +312,13 @@ bool AudioRouteManager::setStreamForRoute(AudioStreamRoute *route)
     StreamListIterator it;
     for (it = mStreamsList[isOut].begin(); it != mStreamsList[isOut].end(); ++it) {
 
-        IoStream *stream = *it;
-        if (stream->isStarted() && !stream->isNewRouteAvailable()) {
+        IoStream &stream = **it;
+        if (stream.isStarted() && !stream.isNewRouteAvailable()) {
 
             if (route->isApplicable(stream)) {
                 Log::Verbose() << __FUNCTION__
                                << ": stream route " << route->getName() << " is applicable";
-                route->setStream(stream);
-                return true;
+                return route->setStream(stream) == android::OK;
             }
         }
     }
@@ -585,7 +587,7 @@ IoStream *AudioRouteManager::getVoiceOutputStream()
     return *it;
 }
 
-const AudioStreamRoute *AudioRouteManager::findMatchingRouteForStream(const IoStream *stream) const
+const AudioStreamRoute *AudioRouteManager::findMatchingRouteForStream(const IoStream &stream) const
 {
     StreamRouteMapConstIterator it;
     for (it = mStreamRouteMap.begin(); it != mStreamRouteMap.end(); ++it) {
@@ -597,25 +599,25 @@ const AudioStreamRoute *AudioRouteManager::findMatchingRouteForStream(const IoSt
     return NULL;
 }
 
-uint32_t AudioRouteManager::getPeriodInUs(const IoStream *stream) const
+uint32_t AudioRouteManager::getPeriodInUs(const IoStream &stream) const
 {
     AutoR lock(mRoutingLock);
     const AudioStreamRoute *route = findMatchingRouteForStream(stream);
     if (route == NULL) {
         Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
-                     << stream->getFlagMask() << ", use case =" << stream->getUseCaseMask();
+                     << stream.getFlagMask() << ", use case =" << stream.getUseCaseMask();
         return 0;
     }
     return route->getPeriodInUs();
 }
 
-uint32_t AudioRouteManager::getLatencyInUs(const IoStream *stream) const
+uint32_t AudioRouteManager::getLatencyInUs(const IoStream &stream) const
 {
     AutoR lock(mRoutingLock);
     const AudioStreamRoute *route = findMatchingRouteForStream(stream);
     if (route == NULL) {
         Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
-                     << stream->getFlagMask() << ", use case =" << stream->getUseCaseMask();
+                     << stream.getFlagMask() << ", use case =" << stream.getUseCaseMask();
         return 0;
     }
     return route->getLatencyInUs();
@@ -702,10 +704,10 @@ void AudioRouteManager::addRoute(const string &name,
         route->setDirection(isOut);
         route->setMask(1 << count[isOut]);
         if (!portSrc.empty()) {
-            route->addPort(findElementByName<AudioPort>(portSrc));
+            route->addPort(*findElementByName<AudioPort>(portSrc));
         }
         if (!portDst.empty()) {
-            route->addPort(findElementByName<AudioPort>(portDst));
+            route->addPort(*findElementByName<AudioPort>(portDst));
         }
         if (route->isStreamRoute()) {
 
@@ -737,7 +739,7 @@ void AudioRouteManager::addPortGroup(const string &name, const string &portMembe
         Log::Debug() << __FUNCTION__ << ": Group=" << name << " PortMember to add=" << portMember;
 
         AudioPort *port = findElementByName<AudioPort>(portMember);
-        portGroup->addPortToGroup(port);
+        portGroup->addPortToGroup(*port);
     }
 }
 
