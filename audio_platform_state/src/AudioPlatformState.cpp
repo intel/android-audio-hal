@@ -715,7 +715,7 @@ string AudioPlatformState::getParameters(const string &keys)
 {
     AutoR lock(mPfwLock);
     KeyValuePairs pairs(keys);
-    KeyValuePairs returnedPairs(keys);
+    KeyValuePairs returnedPairs;
 
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
                   GetFromAndroidParameterHelper(&pairs, &returnedPairs));
