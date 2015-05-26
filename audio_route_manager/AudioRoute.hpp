@@ -76,7 +76,7 @@ public:
      * Calling this API will propagate the in use attribute to the ports belonging to this route.
      *
      */
-    virtual void setUsed(bool isUsed);
+    virtual void setUsed();
 
     /**
      * Checks if the route is used.

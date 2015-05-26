@@ -46,12 +46,14 @@ public:
                 continue;
             }
             if (route->isApplicable()) {
-                route->setUsed(true);
+                route->setUsed();
             }
             if (route->isUsed()) {
-                mRoutes[route->isOut()].setEnabledRoute(true, route->getMask());
-                mRoutes[route->isOut()].setNeedReflowRoute(route->needReflow(), route->getMask());
-                mRoutes[route->isOut()].setNeedRepathRoute(route->needRepath(), route->getMask());
+                mRoutes[route->isOut()].setEnabledRoute(route->getMask());
+                if (route->needReflow())
+                    mRoutes[route->isOut()].setNeedReflowRoute(route->getMask());
+                if (route->needRepath())
+                    mRoutes[route->isOut()].setNeedRepathRoute(route->getMask());
             }
         }
     }
@@ -176,33 +178,30 @@ private:
             return needReflow;
         }
 
-        inline void setNeedReflowRoute(bool isSet, uint32_t index)
+        inline void setNeedReflowRoute(uint32_t index)
         {
-            setBit(isSet, index, needReflow);
+            setBit(index, needReflow);
         }
 
-        inline void setNeedRepathRoute(bool isSet, uint32_t index)
+        inline void setNeedRepathRoute(uint32_t index)
         {
-            setBit(isSet, index, needRepath);
+            setBit(index, needRepath);
         }
 
-        inline void setEnabledRoute(bool isSet, uint32_t index)
+        inline void setEnabledRoute(uint32_t index)
         {
-            setBit(isSet, index, enabled);
+            setBit(index, enabled);
         }
 
         /**
          * Sets a bit referred by an index within a mask.
          *
-         * @param[in] isSet if true, the bit will be set, if false, nop (bit will not be cleared).
          * @param[in] index bit index to set.
          * @param[in,out] mask in which the bit must be set.
          */
-        inline void setBit(bool isSet, uint32_t index, uint32_t &mask)
+        inline void setBit(uint32_t index, uint32_t &mask)
         {
-            if (isSet) {
-                mask |= index;
-            }
+            mask |= index;
         }
 
         /**

@@ -72,12 +72,8 @@ bool AudioRoute::isApplicable() const
     return !isBlocked() && !isUsed() && mIsApplicable;
 }
 
-void AudioRoute::setUsed(bool isUsed)
+void AudioRoute::setUsed()
 {
-    if (!isUsed) {
-
-        return;
-    }
     Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
                    << (mIsOut ? "PLAYBACK" : "CAPTURE");
     mIsUsed = true;

@@ -121,7 +121,7 @@ public:
             // The stream route collection must not only ensure that the route is applicable
             // but also that a stream matches the route.
             if (route && route->isApplicable() && setStreamForRoute(*route)) {
-                route->setUsed(true);
+                route->setUsed();
             }
         }
     }
