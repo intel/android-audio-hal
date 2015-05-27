@@ -230,7 +230,6 @@ bool AudioRouteManager::checkAndPrepareRouting()
 
 void AudioRouteManager::executeMuteRoutingStage()
 {
-    Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, FlowMask);
     setRouteCriteriaForMute();
     mPlatformState->applyConfiguration<Audio>();
@@ -238,7 +237,6 @@ void AudioRouteManager::executeMuteRoutingStage()
 
 void AudioRouteManager::executeDisableRoutingStage()
 {
-    Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask);
     setRouteCriteriaForDisable();
     mStreamRouteMap.disableRoutes();
@@ -248,7 +246,6 @@ void AudioRouteManager::executeDisableRoutingStage()
 
 void AudioRouteManager::executeConfigureRoutingStage()
 {
-    Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, ConfigureMask);
     mStreamRouteMap.configureRoutes();
     setRouteCriteriaForConfigure();
@@ -257,7 +254,6 @@ void AudioRouteManager::executeConfigureRoutingStage()
 
 void AudioRouteManager::executeEnableRoutingStage()
 {
-    Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask | ConfigureMask);
     mStreamRouteMap.preEnableRoutes();
     mPlatformState->applyConfiguration<Audio>();
@@ -266,7 +262,6 @@ void AudioRouteManager::executeEnableRoutingStage()
 
 void AudioRouteManager::executeUnmuteRoutingStage()
 {
-    Log::Debug() << "\t\t-" << __FUNCTION__ << "-";
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion,
                                         ConfigureMask | PathMask | FlowMask);
     mPlatformState->applyConfiguration<Audio>();
