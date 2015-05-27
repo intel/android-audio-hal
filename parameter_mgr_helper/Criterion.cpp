@@ -57,10 +57,6 @@ void Criterion::init(int32_t defaultValue)
     setCriterionState();
 }
 
-Criterion::~Criterion()
-{
-}
-
 template <>
 bool Criterion::setValue<uint32_t>(const uint32_t &value)
 {

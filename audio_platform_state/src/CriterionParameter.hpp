@@ -16,10 +16,7 @@
 #pragma once
 
 #include "Parameter.hpp"
-
-class CriterionType;
-class Criterion;
-class CParameterMgrPlatformConnector;
+#include <Criterion.hpp>
 
 namespace intel_audio
 {
@@ -35,13 +32,10 @@ public:
 
     CriterionParameter(const std::string &key,
                        const std::string &name,
-                       CriterionType *criterionType,
-                       CParameterMgrPlatformConnector *connector,
+                       Criterion &criterion,
                        const std::string &defaultValue);
 
     virtual Type getType() const { return Parameter::CriterionParameter; }
-
-    virtual ~CriterionParameter();
 
     virtual bool setValue(const std::string &value);
 
@@ -55,10 +49,8 @@ public:
      */
     virtual bool sync();
 
-    Criterion *getCriterion() { return mCriterion; }
-
 private:
-    Criterion *mCriterion; /**< Associated Route PFW criterion to the android parameter. */
+    Criterion &mCriterion; /**< Associated Route PFW criterion to the android parameter. */
 };
 
 } // namespace intel_audio

@@ -15,7 +15,6 @@
  */
 #pragma once
 
-#include <NonCopyable.hpp>
 #include <stdint.h>
 #include <inttypes.h>
 #include <string>
@@ -24,7 +23,7 @@ class CParameterMgrPlatformConnector;
 class ISelectionCriterionInterface;
 class CriterionType;
 
-class Criterion : public audio_comms::utilities::NonCopyable
+class Criterion
 {
 public:
     Criterion(const std::string &name,
@@ -36,7 +35,6 @@ public:
               CriterionType *criterionType,
               CParameterMgrPlatformConnector *parameterMgrConnector,
               const std::string &defaultLiteralValue);
-    virtual ~Criterion();
 
     /**
      * Get the name of the criterion.

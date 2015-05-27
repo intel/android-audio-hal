@@ -15,9 +15,6 @@
  */
 
 #include "CriterionParameter.hpp"
-#include <CriterionType.hpp>
-#include <Criterion.hpp>
-#include <ParameterMgrPlatformConnector.h>
 #include <IStreamInterface.hpp>
 #include <convert.hpp>
 #include <utilities/Log.hpp>
@@ -29,18 +26,12 @@ namespace intel_audio
 
 CriterionParameter::CriterionParameter(const std::string &key,
                                        const std::string &name,
-                                       CriterionType *criterionType,
-                                       CParameterMgrPlatformConnector *connector,
+                                       Criterion &criterion,
                                        const std::string &defaultValue /* = "" */)
     : Parameter(key, name, defaultValue),
-      mCriterion(new Criterion(name, criterionType, connector, defaultValue))
+      mCriterion(criterion)
 {
-    mCriterion->setCriterionState<std::string>(getDefaultLiteralValue());
-}
-
-CriterionParameter::~CriterionParameter()
-{
-    delete mCriterion;
+    mCriterion.setCriterionState<std::string>(getDefaultLiteralValue());
 }
 
 bool CriterionParameter::setValue(const std::string &value)
@@ -52,19 +43,19 @@ bool CriterionParameter::setValue(const std::string &value)
         return false;
     }
     Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
-    return mCriterion->setValue(literalValue);
+    return mCriterion.setValue(literalValue);
 }
 
 bool CriterionParameter::getValue(std::string &value) const
 {
-    std::string criterionLiteralValue = mCriterion->getValue<std::string>();
+    std::string criterionLiteralValue = mCriterion.getValue<std::string>();
 
     return getParamFromLiteralValue(value, criterionLiteralValue);
 }
 
 bool CriterionParameter::sync()
 {
-    return mCriterion->setCriterionState(getDefaultLiteralValue());
+    return mCriterion.setCriterionState(getDefaultLiteralValue());
 }
 
 } // namespace intel_audio

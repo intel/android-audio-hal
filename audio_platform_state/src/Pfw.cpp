@@ -308,21 +308,10 @@ void Pfw<Trait>::addCriterionParameter(const string &typeName,
                                        const std::vector<AndroidParamMappingValuePair> &valuePairs,
                                        std::vector<Parameter *> &parameterVector)
 {
-    AUDIOCOMMS_ASSERT(!collectionHasElement<Criterion *>(name, mCriteria),
-                      "Criterion " << name << " already added for " << mTag << " PFW");
-
-    CriterionType *criterionType = getElement<CriterionType>(typeName, mCriterionTypes);
-    if (collectionHasElement<CriterionType *>(gStateChangedCriterionType, mCriterionTypes) &&
-        name != gStateChangedCriterion) {
-        Log::Verbose() << __FUNCTION__ << ": name=" << gStateChangedCriterionType
-                       << ", index=" << 1 << mCriteria.size() << ", value=" << name;
-        mCriterionTypes[gStateChangedCriterionType]->addValuePair(1 << mCriteria.size(), name);
-    }
-    Log::Verbose() << __FUNCTION__ << ": name=" << name << " criterionType=" << typeName;
-    CriterionParameter *paramCriterion = new CriterionParameter(paramKey, name, criterionType,
-                                                                mConnector, defaultValue);
+    addCriterion(name, typeName, defaultValue);
+    CriterionParameter *paramCriterion = new CriterionParameter(paramKey, name, *mCriteria[name],
+                                                                defaultValue);
     addParameter(paramCriterion, valuePairs, parameterVector);
-    mCriteria[name] = paramCriterion->getCriterion();
 }
 
 template <class Trait>

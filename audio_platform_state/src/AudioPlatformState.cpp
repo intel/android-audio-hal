@@ -101,15 +101,13 @@ public:
 
     void operator()(Parameter *param)
     {
-        if (param->getType() != Parameter::CriterionParameter) {
-            delete param;
-        }
+        delete param;
     }
 };
 
 AudioPlatformState::~AudioPlatformState()
 {
-    // Delete all parameter, EXCEPT Criterion Parameters, that will be deleted by the PFW
+    // Delete all parameters (Rogue & CriterionParameters)
     std::for_each(mParameterVector.begin(), mParameterVector.end(), DeleteParamHelper());
 
     delete mAudioPfw;
