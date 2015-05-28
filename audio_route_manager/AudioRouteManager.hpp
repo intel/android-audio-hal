@@ -299,6 +299,11 @@ private:
      */
     void resetRouting();
 
+    /**
+     * Reset the collections managed by route manager service and delete the platform state.
+     */
+    void reset();
+
     /// from IEventListener
     virtual bool onEvent(int);
     virtual bool onError(int);

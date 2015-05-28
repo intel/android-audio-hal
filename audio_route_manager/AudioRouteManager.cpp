@@ -67,23 +67,28 @@ inline const std::string AudioRouteManager::routeMaskToString(uint32_t mask) con
     return mPlatformState->getFormattedState<Audio>(gRouteCriterionType[dir], mask);
 }
 
+void AudioRouteManager::reset()
+{
+    delete mPlatformState;
+    mPlatformState = NULL;
+
+    mStreamRouteMap.reset();
+    mRouteMap.reset();
+    mPortMap.reset();
+}
+
 status_t AudioRouteManager::stopService()
 {
     AutoW lock(mRoutingLock);
     Log::Debug() << __FUNCTION__;
     if (mIsStarted) {
-        delete mPlatformState;
-        mPlatformState = NULL;
-
-        mStreamRouteMap.reset();
-        mRouteMap.reset();
-        mPortMap.reset();
-
         // Synchronous stop of the event thread must be called with NOT held lock as pending request
-        // may need to be served
+        // may need to be served (Event Thread waiting to acquire the lock.
         mRoutingLock.unlock();
         mEventThread->stop();
         mRoutingLock.writeLock();
+
+        reset();
         mIsStarted = false;
     }
     return android::OK;
@@ -98,23 +103,23 @@ status_t AudioRouteManager::startService()
             /* Ignore the start; consider this case is not critical */
             return android::OK;
         }
-        if (!mEventThread->start()) {
-            Log::Error() << "Failed to start event thread.";
-            return android::NO_INIT;
-        }
         mPlatformState = new AudioPlatformState();
     }
 
     /// Construct the platform state component and start it
     if (mPlatformState->start() != android::OK) {
         Log::Error() << __FUNCTION__ << ": could not start Platform State";
-        delete mPlatformState;
-        mPlatformState = NULL;
+        reset();
         return android::NO_INIT;
     }
-    Log::Debug() << __FUNCTION__ << ": success";
 
     AutoW lock(mRoutingLock);
+    // Now that is setup correctly to ensure the route service, start the event thread!
+    if (!mEventThread->start()) {
+        Log::Error() << "Failed to start event thread.";
+        reset();
+        return android::NO_INIT;
+    }
     mIsStarted = true;
     return android::OK;
 }
