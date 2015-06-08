@@ -35,7 +35,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudiohw_intel
 LOCAL_MODULE_OWNER := intel
 
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 

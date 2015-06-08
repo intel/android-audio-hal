@@ -42,7 +42,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudioparameters
 LOCAL_MODULE_OWNER := intel
 
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 # Host build

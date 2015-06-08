@@ -80,7 +80,7 @@ LOCAL_MODULE := libsamplespec_static
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 $(call make_sample_specifications_lib,target)
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 

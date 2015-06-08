@@ -56,7 +56,7 @@ LOCAL_MODULE := libhalaudiodump
 LOCAL_MODULE_OWNER := intel
 $(call make_hal_dump_lib,target)
 LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 

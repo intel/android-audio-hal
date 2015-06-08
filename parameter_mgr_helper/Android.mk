@@ -96,7 +96,7 @@ LOCAL_MODULE := libparametermgr_static_gcov
 LOCAL_MODULE_OWNER := intel
 $(call make_param_mgr_helper_lib,target)
 $(call add_gcov)
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
@@ -118,5 +118,5 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libparametermgr_static
 LOCAL_MODULE_OWNER := intel
 $(call make_param_mgr_helper_lib,target)
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)

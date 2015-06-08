@@ -87,7 +87,7 @@ LOCAL_SHARED_LIBRARIES := \
     $(effect_pre_proc_shared_lib_target)
 LOCAL_MODULE_RELATIVE_PATH := soundfx
 
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_SHARED_LIBRARY)
@@ -124,7 +124,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := liblpepreprocessinghelper
 LOCAL_MODULE_OWNER := intel
 
-include external/stlport/libstlport.mk
+#include external/stlport/libstlport.mk
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_STATIC_LIBRARY)
 

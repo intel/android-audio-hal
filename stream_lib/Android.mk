@@ -116,7 +116,7 @@ LOCAL_MODULE := libstream_static_gcov
 LOCAL_MODULE_OWNER := intel
 $(call make_stream_lib_test_lib,target)
 $(call add_gcov)
-include external/stlport/libstlport.mk
+##include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 endif
@@ -138,5 +138,5 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libstream_static
 LOCAL_MODULE_OWNER := intel
 $(call make_stream_lib_test_lib,target)
-include external/stlport/libstlport.mk
+##include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
