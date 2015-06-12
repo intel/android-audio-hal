@@ -221,7 +221,7 @@ status_t Stream::setParameters(const string &keyValuePairs)
     KeyValuePairs pairs(keyValuePairs);
     // Routing device is added as an integer by the policy, so it has to be retrieved in the same
     // type to handle the sign "-" literal...
-    int32_t routingDevice;
+    int32_t routingDevice = 0;
     string key(AUDIO_PARAMETER_STREAM_ROUTING);
 
     // Replace the routing key by the input / output device key
