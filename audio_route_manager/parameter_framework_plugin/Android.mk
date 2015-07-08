@@ -43,13 +43,12 @@ LOCAL_C_INCLUDES += external/tinyalsa/include \
 
 LOCAL_SHARED_LIBRARIES := \
     libparameter \
+    libxmlserializer \
     libproperty \
     liblog \
     libaudioroutemanager \
 
 LOCAL_STATIC_LIBRARIES := \
-    libparameter_includes \
-    libxmlserializer_includes \
     libaudio_comms_utilities \
     audio.routemanager.includes \
     libsamplespec_static \
