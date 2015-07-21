@@ -559,15 +559,11 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
 
 uint32_t Device::getDeviceFromStream(const Stream &stream) const
 {
-#ifdef USE_LEGACY_ROUTING
-    return stream.getDevice();
-#else
     if (!stream.isRoutedByPolicy()) {
         return AUDIO_DEVICE_NONE;
     }
     const Patch &patch = getPatchUnsafe(stream.getPatchHandle());
     return patch.getDevices(getOppositeRole(stream.getRole()));
-#endif
 }
 
 void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
@@ -609,13 +605,6 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     uint32_t streamsUseCaseMask = 0;
     uint32_t requestedEffectMask = 0;
 
-#ifdef USE_LEGACY_ROUTING
-    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
-        const Stream *stream = it->second;
-        if (stream->getRole() != streamPortRole) {
-            continue;
-        }
-#else
     Mutex::Locker locker(mPatchCollectionLock);
     // Loop on all patches that involve source mix ports (i.e. output streams)
     for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
@@ -639,7 +628,6 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
             Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
             continue;
         }
-#endif
         updateParametersFromStream(*stream, streamsFlagMask, streamsUseCaseMask, deviceMask,
                                    requestedEffectMask);
     }

@@ -102,10 +102,6 @@ audio_stream_manager_include_dirs_from_static_libraries_host := \
 
 audio_stream_manager_cflags := -Wall -Werror -Wextra
 
-ifeq ($(USE_LEGACY_ROUTING), 1)
-    audio_stream_manager_cflags += -DUSE_LEGACY_ROUTING
-endif
-
 #######################################################################
 # Phony package definition
 
