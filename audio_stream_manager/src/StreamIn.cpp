@@ -406,7 +406,7 @@ bool StreamIn::isHwEffectL(effect_handle_t effect)
 status_t StreamIn::setParameters(const string &keyValuePairs)
 {
     KeyValuePairs pairs(keyValuePairs);
-    int inputSource;
+    int inputSource = AUDIO_SOURCE_DEFAULT;
     string key(AUDIO_PARAMETER_STREAM_INPUT_SOURCE);
     if (pairs.get(key, inputSource) == android::OK) {
         setInputSource(static_cast<audio_source_t>(inputSource));
