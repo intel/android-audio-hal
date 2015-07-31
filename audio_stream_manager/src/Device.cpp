@@ -20,6 +20,7 @@
 #include "AudioParameterHandler.hpp"
 #include "StreamIn.hpp"
 #include "StreamOut.hpp"
+#include "CompressedStreamOut.hpp"
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
 #include <Parameters.hpp>
@@ -43,8 +44,7 @@ Device::Device()
     : mEchoReference(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
-      mPrimaryOutput(NULL),
-      mCompressOffloadDevices(AUDIO_DEVICE_NONE)
+      mPrimaryOutput(NULL)
 {
     // Retrieve the Stream Interface
     mStreamInterface = RouteManagerInstance::getStreamInterface();
@@ -101,6 +101,17 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     if (!audio_is_output_devices(devices)) {
         Log::Error() << __FUNCTION__ << ": called with bad devices";
         return android::BAD_VALUE;
+    }
+    if (flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) {
+        CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags);
+        status_t err = out->set(config);
+        if (err != android::OK) {
+            delete out;
+            return err;
+        }
+        stream = out;
+        mStreams[handle] = out;
+        return android::OK;
     }
     StreamOut *out = new StreamOut(this, handle, flags);
     status_t err = out->set(config);
@@ -272,11 +283,6 @@ status_t Device::setParameters(const string &keyValuePairs)
             backupedPairs.add(pairs.toString());
             pairs = backupedPairs;
         }
-    }
-    status = pairs.get(Parameters::gKeyCompressOffloadRouting, mCompressOffloadDevices);
-    if (status == android::OK) {
-        pairs.remove(Parameters::gKeyCompressOffloadRouting);
-        updateStreamsParametersSync(AUDIO_PORT_ROLE_SOURCE);
     }
     status = mStreamInterface->setParameters(pairs.toString());
     if (status == android::OK) {
@@ -569,8 +575,6 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
 uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
 {
     uint32_t selectedDeviceMask = streamDeviceMask;
-    // Compress is not handled by primary HAL, so append compress device (none if inactive)
-    selectedDeviceMask |= mCompressOffloadDevices;
 
     AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
     if (isInCall()) {
@@ -592,7 +596,9 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     uint32_t streamsUseCaseMask = 0;
     uint32_t requestedEffectMask = 0;
 
-    Mutex::Locker locker(mPatchCollectionLock);
+    // As Klockwork complains about potential dead leack, avoid using Locker helper here.
+    mPatchCollectionLock.lock();
+
     // Loop on all patches that involve source mix ports (i.e. output streams)
     for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
         const Patch &patch = it->second;
@@ -623,9 +629,6 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
 
     if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
         deviceMask = selectOutputDevices(deviceMask);
-        // Compress is not handled by primary HAL, so append compress device (none if inactive)
-        streamsFlagMask |= getCompressOffloadFlags();
-
         pairs.add(Parameters::gKeyAndroidMode, mode());
     } else {
         pairs.add<int>(Parameters::gKeyVoipBandType, getBandFromActiveInput());
@@ -635,6 +638,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
               deviceMask | internalDeviceMask);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
+    mPatchCollectionLock.unlock();
 }
 
 CAudioBand::Type Device::getBandFromActiveInput() const

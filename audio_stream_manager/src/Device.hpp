@@ -39,6 +39,7 @@ namespace intel_audio
 {
 
 class CAudioConversion;
+class CompressedStreamOut;
 class StreamOut;
 class StreamIn;
 class Stream;
@@ -157,6 +158,7 @@ protected:
         return *mStreamInterface;
     }
 
+    friend class CompressedStreamOut;
     friend class StreamOut;
     friend class StreamIn;
     friend class Stream;
@@ -368,12 +370,6 @@ private:
         return streamPortRole == AUDIO_PORT_ROLE_SOURCE ? Direction::Output : Direction::Input;
     }
 
-    inline audio_output_flags_t getCompressOffloadFlags() const
-    {
-        return mCompressOffloadDevices != AUDIO_DEVICE_NONE ?
-               AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD : AUDIO_OUTPUT_FLAG_NONE;
-    }
-
     /**
      * Resets an echo reference.
      *
@@ -404,12 +400,6 @@ private:
     PatchCollection mPatches; /**< Collection of connected patches. */
     PortCollection mPorts; /**< Collection of audio ports. */
     Stream *mPrimaryOutput; /**< Primary output stream, which has a leading routing role. */
-
-    /**
-     * Until compress is in a separated HAL, keep track of its device as primary HAL is
-     * of routing the compress use case.
-     */
-    audio_devices_t mCompressOffloadDevices;
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */

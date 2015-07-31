@@ -30,6 +30,7 @@ component_src_files :=  \
     src/Device.cpp \
     src/StreamIn.cpp \
     src/StreamOut.cpp \
+    src/CompressedStreamOut.cpp \
     src/Patch.cpp \
     src/Port.cpp \
     src/AudioParameterHandler.cpp
@@ -41,10 +42,12 @@ component_includes_dir := \
     $(call include-path-for, frameworks-av) \
     external/tinyalsa/include \
     $(call include-path-for, audio-utils) \
-    $(call include-path-for, audio-effects)
+    $(call include-path-for, audio-effects) \
+    external/tinycompress/include \
 
 component_includes_dir_host := \
     $(component_includes_dir) \
+    bionic/libc/kernel/uapi/ \
 
 component_includes_dir_target := \
     $(component_includes_dir) \
@@ -70,6 +73,7 @@ component_static_lib_host += \
     libaudioutils \
     libspeexresampler \
     libtinyalsa \
+    libtinycompress \
 
 component_static_lib_target += \
     $(component_static_lib) \
@@ -82,6 +86,7 @@ component_shared_lib_common := \
 component_shared_lib_target := \
     $(component_shared_lib_common) \
     libtinyalsa \
+    libtinycompress \
     libcutils \
     libutils \
     libmedia \

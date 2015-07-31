@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <dirent.h>
 #include <hardware/audio.h>
 #include <utilities/Log.hpp>
 
@@ -159,6 +160,34 @@ int AudioUtils::getCardIndexByName(const char *name)
         return -EINVAL;
     }
     return indexCard;
+}
+
+static int compressDeviceFilter(const struct dirent *entry)
+{
+    static const char *const compressDevicePrefix = "comprC";
+    return !strncmp(entry->d_name, compressDevicePrefix, strlen(compressDevicePrefix));
+}
+
+int AudioUtils::getCompressDeviceIndex()
+{
+    struct dirent **fileList;
+    int count = scandir("/dev/snd", &fileList, compressDeviceFilter, NULL);
+    if (count <= 0) {
+        Log::Error() << __FUNCTION__ << ": no compressed devices found";
+        return -ENODEV;
+    } else if (count > 1) {
+        Log::Verbose() << __FUNCTION__ << ": multiple (" << count
+                       << ") compressed devices found, using first one";
+    }
+    const char *devName = fileList[0]->d_name;
+    Log::Verbose() << __FUNCTION__ << ": compressed device node: " << devName;
+
+    int dev;
+    static const char *compressDevice = "comprCxD";
+    if (!convertTo<std::string, int>(devName + strlen(compressDevice), dev)) {
+        return -ENODEV;
+    }
+    return dev;
 }
 
 uint32_t AudioUtils::convertUsecToMsec(uint32_t timeUsec)

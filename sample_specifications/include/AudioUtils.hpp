@@ -107,6 +107,13 @@ public:
     static int getCardIndexByName(const char *name);
 
     /**
+     * Get and convert a compress device into its index.
+     *
+     * @return index of the first compress device found, negative value otherwise.
+     */
+    static int getCompressDeviceIndex();
+
+    /**
      * Converts a time in micro to milliseconds.
      * It converts a period of time in microsecond to millisecond rounding up to the nearest milli
      * second.
