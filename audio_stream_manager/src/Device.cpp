@@ -593,7 +593,6 @@ uint32_t Device::selectOutputDevices(uint32_t internalDeviceMask, uint32_t strea
     if (mPrimaryOutput->isStarted() || selectedDeviceMask == AUDIO_DEVICE_NONE || isInCall()) {
         selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
     }
-    selectedDeviceMask |= internalDeviceMask;
     return selectedDeviceMask;
 }
 
@@ -612,14 +611,16 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         audio_port_role_t devicePortRole = getOppositeRole(streamPortRole);
         const Port *mixPort = patch.getMixPort(streamPortRole);
 
-        // Only 1 source port is supported (2 special case accross hw modules)
-        if (patch.getMixPort(devicePortRole) != NULL) {
-            // This patch is not a involving a stream with the same role as the requested role.
+        if (!patch.hasDevice(devicePortRole)) {
+            // This patch does not connect any devices for the requested role.
             continue;
         }
-        if (mixPort == NULL) {
-            // This patch is connecting 2 device ports to one another, so append sink devices
+        if (patch.hasDevice(streamPortRole)) {
+            // This patch is connecting 2 device ports to one another.
             internalDeviceMask |= patch.getDevices(devicePortRole);
+        }
+        if (mixPort == NULL) {
+            // This patch does not involve a valid mix port in the requested role.";
             continue;
         }
         audio_io_handle_t streamHandle = mixPort->getMixIoHandle();
@@ -643,7 +644,8 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         pairs.add(Parameters::gKeyPreProcRequested, requestedEffectMask);
     }
     pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
-    pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)], deviceMask);
+    pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
+              deviceMask|internalDeviceMask);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
 }
 
