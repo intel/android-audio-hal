@@ -35,12 +35,19 @@ const uint32_t StreamOut::mUsecPerMsec = 1000;
 StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
     : Stream(parent, handle, flagMask),
       mFrameCount(0),
-      mEchoReference(NULL)
+      mEchoReference(NULL),
+      mIsMuted(false)
 {
 }
 
 StreamOut::~StreamOut()
 {
+}
+
+android::status_t StreamOut::setVolume(float left, float right)
+{
+    (left == 0 && right == 0) ? mute() : unMute();
+    return android::OK;
 }
 
 status_t StreamOut::write(const void *buffer, size_t &bytes)

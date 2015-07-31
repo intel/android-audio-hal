@@ -556,7 +556,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
                                         uint32_t &requestedEffectMask)
 {
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!hasPrimaryFlags(stream)) {
+        if (!hasPrimaryFlags(stream) && !stream.isMuted()) {
             // Primary devices are not appended as primary output plays a "special" role.
             deviceMask |= getDeviceFromStream(stream);
         }
@@ -578,6 +578,7 @@ uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
         selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
     } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
         // Take the devices of all active outputs with Primary flags if no other stream active
+        // and unmuted.
         selectedDeviceMask = getOutputDeviceMaskFromPrimaryOutputs();
     }
     return selectedDeviceMask;
@@ -632,7 +633,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     }
     pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
     pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
-              deviceMask|internalDeviceMask);
+              deviceMask | internalDeviceMask);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
 }
 

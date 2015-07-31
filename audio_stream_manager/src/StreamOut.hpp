@@ -35,7 +35,7 @@ public:
     // From AudioStreamOut
     virtual uint32_t getLatency();
     /** @note API not implemented in our Audio HAL */
-    virtual android::status_t setVolume(float, float) { return android::OK; }
+    virtual android::status_t setVolume(float left, float right);
     virtual android::status_t write(const void *buffer, size_t &bytes);
     virtual android::status_t getRenderPosition(uint32_t &dspFrames) const;
     /** @note API not implemented in our Audio HAL */
@@ -76,6 +76,18 @@ public:
     virtual bool isOut() const { return true; }
 
     virtual audio_port_role_t getRole() const { return AUDIO_PORT_ROLE_SOURCE; }
+
+    /**
+     * Checks if a stream has been muted or not by the policy.
+     *
+     * @return true if the stream has been muted by policy, false otherwise
+     * @todo return mIsMuted once AOSP patch within AudioTrack sends the setVolume to the stream.
+     */
+    virtual bool isMuted() const { return mIsMuted; }
+
+    void mute() { mIsMuted = true; }
+
+    void unMute() { mIsMuted = false; }
 
 protected:
     /**
@@ -123,5 +135,7 @@ private:
     static const uint32_t mMaxAgainRetry; /**< Max retry for write operations before recovering. */
     static const uint32_t mWaitBeforeRetryUs; /**< Time to wait before retrial. */
     static const uint32_t mUsecPerMsec; /**< time conversion constant. */
+
+    bool mIsMuted;
 };
 } // namespace intel_audio

@@ -73,6 +73,8 @@ public:
      */
     void setInputSource(audio_source_t inputSource);
 
+    virtual bool isMuted() const { return false; }
+
 protected:
     /**
      * Callback of route attachement called by the stream lib. (and so route manager).
