@@ -117,6 +117,17 @@ Pfw<Trait>::Pfw()
 
     mConnector = new CParameterMgrPlatformConnector(pfwConfigurationFilePath);
     mConnector->setLogger(mConnectorLogger);
+    string error;
+    // PFW fail safe mode: a missing subsystem will fallback on virtual subsystem
+    bool isFailSafeActive(Property<bool>("persist.media.pfw.failsafe", true).getValue());
+    if (!mConnector->setFailureOnMissingSubsystem(!isFailSafeActive, error)) {
+        Log::Error() << __FUNCTION__ << ": Failure " <<
+            (isFailSafeActive ? "activated" : "deactivated")
+                     << " on missing subsystem, (error = " << error << ")";
+    } else {
+        Log::Warning() << __FUNCTION__ << ": Fail safe on missing subsystem is "
+                       << (isFailSafeActive ? "active" : "inactive");
+    }
     mParameterHelper = new ParameterMgrHelper(mConnector);
 }
 
