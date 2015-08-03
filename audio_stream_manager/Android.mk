@@ -147,8 +147,6 @@ LOCAL_WHOLE_STATIC_LIBRARIES := \
 LOCAL_SHARED_LIBRARIES := \
     $(audio_stream_manager_shared_lib_target)
 
-#include external/stlport/libstlport.mk
-
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_SHARED_LIBRARY)
 

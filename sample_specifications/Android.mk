@@ -80,7 +80,6 @@ LOCAL_MODULE := libsamplespec_static
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 $(call make_sample_specifications_lib,target)
-#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 
@@ -123,7 +122,7 @@ sample_specifications_functional_test_static_lib_target += \
     $(sample_specifications_functional_test_static_lib)
 
 sample_specifications_functional_test_shared_lib_target += \
-    libstlport libcutils
+    libcutils
 
 # $(1): "_target" or "_host"
 define make_samplespec_functional_test

@@ -82,7 +82,6 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libaudioconversion_static
 LOCAL_MODULE_OWNER := intel
 $(call make_audio_conversion_lib,target)
-#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 
@@ -121,7 +120,7 @@ audio_conversion_fcttest_static_lib_target += \
     $(audio_conversion_fcttest_static_lib)
 
 audio_conversion_fcttest_shared_lib_target += \
-    libstlport libcutils \
+    libcutils \
     libaudioutils
 
 # $(1): "_target" or "_host"

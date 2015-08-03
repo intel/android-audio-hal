@@ -63,7 +63,6 @@ endif
 LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
-#include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
 # Build for configuration file
