@@ -48,6 +48,7 @@ Device::Device()
       mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
+      mPrimaryOutput(NULL),
       mCompressOffloadDevices(AUDIO_DEVICE_NONE)
 {
     // Retrieve the Stream Interface
@@ -138,7 +139,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     }
     mStreams[handle] = out;
 
-    if (isPrimaryOutput(*out)) {
+    if (mPrimaryOutput == NULL && hasPrimaryFlags(*out)) {
         mPrimaryOutput = out;
     }
 
@@ -571,7 +572,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
                                         uint32_t &requestedEffectMask)
 {
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!isPrimaryOutput(stream)) {
+        if (!hasPrimaryFlags(stream)) {
             // Primary devices are not appended as primary output plays a "special" role.
             deviceMask |= getDeviceFromStream(stream);
         }
@@ -581,17 +582,19 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
     }
 }
 
-uint32_t Device::selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask)
+uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
 {
     uint32_t selectedDeviceMask = streamDeviceMask;
     // Compress is not handled by primary HAL, so append compress device (none if inactive)
     selectedDeviceMask |= mCompressOffloadDevices;
 
     AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
-    // Take the device of the primary output if :
-    // primary is active OR no other streams are active OR in call
-    if (mPrimaryOutput->isStarted() || selectedDeviceMask == AUDIO_DEVICE_NONE || isInCall()) {
+    if (isInCall()) {
+        // Take the device of the primary output if in call
         selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
+    } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
+        // Take the devices of all active outputs with Primary flags if no other stream active
+        selectedDeviceMask = getOutputDeviceMaskFromPrimaryOutputs();
     }
     return selectedDeviceMask;
 }
@@ -634,7 +637,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     }
 
     if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
-        deviceMask = selectOutputDevices(internalDeviceMask, deviceMask);
+        deviceMask = selectOutputDevices(deviceMask);
         // Compress is not handled by primary HAL, so append compress device (none if inactive)
         streamsFlagMask |= getCompressOffloadFlags();
 
@@ -666,9 +669,26 @@ CAudioBand::Type Device::getBandFromActiveInput() const
 
 bool Device::isPrimaryOutput(const Stream &stream) const
 {
+    return &stream == mPrimaryOutput;
+}
+
+bool Device::hasPrimaryFlags(const Stream &stream) const
+{
     return stream.isOut() &&
            (stream.getFlagMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
            AUDIO_OUTPUT_FLAG_PRIMARY;
+}
+
+uint32_t Device::getOutputDeviceMaskFromPrimaryOutputs() const
+{
+    uint32_t outputDeviceMaskFromPrimaryOutputs = AUDIO_DEVICE_NONE;
+    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
+        const Stream *stream = it->second;
+        if (hasPrimaryFlags(*stream) && stream->isStarted()) {
+            outputDeviceMaskFromPrimaryOutputs |= getDeviceFromStream(*stream);
+        }
+    }
+    return outputDeviceMaskFromPrimaryOutputs;
 }
 
 } // namespace intel_audio
