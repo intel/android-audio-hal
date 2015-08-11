@@ -48,6 +48,7 @@ Device::Device()
       mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
+      mPrimaryOutput(NULL),
       mCompressOffloadDevices(AUDIO_DEVICE_NONE)
 {
     // Retrieve the Stream Interface
@@ -138,7 +139,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     }
     mStreams[handle] = out;
 
-    if (isPrimaryOutput(*out)) {
+    if (mPrimaryOutput == NULL && hasPrimaryFlags(*out)) {
         mPrimaryOutput = out;
     }
 
@@ -559,15 +560,11 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
 
 uint32_t Device::getDeviceFromStream(const Stream &stream) const
 {
-#ifdef USE_LEGACY_ROUTING
-    return stream.getDevice();
-#else
     if (!stream.isRoutedByPolicy()) {
         return AUDIO_DEVICE_NONE;
     }
     const Patch &patch = getPatchUnsafe(stream.getPatchHandle());
     return patch.getDevices(getOppositeRole(stream.getRole()));
-#endif
 }
 
 void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
@@ -575,7 +572,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
                                         uint32_t &requestedEffectMask)
 {
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!isPrimaryOutput(stream)) {
+        if (!hasPrimaryFlags(stream)) {
             // Primary devices are not appended as primary output plays a "special" role.
             deviceMask |= getDeviceFromStream(stream);
         }
@@ -585,19 +582,20 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
     }
 }
 
-uint32_t Device::selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask)
+uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
 {
     uint32_t selectedDeviceMask = streamDeviceMask;
     // Compress is not handled by primary HAL, so append compress device (none if inactive)
     selectedDeviceMask |= mCompressOffloadDevices;
 
     AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
-    // Take the device of the primary output if :
-    // primary is active OR no other streams are active OR in call
-    if (mPrimaryOutput->isStarted() || selectedDeviceMask == AUDIO_DEVICE_NONE || isInCall()) {
+    if (isInCall()) {
+        // Take the device of the primary output if in call
         selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
+    } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
+        // Take the devices of all active outputs with Primary flags if no other stream active
+        selectedDeviceMask = getOutputDeviceMaskFromPrimaryOutputs();
     }
-    selectedDeviceMask |= internalDeviceMask;
     return selectedDeviceMask;
 }
 
@@ -609,13 +607,6 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     uint32_t streamsUseCaseMask = 0;
     uint32_t requestedEffectMask = 0;
 
-#ifdef USE_LEGACY_ROUTING
-    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
-        const Stream *stream = it->second;
-        if (stream->getRole() != streamPortRole) {
-            continue;
-        }
-#else
     Mutex::Locker locker(mPatchCollectionLock);
     // Loop on all patches that involve source mix ports (i.e. output streams)
     for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
@@ -623,14 +614,16 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         audio_port_role_t devicePortRole = getOppositeRole(streamPortRole);
         const Port *mixPort = patch.getMixPort(streamPortRole);
 
-        // Only 1 source port is supported (2 special case accross hw modules)
-        if (patch.getMixPort(devicePortRole) != NULL) {
-            // This patch is not a involving a stream with the same role as the requested role.
+        if (!patch.hasDevice(devicePortRole)) {
+            // This patch does not connect any devices for the requested role.
             continue;
         }
-        if (mixPort == NULL) {
-            // This patch is connecting 2 device ports to one another, so append sink devices
+        if (patch.hasDevice(streamPortRole)) {
+            // This patch is connecting 2 device ports to one another.
             internalDeviceMask |= patch.getDevices(devicePortRole);
+        }
+        if (mixPort == NULL) {
+            // This patch does not involve a valid mix port in the requested role.";
             continue;
         }
         audio_io_handle_t streamHandle = mixPort->getMixIoHandle();
@@ -639,13 +632,12 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
             Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
             continue;
         }
-#endif
         updateParametersFromStream(*stream, streamsFlagMask, streamsUseCaseMask, deviceMask,
                                    requestedEffectMask);
     }
 
     if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
-        deviceMask = selectOutputDevices(internalDeviceMask, deviceMask);
+        deviceMask = selectOutputDevices(deviceMask);
         // Compress is not handled by primary HAL, so append compress device (none if inactive)
         streamsFlagMask |= getCompressOffloadFlags();
 
@@ -655,7 +647,8 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         pairs.add(Parameters::gKeyPreProcRequested, requestedEffectMask);
     }
     pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
-    pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)], deviceMask);
+    pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
+              deviceMask|internalDeviceMask);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
 }
 
@@ -676,9 +669,26 @@ CAudioBand::Type Device::getBandFromActiveInput() const
 
 bool Device::isPrimaryOutput(const Stream &stream) const
 {
+    return &stream == mPrimaryOutput;
+}
+
+bool Device::hasPrimaryFlags(const Stream &stream) const
+{
     return stream.isOut() &&
            (stream.getFlagMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
            AUDIO_OUTPUT_FLAG_PRIMARY;
+}
+
+uint32_t Device::getOutputDeviceMaskFromPrimaryOutputs() const
+{
+    uint32_t outputDeviceMaskFromPrimaryOutputs = AUDIO_DEVICE_NONE;
+    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
+        const Stream *stream = it->second;
+        if (hasPrimaryFlags(*stream) && stream->isStarted()) {
+            outputDeviceMaskFromPrimaryOutputs |= getDeviceFromStream(*stream);
+        }
+    }
+    return outputDeviceMaskFromPrimaryOutputs;
 }
 
 } // namespace intel_audio

@@ -256,21 +256,32 @@ private:
      * account the specific role of the primary output and the compress (as not handled by
      * primary HAL BUT routed by primary).
      *
-     * @param[in] internalDeviceMask Devices that are connected internal (without streams).
      * @param[in] streamDeviceMask involved in stream operations.
      *
      * @return selected output devices to be routed.
      */
-    uint32_t selectOutputDevices(uint32_t internalDeviceMask, uint32_t streamDeviceMask);
+    uint32_t selectOutputDevices(uint32_t streamDeviceMask);
 
     /**
-     * Checks if the stream is the primary output stream, i.e. it has PRIMARY flags.
+     * Checks if the stream is the primary output stream.
      *
      * @param[in] stream to check
      *
      * @return true if stream is the primary output, false otherwise.
      */
     bool isPrimaryOutput(const Stream &stream) const;
+
+    /**
+     * Checks if the stream is the output stream has PRIMARY flags.
+     *
+     * @param[in] stream to check
+     *
+     * @return true if stream is the primary output, false otherwise.
+     */
+    bool hasPrimaryFlags(const Stream &stream) const;
+
+    uint32_t getOutputDeviceMaskFromPrimaryOutputs() const;
+
 
     /**
      * Infer the band from a stream, using its sample rate information.

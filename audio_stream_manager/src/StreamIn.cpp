@@ -402,21 +402,6 @@ bool StreamIn::isHwEffectL(effect_handle_t effect)
     return implementor == mHwEffectImplementor;
 }
 
-#ifdef USE_LEGACY_ROUTING
-status_t StreamIn::setParameters(const string &keyValuePairs)
-{
-    KeyValuePairs pairs(keyValuePairs);
-    int inputSource = AUDIO_SOURCE_DEFAULT;
-    string key(AUDIO_PARAMETER_STREAM_INPUT_SOURCE);
-    if (pairs.get(key, inputSource) == android::OK) {
-        setInputSource(static_cast<audio_source_t>(inputSource));
-        // Removes this input stream specific key
-        pairs.remove(key);
-    }
-    return Stream::setParameters(pairs.toString());
-}
-#endif
-
 status_t StreamIn::setDevice(audio_devices_t device)
 {
     if (!audio_is_input_device(device)) {

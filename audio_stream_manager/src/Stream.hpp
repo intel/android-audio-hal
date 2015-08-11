@@ -70,7 +70,7 @@ public:
     /** @note API not used anymore for routing since Routing Control API 3.0. */
     virtual android::status_t setParameters(const std::string &keyValuePairs);
     /** @note API not used anymore for routing since Routing Control API 3.0. */
-    virtual std::string getParameters(const std::string &keys) const;
+    virtual std::string getParameters(const std::string &keys) const { return keys; }
 
     // From TinyAlsaIoStream
     virtual bool isRoutedByPolicy() const;
