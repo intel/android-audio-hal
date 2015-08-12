@@ -61,7 +61,7 @@ class Patch
 private:
     typedef std::vector<Port *> PortCollection;
     typedef PortCollection::iterator PortIterator;
-    typedef std::vector<const Port *>::const_iterator PortConstIterator;
+    typedef std::vector<Port *>::const_iterator PortConstIterator;
 
 public:
     Patch(const audio_patch_handle_t handle = AUDIO_PATCH_HANDLE_NONE,

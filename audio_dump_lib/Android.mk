@@ -18,53 +18,65 @@
 
 LOCAL_PATH := $(call my-dir)
 
+#######################################################################
 # Common variables
-##################
 
-hal_dump_src_files := HalAudioDump.cpp
+component_src_files := HalAudioDump.cpp
 
-hal_dump_cflags := -DDEBUG -Wall -Werror
+component_cflags := -Wall -Werror -Wno-unused-parameter
 
-hal_dump_includes_common := \
-    $(LOCAL_PATH)/include
+component_export_includes_dir := $(LOCAL_PATH)/include
 
-hal_dump_includes_dir_host := \
+component_includes_dir_host := \
+    $(component_export_includes_dir) \
     $(call include-path-for, libc-kernel)
 
-hal_dump_includes_dir_target := \
+component_includes_dir_target := \
+    $(component_export_includes_dir) \
     $(call include-path-for, bionic)
 
+component_static_lib := libaudio_comms_utilities
+
+component_static_lib_host := \
+    $(foreach lib, $(component_static_lib), $(lib)_host)
+
 #######################################################################
-# Build for libhalaudiodump for host and target
+# Component Target Build
 
-# Compile macro
-define make_hal_dump_lib
-$( \
-    $(eval LOCAL_EXPORT_C_INCLUDE_DIRS := $(hal_dump_includes_common)) \
-    $(eval LOCAL_C_INCLUDES := $(hal_dump_includes_common)) \
-    $(eval LOCAL_C_INCLUDES += $(hal_dump_includes_dir_$(1))) \
-    $(eval LOCAL_SRC_FILES := $(hal_dump_src_files)) \
-    $(eval LOCAL_CFLAGS := $(hal_dump_cflags)) \
-    $(eval LOCAL_MODULE_TAGS := optional) \
-)
-endef
-
-# Build for target
-##################
 include $(CLEAR_VARS)
+
 LOCAL_MODULE := libhalaudiodump
 LOCAL_MODULE_OWNER := intel
-$(call make_hal_dump_lib,target)
-LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes_dir)
+
+LOCAL_C_INCLUDES := $(component_includes_dir_target)
+
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_CFLAGS := $(component_cflags)
+LOCAL_MODULE_TAGS := optional
+
+LOCAL_STATIC_LIBRARIES := $(component_static_lib)
 include external/stlport/libstlport.mk
 include $(BUILD_STATIC_LIBRARY)
 
+#######################################################################
+# Component Host Build
 
-# Build for host
-################
 include $(CLEAR_VARS)
+
 LOCAL_MODULE := libhalaudiodump_host
 LOCAL_MODULE_OWNER := intel
-$(call make_hal_dump_lib,host)
-LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities_host
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes_dir)
+
+LOCAL_C_INCLUDES := $(component_includes_dir_host)
+
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
+LOCAL_MODULE_TAGS := optional
+LOCAL_STRIP_MODULE := false
+
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
+
 include $(BUILD_HOST_STATIC_LIBRARY)

@@ -19,9 +19,13 @@
 
 namespace intel_audio
 {
+#ifndef HAL_CONF_FILE_PATH
+#define HAL_CONF_FILE_PATH  "/system/etc"
+#endif
 
 static const char *const gAudioHalConfFilePath =
-    "/system/etc/route_criteria.conf";
+    HAL_CONF_FILE_PATH"/route_criteria.conf";
+
 static const char *const gAudioHalVendorConfFilePath =
     "/vendor/etc/route_criteria.conf";
 

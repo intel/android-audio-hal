@@ -41,4 +41,12 @@ const std::string &Parameters::gKeyVoipBandType = "voip_band_type";
 
 const std::string &Parameters::gKeyPreProcRequested = "pre_proc_requested";
 
+const std::string &Parameters::gkeyAlwaysListeningRoute = "vtsv_route";
+
+const std::string &Parameters::gKeyLpalDevice = "lpal_device";
+
+const std::string &Parameters::gkeyAlwaysListeningRouteOn = "on";
+
+const std::string &Parameters::gkeyAlwaysListeningRouteOff = "off";
+
 }   // namespace intel_audio

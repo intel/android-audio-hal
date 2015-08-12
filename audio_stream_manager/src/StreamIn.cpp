@@ -22,6 +22,7 @@
 #include <BitField.hpp>
 #include <EffectHelper.hpp>
 #include <utilities/Log.hpp>
+#include <algorithm>
 
 using namespace std;
 using audio_comms::utilities::BitField;
@@ -99,7 +100,8 @@ status_t StreamIn::readHwFrames(void *buffer, size_t frames)
             }
 
             if (++retryCount >= mMaxReadWriteRetried) {
-                Log::Error() << "%s: Hardware not responding after %d retries", __FUNCTION__, retryCount;
+                Log::Error() << __FUNCTION__ << ": Hardware not responding after " << retryCount
+                             << " retries";
                 return android::DEAD_OBJECT;
             }
 

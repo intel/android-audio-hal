@@ -22,7 +22,6 @@
 #include <utilities/Log.hpp>
 #include <utils/Errors.h>
 #include <utils/Atomic.h>
-#include <vector>
 
 using android::status_t;
 using audio_comms::utilities::Log;

@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
 
@@ -23,7 +24,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 #######################################################################
 # Common variables
 
-audio_stream_manager_src_files :=  \
+component_src_files :=  \
     src/Stream.cpp \
     src/audio_hw.cpp \
     src/Device.cpp \
@@ -33,8 +34,7 @@ audio_stream_manager_src_files :=  \
     src/Port.cpp \
     src/AudioParameterHandler.cpp
 
-audio_stream_manager_includes_dir := \
-    $(TARGET_OUT_HEADERS)/libaudioresample \
+component_includes_dir := \
     $(TARGET_OUT_HEADERS)/hal_audio_dump \
     $(TARGET_OUT_HEADERS)/hw \
     $(TARGET_OUT_HEADERS)/parameter \
@@ -43,64 +43,65 @@ audio_stream_manager_includes_dir := \
     $(call include-path-for, audio-utils) \
     $(call include-path-for, audio-effects)
 
-audio_stream_manager_includes_dir_host := \
-    $(audio_stream_manager_includes_dir)
+component_includes_dir_host := \
+    $(component_includes_dir) \
 
-audio_stream_manager_includes_dir_target := \
-    $(audio_stream_manager_includes_dir) \
+component_includes_dir_target := \
+    $(component_includes_dir) \
     $(call include-path-for, bionic)
 
-audio_stream_manager_static_lib += \
+component_static_lib += \
     libsamplespec_static \
     libaudioconversion_static \
     libstream_static \
-    libaudioplatformstate \
-    libaudioparameters \
     libparametermgr_static \
+    libaudioparameters \
+    libaudioplatformstate \
     libaudio_hal_utilities \
+    libproperty \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libhalaudiodump \
     liblpepreprocessinghelper \
-    libaudiocomms_naive_tokenizer
+    libaudiocomms_naive_tokenizer \
 
-audio_stream_manager_static_lib_host += \
-    $(foreach lib, $(audio_stream_manager_static_lib), $(lib)_host)
+component_static_lib_host += \
+    $(foreach lib, $(component_static_lib), $(lib)_host) \
+    libcutils \
+    libutils \
+    libaudioutils \
+    libspeexresampler \
+    libtinyalsa \
 
-audio_stream_manager_static_lib_target += \
-    $(audio_stream_manager_static_lib) \
+component_static_lib_target += \
+    $(component_static_lib) \
     libmedia_helper \
-    audio.routemanager.includes
 
-audio_stream_manager_shared_lib_target += \
+component_shared_lib_common := \
+    libparameter \
+    libaudioroutemanager \
+
+component_shared_lib_target := \
+    $(component_shared_lib_common) \
     libtinyalsa \
     libcutils \
     libutils \
     libmedia \
     libhardware \
     libhardware_legacy \
-    libparameter \
-    libicuuc \
-    libevent-listener \
-    libaudioresample \
     libaudioutils \
-    libproperty \
-    libaudioroutemanager \
+    libicuuc \
 
-audio_stream_manager_include_dirs_from_static_libraries := \
-    libevent-listener_static \
-    libproperty_static
+component_shared_lib_host := \
+    $(foreach lib, $(component_shared_lib_common), $(lib)_host) \
+    libicuuc-host \
+    liblog \
 
-audio_stream_manager_include_dirs_from_static_libraries_target := \
-    $(audio_stream_manager_include_dirs_from_static_libraries)
 
-audio_stream_manager_whole_static_lib := \
+component_whole_static_lib := \
     libaudiohw_intel
 
-audio_stream_manager_include_dirs_from_static_libraries_host := \
-    $(foreach lib, $(audio_stream_manager_include_dirs_from_static_libraries), $(lib)_host)
-
-audio_stream_manager_cflags := -Wall -Werror -Wextra
+component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
 # Phony package definition
@@ -118,59 +119,54 @@ LOCAL_REQUIRED_MODULES := \
 include $(BUILD_PHONY_PACKAGE)
 
 #######################################################################
-# Build for target
+# Component Target Build
 
 include $(CLEAR_VARS)
 
-LOCAL_C_INCLUDES := \
-    $(audio_stream_manager_includes_dir_target)
+LOCAL_C_INCLUDES := $(component_includes_dir_target)
 
-LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
-LOCAL_CFLAGS := $(audio_stream_manager_cflags)
-
-ifeq ($(BOARD_HAVE_BLUETOOTH),true)
-  LOCAL_CFLAGS += -DWITH_A2DP
-endif
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_MODULE := audio.primary.$(TARGET_BOARD_PLATFORM)
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_RELATIVE_PATH := hw
 LOCAL_MODULE_TAGS := optional
-LOCAL_STATIC_LIBRARIES := \
-    $(audio_stream_manager_static_lib_target)
-LOCAL_WHOLE_STATIC_LIBRARIES := \
-    $(audio_stream_manager_whole_static_lib)
-LOCAL_SHARED_LIBRARIES := \
-    $(audio_stream_manager_shared_lib_target)
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
+LOCAL_WHOLE_STATIC_LIBRARIES := $(component_whole_static_lib)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
 
 include external/stlport/libstlport.mk
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
 include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
-# Build for host
-
-ifeq ($(audiocomms_test_host),true)
+# Component Host Build
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(audio_stream_manager_includes_dir_host)
-LOCAL_STATIC_LIBRARIES := $(audio_stream_manager_static_lib_host)
-# libraries included for their headers
-LOCAL_STATIC_LIBRARIES += \
-    $(audio_stream_manager_include_dirs_from_static_libraries_host)
-LOCAL_WHOLE_STATIC_LIBRARIES := $(audio_stream_manager_whole_static_lib)
-LOCAL_SRC_FILES := $(audio_stream_manager_src_files)
-LOCAL_CFLAGS := $(audio_stream_manager_cflags)
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/src
+LOCAL_C_INCLUDES := $(component_includes_dir_host)
+LOCAL_STATIC_LIBRARIES := \
+    $(component_static_lib_host) \
+    $(component_whole_static_lib)_host
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_host)
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_CFLAGS := $(component_cflags)
+LOCAL_LDFLAGS += -pthread -lrt
+
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE := libaudio_stream_manager_static_host
+LOCAL_MODULE := audio.primary_host
 LOCAL_MODULE_OWNER := intel
+
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
 
-# Component functional test
+# Target Component functional test
 #######################################################################
 include $(CLEAR_VARS)
 
@@ -202,5 +198,58 @@ LOCAL_CFLAGS := -Wall -Werror -Wextra -O0 -ggdb
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_NATIVE_TEST)
 
+# Component functional test for HOST
+#######################################################################
+include $(CLEAR_VARS)
+
+LOCAL_SRC_FILES:= test/FunctionalTestHost.cpp
+
+LOCAL_C_INCLUDES := \
+    test \
+    external/gtest/include \
+    $(component_includes_dir_host) \
+
+LOCAL_STATIC_LIBRARIES := \
+    audio.primary_host \
+    $(component_static_lib_host) \
+    $(component_whole_static_lib)_host \
+    libgtest_host \
+    libgtest_main_host \
+
+LOCAL_SHARED_LIBRARIES := \
+    $(component_shared_lib_host)
+
+LOCAL_LDFLAGS += -lpthread -lrt
+LOCAL_MODULE := audio-hal-functional_test_host
+LOCAL_REQUIRED_MODULES := host_test_app_pfw_files
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_STRIP_MODULE := false
+
+LOCAL_CFLAGS := -Wall -Werror -Wextra -O0 -ggdb
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
+# Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
+# misalignment against gtest mk files
+include $(BUILD_HOST_EXECUTABLE)
+
+#######################################################################
+# Build for configuration file
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := route_criteria.conf
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_SRC_FILES := test/config/$(LOCAL_MODULE)
+LOCAL_MODULE_PATH := $(HOST_OUT)/etc
+LOCAL_IS_HOST_MODULE := true
+include $(BUILD_PREBUILT)
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
+
+#######################################################################
+# Recursive call sub-folder Android.mk
+#######################################################################
+include $(call all-makefiles-under,$(LOCAL_PATH))

@@ -53,7 +53,6 @@ effect_pre_proc_static_lib += \
 
 effect_pre_proc_static_lib_host += \
     $(foreach lib, $(effect_pre_proc_static_lib), $(lib)_host) \
-    libaudioresample_static_host
 
 effect_pre_proc_static_lib_target += \
     $(effect_pre_proc_static_lib) \
@@ -91,23 +90,6 @@ include external/stlport/libstlport.mk
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_SHARED_LIBRARY)
-
-#######################################################################
-# Build for host
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := liblpepreprocessing_static_gcov_host
-LOCAL_MODULE_OWNER := intel
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-LOCAL_C_INCLUDES := $(effect_pre_proc_includes_common)
-LOCAL_C_INCLUDES += $(effect_pre_proc_includes_dir_host)
-LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
-LOCAL_CFLAGS := $(effect_pre_proc_cflags)
-LOCAL_STATIC_LIBRARIES := $(effect_pre_proc_static_lib_host)
-LOCAL_MODULE_TAGS := optional
-include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-include $(BUILD_HOST_STATIC_LIBRARY)
-
 
 # Helper Effect Lib
 #######################################################################

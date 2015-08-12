@@ -19,23 +19,7 @@
 LOCAL_PATH := $(call my-dir)
 
 #######################################################################
-# Target Component Build
-
-include $(CLEAR_VARS)
-
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-
-LOCAL_MODULE := libaudio_hal_utilities
-
-include $(BUILD_STATIC_LIBRARY)
-
+# Recursive call sub-folder Android.mk
 #######################################################################
-# Host Component Build
 
-include $(CLEAR_VARS)
-
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-
-LOCAL_MODULE := libaudio_hal_utilities_host
-
-include $(BUILD_HOST_STATIC_LIBRARY)
+include $(call all-makefiles-under,$(LOCAL_PATH))

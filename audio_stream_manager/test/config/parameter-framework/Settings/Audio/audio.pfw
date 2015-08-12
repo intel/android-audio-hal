@@ -1,0 +1,9 @@
+domain: Volume
+	conf: NoSound
+		Volume Is muted
+		component: /Audio/alsa/master
+			volume = 0
+	conf: MaxSound
+		Volume Is max
+		component: /Audio/alsa/master
+			volume = 64

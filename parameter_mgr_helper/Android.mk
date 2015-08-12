@@ -19,104 +19,83 @@
 
 LOCAL_PATH := $(call my-dir)
 
+include $(OPTIONAL_QUALITY_ENV_SETUP)
+
 #######################################################################
 # Common variables
 
-param_mgr_helper_src_files :=  \
+component_export_include_dir := \
+    $(LOCAL_PATH)/includes \
+
+component_src_files := \
     ParameterMgrHelper.cpp \
     Criterion.cpp \
     CriterionType.cpp
 
-param_mgr_helper_common_includes_dir := \
-    $(LOCAL_PATH)/includes \
-    $(TARGET_OUT_HEADERS)/parameter
+component_common_includes_dir := \
+    $(component_export_include_dir) \
 
-param_mgr_helper_includes_dir := \
+component_includes_dir := \
+    parameter \
 
-param_mgr_helper_includes_dir_host := \
-    $(foreach inc, $(param_mgr_helper_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
-    $(call include-path-for, libc-kernel)
+component_includes_dir_host := \
+    $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
+    $(component_common_includes_dir)
 
-param_mgr_helper_includes_dir_target := \
-    $(foreach inc, $(param_mgr_helper_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
-    $(call include-path-for, bionic)
+component_includes_dir_target := \
+    $(foreach inc, $(component_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
+    $(call include-path-for, bionic) \
+    $(component_common_includes_dir)
 
-param_mgr_helper_static_lib += \
+component_static_lib := \
     libaudio_comms_utilities \
     libaudio_comms_convert
 
-param_mgr_helper_static_lib_host += \
-    $(foreach lib, $(param_mgr_helper_static_lib), $(lib)_host)
+component_static_lib_host := \
+    $(foreach lib, $(component_static_lib), $(lib)_host)
 
-param_mgr_helper_static_lib_target += \
-    $(param_mgr_helper_static_lib)
-
-param_mgr_helper_cflags := -Wall -Werror
+component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
-# Build for libsamplespec with and without gcov for host and target
-
-# Compile macro
-# $(1): "_target" or "_host"
-define make_param_mgr_helper_lib
-$( \
-    $(eval LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/includes) \
-    $(eval LOCAL_C_INCLUDES := $(param_mgr_helper_common_includes_dir)) \
-    $(eval LOCAL_C_INCLUDES += $(param_mgr_helper_includes_dir_$(1))) \
-    $(eval LOCAL_SRC_FILES := $(param_mgr_helper_src_files)) \
-    $(eval LOCAL_STATIC_LIBRARIES := $(param_mgr_helper_static_lib_$(1))) \
-    $(eval LOCAL_CFLAGS := $(param_mgr_helper_cflags)) \
-    $(eval LOCAL_MODULE_TAGS := optional) \
-)
-endef
-define add_gcov
-$( \
-    $(eval LOCAL_CFLAGS += -O0 --coverage) \
-    $(eval LOCAL_LDFLAGS += --coverage) \
-)
-endef
-
-# Build for host test with gcov
-ifeq ($(audiocomms_test_gcov_host),true)
+# Component Host Build
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := libparametermgr_static_gcov_host
-LOCAL_MODULE_OWNER := intel
-$(call make_param_mgr_helper_lib,host)
-$(call add_gcov)
-include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
-
-# Build for target test with gcov
-ifeq ($(audiocomms_test_gcov_target),true)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := libparametermgr_static_gcov
-LOCAL_MODULE_OWNER := intel
-$(call make_param_mgr_helper_lib,target)
-$(call add_gcov)
-include external/stlport/libstlport.mk
-include $(BUILD_STATIC_LIBRARY)
-
-endif
-
-# Build for host test
-ifeq ($(audiocomms_test_host),true)
-
-include $(CLEAR_VARS)
 LOCAL_MODULE := libparametermgr_static_host
 LOCAL_MODULE_OWNER := intel
-$(call make_param_mgr_helper_lib,host)
+LOCAL_MODULE_TAGS := optional
+LOCAL_STRIP_MODULE := false
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
+LOCAL_C_INCLUDES := $(component_includes_dir_host)
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
+LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
 include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
-
-# Build for target (inconditionnal)
+#######################################################################
+# Component Target Build
 
 include $(CLEAR_VARS)
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
+LOCAL_C_INCLUDES := $(component_includes_dir_target)
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_STATIC_LIBRARIES := $(component_static_lib)
+LOCAL_CFLAGS := $(component_cflags)
+
 LOCAL_MODULE := libparametermgr_static
 LOCAL_MODULE_OWNER := intel
-$(call make_param_mgr_helper_lib,target)
+LOCAL_MODULE_TAGS := optional
+
 include external/stlport/libstlport.mk
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
 include $(BUILD_STATIC_LIBRARY)
+
+
+include $(OPTIONAL_QUALITY_ENV_TEARDOWN)
