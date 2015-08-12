@@ -25,7 +25,7 @@
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <ParameterMgrHelper.hpp>
-#include <Property.h>
+#include <property/Property.hpp>
 #include "NaiveTokenizer.h"
 #include <algorithm>
 #include <convert.hpp>
@@ -39,10 +39,11 @@
 #define PFW_CONF_FILE_PATH  "/etc/parameter-framework/"
 #endif
 
-using std::string;
+using namespace std;
 using audio_comms::utilities::convertTo;
 using android::status_t;
 using audio_comms::utilities::Log;
+using audio_comms::utilities::Property;
 
 namespace intel_audio
 {
@@ -73,7 +74,7 @@ private:
 
 public:
     ParameterMgrPlatformConnectorLogger()
-        : mVerbose(TProperty<string>("persist.media.pfw.verbose", "false"))
+        : mVerbose(Property<string>("persist.media.pfw.verbose", "false").getValue())
     {}
 
     virtual void log(bool isWarning, const string &log)
@@ -105,8 +106,8 @@ AudioPlatformState::AudioPlatformState(IStreamInterface *streamInterface)
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
     string routePfwConfFilePath = PFW_CONF_FILE_PATH;
-    routePfwConfFilePath += TProperty<string>(mRoutePfwConfFileNamePropName,
-                                              mRoutePfwDefaultConfFileName);
+    routePfwConfFilePath += Property<string>(mRoutePfwConfFileNamePropName,
+                                             mRoutePfwDefaultConfFileName).getValue();
 
     Log::Info() << __FUNCTION__
                 << ": Route-PFW: using configuration file: " << routePfwConfFilePath;
@@ -837,8 +838,10 @@ void AudioPlatformState::printPlatformFwErrorInfo() const
 
         if (debugStream.fail()) {
             Log::Error() << __FUNCTION__ << ": Unable to open file" << *it
-                         << " with failbit " << (debugStream.rdstate() & ifstream::failbit)
-                         << " and badbit " << (debugStream.rdstate() & ifstream::badbit);
+                         << " with failbit "
+                         << static_cast<int>(debugStream.rdstate() & ifstream::failbit)
+                         << " and badbit "
+                         << static_cast<int>(debugStream.rdstate() & ifstream::badbit);
             debugStream.close();
             continue;
         }

@@ -17,6 +17,7 @@
 
 #include <NonCopyable.hpp>
 #include <stdint.h>
+#include <inttypes.h>
 #include <string>
 
 class CParameterMgrPlatformConnector;

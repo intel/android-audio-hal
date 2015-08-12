@@ -18,6 +18,7 @@
 #include "AudioParameterHandler.hpp"
 #include <utilities/Log.hpp>
 #include <utils/Errors.h>
+#include <cstring>
 
 using android::status_t;
 using namespace std;

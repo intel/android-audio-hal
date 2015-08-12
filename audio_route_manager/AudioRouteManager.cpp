@@ -18,7 +18,8 @@
 
 #include "AudioRouteManager.hpp"
 #include "AudioRouteManagerObserver.hpp"
-#include "Property.h"
+
+#include <property/Property.hpp>
 #include <Observer.hpp>
 #include <IoStream.hpp>
 #include <BitField.hpp>
@@ -35,7 +36,7 @@ using android::status_t;
 using namespace std;
 using audio_comms::utilities::BitField;
 using audio_comms::utilities::Log;
-
+using audio_comms::utilities::Property;
 typedef android::RWLock::AutoRLock AutoR;
 typedef android::RWLock::AutoWLock AutoW;
 
@@ -69,7 +70,7 @@ private:
 
 public:
     CParameterMgrPlatformConnectorLogger()
-        : mVerbose(TProperty<string>("persist.media.pfw.verbose", "false"))
+        : mVerbose(Property<string>("persist.media.pfw.verbose", "false").getValue())
     {}
 
     virtual void log(bool isWarning, const string &log)
@@ -122,8 +123,8 @@ AudioRouteManager::AudioRouteManager()
     // Fetch the name of the PFW configuration file: this name is stored in an Android property
     // and can be different for each hardware
     string audioPfwConfigurationFilePath = PFW_CONF_FILE_PATH;
-    audioPfwConfigurationFilePath += TProperty<string>(mAudioPfwConfFilePropName,
-                                                       mAudioPfwDefaultConfFileName);
+    audioPfwConfigurationFilePath += Property<string>(mAudioPfwConfFilePropName,
+                                                      mAudioPfwDefaultConfFileName).getValue();
 
     Log::Info() << __FUNCTION__
                 << ": audio PFW using configuration file: " << audioPfwConfigurationFilePath;

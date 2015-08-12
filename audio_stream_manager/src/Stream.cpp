@@ -25,13 +25,14 @@
 #include <KeyValuePairs.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
-#include "Property.h"
+#include <property/Property.hpp>
 #include <AudioConversion.hpp>
 #include <HalAudioDump.hpp>
 #include <string>
 
 using android::status_t;
 using audio_comms::utilities::Log;
+using audio_comms::utilities::Property;
 using namespace std;
 
 namespace intel_audio
@@ -356,7 +357,7 @@ void Stream::initAudioDump()
      * then the dump object is created if it doesn't exist. Otherwise if it
      * is set to false, the dump object will be deleted to stop the dump.
      */
-    if (TProperty<bool>(dumpBeforeConvProps[isOut()], false)) {
+    if (Property<bool>(dumpBeforeConvProps[isOut()], false).getValue()) {
         if (!mDumpBeforeConv) {
             Log::Info() << __FUNCTION__ << ": create dump object for audio before conversion";
             mDumpBeforeConv = new HalAudioDump();
@@ -365,7 +366,7 @@ void Stream::initAudioDump()
         delete mDumpBeforeConv;
         mDumpBeforeConv = NULL;
     }
-    if (TProperty<bool>(dumpAfterConvProps[isOut()], false)) {
+    if (Property<bool>(dumpAfterConvProps[isOut()], false).getValue()) {
         if (!mDumpAfterConv) {
             Log::Info() << __FUNCTION__ << ": create dump object for audio after conversion";
             mDumpAfterConv = new HalAudioDump();

@@ -63,6 +63,12 @@ public:
 
     /** PreProc Parameter Key. */
     static const std::string &gKeyPreProcRequested;
+
+    /** Always Listening Route/VTSV Parameters Keys */
+    static const std::string &gkeyAlwaysListeningRoute;
+    static const std::string &gKeyLpalDevice;
+    static const std::string &gkeyAlwaysListeningRouteOn;
+    static const std::string &gkeyAlwaysListeningRouteOff;
 };
 
 }   // namespace intel_audio

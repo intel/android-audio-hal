@@ -23,14 +23,11 @@
 #include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
-#include "Property.h"
 #include <Parameters.hpp>
 #include <RouteManagerInstance.hpp>
 #include <hardware/audio_effect.h>
-#include <media/AudioRecord.h>
 #include <utilities/Log.hpp>
 #include <string>
-#include <cutils/properties.h>
 
 
 using namespace std;
@@ -648,7 +645,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     }
     pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
     pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
-              deviceMask|internalDeviceMask);
+              deviceMask | internalDeviceMask);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
 }
 

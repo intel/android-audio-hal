@@ -16,6 +16,7 @@
 # limitations under the License.
 #
 
+
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
 
@@ -23,7 +24,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 #######################################################################
 # Common variables
 
-audio_route_manager_src_files :=  \
+component_src_files :=  \
     RoutingElement.cpp \
     AudioPort.cpp \
     AudioPortGroup.cpp \
@@ -33,123 +34,151 @@ audio_route_manager_src_files :=  \
     AudioRouteManagerObserver.cpp \
     RouteManagerInstance.cpp \
 
-audio_route_manager_includes_common := \
+component_export_includes := \
     $(LOCAL_PATH)/includes \
     $(LOCAL_PATH)/interface
 
-audio_route_manager_includes_dir := \
-    $(TARGET_OUT_HEADERS)/libaudioresample \
-    $(TARGET_OUT_HEADERS)/hw \
-    $(TARGET_OUT_HEADERS)/parameter \
+component_includes_common := \
+    $(component_export_includes) \
     $(call include-path-for, frameworks-av) \
     external/tinyalsa/include \
     $(call include-path-for, audio-utils)
 
-audio_route_manager_includes_dir_host := \
-    $(audio_route_manager_includes_dir)
+component_includes_dir := \
+    hw \
+    parameter \
 
-audio_route_manager_includes_dir_target := \
-    $(audio_route_manager_includes_dir) \
+component_includes_dir_host := \
+    $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
+    $(component_includes_common) \
+
+component_includes_dir_target := \
+    $(foreach inc, $(component_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
+    $(component_includes_common) \
     $(call include-path-for, bionic)
 
-audio_route_manager_header_copy_folder_unit_test := \
-    audio_route_manager_unit_test
-
-audio_route_manager_static_lib := \
+component_static_lib := \
     libstream_static \
     libsamplespec_static \
-    libparametermgr_static \
     libaudio_hal_utilities \
+    libparametermgr_static \
     libaudio_comms_utilities \
+    libaudio_comms_convert \
+    libproperty \
     liblpepreprocessinghelper \
     libevent-listener_static \
 
-audio_route_manager_static_lib_host := \
-    $(foreach lib, $(audio_route_manager_static_lib), $(lib)_host) \
-    libproperty_includes_host \
-
-audio_route_manager_static_lib_target := \
-    $(audio_route_manager_static_lib) \
-    libmedia_helper \
-    libproperty_static
-
-audio_route_manager_shared_lib_target := \
+component_static_lib_host := \
+    $(foreach lib, $(component_static_lib), $(lib)_host) \
     libtinyalsa \
     libcutils \
     libutils \
-    libparameter \
-    libhardware_legacy \
-    libicuuc \
-    libevent-listener \
     libaudioutils \
-    libproperty
 
-audio_route_manager_cflags := -Wall -Werror
+component_static_lib_target := \
+    $(component_static_lib) \
+    libmedia_helper \
 
-ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
-audio_route_manager_cflags += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
-endif
+component_shared_lib_common := \
+    libparameter \
+    libicuuc \
+
+component_shared_lib_target := \
+    $(component_shared_lib_common) \
+    libtinyalsa \
+    libcutils \
+    libutils \
+    libhardware_legacy \
+    libaudioutils \
+
+component_shared_lib_host := \
+    libicuuc-host \
+    libparameter_host \
+    liblog
+
+component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
-# Build for target
+# Component Target Build
 
 include $(CLEAR_VARS)
 
-LOCAL_EXPORT_C_INCLUDE_DIRS := \
-    $(audio_route_manager_includes_common)
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes)
 
-LOCAL_C_INCLUDES := \
-    $(audio_route_manager_includes_common) \
-    $(audio_route_manager_includes_dir_target)
+LOCAL_C_INCLUDES := $(component_includes_dir_target)
 
-LOCAL_SRC_FILES := $(audio_route_manager_src_files)
-LOCAL_CFLAGS := $(audio_route_manager_cflags)
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_CFLAGS := $(component_cflags)
+
+ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
+LOCAL_CFLAGS += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
+endif
 
 LOCAL_MODULE := libaudioroutemanager
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
-LOCAL_STATIC_LIBRARIES := \
-    $(audio_route_manager_static_lib_target)
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
 
-LOCAL_SHARED_LIBRARIES := \
-    $(audio_route_manager_shared_lib_target)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
 include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
-# Build for host
-
-ifeq ($(audiocomms_test_gcov_host),true)
+# Component Host Build
 
 include $(CLEAR_VARS)
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include)
-LOCAL_C_INCLUDES := $(audio_route_manager_includes_common)
-LOCAL_C_INCLUDES += $(audio_route_manager_includes_dir_host)
-LOCAL_STATIC_LIBRARIES := $(audio_route_manager_static_lib_host)
-# libraries included for their headers
-LOCAL_STATIC_LIBRARIES += \
-    $(audio_route_manager_include_dirs_from_static_libraries_host)
-LOCAL_SRC_FILES := $(audio_route_manager_src_files)
-LOCAL_CFLAGS := $(audio_route_manager_cflags)
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE := libaudio_route_manager_static_gcov_host
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes)
+
+LOCAL_C_INCLUDES := $(component_includes_dir_host)
+
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_host)
+LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_CFLAGS := \
+    $(component_cflags) -O0 -ggdb \
+    -DPFW_CONF_FILE_PATH=\"$(HOST_OUT)\"'"/etc/parameter-framework/"'
+
+LOCAL_LDFLAGS += \
+    -pthread -lrt \
+
+LOCAL_MODULE := libaudioroutemanager_host
 LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_STRIP_MODULE := false
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
-include $(BUILD_HOST_STATIC_LIBRARY)
 
-endif
-
+include $(BUILD_HOST_SHARED_LIBRARY)
 
 #######################################################################
 # Build for target to export headers
 
 include $(CLEAR_VARS)
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(audio_route_manager_includes_common)
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_includes_common)
 LOCAL_MODULE := audio.routemanager.includes
 LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+
 include $(BUILD_STATIC_LIBRARY)
 
+#######################################################################
+# Build for host to export headers
+
+include $(CLEAR_VARS)
+
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_includes_common)
+LOCAL_MODULE := audio.routemanager.includes_host
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+
+include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
+include $(BUILD_HOST_STATIC_LIBRARY)
+
+#######################################################################
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)

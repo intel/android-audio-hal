@@ -19,50 +19,65 @@
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
 
-# Target build
 #######################################################################
+# Common variables
 
-include $(CLEAR_VARS)
+component_export_include_dir := \
+    $(LOCAL_PATH)/include \
 
-LOCAL_STATIC_LIBRARIES := \
+component_src_files :=  \
+    src/KeyValuePairs.cpp \
+    src/Parameters.cpp \
+
+component_static_lib := \
     libaudio_hal_utilities \
     libaudio_comms_utilities \
     libaudio_comms_convert \
 
-LOCAL_SRC_FILES := \
-    src/KeyValuePairs.cpp \
-    src/Parameters.cpp \
+component_static_lib_host := \
+    $(foreach lib, $(component_static_lib), $(lib)_host) \
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
-LOCAL_CFLAGS := -Wall -Werror -Wextra
+component_cflags := -Wall -Werror -Wno-unused-parameter
+
+#######################################################################
+# Target Component Build
+
+include $(CLEAR_VARS)
+
+LOCAL_STATIC_LIBRARIES := $(component_static_lib)
+
+LOCAL_SRC_FILES := $(component_src_files)
+
+LOCAL_C_INCLUDES := $(component_export_include_dir)
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
+LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_MODULE_TAGS := optional
-
 LOCAL_MODULE := libaudioparameters
 LOCAL_MODULE_OWNER := intel
 
 include $(BUILD_STATIC_LIBRARY)
 
-# Host build
 #######################################################################
+# Host Component Build
 
 include $(CLEAR_VARS)
 
-LOCAL_STATIC_LIBRARIES := \
-    libaudio_comms_utilities_host \
-    libaudio_comms_convert_host \
+LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
 
-LOCAL_SRC_FILES := src/KeyValuePairs.cpp \
+LOCAL_SRC_FILES := $(component_src_files)
 
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
-LOCAL_CFLAGS := -Wall -Werror -Wextra
-LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
+LOCAL_C_INCLUDES := $(component_export_include_dir)
+LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
+LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 
+LOCAL_STRIP_MODULE := false
 LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE := libkeyvaluepairs_host
+LOCAL_MODULE := libaudioparameters_host
 LOCAL_MODULE_OWNER := intel
+
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
+
 include $(BUILD_HOST_STATIC_LIBRARY)
 
 # Functional test
@@ -75,7 +90,7 @@ LOCAL_SRC_FILES += test/KeyValuePairsTest.cpp \
 LOCAL_C_INCLUDES := \
 
 LOCAL_STATIC_LIBRARIES += \
-    libkeyvaluepairs_host \
+    libaudioparameters_host \
     libaudio_comms_utilities_host \
     libaudio_comms_convert_host \
 

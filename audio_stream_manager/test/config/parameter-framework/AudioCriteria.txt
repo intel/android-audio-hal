@@ -1,0 +1,2 @@
+ExclusiveCriterion Volume                 :    muted            max
+ExclusiveCriterion ScreenState            :    False            True

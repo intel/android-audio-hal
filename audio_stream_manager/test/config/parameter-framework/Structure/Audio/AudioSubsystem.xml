@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Subsystem xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="Schemas/Subsystem.xsd"
+    Name="alsa" Type="Virtual" Endianness="Little">
+    <ComponentLibrary>
+        <ComponentType Name="VolumeMixer">
+            <IntegerParameter Name="volume" Size="8" Min="0" Max="64"/>
+        </ComponentType>
+    </ComponentLibrary>
+    <InstanceDefinition>
+        <Component Name="master" Type="VolumeMixer"/>
+    </InstanceDefinition>
+</Subsystem>
