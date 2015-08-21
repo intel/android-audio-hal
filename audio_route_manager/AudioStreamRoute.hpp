@@ -32,7 +32,7 @@ class IAudioDevice;
 class AudioStreamRoute : public AudioRoute, private IStreamRoute
 {
 public:
-    AudioStreamRoute(const std::string &name);
+    AudioStreamRoute(const std::string &name, bool isOut, uint32_t mask);
 
     virtual ~AudioStreamRoute();
 
@@ -92,9 +92,9 @@ public:
      * It overrides the applicability of Route Parameter Manager to apply the port strategy
      * and to match the mask of the stream requesting to be routed.
      *
-     * @param stream Stream to be attached to this route during routing process.
+     * @param true if the stream has been attached to the route, falsoe otherwise..
      */
-    void setStream(IoStream *stream);
+    bool setStream(IoStream &stream);
 
     /**
      * route hook point.
@@ -112,23 +112,12 @@ public:
      * configure hook point.
      * Called by the route manager at configure step.
      */
-    virtual void configure();
+    void configure();
 
     /**
      * Reset the availability of the route.
      */
     virtual void resetAvailability();
-
-    /**
-     * Checks if a route is applicable.
-     * It overrides the applicability of Route Parameter Manager to apply the port strategy
-     * and to match the mask of the stream requesting to be routed.
-     *
-     * @param stream candidate for using this route.
-     *
-     * @return true if the route is applicable, false otherwise.
-     */
-    virtual bool isApplicable(const IoStream *stream = NULL) const;
 
     /**
      * Checks if the stream route matches the given stream attributes, i.e. the flags, the use case.
@@ -137,7 +126,7 @@ public:
      *
      * @return true if the route matches, false otherwise.
      */
-    bool isMatchingWithStream(const IoStream *stream) const;
+    bool isMatchingWithStream(const IoStream &stream) const;
 
     /**
      * Returns the applicable flags mask of the route
@@ -166,16 +155,6 @@ public:
      *              reconfigured.
      */
     virtual bool needReflow() const;
-
-    /**
-     * Checks the type of route.
-     *
-     * @return true if the route is a stream route, false otherwise.
-     */
-    virtual bool isStreamRoute() const
-    {
-        return true;
-    }
 
     /**
      * Check if the route requires pre enabling.
@@ -296,7 +275,7 @@ private:
      *
      * @return status. OK if successful, error code otherwise.
      */
-    void detachCurrentStream();
+    android::status_t detachCurrentStream();
 
     StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 

@@ -42,14 +42,12 @@ bool Parameter::getLiteralValueFromParam(const string &androidParam, string &lit
         literalValue = androidParam;
         return true;
     }
-    if (!isAndroidParameterValueValid(androidParam)) {
-
+    MappingValuesMapConstIterator it = mMappingValuesMap.find(androidParam);
+    if (it == mMappingValuesMap.end()) {
         Log::Verbose() << __FUNCTION__ << ": unknown parameter value \"" << androidParam
                        << "\" for " << mAndroidParameterKey;
         return false;
     }
-    MappingValuesMapConstIterator it = mMappingValuesMap.find(androidParam);
-    AUDIOCOMMS_ASSERT(it != mMappingValuesMap.end(), "Value not valid");
     literalValue = it->second;
     return true;
 }

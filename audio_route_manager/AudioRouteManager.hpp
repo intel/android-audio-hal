@@ -18,11 +18,15 @@
 #include "AudioPort.hpp"
 #include "AudioPortGroup.hpp"
 #include "AudioStreamRoute.hpp"
+#include "StreamRouteCollection.hpp"
+#include "RouteCollection.hpp"
+#include "ElementCollection.hpp"
 #include "AudioRoute.hpp"
 #include "EventThread.h"
 #include "RoutingStage.hpp"
 #include "RouteInterface.hpp"
 #include "IStreamInterface.hpp"
+#include <AudioPlatformState.hpp>
 #include <AudioCommsAssert.hpp>
 #include "ParameterMgrPlatformConnector.h"
 #include <ParameterMgrHelper.hpp>
@@ -42,7 +46,6 @@ namespace intel_audio
 
 class IoStream;
 struct pcm_config;
-class CParameterMgrPlatformConnectorLogger;
 
 class AudioRouteManager : public IStreamInterface,
                           public IRouteInterface,
@@ -50,22 +53,6 @@ class AudioRouteManager : public IStreamInterface,
                           private audio_comms::utilities::Observable,
                           private audio_comms::utilities::NonCopyable
 {
-private:
-    typedef std::map<std::string, AudioRoute *>::iterator RouteMapIterator;
-    typedef std::map<std::string, AudioRoute *>::const_iterator RouteMapConstIterator;
-    typedef std::map<std::string, AudioStreamRoute *>::iterator StreamRouteMapIterator;
-    typedef std::map<std::string, AudioStreamRoute *>::const_iterator StreamRouteMapConstIterator;
-    typedef std::map<std::string, AudioPort *>::iterator PortMapIterator;
-    typedef std::map<std::string, AudioPort *>::const_iterator PortMapConstIterator;
-    typedef std::map<std::string, AudioPortGroup *>::iterator PortGroupMapIterator;
-    typedef std::map<std::string, AudioPortGroup *>::const_iterator PortGroupMapConstIterator;
-    typedef std::list<IoStream *>::iterator StreamListIterator;
-    typedef std::list<IoStream *>::const_iterator StreamListConstIterator;
-    typedef std::map<std::string, Criterion *>::iterator CriteriaMapIterator;
-    typedef std::map<std::string, Criterion *>::const_iterator CriteriaMapConstIterator;
-    typedef std::map<std::string, CriterionType *>::iterator CriteriaTypeMapIterator;
-    typedef std::map<std::string, CriterionType *>::const_iterator CriteriaTypeMapConstIterator;
-
 public:
     AudioRouteManager();
     virtual ~AudioRouteManager();
@@ -74,61 +61,31 @@ private:
     /// From Stream Interface
     virtual android::status_t startService();
     virtual android::status_t stopService();
-    virtual void addStream(IoStream *stream);
-    virtual void removeStream(IoStream *stream);
+    virtual void addStream(IoStream &stream)
+    {
+        AutoW lock(mRoutingLock);
+        mStreamRouteMap.addStream(stream);
+    }
+    virtual void removeStream(IoStream &stream)
+    {
+        AutoW lock(mRoutingLock);
+        mStreamRouteMap.removeStream(stream);
+    }
+
     virtual void reconsiderRouting(bool isSynchronous = false);
     virtual android::status_t setVoiceVolume(float gain);
-    virtual IoStream *getVoiceOutputStream();
-    virtual uint32_t getLatencyInUs(const IoStream *stream) const;
-    virtual uint32_t getPeriodInUs(const IoStream *stream) const;
-    virtual bool addCriterionType(const std::string &name, bool isInclusive);
-    virtual void addCriterionTypeValuePair(const std::string &name, const std::string &literal,
-                                           uint32_t value);
-    bool addCriterionTypeUnsafe(const std::string &name, bool isInclusive);
-    void addCriterionTypeValuePairUnsafe(const std::string &name, const std::string &literal,
-                                         uint32_t value);
-    virtual void addCriterion(const std::string &name, const std::string &criterionType,
-                              const std::string &defaultLiteralValue = "");
-    virtual bool setAudioCriterion(const std::string &name, const std::string &literalValue)
+    virtual IoStream *getVoiceOutputStream()
     {
-        return setAudioCriterion<std::string>(name, literalValue);
+        AutoR lock(mRoutingLock);
+        return mStreamRouteMap.getVoiceStreamRoute();
     }
-    virtual bool setAudioCriterion(const std::string &name, uint32_t value)
-    {
-        return setAudioCriterion<uint32_t>(name, value);
-    }
-    virtual bool getAudioCriterion(const std::string &name, std::string &literalValue) const
-    {
-        return getAudioCriterion<std::string>(name, literalValue);
-    }
-    virtual bool getAudioCriterion(const std::string &name, uint32_t &value) const
-    {
-        return getAudioCriterion<uint32_t>(name, value);
-    }
-    virtual bool setAudioParameter(const std::string &path, const uint32_t &value)
-    {
-        return setAudioParameter<uint32_t>(path, value);
-    }
-    virtual bool setAudioParameter(const std::string &path, const std::string &value)
-    {
-        return setAudioParameter<std::string>(path, value);
-    }
-    virtual bool setAudioParameter(const std::string &path, const double &value)
-    {
-        return setAudioParameter<double>(path, value);
-    }
-    virtual bool getAudioParameter(const std::string &path, uint32_t &value) const
-    {
-        return getAudioParameter<uint32_t>(path, value);
-    }
-    virtual bool getAudioParameter(const std::string &path, std::string &value) const
-    {
-        return getAudioParameter<std::string>(path, value);
-    }
-    virtual bool getAudioParameter(const std::string &path, double &value) const
-    {
-        return getAudioParameter<double>(path, value);
-    }
+    virtual uint32_t getLatencyInUs(const IoStream &stream) const;
+    virtual uint32_t getPeriodInUs(const IoStream &stream) const;
+    virtual android::status_t setParameters(const std::string &keyValuePair,
+                                            bool isSynchronous = false);
+
+    virtual std::string getParameters(const std::string &keys) const;
+    virtual void printPlatformFwErrorInfo() const {}
 
     /// From Route Interface
     virtual void addPort(const std::string &name);
@@ -138,93 +95,90 @@ private:
                                const std::string &portSrc, const std::string &portDst,
                                bool isOut)
     {
-        addRoute<AudioRoute>(name, portSrc, portDst, isOut, mRouteMap);
+        std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
+        if (mRouteMap.getElement(mapKeyName) != NULL) {
+            audio_comms::utilities::Log::Error() << __FUNCTION__ << ": route "
+                                                 << mapKeyName << " already added to route list!";
+            return;
+        }
+        AudioRoute *route = instantiateRoute<AudioRoute>(name, portSrc, portDst, isOut);
+        mRouteMap.addElement(mapKeyName, route);
     }
 
     virtual void addAudioStreamRoute(const std::string &name,
                                      const std::string &portSrc, const std::string &portDst,
                                      bool isOut)
     {
-        addRoute<AudioStreamRoute>(name, portSrc, portDst, isOut, mStreamRouteMap);
+        std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
+        if (mRouteMap.getElement(mapKeyName) != NULL) {
+            audio_comms::utilities::Log::Error() << __FUNCTION__ << ": route "
+                                                 << mapKeyName << " already added to route list!";
+            return;
+        }
+        AudioStreamRoute *route = instantiateRoute<AudioStreamRoute>(name, portSrc, portDst, isOut);
+        mStreamRouteMap.addElement(mapKeyName, route);
+        mRouteMap.addElement(mapKeyName, route);
     }
 
     virtual void updateStreamRouteConfig(const std::string &name,
-                                         const StreamRouteConfig &config);
-    virtual void addRouteSupportedEffect(const std::string &name, const std::string &effect);
-    virtual void setRouteApplicable(const std::string &name, bool isApplicable);
-    virtual void setRouteNeedReconfigure(const std::string &name,
-                                         bool needReconfigure);
-    virtual void setRouteNeedReroute(const std::string &name,
-                                     bool needReroute);
+                                         const StreamRouteConfig &config)
+    {
+        mStreamRouteMap.updateStreamRouteConfig(name, config);
+    }
+
+    virtual void addRouteSupportedEffect(const std::string &name, const std::string &effect)
+    {
+        mStreamRouteMap.addRouteSupportedEffect(name, effect);
+    }
+
+    virtual void setRouteApplicable(const std::string &name, bool isApplicable)
+    {
+        mRouteMap.setRouteApplicable(name, isApplicable);
+    }
+
+    virtual void setRouteNeedReconfigure(const std::string &name, bool needReconfigure)
+    {
+        mRouteMap.setRouteNeedReconfigure(name, needReconfigure);
+    }
+
+    virtual void setRouteNeedReroute(const std::string &name, bool needReroute)
+    {
+        mRouteMap.setRouteNeedReroute(name, needReroute);
+    }
+
     virtual void setPortBlocked(const std::string &name, bool isBlocked);
     virtual bool addAudioCriterionType(const std::string &name, bool isInclusive)
     {
-        return addCriterionType(name, isInclusive);
+        return mPlatformState->addCriterionType<Audio>(name, isInclusive);
     }
     virtual void addAudioCriterionTypeValuePair(const std::string &name, const std::string &literal,
                                                 uint32_t value)
     {
-        addCriterionTypeValuePair(name, literal, value);
+        mPlatformState->addCriterionTypeValuePair<Audio>(name, literal, value);
     }
     virtual void addAudioCriterion(const std::string &name, const std::string &criterionType,
                                    const std::string &defaultLiteralValue = "")
     {
-        addCriterion(name, criterionType, defaultLiteralValue);
+        mPlatformState->addCriterion<Audio>(name, criterionType, defaultLiteralValue);
     }
     virtual void setParameter(const std::string &name, uint32_t value)
     {
-        setAudioCriterion<uint32_t>(name, value);
+        setAudioCriterion(name, value);
     }
 
     /**
-     * Gets an audio parameter manager criterion value.
+     * Sets an audio parameter manager criterion value. Note that it just stage the value.
+     * The criterion will be set only at configure stage.
      *
-     * @tparam T type of the value to set, uint32_t and string supported
-     * @param[in] name: criterion name.
-     * @param[out] value: the value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    template <typename T>
-    bool getAudioCriterion(const std::string &name, T &value) const;
-
-    /**
-     * Sets an audio parameter manager parameter value.
-     *
-     * @tparam T type of the value to set, uint32_t and string supported
-     * @param[in] name: parameter name.
-     * @param[in] value: value to set.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    template <typename T>
-    bool setAudioParameter(const std::string &name, const T &value);
-
-    /**
-     * Gets an audio parameter manager parameter value.
-     *
-     * @param[in] name: parameter name.
-     * @param[in] literalValue: the value is correctly set if return code is true.
-     *
-     * @return true if operation successful, false otherwise.
-     */
-    template <typename T>
-    bool getAudioParameter(const std::string &name, T &value) const;
-
-    /**
-     * Sets an audio parameter manager criterion value.
-     *
-     * @tparam T type of the value to set, uint32_t and string supported
      * @param[in] name: criterion name.
      * @param[in] value: value to set.
      *
      * @return true if operation successful, false otherwise.
      */
-    template <typename T>
-    bool setAudioCriterion(const std::string &name, const T &value);
+    bool setAudioCriterion(const std::string &name, uint32_t value);
 
     /**
-     * Add an Audio Route to route manager.
+     * Instantiate an Audio Route.
      * Called at audio platform discovery.
      *
      * @tparam T: route type (Audio Route or Audio Stream Route).
@@ -232,50 +186,12 @@ private:
      * @param[in] portSrc: source port used by route, may be null if no protection needed.
      * @param[in] portDst: destination port used by route, may be null if no protection needed.
      * @param[in] isOut: route direction (true for output, false for input).
-     * @param[in] elementsMap: list in which this route needs to be added.
      */
     template <typename T>
-    void addRoute(const std::string &name,
-                  const std::string &portSrc,
-                  const std::string &portDst,
-                  bool isOut,
-                  std::map<std::string, T *> &elementsMap);
-
-    /**
-     * Commit the criteria those value has been set by Route PFW.
-     * It also applies the configuration to take these criteria into account.
-     */
-    void commitCriteriaAndApply();
-
-    /**
-     * Find the most suitable route for a given stream according to its attributes, ie flags,
-     * use cases, effects...
-     *
-     * @param[in] stream for which the matching route request is performed
-     *
-     * @return valid stream route if found, NULL otherwise.
-     */
-    const AudioStreamRoute *findMatchingRouteForStream(const IoStream *stream) const;
-
-    /**
-     * Sets a bit referred by an index within a mask.
-     *
-     * @param[in] isSet if true, the bit will be set, if false, nop (bit will not be cleared).
-     * @param[in] index bit index to set.
-     * @param[in,out] mask in which the bit must be set.
-     */
-    void setBit(bool isSet, uint32_t index, uint32_t &mask);
-
-    /**
-     * Checks if the routing conditions changed in a given direction.
-     *
-     * @tparam isOut direction of the route to consider.
-     *
-     * @return  true if previously enabled routes is different from currently enabled routes
-     *               or if any route needs to be reconfigured.
-     */
-    template <bool isOut>
-    inline bool routingHasChanged();
+    T *instantiateRoute(const std::string &name,
+                        const std::string &portSrc,
+                        const std::string &portDst,
+                        bool isOut);
 
     /**
      * From worker thread context
@@ -283,6 +199,13 @@ private:
      * after a mode change, a modem event ...
      */
     void doReconsiderRouting();
+
+    /**
+     * Trigs a routing reconsideration. Must be called with Routing Lock held in W Mode
+     *
+     * @param[in] synchronous: if set, re routing shall be synchronous.
+     */
+    void reconsiderRoutingUnsafe(bool isSynchronous = false);
 
     /**
      *
@@ -354,147 +277,9 @@ private:
     void setRouteCriteriaForDisable();
 
     /**
-     * Performs the disabling of the route.
-     * It only concerns the action that needs to be done on routes themselves, ie detaching
-     * streams, closing alsa devices.
-     * Disable Routes that were opened before reconsidering the routing and will be closed after
-     * or routes that request to be rerouted.
-     *
-     * @param[in] bIsPostDisable if set, it indicates that the disable happens after unrouting.
-     */
-    void doDisableRoutes(bool isPostDisable = false);
-
-    /**
-     * Performs the post-disabling of the route.
-     * It only concerns the action that needs to be done on routes themselves, ie detaching
-     * streams, closing alsa devices. Some platform requires to close stream before unrouting.
-     * Behavior is encoded in the route itself.
-     *
-     */
-    inline void doPostDisableRoutes()
-    {
-        doDisableRoutes(true);
-    }
-
-    /**
      * Enable the routes.
      */
     void executeEnableRoutingStage();
-
-    /**
-     * Performs the enabling of the routes.
-     * It only concerns the action that needs to be done on routes themselves, ie attaching
-     * streams, opening alsa devices.
-     * Enable Routes that were not enabled and will be enabled after the routing reconsideration
-     * or routes that requested to be rerouted.
-     *
-     * @tparam isOut direction of the routes to disable.
-     * @param[in] bIsPreEnable if set, it indicates that the enable happens before routing.
-     */
-    void doEnableRoutes(bool isPreEnable = false);
-
-    /**
-     * Performs the pre-enabling of the routes.
-     * It only concerns the action that needs to be done on routes themselves, ie attaching
-     * streams, opening alsa devices. Some platform requires to open stream before routing.
-     * Behavior is encoded in the route itself.
-     */
-    inline void doPreEnableRoutes()
-    {
-        doEnableRoutes(true);
-    }
-
-    /**
-     * Before routing, prepares the attribute of an audio route.
-     *
-     * @param[in] route AudioRoute to prepare for routing.
-     */
-    void prepareRoute(AudioRoute *route);
-
-    /**
-     * Find and set a stream for an applicable route.
-     * It try to associate a streams that must be started and not already routed, with a stream
-     * route according to the applicability mask.
-     * This mask depends on the direction of the stream:
-     *      -Output stream: output Flags
-     *      -Input stream: input source.
-     *
-     * @param[in] route applicable route to be associated to a stream.
-     *
-     * @return true if a stream was found and attached to the route, false otherwise.
-     */
-    bool setStreamForRoute(AudioStreamRoute *route);
-
-    /**
-     * Add a routing element referred by its name and id to a map. Routing Elements are ports, port
-     * groups, route and stream route. Compile time error generated if called with wrong type.
-     *
-     * @tparam T type of routing element to add.
-     * @param[in] key to be used for indexing the map.
-     * @param[in] name of the routing element to add.
-     * @param[in] elementsMap maps of routing elements to add to.
-     *
-     * @return true if added, false otherwise (already added or PFW already started).
-     */
-    template <typename T>
-    bool addElement(const std::string &key,
-                    const string &name,
-                    std::map<std::string, T *> &elementsMap);
-
-    /**
-     * Get a routing element from a map by its name. Routing Elements are ports, port
-     * groups, route and stream route. Compile time error generated if called with wrong type.
-     *
-     * @tparam T type of routing element to search.
-     * @param[in] name name of the routing element to find.
-     * @param[in] elementsMap maps of routing elements to search into.
-     *
-     * @return valid pointer on routing element if found, assert if element not found.
-     */
-    template <typename T>
-    T *getElement(const std::string &name, std::map<std::string, T *> &elementsMap);
-
-    /**
-     * Find a routing element from a map by its name. Routing Elements are ports, port
-     * groups, route and stream route. Compile time error generated if called with wrong type.
-     *
-     * @tparam T type of routing element to search.
-     * @param[in] name name of the routing element to find.
-     * @param[in] elementsMap maps of routing elements to search into.
-     *
-     * @return valid pointer on element if found, NULL otherwise.
-     */
-    template <typename T>
-    T *findElementByName(const std::string &name, std::map<std::string, T *> elementsMap);
-
-    /**
-     * Reset the availability of routing elements belonging to a map. Routing Elements are ports,
-     * port, groups, route and stream route. Compile time error generated if called with wrong type.
-     *
-     * @tparam T type of routing element.
-     * @param[in] elementsMap maps of routing elements to search into.
-     *
-     * @return valid pointer on element if found, NULL otherwise.
-     */
-    template <typename T>
-    void resetAvailability(std::map<std::string, T *> elementsMap);
-
-    /**
-     * Returns the handle on the route criterion type associated to the direction.
-     *
-     * @param[in] dir Direction of the route
-     *
-     * @return route criterion type handle.
-     */
-    inline CriterionType *getRouteCriterionType(Direction::Values dir)
-    const
-    {
-        CriteriaTypeMapConstIterator it = mCriterionTypesMap.find(mRouteCriterionType[dir]);
-        AUDIOCOMMS_ASSERT(it != mCriterionTypesMap.end(), "Route CriterionType not found");
-        CriterionType *criterionType = it->second;
-        AUDIOCOMMS_ASSERT(criterionType != NULL, "Invalid route criterion type");
-        return criterionType;
-    }
 
     /**
      * Returns the formatted state of the route criterion according to the mask.
@@ -505,25 +290,7 @@ private:
      * @return litteral values of the route separated by a "|".
      */
     template <Direction::Values dir>
-    inline const std::string routeMaskToString(uint32_t mask) const
-    {
-        return getRouteCriterionType(dir)->getFormattedState(mask);
-    }
-
-    /**
-     * Returns the numeric part of the route criterion according to the mask.
-     *
-     * @param[in] name of the route to convert into a mask.
-     *
-     * @return associated mask (or numerical part) of the route criterion.
-     */
-    inline uint32_t routeToMask(AudioRoute *route) const
-    {
-        Direction::Values dir = route->isOut() ? Direction::Output : Direction::Input;
-        int numeric;
-        return getRouteCriterionType(dir)->getNumericalFromLiteral(route->getName(), numeric) ?
-                    numeric : 0;
-    }
+    inline const std::string routeMaskToString(uint32_t mask) const;
 
     /**
      * Reset the routing conditions.
@@ -531,6 +298,11 @@ private:
      * resets the availability of the routes and ports.
      */
     void resetRouting();
+
+    /**
+     * Reset the collections managed by route manager service and delete the platform state.
+     */
+    void reset();
 
     /// from IEventListener
     virtual bool onEvent(int);
@@ -540,53 +312,16 @@ private:
     virtual void onPollError();
     virtual bool onProcess(void *, uint32_t);
 
-    static const std::pair<int, const char *> mRoutingStageValuePairs[];
+    RouteCollection<> mRouteMap; /**< map of audio route to manage. */
 
-    /**
-     * Defines the name of the Android property describing the name of the *
-     * audio PFW configuration file.
-     */
-    static const char *const mAudioPfwConfFilePropName;
-    static const char *const mAudioPfwDefaultConfFileName;
-    static const char *const
-    mClosingRouteCriterion[Direction::gNbDirections];
-    static const char *const
-    mOpenedRouteCriterion[Direction::gNbDirections];
-    static const char *const mRouteCriterionType[Direction::gNbDirections];
-    static const char *const mRoutingStage;
-    static const char *const mVoiceVolume;
+    StreamRouteCollection mStreamRouteMap; /**< map of audio stream route. */
 
-    CParameterMgrPlatformConnector *mAudioPfwConnector; /**< parameter manager connector */
-    CParameterMgrPlatformConnectorLogger *mAudioPfwConnectorLogger; /**< PFW logger. */
-
-    /**
-     * Map of criteria used to pilot the audio PFW.
-     */
-    std::map<std::string, Criterion *> mCriteriaMap;
-
-    Criterion *mRoutingStageCriterion;
-    Criterion *mSelectedClosingRoutes[Direction::gNbDirections];
-    Criterion *mSelectedOpenedRoutes[Direction::gNbDirections];
-
-    ParameterMgrHelper *mParameterHelper;
-
-    /**
-     * array of list of streams opened.
-     */
-    std::list<IoStream *> mStreamsList[Direction::gNbDirections];
-
-    std::map<std::string, CriterionType *> mCriterionTypesMap; /**< criterion types map. */
-
-    std::map<std::string, AudioRoute *> mRouteMap; /**< map of audio route to manage. */
-
-    std::map<std::string, AudioStreamRoute *> mStreamRouteMap; /**< map of audio stream route. */
-
-    std::map<std::string, AudioPort *> mPortMap; /**< map of audio ports whose state may change. */
+    ElementCollection<AudioPort> mPortMap; /**< map of audio ports whose state may change. */
 
     /**
      * map of mutuel exclusive port groups.
      */
-    std::map<std::string, AudioPortGroup *> mPortGroupMap;
+    ElementCollection<AudioPortGroup> mPortGroupMap;
 
     CEventThread *mEventThread; /**< worker thread in which routing is running. */
 
@@ -594,73 +329,7 @@ private:
 
     mutable android::RWLock mRoutingLock; /**< lock to protect the routing. */
 
-    struct
-    {
-        uint32_t needReflow;  /**< Bitfield of routes that needs to be mute / unmutes. */
-        uint32_t needRepath;  /**< Bitfield of routes that needs to be disabled / enabled. */
-        uint32_t enabled;     /**< Bitfield of enabled routes. */
-        uint32_t prevEnabled; /**< Bitfield of previously enabled routes. */
-    } mRoutes[Direction::gNbDirections];
-
-    /**
-     * Get the need reflow routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return reflow routes mask in the requested direction.
-     */
-    inline uint32_t needReflowRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].needReflow;
-    }
-
-    /**
-     * Get the need repath routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return repath routes mask in the requested direction.
-     */
-    inline uint32_t needRepathRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].needRepath;
-    }
-
-    /**
-     * Get the enabled routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return enabled routes mask in the requested direction.
-     */
-    inline uint32_t enabledRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].enabled;
-    }
-
-    /**
-     * Get the prevously enabled routes mask.
-     *
-     * @param[in] isOut direction of the route addressed by the request.
-     *
-     * @return previously enabled routes mask in the requested direction.
-     */
-    inline uint32_t prevEnabledRoutes(bool isOut) const
-    {
-        return mRoutes[isOut].prevEnabled;
-    }
-
-    /**
-     * provide a compile time error if no specialization is provided for a given type.
-     *
-     * @tparam T: type of the routingElement. Routing Element supported are:
-     *                      - AudioPort
-     *                      - AudioPortGroup
-     *                      - AudioRoute
-     *                      - AudioStreamRoute.
-     */
-    template <typename T>
-    struct routingElementSupported;
+    AudioPlatformState *mPlatformState; /**< Platform state handler for Route / Audio PFW. */
 };
 
 } // namespace intel_audio

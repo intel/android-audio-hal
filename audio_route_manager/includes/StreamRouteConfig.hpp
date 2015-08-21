@@ -34,7 +34,7 @@ struct StreamRouteConfig
     bool requirePostDisable;
 
     const char *cardName;   /**< Alsa card used by the stream route. */
-    uint8_t deviceId;       /**< Alsa card used by the stream route. */
+    uint32_t deviceId;       /**< Alsa card used by the stream route. */
 
     /**
      * pcm configuration supported by the stream route.
@@ -49,7 +49,7 @@ struct StreamRouteConfig
     uint32_t silenceThreshold;
     uint32_t availMin;
 
-    uint8_t silencePrologInMs; /**< if needed, silence to be appended before valid samples. */
+    uint32_t silencePrologInMs; /**< if needed, silence to be appended before valid samples. */
     uint32_t flagMask; /**< flags supported by this route. To be checked with stream flags. */
     uint32_t useCaseMask; /**< use cases supported by this route. To be checked with stream. */
 

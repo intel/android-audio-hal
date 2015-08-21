@@ -107,13 +107,15 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                 // Dump hw registers debug file info in console
                 mParent->printPlatformFwErrorInfo();
 
-            } else if ((error.find(strerror(EBADFD)) != std::string::npos)
-                       || (error.find(strerror(EBADF)) != std::string::npos)) {
+            } else if (error.find(strerror(EBADFD)) != std::string::npos) {
                 mStreamLock.unlock();
                 Log::Error() << __FUNCTION__ << ": execute device recovery";
                 setStandby(true);
-                return android::OK;
+                return android::DEAD_OBJECT;
             }
+            AUDIOCOMMS_ASSERT(error.find(strerror(EBADF)) == std::string::npos,
+                              "Audio Device handle closed not by Audio HAL."
+                              " A corruption might have happenned, investigation required");
 
             if (++retryCount > mMaxReadWriteRetried) {
                 mStreamLock.unlock();
@@ -246,7 +248,6 @@ status_t StreamOut::flush()
 
 void StreamOut::addEchoReference(struct echo_reference_itfe *reference)
 {
-    AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
     AutoW lock(mPreProcEffectLock);
     Log::Debug() << __FUNCTION__ << ": (reference = " << reference
                  << "): note mEchoReference = " << mEchoReference;

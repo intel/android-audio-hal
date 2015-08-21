@@ -151,10 +151,10 @@ protected:
      *
      * @return stream interface of the route manager.
      */
-    IStreamInterface *getStreamInterface()
+    IStreamInterface &getStreamInterface()
     {
         AUDIOCOMMS_ASSERT(mStreamInterface != NULL, "Invalid stream interface");
-        return mStreamInterface;
+        return *mStreamInterface;
     }
 
     friend class StreamOut;
@@ -393,8 +393,6 @@ private:
     struct echo_reference_itfe *getEchoReference(const SampleSpec &inputSampleSpec);
 
     struct echo_reference_itfe *mEchoReference; /**< Echo reference to use for AEC effect. */
-
-    AudioPlatformState *mPlatformState; /**< Platform state pointer. */
 
     AudioParameterHandler *mAudioParameterHandler; /**< backup and restore audio parameters. */
 

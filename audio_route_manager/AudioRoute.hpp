@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "RoutingElement.hpp"
+#include <NonCopyable.hpp>
 #include "RoutingStage.hpp"
 #include <bitset>
 
@@ -24,7 +24,7 @@ namespace intel_audio
 
 class AudioPort;
 
-class AudioRoute : public RoutingElement
+class AudioRoute : public audio_comms::utilities::NonCopyable
 {
 
 public:
@@ -41,7 +41,7 @@ public:
         ENbPorts
     };
 
-    AudioRoute(const std::string &name);
+    AudioRoute(const std::string &name, bool isOut, uint32_t mask);
     virtual ~AudioRoute();
 
     /**
@@ -51,7 +51,7 @@ public:
      *
      * @param[in] port Port that this route is using.
      */
-    void addPort(AudioPort *port);
+    void addPort(intel_audio::AudioPort &port);
 
     /**
      * Reset the availability of the route.
@@ -76,7 +76,7 @@ public:
      * Calling this API will propagate the in use attribute to the ports belonging to this route.
      *
      */
-    virtual void setUsed(bool isUsed);
+    virtual void setUsed();
 
     /**
      * Checks if the route is used.
@@ -99,16 +99,6 @@ public:
     bool previouslyUsed() const
     {
         return mPreviouslyUsed;
-    }
-
-    /**
-     * Checks the type of route.
-     *
-     * @return true if the route is a stream route, false otherwise.
-     */
-    virtual bool isStreamRoute() const
-    {
-        return false;
     }
 
     /**
@@ -213,22 +203,23 @@ public:
         return mIsOut;
     }
 
+    uint32_t getMask() const { return mMask; }
+
     /**
-     * Sets the direction of the route.
+     * Returns identifier of current routing element
      *
-     * Called at the construction of the audio platform.
-     *
-     * @param[in] isOut true if the route an output route, false if input route.
+     * @returns string representing the name of the routing element
      */
-    void setDirection(bool isOut)
-    {
-        mIsOut = isOut;
-    }
+    const std::string &getName() const { return mName; }
 
 private:
     AudioPort *mPort[ENbPorts]; /**< Route is connected to 2 ports. NULL if no mutual exclusion*/
 
     bool mBlocked; /**< Tells whether the route is blocked or not. */
+
+    std::string mName; /**< Unique Identifier of a routing element */
+
+    uint32_t mMask; /**< A route is identified with a mask, it helps for criteria representation. */
 
     bool mIsOut; /**< Tells whether the route is an output or not. */
 

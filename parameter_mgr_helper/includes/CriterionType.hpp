@@ -50,14 +50,6 @@ public:
     void addValuePair(int numerical, const std::string &literal);
 
     /**
-     * Adds value pairs for this criterion type to the parameter manager.
-     *
-     * @param[in] pairs array of value pairs.
-     * @param[in] nbPairs number of value pairs to add.
-     */
-    void addValuePairs(const ValuePair *pairs, uint32_t nbPairs);
-
-    /**
      * Checks if a literal value belongs to the criterion type value pairs.
      *
      * @param[in] name to check if belongs to value pairs.
@@ -83,7 +75,7 @@ public:
      *
      * @return the literal value associated to the numerical local value.
      */
-    std::string getFormattedState(uint32_t value);
+    std::string getFormattedState(uint32_t value) const;
 
     /**
      * Get the numerical value of the criterion.
