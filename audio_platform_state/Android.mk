@@ -137,7 +137,7 @@ LOCAL_CFLAGS := \
     -DHAL_CONF_FILE_PATH=\"$(HOST_OUT)\"'"/etc"'
 
 LOCAL_SHARED_LIBRARIES := \
-    libparameter
+    libparameter_host
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
