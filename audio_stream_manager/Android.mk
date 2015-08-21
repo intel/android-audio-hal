@@ -86,7 +86,6 @@ component_shared_lib_target := \
     libutils \
     libmedia \
     libhardware \
-    libhardware_legacy \
     libaudioutils \
     libicuuc \
 

@@ -91,7 +91,6 @@ component_shared_lib_target := \
     libtinyalsa \
     libcutils \
     libutils \
-    libhardware_legacy \
     libaudioutils \
 
 component_shared_lib_host := \
