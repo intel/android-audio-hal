@@ -143,7 +143,7 @@ int AudioUtils::getCardIndexByName(const char *name)
         if (written < 0) {
             Log::Error() << "Sound card " << name << " does not exist";
             return -errno;
-        } else if (written >= (ssize_t)sizeof(cardFilePath)) {
+        } else if (written >= (ssize_t)sizeof(cardNameWithIndex)) {
 
             // This will probably never happen
             return -ENAMETOOLONG;
