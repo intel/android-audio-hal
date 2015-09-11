@@ -414,7 +414,8 @@ status_t StreamIn::setDevice(audio_devices_t device)
 
 void StreamIn::setInputSource(audio_source_t inputSource)
 {
-    AUDIOCOMMS_COMPILE_TIME_ASSERT(AUDIO_SOURCE_CNT < 32);
+    static const uint32_t nbHiddenInputSource = 2; // Hotword and FmTuner are hidden by audio.h
+    AUDIOCOMMS_COMPILE_TIME_ASSERT(AUDIO_SOURCE_CNT + nbHiddenInputSource <= 32);
 
     uint32_t inputSourceShift = inputSource;
 
@@ -425,6 +426,11 @@ void StreamIn::setInputSource(audio_source_t inputSource)
          * the stream wishes to store it as a mask, the hotword source
          * is set at the audio source cnt bit (a compile time assertion
          * will complain if this workaround is broken)
+         */
+        inputSourceShift = AUDIO_SOURCE_CNT + 1;
+    } else if (inputSource == AUDIO_SOURCE_FM_TUNER) {
+        /** FM Tuner input source has been set by audio.h outside range of available source
+         * exposed to JAVA layer.
          */
         inputSourceShift = AUDIO_SOURCE_CNT;
     }
