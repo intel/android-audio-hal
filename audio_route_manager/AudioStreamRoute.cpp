@@ -24,6 +24,15 @@
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 
+/**
+ * This input flag is not defined in audio.h
+ * In case of requested stream input flags is none areFlagsMatching
+ * returns always true (0 & X = 0).
+ * This flags is used to fix this issue by append AUDIO_INPUT_FLAG_PRIMARY
+ * only when input flags is AUDIO_INPUT_FLAG_NONE
+ */
+#define AUDIO_INPUT_FLAG_PRIMARY 0x10
+
 using std::string;
 using audio_comms::utilities::Log;
 
@@ -193,6 +202,8 @@ bool AudioStreamRoute::isMatchingWithStream(const IoStream &stream) const
         // If no flags is provided for output, take primary by default
         streamFlagMask = !streamFlagMask ?
                          static_cast<uint32_t>(AUDIO_OUTPUT_FLAG_PRIMARY) : streamFlagMask;
+    } else if (streamFlagMask == AUDIO_INPUT_FLAG_NONE) {
+        streamFlagMask |= AUDIO_INPUT_FLAG_PRIMARY;
     }
 
     Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
