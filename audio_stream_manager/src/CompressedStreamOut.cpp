@@ -215,7 +215,7 @@ status_t CompressedStreamOut::openDeviceUnsafe()
     Log::Verbose() << __FUNCTION__ << ": device " << device;
 
     // update the configuration structure for given type of stream
-    codec.id = (getFormat() == AUDIO_FORMAT_MP3) ? SND_AUDIOCODEC_MP3 : SND_AUDIOPROFILE_AAC;
+    codec.id = (getFormat() == AUDIO_FORMAT_MP3) ? SND_AUDIOCODEC_MP3 : SND_AUDIOCODEC_AAC;
     /* the channel maks is the one that come to hal. Converting the mask to channel number */
     int channel_count = popcount(getChannels());
     codec.ch_out = channel_count;
