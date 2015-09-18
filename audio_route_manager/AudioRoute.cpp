@@ -27,8 +27,10 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioRoute::AudioRoute(const string &name)
-    : RoutingElement(name),
+AudioRoute::AudioRoute(const string &name, bool isOut, uint32_t mask)
+    : mName(name),
+      mMask(mask),
+      mIsOut(isOut),
       mIsUsed(false),
       mPreviouslyUsed(false),
       mIsApplicable(false),
@@ -43,18 +45,16 @@ AudioRoute::~AudioRoute()
 }
 
 
-void AudioRoute::addPort(AudioPort *port)
+void AudioRoute::addPort(AudioPort &port)
 {
-    AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
+    Log::Verbose() << __FUNCTION__ << ": " << port.getName() << " to route " << getName();
 
-    Log::Verbose() << __FUNCTION__ << ": " << port->getName() << " to route " << getName();
-
-    port->addRouteToPortUsers(this);
+    port.addRouteToPortUsers(*this);
     if (!mPort[EPortSource]) {
 
-        mPort[EPortSource] = port;
+        mPort[EPortSource] = &port;
     } else {
-        mPort[EPortDest] = port;
+        mPort[EPortDest] = &port;
     }
 }
 
@@ -69,31 +69,22 @@ bool AudioRoute::isApplicable() const
 {
     Log::Verbose() << __FUNCTION__ << ": " << getName()
                    << "!isBlocked()=" << !isBlocked() << " && _isApplicable=" << mIsApplicable;
-    return !isBlocked() && mIsApplicable;
+    return !isBlocked() && !isUsed() && mIsApplicable;
 }
 
-void AudioRoute::setUsed(bool isUsed)
+void AudioRoute::setUsed()
 {
-    if (!isUsed) {
+    Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
+                   << (mIsOut ? "PLAYBACK" : "CAPTURE");
+    mIsUsed = true;
 
-        return;
-    }
+    // Propagate the in use attribute to the ports
+    // used by this route
+    for (int i = 0; i < ENbPorts; i++) {
 
-    AUDIOCOMMS_ASSERT(isBlocked() != true, "Requested route blocked");
+        if (mPort[i]) {
 
-    if (!mIsUsed) {
-        Log::Verbose() << __FUNCTION__ << ": route " << getName() << " is now in use in "
-                       << (mIsOut ? "PLAYBACK" : "CAPTURE");
-        mIsUsed = true;
-
-        // Propagate the in use attribute to the ports
-        // used by this route
-        for (int i = 0; i < ENbPorts; i++) {
-
-            if (mPort[i]) {
-
-                mPort[i]->setUsed(this);
-            }
+            mPort[i]->setUsed(*this);
         }
     }
 }

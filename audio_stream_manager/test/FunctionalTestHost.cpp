@@ -164,6 +164,46 @@ TEST_F(AudioHalTest, audioRecordingBufferSize)
     ASSERT_EQ(48u * 20 * 2 * 2, getDevice()->getInputBufferSize(config));
 }
 
+TEST_P(AudioHalInputStreamSupportedInputSourceTest, inputSource)
+{
+    audio_config_t config;
+    setConfig(48000, AUDIO_CHANNEL_IN_STEREO, AUDIO_FORMAT_PCM_16_BIT, config);
+    intel_audio::StreamInInterface *inStream = NULL;
+    audio_devices_t devices = static_cast<audio_devices_t>(AUDIO_DEVICE_IN_COMMUNICATION);
+    audio_input_flags_t flags = AUDIO_INPUT_FLAG_NONE;
+    const char *address = "dont_care";
+    audio_source_t source = GetParam();
+
+    status_t status = getDevice()->openInputStream(0, devices, config, inStream,
+                                                   flags, address, source);
+    ASSERT_EQ(status, android::OK);
+    ASSERT_FALSE(inStream == NULL);
+
+    EXPECT_EQ(config.sample_rate, inStream->getSampleRate());
+    EXPECT_EQ(config.format, inStream->getFormat());
+    EXPECT_EQ(config.channel_mask, inStream->getChannels());
+
+    getDevice()->closeInputStream(inStream);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    AudioHalInputStreamSupportedInputSourceTestAll,
+    AudioHalInputStreamSupportedInputSourceTest,
+    ::testing::Values(
+        AUDIO_SOURCE_DEFAULT,                     // = 0,
+        AUDIO_SOURCE_MIC,                     // = 1,
+        AUDIO_SOURCE_VOICE_UPLINK,            // = 2,
+        AUDIO_SOURCE_VOICE_DOWNLINK,          // = 3,
+        AUDIO_SOURCE_VOICE_CALL,              // = 4,
+        AUDIO_SOURCE_CAMCORDER,               // = 5,
+        AUDIO_SOURCE_VOICE_RECOGNITION,       // = 6,
+        AUDIO_SOURCE_VOICE_COMMUNICATION,     // = 7,
+        AUDIO_SOURCE_REMOTE_SUBMIX,           // = 8,
+        AUDIO_SOURCE_FM_TUNER,                // = 1998,
+        AUDIO_SOURCE_HOTWORD                  // = 1999,
+        )
+    );
+
 TEST_F(AudioHalTest, inputStreamSpec)
 {
 
@@ -173,7 +213,7 @@ TEST_F(AudioHalTest, inputStreamSpec)
     audio_devices_t devices = static_cast<audio_devices_t>(AUDIO_DEVICE_IN_COMMUNICATION);
     audio_input_flags_t flags = AUDIO_INPUT_FLAG_NONE;
     const char *address = "dont_care";
-    audio_source_t source = AUDIO_SOURCE_MIC;
+    audio_source_t source = AUDIO_SOURCE_FM_TUNER;
 
     status_t status = getDevice()->openInputStream(0, devices, config, inStream,
                                                    flags, address, source);

@@ -17,10 +17,12 @@
 
 #include "SampleSpec.hpp"
 #include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 #include <stdint.h>
 #include <errno.h>
 #include <limits>
 
+using audio_comms::utilities::Log;
 using namespace std;
 
 namespace intel_audio
@@ -103,13 +105,19 @@ size_t SampleSpec::getFrameSize() const
 
 size_t SampleSpec::convertBytesToFrames(size_t bytes) const
 {
-    AUDIOCOMMS_ASSERT(getFrameSize() != 0, "Null frame size");
+    if (getFrameSize() == 0) {
+        Log::Error() << __FUNCTION__ << ": Null frame size";
+        return 0;
+    }
     return bytes / getFrameSize();
 }
 
 size_t SampleSpec::convertFramesToBytes(size_t frames) const
 {
-    AUDIOCOMMS_ASSERT(getFrameSize() != 0, "Null frame size");
+    if (getFrameSize() == 0) {
+        Log::Error() << __FUNCTION__ << ": Null frame size";
+        return 0;
+    }
     AUDIOCOMMS_ASSERT(frames <= numeric_limits<size_t>::max() / getFrameSize(),
                       "conversion exceeds limit");
     return frames * getFrameSize();
@@ -117,7 +125,10 @@ size_t SampleSpec::convertFramesToBytes(size_t frames) const
 
 size_t SampleSpec::convertFramesToUsec(uint32_t frames) const
 {
-    AUDIOCOMMS_ASSERT(getFrameSize() != 0, "Null frame size");
+    if (getFrameSize() == 0) {
+        Log::Error() << __FUNCTION__ << ": Null frame size";
+        return 0;
+    }
     AUDIOCOMMS_ASSERT((frames / getSampleRate()) <=
                       (numeric_limits<size_t>::max() / mUsecPerSec),
                       "conversion exceeds limit");

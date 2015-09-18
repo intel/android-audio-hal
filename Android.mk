@@ -39,6 +39,7 @@ SUBDIRS := audio_conversion \
            utilities/active_value_set \
            utilities/parameter \
            utilities \
+	   audio_route_manager/parameter_framework_plugin \
 
 # Call sub-folders' Android.mk
 include $(call named-subdir-makefiles, $(SUBDIRS))

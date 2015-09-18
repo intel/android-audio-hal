@@ -118,6 +118,13 @@ class AudioHalOutputStreamSupportedChannelsTest
 {
 };
 
+class AudioHalInputStreamSupportedInputSourceTest
+    : public AudioHalTest,
+      public ::testing::WithParamInterface<audio_source_t>
+{
+};
+
+
 class AudioHalValidGlobalParameterTest
     : public ::testing::WithParamInterface<std::pair<std::string, std::string> >,
       public AudioHalTest

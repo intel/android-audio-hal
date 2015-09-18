@@ -48,13 +48,10 @@ void AudioPort::resetAvailability()
     mRouteAttached[Direction::Input] = NULL;
 }
 
-void AudioPort::addGroupToPort(AudioPortGroup *portGroup)
+void AudioPort::addGroupToPort(AudioPortGroup &portGroup)
 {
     Log::Verbose() << __FUNCTION__;
-    if (portGroup) {
-        mPortGroupList.push_back(portGroup);
-    }
-
+    mPortGroupList.push_back(&portGroup);
 }
 
 void AudioPort::setBlocked(bool blocked)
@@ -68,10 +65,7 @@ void AudioPort::setBlocked(bool blocked)
     mIsBlocked = blocked;
 
     if (blocked) {
-
-        AUDIOCOMMS_ASSERT(mRouteAttached != NULL, "Attached route is not initialized");
-
-        // Blocks now all route that use this port
+        // Blocks now all route that use this port, whether this port is attached or not to a route.
         RouteListIterator it;
 
         // Find the applicable route for this route request
@@ -84,10 +78,8 @@ void AudioPort::setBlocked(bool blocked)
     }
 }
 
-void AudioPort::setUsed(AudioRoute *route)
+void AudioPort::setUsed(AudioRoute &route)
 {
-    AUDIOCOMMS_ASSERT(route != NULL, "Invalid route requested");
-
     if (mIsUsed) {
 
         // Port is already in use, bailing out
@@ -96,7 +88,7 @@ void AudioPort::setUsed(AudioRoute *route)
     Log::Verbose() << __FUNCTION__ << ": port " << getName() << " is in use";
 
     mIsUsed = true;
-    mRouteAttached[route->isOut()] = route;
+    mRouteAttached[route.isOut()] = &route;
 
     PortGroupListIterator it;
 
@@ -104,7 +96,7 @@ void AudioPort::setUsed(AudioRoute *route)
 
         AudioPortGroup *portGroup = *it;
 
-        portGroup->blockMutualExclusivePort(this);
+        portGroup->blockMutualExclusivePort(*this);
     }
 
     // Block all route using this port as well (except the route in opposite direction
@@ -117,7 +109,7 @@ void AudioPort::setUsed(AudioRoute *route)
     for (routeIt = mRouteList.begin(); routeIt != mRouteList.end(); ++routeIt) {
 
         AudioRoute *routeUsingThisPort = *routeIt;
-        if ((routeUsingThisPort == route) || (route->getName() == routeUsingThisPort->getName())) {
+        if ((routeUsingThisPort == &route) || (route.getName() == routeUsingThisPort->getName())) {
 
             continue;
         }
@@ -126,13 +118,11 @@ void AudioPort::setUsed(AudioRoute *route)
     }
 }
 
-void AudioPort::addRouteToPortUsers(AudioRoute *route)
+void AudioPort::addRouteToPortUsers(AudioRoute &route)
 {
-    AUDIOCOMMS_ASSERT(route != NULL, "Invalid route requested");
+    mRouteList.push_back(&route);
 
-    mRouteList.push_back(route);
-
-    Log::Verbose() << __FUNCTION__ << ": added " << route->getName()
+    Log::Verbose() << __FUNCTION__ << ": added " << route.getName()
                    << " route to " << getName() << " port users";
 }
 

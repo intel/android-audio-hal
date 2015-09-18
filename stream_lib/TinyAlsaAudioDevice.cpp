@@ -69,8 +69,11 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
     // it will return a reference on a "bad pcm" structure
     //
     uint32_t flags = (isOut ? PCM_OUT : PCM_IN) | PCM_MONOTONIC;
-    mPcmDevice = pcm_open(AudioUtils::getCardIndexByName(cardName),
-                          deviceId, flags, &config);
+    int cardIndex = AudioUtils::getCardIndexByName(cardName);
+    if (cardIndex < 0) {
+        return android::BAD_VALUE;
+    }
+    mPcmDevice = pcm_open(cardIndex, deviceId, flags, &config);
     if (mPcmDevice && !pcm_is_ready(mPcmDevice)) {
         Log::Error() << __FUNCTION__
                      << ": Cannot open tinyalsa (" << cardName

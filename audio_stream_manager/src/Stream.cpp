@@ -222,7 +222,7 @@ size_t Stream::getBufferSize() const
 {
     AutoR lock(mStreamLock);
     size_t size = mSampleSpec.convertUsecToframes(
-        mParent->getStreamInterface()->getPeriodInUs(this));
+        mParent->getStreamInterface().getPeriodInUs(*this));
 
     size = AudioUtils::alignOn16(size);
 
@@ -268,7 +268,8 @@ void Stream::setUseCaseMask(uint32_t useCaseMask)
 void Stream::updateLatency()
 {
     AutoR lock(mStreamLock);
-    mLatencyMs = AudioUtils::convertUsecToMsec(mParent->getStreamInterface()->getLatencyInUs(this));
+    mLatencyMs =
+            AudioUtils::convertUsecToMsec(mParent->getStreamInterface().getLatencyInUs(*this));
 }
 
 status_t Stream::setStandby(bool isSet)

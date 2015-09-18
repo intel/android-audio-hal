@@ -57,7 +57,6 @@ LOCAL_CFLAGS := $(component_cflags)
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_LIBRARIES := $(component_static_lib)
-
 include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################

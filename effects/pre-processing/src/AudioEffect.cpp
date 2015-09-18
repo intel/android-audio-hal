@@ -47,10 +47,14 @@ AudioEffect::~AudioEffect()
 {
 }
 
-void AudioEffect::setSession(AudioEffectSession *session)
+android::status_t AudioEffect::setSession(AudioEffectSession *session)
 {
-    AUDIOCOMMS_ASSERT(mSession == NULL, "Effects already in use for a session");
+    if (mSession != NULL) {
+        Log::Error() << __FUNCTION__ << ": Effects already in use for a session";
+        return android::INVALID_OPERATION;
+    }
     mSession = session;
+    return android::OK;
 }
 
 const effect_uuid_t *AudioEffect::getUuid() const

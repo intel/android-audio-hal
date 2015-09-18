@@ -30,8 +30,8 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioStreamRoute::AudioStreamRoute(const string &name)
-    : AudioRoute(name),
+AudioStreamRoute::AudioStreamRoute(const string &name, bool isOut, uint32_t mask)
+    : AudioRoute(name, isOut, mask),
       mCurrentStream(NULL),
       mNewStream(NULL),
       mEffectSupported(0),
@@ -148,47 +148,48 @@ void AudioStreamRoute::configure()
          * Route is still in use, but the stream attached to this route has changed...
          * Unroute previous stream.
          */
-        detachCurrentStream();
+        if (detachCurrentStream() != android::OK) {
+            return;
+        }
 
         // route new stream
-        attachNewStream();
+        if (attachNewStream() != android::OK) {
+            return;
+        }
     }
 }
 
 void AudioStreamRoute::resetAvailability()
 {
     if (mNewStream) {
-
         mNewStream->resetNewStreamRoute();
         mNewStream = NULL;
     }
     AudioRoute::resetAvailability();
 }
 
-void AudioStreamRoute::setStream(IoStream *stream)
+bool AudioStreamRoute::setStream(IoStream &stream)
 {
-    AUDIOCOMMS_ASSERT(stream != NULL, "Fatal: invalid stream parameter!");
+    if (stream.isOut() != isOut()) {
+        Log::Error() << __FUNCTION__ << ": to route " << getName() << " which has not the same dir";
+        return false;
+    }
+    if (mNewStream != NULL) {
+        Log::Error() << __FUNCTION__ << ": route " << getName() << " is busy";
+        return false;
+    }
     Log::Verbose() << __FUNCTION__ << ": to " << getName() << " route";
-    AUDIOCOMMS_ASSERT(stream->isOut() == isOut(), "Fatal: unexpected stream direction!");
-
-    AUDIOCOMMS_ASSERT(mNewStream == NULL, "Fatal: invalid stream value!");
-
-    mNewStream = stream;
+    mNewStream = &stream;
     mNewStream->setNewStreamRoute(this);
+    return true;
 }
 
-bool AudioStreamRoute::isApplicable(const IoStream *stream) const
+bool AudioStreamRoute::isMatchingWithStream(const IoStream &stream) const
 {
-    return AudioRoute::isApplicable() && !isUsed() && isMatchingWithStream(stream);
-}
+    uint32_t streamFlagMask = stream.getFlagMask();
+    uint32_t streamUseCaseMask = stream.getUseCaseMask();
 
-bool AudioStreamRoute::isMatchingWithStream(const IoStream *stream) const
-{
-    AUDIOCOMMS_ASSERT(stream != NULL, "NULL stream");
-    uint32_t streamFlagMask = stream->getFlagMask();
-    uint32_t streamUseCaseMask = stream->getUseCaseMask();
-
-    if (stream->isOut()) {
+    if (stream.isOut()) {
         // If no flags is provided for output, take primary by default
         streamFlagMask = !streamFlagMask ?
                          static_cast<uint32_t>(AUDIO_OUTPUT_FLAG_PRIMARY) : streamFlagMask;
@@ -196,16 +197,16 @@ bool AudioStreamRoute::isMatchingWithStream(const IoStream *stream) const
 
     Log::Verbose() << __FUNCTION__ << ": is Route " << getName() << " applicable? "
                    << "\n\t\t\t route direction=" << (isOut() ? "output" : "input")
-                   << " stream direction=" << (stream->isOut() ? "output" : "input") << std::hex
+                   << " stream direction=" << (stream.isOut() ? "output" : "input") << std::hex
                    << " && stream flags mask=0x" << streamFlagMask
                    << " & route applicable flags mask=0x" << getFlagsMask()
                    << " && stream use case mask=0x" << streamUseCaseMask
                    << " & route applicable use case mask=0x" << getUseCaseMask();
 
-    return (stream->isOut() == isOut()) &&
+    return (stream.isOut() == isOut()) &&
            areFlagsMatching(streamFlagMask) &&
            areUseCasesMatching(streamUseCaseMask) &&
-           implementsEffects(stream->getEffectRequested());
+           implementsEffects(stream.getEffectRequested());
 }
 
 inline bool AudioStreamRoute::areFlagsMatching(uint32_t streamFlagMask) const
@@ -225,7 +226,11 @@ bool AudioStreamRoute::implementsEffects(uint32_t effectMask) const
 
 android::status_t AudioStreamRoute::attachNewStream()
 {
-    AUDIOCOMMS_ASSERT(mNewStream != NULL, "Fatal: invalid stream value!");
+    if (mNewStream == NULL) {
+        Log::Error() << __FUNCTION__ << ": trying to attach route " << getName()
+                     << " to invalid stream";
+        return android::DEAD_OBJECT;
+    }
 
     android::status_t err = mNewStream->attachRoute();
 
@@ -239,12 +244,16 @@ android::status_t AudioStreamRoute::attachNewStream()
     return android::OK;
 }
 
-void AudioStreamRoute::detachCurrentStream()
+android::status_t AudioStreamRoute::detachCurrentStream()
 {
-    AUDIOCOMMS_ASSERT(mCurrentStream != NULL, "Fatal: invalid stream value!");
-
+    if (mCurrentStream == NULL) {
+        Log::Error() << __FUNCTION__ << ": trying to detach route " << getName()
+                     << " from invalid stream";
+        return android::DEAD_OBJECT;
+    }
     mCurrentStream->detachRoute();
     mCurrentStream = NULL;
+    return android::OK;
 }
 
 void AudioStreamRoute::addEffectSupported(const std::string &effect)

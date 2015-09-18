@@ -15,9 +15,6 @@
  */
 
 #include "CriterionParameter.hpp"
-#include <CriterionType.hpp>
-#include <Criterion.hpp>
-#include <ParameterMgrPlatformConnector.h>
 #include <IStreamInterface.hpp>
 #include <convert.hpp>
 #include <utilities/Log.hpp>
@@ -27,30 +24,17 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-bool CriterionParameter::set(const std::string &androidParamValue)
+CriterionParameter::CriterionParameter(const std::string &key,
+                                       const std::string &name,
+                                       Criterion &criterion,
+                                       const std::string &defaultValue /* = "" */)
+    : Parameter(key, name, defaultValue),
+      mCriterion(criterion)
 {
-    mObserver->parameterHasChanged(getName());
-    return true;
+    mCriterion.setCriterionState<std::string>(getDefaultLiteralValue());
 }
 
-RouteCriterionParameter::RouteCriterionParameter(ParameterChangedObserver *observer,
-                                                 const std::string &key,
-                                                 const std::string &name,
-                                                 CriterionType *criterionType,
-                                                 CParameterMgrPlatformConnector *connector,
-                                                 const std::string &defaultValue /* = "" */)
-    : CriterionParameter(observer, key, name, defaultValue),
-      mCriterion(new Criterion(name, criterionType, connector, defaultValue))
-{
-    mCriterion->setCriterionState<std::string>(getDefaultLiteralValue());
-}
-
-RouteCriterionParameter::~RouteCriterionParameter()
-{
-    delete mCriterion;
-}
-
-bool RouteCriterionParameter::setValue(const std::string &value)
+bool CriterionParameter::setValue(const std::string &value)
 {
     std::string literalValue;
     if (!getLiteralValueFromParam(value, literalValue)) {
@@ -59,56 +43,19 @@ bool RouteCriterionParameter::setValue(const std::string &value)
         return false;
     }
     Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
-    if (!mCriterion->setCriterionState(literalValue)) {
-        return false;
-    }
-    return CriterionParameter::set(literalValue);
+    return mCriterion.setValue(literalValue);
 }
 
-bool RouteCriterionParameter::getValue(std::string &value) const
+bool CriterionParameter::getValue(std::string &value) const
 {
-    std::string criterionLiteralValue = mCriterion->getValue<std::string>();
+    std::string criterionLiteralValue = mCriterion.getValue<std::string>();
 
     return getParamFromLiteralValue(value, criterionLiteralValue);
 }
 
-AudioCriterionParameter::AudioCriterionParameter(ParameterChangedObserver *observer,
-                                                 const std::string &key,
-                                                 const std::string &name,
-                                                 const std::string &typeName,
-                                                 IStreamInterface *streamInterface,
-                                                 const std::string &defaultValue /* = "" */)
-    : CriterionParameter(observer, key, name, defaultValue),
-      mStreamInterface(streamInterface)
+bool CriterionParameter::sync()
 {
-    mStreamInterface->addCriterion(name, typeName, defaultValue);
-}
-
-bool AudioCriterionParameter::setValue(const std::string &value)
-{
-    std::string literalValue;
-    if (!getLiteralValueFromParam(value, literalValue)) {
-        Log::Warning() << __FUNCTION__
-                       << ": unknown parameter value(" << value << ") for " << getKey();
-        return false;
-    }
-    Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
-    if (mStreamInterface->setAudioCriterion(getName(), literalValue)) {
-        CriterionParameter::set(literalValue);
-    }
-    return true;
-}
-
-bool AudioCriterionParameter::getValue(std::string &value) const
-{
-    std::string criterionLiteralValue;
-    return mStreamInterface->getAudioCriterion(getName(), criterionLiteralValue) &&
-           getParamFromLiteralValue(value, criterionLiteralValue);
-}
-
-bool AudioCriterionParameter::sync()
-{
-    return mStreamInterface->setAudioCriterion(getName(), getDefaultLiteralValue());
+    return mCriterion.setCriterionState(getDefaultLiteralValue());
 }
 
 } // namespace intel_audio
