@@ -26,10 +26,13 @@ LOCAL_PATH := $(call my-dir)
 component_src_files :=  \
     src/Parameter.cpp \
     src/CriterionParameter.cpp \
-    src/AudioPlatformState.cpp \
+    src/Pfw.cpp \
     src/VolumeKeys.cpp \
+    src/AudioPlatformState.cpp \
 
-component_export_includes := $(LOCAL_PATH)/include
+component_export_includes := \
+    $(LOCAL_PATH)/include \
+    $(LOCAL_PATH)/src
 
 component_includes_common := \
     $(component_export_includes) \
@@ -54,6 +57,7 @@ component_static_lib := \
     libparametermgr_static \
     libaudio_comms_utilities \
     libaudio_comms_convert \
+    libaudio_hal_utilities \
     liblpepreprocessinghelper \
     libaudiocomms_naive_tokenizer \
     libproperty \
@@ -131,7 +135,7 @@ LOCAL_CFLAGS := \
     -DHAL_CONF_FILE_PATH=\"$(HOST_OUT)\"'"/etc"'
 
 LOCAL_SHARED_LIBRARIES := \
-    libparameter
+    libparameter_host
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 

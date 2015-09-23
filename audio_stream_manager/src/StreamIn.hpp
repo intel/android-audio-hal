@@ -73,6 +73,8 @@ public:
      */
     void setInputSource(audio_source_t inputSource);
 
+    virtual bool isMuted() const { return false; }
+
 protected:
     /**
      * Callback of route attachement called by the stream lib. (and so route manager).
@@ -256,7 +258,7 @@ private:
      * @return OK if successful operation, error code otherwise.
      */
     android::status_t pushEchoReference(ssize_t frames, effect_handle_t preprocessor,
-                                        struct echo_reference_itfe *reference);
+                                        echo_reference_itfe &reference);
 
     /**
      * Update the echo reference with the frames read from the audio device.
@@ -266,7 +268,7 @@ private:
      *
      * @return 0 if successful operation, error code otherwise.
      */
-    int32_t updateEchoReference(ssize_t frames, struct echo_reference_itfe *reference);
+    int32_t updateEchoReference(ssize_t frames, struct echo_reference_itfe &reference);
 
     /**
      * Set preprocessor echo delay.
@@ -286,7 +288,7 @@ private:
      *
      * @return OK if successful operation, error code otherwise.
      */
-    android::status_t setPreprocessorParam(effect_handle_t effect, effect_param_t *param);
+    android::status_t setPreprocessorParam(effect_handle_t effect, effect_param_t &param);
 
     /**
      * Get the capture delay.

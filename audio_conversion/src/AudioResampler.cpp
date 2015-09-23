@@ -81,7 +81,7 @@ status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ss
         return status;
     }
 
-    AUDIOCOMMS_ASSERT(mResampler != NULL, "NULL resampler handler");
+    AUDIOCOMMS_ASSERT(mResampler != NULL, "Audio Utils failed to instantiate a resampler");
 
     mConvertSamplesFct = static_cast<SampleConverter>(&AudioResampler::resampleFrames);
     return OK;

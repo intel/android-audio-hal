@@ -79,6 +79,8 @@ public:
     virtual bool isStarted() const;
     virtual bool isOut() const = 0;
 
+    virtual bool isMuted() const = 0;
+
     audio_io_handle_t getIoHandle() const { return mHandle; }
 
     /**

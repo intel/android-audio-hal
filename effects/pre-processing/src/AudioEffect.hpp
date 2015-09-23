@@ -108,7 +108,7 @@ public:
      *
      * @param[in] session to attach.
      */
-    void setSession(AudioEffectSession *session);
+    android::status_t setSession(AudioEffectSession *session);
 
     /**
      * Get Session attached to this effect.

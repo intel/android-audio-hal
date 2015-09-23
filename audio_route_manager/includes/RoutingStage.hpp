@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 namespace intel_audio
 {
 

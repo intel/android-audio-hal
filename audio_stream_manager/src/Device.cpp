@@ -20,7 +20,7 @@
 #include "AudioParameterHandler.hpp"
 #include "StreamIn.hpp"
 #include "StreamOut.hpp"
-#include <AudioPlatformState.hpp>
+#include "CompressedStreamOut.hpp"
 #include <AudioCommsAssert.hpp>
 #include <hardware/audio.h>
 #include <Parameters.hpp>
@@ -42,11 +42,9 @@ const char *const Device::mRestartingRequested = "true";
 
 Device::Device()
     : mEchoReference(NULL),
-      mPlatformState(NULL),
       mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
-      mPrimaryOutput(NULL),
-      mCompressOffloadDevices(AUDIO_DEVICE_NONE)
+      mPrimaryOutput(NULL)
 {
     // Retrieve the Stream Interface
     mStreamInterface = RouteManagerInstance::getStreamInterface();
@@ -54,30 +52,15 @@ Device::Device()
         Log::Error() << "Failed to get Stream Interface on RouteMgr";
         return;
     }
-
-    /// Construct the platform state component and start it
-    mPlatformState = new AudioPlatformState(mStreamInterface);
-    if (mPlatformState->start() != android::OK) {
-        Log::Error() << __FUNCTION__ << ": could not start Platform State";
-        mStreamInterface = NULL;
-        delete mPlatformState;
-        mPlatformState = NULL;
-        return;
-    }
-
     /// Start Routing service
     if (mStreamInterface->startService() != android::OK) {
         Log::Error() << __FUNCTION__ << ": Could not start Route Manager stream service";
         // Reset interface pointer to give a chance for initCheck to catch any issue
         // with the RouteMgr.
         mStreamInterface = NULL;
-        delete mPlatformState;
-        mPlatformState = NULL;
         return;
     }
-    mPlatformState->sync();
-
-    mStreamInterface->reconsiderRouting();
+    mStreamInterface->reconsiderRouting(true);
 
     Log::Debug() << __FUNCTION__ << ": Route Manager Service successfully started";
 }
@@ -87,14 +70,11 @@ Device::~Device()
     mStreamInterface->stopService();
     // Remove parameter handler
     delete mAudioParameterHandler;
-    // Remove Platform State component
-    delete mPlatformState;
 }
 
 status_t Device::initCheck() const
 {
-    return (mStreamInterface && mPlatformState && mPlatformState->isStarted()) ?
-           android::OK : android::NO_INIT;
+    return mStreamInterface ? android::OK : android::NO_INIT;
 }
 
 status_t Device::setVoiceVolume(float volume)
@@ -122,6 +102,17 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
         Log::Error() << __FUNCTION__ << ": called with bad devices";
         return android::BAD_VALUE;
     }
+    if (flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) {
+        CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags);
+        status_t err = out->set(config);
+        if (err != android::OK) {
+            delete out;
+            return err;
+        }
+        stream = out;
+        mStreams[handle] = out;
+        return android::OK;
+    }
     StreamOut *out = new StreamOut(this, handle, flags);
     status_t err = out->set(config);
     if (err != android::OK) {
@@ -141,7 +132,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     }
 
     // Informs the route manager of stream creation
-    mStreamInterface->addStream(out);
+    mStreamInterface->addStream(*out);
     stream = out;
 
     Log::Debug() << __FUNCTION__ << ": output created with status=" << err;
@@ -150,9 +141,12 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
 
 void Device::closeOutputStream(StreamOutInterface *out)
 {
+    if (!out) {
+        Log::Error() << __FUNCTION__ << ": invalid stream handle";
+        return;
+    }
     // Informs the route manager of stream destruction
-    AUDIOCOMMS_ASSERT(out != NULL, "Invalid output stream to remove");
-    mStreamInterface->removeStream(static_cast<StreamOut *>(out));
+    mStreamInterface->removeStream(static_cast<StreamOut &>(*out));
     audio_io_handle_t handle = static_cast<StreamOut *>(out)->getIoHandle();
     if (mStreams.find(handle) == mStreams.end()) {
         Log::Error() << __FUNCTION__ << ": requesting to deleted an output stream with io handle= "
@@ -196,7 +190,7 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
     mStreams[handle] = in;
 
     // Informs the route manager of stream creation
-    mStreamInterface->addStream(in);
+    mStreamInterface->addStream(*in);
     stream = in;
 
     Log::Debug() << __FUNCTION__ << ": input created with status=" << err;
@@ -205,9 +199,12 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
 
 void Device::closeInputStream(StreamInInterface *in)
 {
+    if (!in) {
+        Log::Error() << __FUNCTION__ << ": invalid stream handle";
+        return;
+    }
     // Informs the route manager of stream destruction
-    AUDIOCOMMS_ASSERT(in != NULL, "Invalid input stream to remove");
-    mStreamInterface->removeStream(static_cast<StreamIn *>(in));
+    mStreamInterface->removeStream(static_cast<StreamIn &>(*in));
     audio_io_handle_t handle = static_cast<StreamIn *>(in)->getIoHandle();
     if (mStreams.find(handle) == mStreams.end()) {
         Log::Error() << __FUNCTION__ << ": requesting to deleted an input stream with io handle= "
@@ -226,12 +223,12 @@ status_t Device::setMicMute(bool mute)
     if (status != android::OK) {
         return status;
     }
-    return mPlatformState->setParameters(pair.toString());
+    return mStreamInterface->setParameters(pair.toString());
 }
 
 status_t Device::getMicMute(bool &muted) const
 {
-    KeyValuePairs pair(mPlatformState->getParameters(Parameters::gKeyMicMute));
+    KeyValuePairs pair(mStreamInterface->getParameters(Parameters::gKeyMicMute));
     return pair.get(Parameters::gKeyMicMute, muted);
 }
 
@@ -287,12 +284,7 @@ status_t Device::setParameters(const string &keyValuePairs)
             pairs = backupedPairs;
         }
     }
-    status = pairs.get(Parameters::gKeyCompressOffloadRouting, mCompressOffloadDevices);
-    if (status == android::OK) {
-        pairs.remove(key);
-        updateStreamsParametersSync(AUDIO_PORT_ROLE_SOURCE);
-    }
-    status = mPlatformState->setParameters(pairs.toString());
+    status = mStreamInterface->setParameters(pairs.toString());
     if (status == android::OK) {
         Log::Verbose() << __FUNCTION__
                        << ": saving the parameters to recover in case of media server crash";
@@ -304,7 +296,7 @@ status_t Device::setParameters(const string &keyValuePairs)
 string Device::getParameters(const string &keys) const
 {
     Log::Verbose() << __FUNCTION__ << ": requested keys " << keys;
-    return mPlatformState->getParameters(keys);
+    return mStreamInterface->getParameters(keys);
 }
 
 android::status_t Device::setMode(audio_mode_t mode)
@@ -327,7 +319,7 @@ void Device::resetEchoReference(struct echo_reference_itfe *reference)
     }
 
     // Get active voice output stream
-    IoStream *stream = getStreamInterface()->getVoiceOutputStream();
+    IoStream *stream = getStreamInterface().getVoiceOutputStream();
     if (stream == NULL) {
         Log::Error() << __FUNCTION__
                      << ": no voice output found"
@@ -346,7 +338,7 @@ struct echo_reference_itfe *Device::getEchoReference(const SampleSpec &inputSamp
     resetEchoReference(mEchoReference);
 
     // Get active voice output stream
-    IoStream *stream = getStreamInterface()->getVoiceOutputStream();
+    IoStream *stream = getStreamInterface().getVoiceOutputStream();
     if (stream == NULL) {
         Log::Error() << __FUNCTION__ << ": no voice output found,"
                      << " so problem to provide data reference for AEC effect!";
@@ -372,7 +364,7 @@ struct echo_reference_itfe *Device::getEchoReference(const SampleSpec &inputSamp
 
 void Device::printPlatformFwErrorInfo()
 {
-    mPlatformState->printPlatformFwErrorInfo();
+    mStreamInterface->printPlatformFwErrorInfo();
 }
 
 bool Device::hasStream(const audio_io_handle_t &streamHandle)
@@ -407,8 +399,9 @@ Port &Device::getPort(const audio_port_handle_t &portHandle)
 
 const Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle) const
 {
-    AUDIOCOMMS_ASSERT(hasPatchUnsafe(patchHandle), "Patch not found within collection");
-    return mPatches.find(patchHandle)->second;
+    PatchCollection::const_iterator it = mPatches.find(patchHandle);
+    AUDIOCOMMS_ASSERT(it != mPatches.end(), "Patch not found within collection");
+    return it->second;
 }
 
 Patch &Device::getPatchUnsafe(const audio_patch_handle_t &patchHandle)
@@ -540,7 +533,7 @@ status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice
         return android::OK;
     }
     Log::Verbose() << __FUNCTION__ << ": Parameters:" << pairs.toString();
-    return mPlatformState->setParameters(pairs.toString(), synchronous);
+    return mStreamInterface->setParameters(pairs.toString(), synchronous);
 }
 
 status_t Device::getAudioPort(struct audio_port & /*port*/) const
@@ -569,7 +562,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
                                         uint32_t &requestedEffectMask)
 {
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!hasPrimaryFlags(stream)) {
+        if (!hasPrimaryFlags(stream) && !stream.isMuted()) {
             // Primary devices are not appended as primary output plays a "special" role.
             deviceMask |= getDeviceFromStream(stream);
         }
@@ -582,8 +575,6 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
 uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
 {
     uint32_t selectedDeviceMask = streamDeviceMask;
-    // Compress is not handled by primary HAL, so append compress device (none if inactive)
-    selectedDeviceMask |= mCompressOffloadDevices;
 
     AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
     if (isInCall()) {
@@ -591,6 +582,7 @@ uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
         selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
     } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
         // Take the devices of all active outputs with Primary flags if no other stream active
+        // and unmuted.
         selectedDeviceMask = getOutputDeviceMaskFromPrimaryOutputs();
     }
     return selectedDeviceMask;
@@ -604,7 +596,9 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     uint32_t streamsUseCaseMask = 0;
     uint32_t requestedEffectMask = 0;
 
-    Mutex::Locker locker(mPatchCollectionLock);
+    // As Klockwork complains about potential dead leack, avoid using Locker helper here.
+    mPatchCollectionLock.lock();
+
     // Loop on all patches that involve source mix ports (i.e. output streams)
     for (PatchCollection::const_iterator it = mPatches.begin(); it != mPatches.end(); ++it) {
         const Patch &patch = it->second;
@@ -635,9 +629,6 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
 
     if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {
         deviceMask = selectOutputDevices(deviceMask);
-        // Compress is not handled by primary HAL, so append compress device (none if inactive)
-        streamsFlagMask |= getCompressOffloadFlags();
-
         pairs.add(Parameters::gKeyAndroidMode, mode());
     } else {
         pairs.add<int>(Parameters::gKeyVoipBandType, getBandFromActiveInput());
@@ -647,6 +638,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
               deviceMask | internalDeviceMask);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
+    mPatchCollectionLock.unlock();
 }
 
 CAudioBand::Type Device::getBandFromActiveInput() const

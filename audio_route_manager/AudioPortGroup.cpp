@@ -36,23 +36,19 @@ AudioPortGroup::~AudioPortGroup()
 {
 }
 
-void AudioPortGroup::addPortToGroup(AudioPort *port)
+void AudioPortGroup::addPortToGroup(AudioPort &port)
 {
-    AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
-
-    mPortList.push_back(port);
+    mPortList.push_back(&port);
 
     // Give the pointer on Group port back to the port
-    port->addGroupToPort(this);
+    port.addGroupToPort(*this);
 
-    Log::Verbose() << __FUNCTION__ << ": added " << port->getName() << " to port group";
+    Log::Verbose() << __FUNCTION__ << ": added " << port.getName() << " to port group";
 }
 
-void AudioPortGroup::blockMutualExclusivePort(const AudioPort *port)
+void AudioPortGroup::blockMutualExclusivePort(const AudioPort &port)
 {
-    AUDIOCOMMS_ASSERT(port != NULL, "Invalid port requested");
-
-    Log::Verbose() << __FUNCTION__ << ": of port " << port->getName();
+    Log::Verbose() << __FUNCTION__ << ": of port " << port.getName();
 
     PortListIterator it;
 
@@ -60,7 +56,7 @@ void AudioPortGroup::blockMutualExclusivePort(const AudioPort *port)
     for (it = mPortList.begin(); it != mPortList.end(); ++it) {
 
         AudioPort *itPort = *it;
-        if (port != itPort) {
+        if (&port != itPort) {
 
             itPort->setBlocked(true);
         }

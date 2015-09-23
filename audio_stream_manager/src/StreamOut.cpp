@@ -35,12 +35,19 @@ const uint32_t StreamOut::mUsecPerMsec = 1000;
 StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
     : Stream(parent, handle, flagMask),
       mFrameCount(0),
-      mEchoReference(NULL)
+      mEchoReference(NULL),
+      mIsMuted(false)
 {
 }
 
 StreamOut::~StreamOut()
 {
+}
+
+android::status_t StreamOut::setVolume(float left, float right)
+{
+    (left == 0 && right == 0) ? mute() : unMute();
+    return android::OK;
 }
 
 status_t StreamOut::write(const void *buffer, size_t &bytes)
@@ -107,13 +114,15 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
                 // Dump hw registers debug file info in console
                 mParent->printPlatformFwErrorInfo();
 
-            } else if ((error.find(strerror(EBADFD)) != std::string::npos)
-                       || (error.find(strerror(EBADF)) != std::string::npos)) {
+            } else if (error.find(strerror(EBADFD)) != std::string::npos) {
                 mStreamLock.unlock();
                 Log::Error() << __FUNCTION__ << ": execute device recovery";
                 setStandby(true);
-                return android::OK;
+                return android::DEAD_OBJECT;
             }
+            AUDIOCOMMS_ASSERT(error.find(strerror(EBADF)) == std::string::npos,
+                              "Audio Device handle closed not by Audio HAL."
+                              " A corruption might have happenned, investigation required");
 
             if (++retryCount > mMaxReadWriteRetried) {
                 mStreamLock.unlock();
@@ -246,7 +255,6 @@ status_t StreamOut::flush()
 
 void StreamOut::addEchoReference(struct echo_reference_itfe *reference)
 {
-    AUDIOCOMMS_ASSERT(reference != NULL, "Null echo reference pointer");
     AutoW lock(mPreProcEffectLock);
     Log::Debug() << __FUNCTION__ << ": (reference = " << reference
                  << "): note mEchoReference = " << mEchoReference;

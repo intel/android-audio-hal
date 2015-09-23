@@ -36,25 +36,14 @@ CriterionType::~CriterionType()
 {
 }
 
-string CriterionType::getFormattedState(uint32_t value)
+string CriterionType::getFormattedState(uint32_t value) const
 {
-    return getTypeInterface()->getFormattedState(value);
+    return mCriterionTypeInterface->getFormattedState(value);
 }
 
 void CriterionType::addValuePair(int numerical, const string &literal)
 {
     getTypeInterface()->addValuePair(numerical, literal.c_str());
-}
-
-void CriterionType::addValuePairs(const ValuePair *pairs, uint32_t nbPairs)
-{
-    AUDIOCOMMS_ASSERT(pairs != NULL, "NULL value pairs");
-    uint32_t index;
-    for (index = 0; index < nbPairs; index++) {
-
-        const ValuePair *valuePair = &pairs[index];
-        getTypeInterface()->addValuePair(valuePair->first, valuePair->second);
-    }
 }
 
 bool CriterionType::hasValuePairByName(const std::string &name)

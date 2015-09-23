@@ -19,8 +19,6 @@
 namespace intel_audio
 {
 
-const std::string &Parameters::gKeyCompressOffloadRouting = "key_compress_offload_routing";
-
 const std::string &Parameters::gKeyAndroidMode = "android_mode";
 
 const std::string &Parameters::gKeyMicMute = "mic_mute";

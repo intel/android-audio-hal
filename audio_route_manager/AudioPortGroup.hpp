@@ -42,7 +42,7 @@ public:
      *
      * @param[in] port Port to add as a members of the group.
      */
-    void addPortToGroup(AudioPort *port);
+    void addPortToGroup(AudioPort &port);
 
     /**
      * Block all the other port from this group except the requester.
@@ -53,7 +53,7 @@ public:
      *
      * @param[in] port Port in use that request to block all the members of the group.
      */
-    void blockMutualExclusivePort(const AudioPort *port);
+    void blockMutualExclusivePort(const AudioPort &port);
 
 private:
     std::list<AudioPort *> mPortList; /**< mutual exlusive ports belonging to this PortGroup. */

@@ -136,6 +136,7 @@ component_functional_test_static_lib_target += \
 component_functional_test_shared_lib_target += \
     libcutils
 
+
 #######################################################################
 # Component Functional Test Target Build
 

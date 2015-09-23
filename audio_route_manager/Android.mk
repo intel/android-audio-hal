@@ -61,12 +61,15 @@ component_static_lib := \
     libstream_static \
     libsamplespec_static \
     libaudio_hal_utilities \
+    libaudioplatformstate \
     libparametermgr_static \
+    libaudioparameters \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libproperty \
     liblpepreprocessinghelper \
     libevent-listener_static \
+    libaudiocomms_naive_tokenizer \
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host) \
@@ -88,7 +91,6 @@ component_shared_lib_target := \
     libtinyalsa \
     libcutils \
     libutils \
-    libhardware_legacy \
     libaudioutils \
 
 component_shared_lib_host := \

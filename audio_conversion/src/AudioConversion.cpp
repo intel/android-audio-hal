@@ -94,19 +94,17 @@ status_t AudioConversion::configure(const SampleSpec &ssSrc, const SampleSpec &s
 
         return ret;
     }
-
-    // Assert the temporary sample spec equals the destination sample spec
-    AUDIOCOMMS_ASSERT(tmpSsSrc == ssDst, "Could not provide converter");
-
-    return ret;
+    return tmpSsSrc == ssDst ? OK : INVALID_OPERATION;
 }
 
 status_t AudioConversion::getConvertedBuffer(void *dst,
                                              const size_t outFrames,
                                              AudioBufferProvider *bufferProvider)
 {
-    AUDIOCOMMS_ASSERT(bufferProvider != NULL, "NULL source buffer");
-    AUDIOCOMMS_ASSERT(dst != NULL, "NULL destination buffer");
+    if (!bufferProvider || !dst) {
+        Log::Error() << __FUNCTION__ << ": Invalid buffer";
+        return BAD_VALUE;
+    }
 
     status_t status = NO_ERROR;
 
@@ -222,7 +220,10 @@ status_t AudioConversion::convert(const void *src,
                                   const size_t inFrames,
                                   size_t *outFrames)
 {
-    AUDIOCOMMS_ASSERT(src != NULL, "NULL source buffer");
+    if (!src) {
+        Log::Error() << __FUNCTION__ << ": NULL source buffer";
+        return BAD_VALUE;
+    }
     const void *srcBuf = src;
     void *dstBuf = NULL;
     size_t srcFrames = inFrames;
@@ -283,8 +284,6 @@ status_t AudioConversion::doConfigureAndAddConverter(SampleSpecItem sampleSpecIt
                                                      SampleSpec *ssSrc,
                                                      const SampleSpec *ssDst)
 {
-    AUDIOCOMMS_ASSERT(sampleSpecItem < NbSampleSpecItems, "Sample Spec item out of range");
-
     SampleSpec tmpSsDst = *ssSrc;
     tmpSsDst.setSampleSpecItem(sampleSpecItem, ssDst->getSampleSpecItem(sampleSpecItem));
 
@@ -308,8 +307,10 @@ status_t AudioConversion::configureAndAddConverter(SampleSpecItem sampleSpecItem
                                                    SampleSpec *ssSrc,
                                                    const SampleSpec *ssDst)
 {
-    AUDIOCOMMS_ASSERT(sampleSpecItem < NbSampleSpecItems, "Sample Spec item out of range");
-
+    if (sampleSpecItem >= NbSampleSpecItems) {
+        Log::Error() << __FUNCTION__ << ": Sample Spec item out of range";
+        return INVALID_OPERATION;
+    }
     // If the input format size is higher, first perform the reformat
     // then add the resampler
     // and perform the reformat (if not already done)

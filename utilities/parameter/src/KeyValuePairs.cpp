@@ -75,11 +75,16 @@ android::status_t KeyValuePairs::add(const string &keyValuePairs)
             if (strchr(pair, *mPairAssociator) != NULL) {
                 if (strcspn(pair, mPairAssociator) == 0) {
                     // No key provided, bailing out
-                    free(pairs);
-                    return android::BAD_VALUE;
+                    status = android::BAD_VALUE;
+                    break;
                 }
                 char *tmp = strtok(pair, mPairAssociator);
-                AUDIOCOMMS_ASSERT(tmp != NULL, "No key nor value provided");
+                if (tmp == NULL) {
+                    Log::Error() << __FUNCTION__ << ": No key nor value provided within " << pair
+                                 << " with expected '" << mPairAssociator << "'' associator.";
+                    status = android::BAD_VALUE;
+                    break;
+                }
                 key = tmp;
                 tmp = strtok(NULL, mPairAssociator);
                 if (tmp != NULL) {
