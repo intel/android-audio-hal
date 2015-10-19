@@ -109,16 +109,6 @@ public:
         }
     }
 
-    void configureRoutes()
-    {
-        for (auto it : Base::mElements) {
-            auto route = it.second;
-            if (route && route->needReflow()) {
-                route->configure();
-            }
-        }
-    }
-
     /**
      * Performs the disabling of the route.
      * It only concerns the action that needs to be done on routes themselves, ie detaching

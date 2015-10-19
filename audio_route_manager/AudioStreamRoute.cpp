@@ -18,7 +18,6 @@
 #include "AudioStreamRoute.hpp"
 #include <AudioDevice.hpp>
 #include <AudioUtils.hpp>
-#include <IoStream.hpp>
 #include <StreamLib.hpp>
 #include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
@@ -44,6 +43,15 @@ AudioStreamRoute::~AudioStreamRoute()
     delete mAudioDevice;
 }
 
+const StreamRouteConfig AudioStreamRoute::getRouteConfig() const
+{
+    StreamRouteConfig config = mConfig;
+    config.rate = mCurrentRate;
+    config.format = mCurrentFormat;
+    config.channels = popcount(mCurrentChannelMask);
+    return config;
+}
+
 void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
 {
     Log::Verbose() << __FUNCTION__
@@ -60,16 +68,20 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
                    << "\n\t  format=" << static_cast<int32_t>(config.format)
                    << "\n\t  device=" << config.supportedDeviceMask;
     mConfig = config;
-
-    mSampleSpec = SampleSpec(mConfig.channels, mConfig.format,
-                             mConfig.rate,  mConfig.channelsPolicy);
-}
-
-bool AudioStreamRoute::needReflow() const
-{
-    return mPreviouslyUsed && mIsUsed &&
-           (mRoutingStageRequested.test(Flow) || mRoutingStageRequested.test(Path) ||
-            mCurrentStream != mNewStream);
+    if (!StreamRouteConfig::isDynamic(config.rate)) {
+        mCapabilities.supportedRates.push_back(config.rate);
+        mCurrentRate = config.rate;
+    }
+    if (!StreamRouteConfig::isDynamic(mConfig.format)) {
+        mCapabilities.supportedFormats.push_back(config.format);
+        mCurrentFormat = config.format;
+    }
+    if (!StreamRouteConfig::isDynamic(mConfig.channels)) {
+        audio_channel_mask_t mask = isOut() ? audio_channel_out_mask_from_count(mConfig.channels) :
+                                              audio_channel_in_mask_from_count(mConfig.channels);
+        mCapabilities.supportedChannelMasks.push_back(mask);
+        mCurrentChannelMask = mask;
+    }
 }
 
 android::status_t AudioStreamRoute::route(bool isPreEnable)
@@ -135,31 +147,6 @@ void AudioStreamRoute::unroute(bool isPostDisable)
     }
 }
 
-void AudioStreamRoute::configure()
-{
-    if (mCurrentStream != mNewStream) {
-
-        if (!mAudioDevice->isOpened()) {
-            Log::Error() << __FUNCTION__
-                         << ": error opening audio device, cannot configure any stream";
-            return;
-        }
-
-        /**
-         * Route is still in use, but the stream attached to this route has changed...
-         * Unroute previous stream.
-         */
-        if (detachCurrentStream() != android::OK) {
-            return;
-        }
-
-        // route new stream
-        if (attachNewStream() != android::OK) {
-            return;
-        }
-    }
-}
-
 void AudioStreamRoute::resetAvailability()
 {
     if (mNewStream) {
@@ -181,6 +168,17 @@ bool AudioStreamRoute::setStream(IoStream &stream)
     }
     Log::Verbose() << __FUNCTION__ << ": to " << getName() << " route";
     mNewStream = &stream;
+
+    // For each element of the audio configuration:
+    // Either the conf of the stream is supported by the route (so use stream conf),
+    // or a resampler can be used from the route default conf (so use route default conf)
+    mCurrentRate = mCapabilities.supportRate(stream.getSampleRate()) ?
+                   stream.getSampleRate() : mCapabilities.getDefaultRate();
+    mCurrentFormat = mCapabilities.supportFormat(stream.getFormat()) ?
+                     stream.getFormat() : mCapabilities.getDefaultFormat();
+    mCurrentChannelMask = mCapabilities.supportChannelMask(stream.getChannels()) ?
+                          stream.getChannels() : mCapabilities.getDefaultChannelMask();
+
     mNewStream->setNewStreamRoute(this);
     return true;
 }
@@ -198,7 +196,8 @@ bool AudioStreamRoute::isMatchingWithStream(const IoStream &stream) const
     return (stream.isOut() == isOut()) &&
            areFlagsMatching(stream.getFlagMask()) &&
            areUseCasesMatching(stream.getUseCaseMask()) &&
-           implementsEffects(stream.getEffectRequested());
+           implementsEffects(stream.getEffectRequested()) &&
+           supportStreamConfig(stream);
 }
 
 inline bool AudioStreamRoute::areFlagsMatching(uint32_t streamFlagMask) const

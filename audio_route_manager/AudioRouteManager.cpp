@@ -252,7 +252,6 @@ void AudioRouteManager::executeDisableRoutingStage()
 void AudioRouteManager::executeConfigureRoutingStage()
 {
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, ConfigureMask);
-    mStreamRouteMap.configureRoutes();
     setRouteCriteriaForConfigure();
     mPlatformState->commitCriteriaAndApplyConfiguration<Audio>();
 }
@@ -398,6 +397,11 @@ uint32_t AudioRouteManager::getLatencyInUs(const IoStream &stream) const
         return 0;
     }
     return route->getLatencyInUs();
+}
+
+bool AudioRouteManager::supportStreamConfig(const IoStream &stream) const
+{
+    return mStreamRouteMap.findMatchingRouteForStream(stream) != nullptr;
 }
 
 void AudioRouteManager::setPortBlocked(const string &name, bool isBlocked)

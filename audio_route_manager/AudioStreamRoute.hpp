@@ -18,15 +18,16 @@
 #include "AudioRoute.hpp"
 #include "IStreamRoute.hpp"
 #include "StreamRouteConfig.hpp"
+#include "AudioCapabilities.hpp"
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
+#include <IoStream.hpp>
 #include <list>
 #include <utils/Errors.h>
 
 namespace intel_audio
 {
 
-class IoStream;
 class IAudioDevice;
 
 class AudioStreamRoute : public AudioRoute, private IStreamRoute
@@ -43,13 +44,13 @@ public:
      *
      * @return OK with capabilities retrieved correctly, error code otherwise.
      */
-    virtual android::status_t loadCapabilities() { return android::NO_ERROR; }
+    android::status_t loadCapabilities() { return android::NO_ERROR; }
 
     /**
      * For route with dynamic behavior: upon disconnection of device managed by this route,
      * the capabilities shall be resetted.
      */
-    virtual void resetCapabilities() {}
+    void resetCapabilities() {}
 
     /**
      * Get the sample specifications of this route.
@@ -59,7 +60,8 @@ public:
      */
     virtual const SampleSpec getSampleSpec() const
     {
-        return mSampleSpec;
+        return SampleSpec(popcount(mCurrentChannelMask), mCurrentFormat, mCurrentRate,
+                          mConfig.channelsPolicy);
     }
 
     /**
@@ -124,12 +126,6 @@ public:
     virtual void unroute(bool isPostDisable);
 
     /**
-     * configure hook point.
-     * Called by the route manager at configure step.
-     */
-    void configure();
-
-    /**
      * Reset the availability of the route.
      */
     virtual void resetAvailability();
@@ -142,6 +138,26 @@ public:
      * @return true if the route matches, false otherwise.
      */
     bool isMatchingWithStream(const IoStream &stream) const;
+
+    /**
+     * Checks if the stream route capabilities are matching with the stream sample specification
+     * i.e. format, subformat, sample rate, channel count, specific encoded format...
+     * For non dynamic settings, return true if supported converter can be used
+     * For dynamic settings (intend to adress direct stream), the list of supported setting must
+     * contain the stream audio configuration.
+     * Either natively by the stream route
+     * (checks done with its capabilities) or using a converter from the given config to
+     * the default route config.
+     *
+     * @param[in] stream to be checked against this route
+     *
+     * @return true if the config is supported, false otherwise.
+     */
+    inline bool supportStreamConfig(const IoStream &stream) const
+    {
+        return supportRate(stream.getSampleRate()) && supportFormat(stream.getFormat()) &&
+               supportChannelMask(stream.getChannels());
+    }
 
     /**
      * Returns the applicable flags mask of the route
@@ -162,14 +178,16 @@ public:
         return mConfig.useCaseMask;
     }
 
-    /**
-     * Check if a route needs to go throug flow routing stage.
-     * It overrides the XML rules only if the route is used by a different stream.
-     *
-     * @return true if the route was used before rerouting, will be used after but needs to be
-     *              reconfigured.
-     */
-    virtual bool needReflow() const;
+    virtual bool needReflow() const
+    {
+        return stillUsed() &&
+                (mRoutingStageRequested.test(Flow) || mRoutingStageRequested.test(Path));
+    }
+
+    virtual bool needRepath() const
+    {
+        return stillUsed() && (mRoutingStageRequested.test(Path) || mCurrentStream != mNewStream);
+    }
 
     /**
      * Check if the route requires pre enabling.
@@ -198,10 +216,7 @@ public:
      *
      * @return pcm configuration of the route (from Route Parameter Manager settings).
      */
-    const StreamRouteConfig &getRouteConfig() const
-    {
-        return mConfig;
-    }
+    const StreamRouteConfig getRouteConfig() const;
 
     uint32_t getSupportedDeviceMask() const
     {
@@ -234,6 +249,38 @@ protected:
     uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
 
 private:
+    inline bool remapperSupported(const audio_channel_mask_t mask) const
+    {
+        // We only support convertion to / from at most 2 channels
+        return (popcount(mask) <= 2) && (popcount(mCapabilities.getDefaultChannelMask()) <= 2);
+    }
+
+    inline bool reformatterSupported(const audio_format_t format) const
+    {
+        // We only support convertion to/from S16 from/to S8_24 respectively
+        return ((format == AUDIO_FORMAT_PCM_16_BIT) || (format == AUDIO_FORMAT_PCM_8_24_BIT)) &&
+               ((mCapabilities.getDefaultFormat() == AUDIO_FORMAT_PCM_16_BIT) ||
+                (mCapabilities.getDefaultFormat() == AUDIO_FORMAT_PCM_8_24_BIT));
+    }
+
+    inline bool resamplerSupported(uint32_t rate) const
+    {
+        return (rate != 0) && (mCapabilities.getDefaultRate() != 0);
+    }
+
+    inline bool supportRate(uint32_t rate) const
+    {
+        return mCapabilities.supportRate(rate) || resamplerSupported(rate);
+    }
+    inline bool supportFormat(audio_format_t format) const
+    {
+        return mCapabilities.supportFormat(format) || reformatterSupported(format);
+    }
+    inline bool supportChannelMask(audio_channel_mask_t channelMask) const
+    {
+        return mCapabilities.supportChannelMask(channelMask) || remapperSupported(channelMask);
+    }
+
     /**
      * Checks if the use cases supported by this route are matching with the stream use case mask.
      *
@@ -299,9 +346,13 @@ private:
 
     StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 
-    SampleSpec mSampleSpec; /**< Sample specification of the stream route. */
-
     IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
+
+    AudioCapabilities mCapabilities;
+
+    uint32_t mCurrentRate = 0;
+    audio_format_t mCurrentFormat = AUDIO_FORMAT_DEFAULT;
+    audio_channel_mask_t mCurrentChannelMask = AUDIO_CHANNEL_NONE;
 };
 
 } // namespace intel_audio

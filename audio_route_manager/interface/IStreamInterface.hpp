@@ -107,6 +107,17 @@ struct IStreamInterface
      */
     virtual uint32_t getPeriodInUs(const IoStream &stream) const = 0;
 
+    /**
+     * Checks whether the stream and its audio configuration that it wishes to use match
+     * with a stream route.
+     *
+     * @param[in] stream to be checked for support
+     *
+     * @return true if the audio configuration of the stream is supported by a route,
+     *              false otherwise.
+     */
+    virtual bool supportStreamConfig(const IoStream &stream) const = 0;
+
     virtual android::status_t setParameters(const std::string &keyValuePair,
                                             bool isSynchronous = false) = 0;
 

@@ -81,6 +81,7 @@ private:
     }
     virtual uint32_t getLatencyInUs(const IoStream &stream) const;
     virtual uint32_t getPeriodInUs(const IoStream &stream) const;
+    virtual bool supportStreamConfig(const IoStream &stream) const;
     virtual android::status_t setParameters(const std::string &keyValuePair,
                                             bool isSynchronous = false);
 

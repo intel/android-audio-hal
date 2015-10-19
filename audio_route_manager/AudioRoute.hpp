@@ -123,6 +123,8 @@ public:
         mIsApplicable = isApplicable;
     }
 
+    inline bool stillUsed() const { return previouslyUsed() && isUsed(); }
+
     /**
      * Checks if a route needs to be muted / unmuted.
      *
@@ -133,8 +135,8 @@ public:
      */
     virtual bool needReflow() const
     {
-        return mPreviouslyUsed && mIsUsed && (mRoutingStageRequested.test(Flow) ||
-                                              mRoutingStageRequested.test(Path));
+        return stillUsed() && (mRoutingStageRequested.test(Flow) ||
+                               mRoutingStageRequested.test(Path));
     }
 
     /**
@@ -147,7 +149,7 @@ public:
      */
     virtual bool needRepath() const
     {
-        return mPreviouslyUsed && mIsUsed && mRoutingStageRequested.test(Path);
+        return stillUsed() && mRoutingStageRequested.test(Path);
     }
 
     /**

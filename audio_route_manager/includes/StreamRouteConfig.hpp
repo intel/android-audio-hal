@@ -69,6 +69,8 @@ struct StreamRouteConfig
      * (for example: HDMI devices, need to retrieve capabilities by reading EDID informations).
      */
     uint32_t supportedDeviceMask;
+
+    static bool isDynamic(uint32_t param) { return param == 0; }
 };
 
 } // namespace intel_audio
