@@ -61,6 +61,14 @@ struct StreamRouteConfig
      *   - average policy: channel has a highest weight among the other, it must contains all valid
      */
     std::vector<SampleSpec::ChannelsPolicy> channelsPolicy;
+
+    /**
+     * Mask of device supported / managed by the stream route.
+     * For devices that can be connected / disconnected at runtime, it is mandatory to fill
+     * this field in order to be able to retrieve capabilities on newly connected device
+     * (for example: HDMI devices, need to retrieve capabilities by reading EDID informations).
+     */
+    uint32_t supportedDeviceMask;
 };
 
 } // namespace intel_audio

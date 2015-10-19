@@ -189,6 +189,26 @@ public:
     }
 
     /**
+     * Handle the change of state of a device to whom it concerns by loading / resetting
+     * capabilities of route(s) supporting this device.
+     * @param[in] device that has been connected / disconnected
+     * @param[in] state of the device.
+     */
+    void handleDeviceConnectionState(audio_devices_t device, bool isConnected)
+    {
+        for (auto it : Base::mElements) {
+            auto route = it.second;
+            if ((route->getSupportedDeviceMask() & device) == device) {
+                if (isConnected) {
+                    route->loadCapabilities();
+                } else {
+                    route->resetCapabilities();
+                }
+            }
+        }
+    }
+
+    /**
      * Performs the post-disabling of the route.
      * It only concerns the action that needs to be done on routes themselves, ie detaching
      * streams, closing alsa devices. Some platform requires to close stream before unrouting.

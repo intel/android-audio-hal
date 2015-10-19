@@ -50,6 +50,7 @@ private:
         uint32_t flagMask; /**< applicable flags mask, either input/output flags. */
         uint32_t useCaseMask; /**< applicable use cases mask, input source, unused for output. */
         char effectSupported[mMaxStringSize]; /**< effects supported by the stream route. */
+        uint32_t supportedDeviceMask; /**< Mask of supported devices by the stream route. */
         bool requirePreEnable; /**< require pre enable attribute. */
         bool requirePostDisable; /**< require post disable attribute. */
         uint32_t silencePrologInMs; /**< prolog silence to be added when opening the device in ms.*/

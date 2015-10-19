@@ -45,6 +45,7 @@ const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
     .flagMask =   0,
     .useCaseMask = 0,
     .effectSupported =       {},
+    .supportedDeviceMask =   AUDIO_DEVICE_NONE,
     .requirePreEnable =      false,
     .requirePostDisable =    false,
     .silencePrologInMs =     0,
@@ -95,6 +96,7 @@ AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
     config.silencePrologInMs = mConfig.silencePrologInMs;
     config.flagMask = mConfig.flagMask;
     config.useCaseMask = mConfig.useCaseMask;
+    config.supportedDeviceMask = mConfig.supportedDeviceMask;
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
@@ -173,6 +175,7 @@ bool AudioStreamRoute::sendToHW(string & /*error*/)
     streamConfig.silencePrologInMs = config.silencePrologInMs;
     streamConfig.flagMask = config.flagMask;
     streamConfig.useCaseMask = config.useCaseMask;
+    streamConfig.supportedDeviceMask = config.supportedDeviceMask;
 
     streamConfig.channelsPolicy.erase(streamConfig.channelsPolicy.begin(),
                                       streamConfig.channelsPolicy.end());

@@ -37,6 +37,21 @@ public:
     virtual ~AudioStreamRoute();
 
     /**
+     * Upon connection of device managed by this route, it loads the capabilities from the device
+     * (example: for an HDMI screen, the driver will read EDID to retrieve the screen audio
+     * capabilities.
+     *
+     * @return OK with capabilities retrieved correctly, error code otherwise.
+     */
+    virtual android::status_t loadCapabilities() { return android::NO_ERROR; }
+
+    /**
+     * For route with dynamic behavior: upon disconnection of device managed by this route,
+     * the capabilities shall be resetted.
+     */
+    virtual void resetCapabilities() {}
+
+    /**
      * Get the sample specifications of this route.
      * From IStreamRoute, intended to be called by the stream.
      *
@@ -186,6 +201,11 @@ public:
     const StreamRouteConfig &getRouteConfig() const
     {
         return mConfig;
+    }
+
+    uint32_t getSupportedDeviceMask() const
+    {
+        return mConfig.supportedDeviceMask;
     }
 
     /**

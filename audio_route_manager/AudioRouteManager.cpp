@@ -450,10 +450,19 @@ status_t AudioRouteManager::setParameters(const std::string &keyValuePair, bool 
     AutoW lock(mRoutingLock);
     bool hasChanged = false;
     status_t ret = mPlatformState->setParameters(keyValuePair, hasChanged);
-    if (!hasChanged) {
-        return ret;
+    if (hasChanged) {
+        reconsiderRoutingUnsafe(isSynchronous);
     }
-    reconsiderRoutingUnsafe(isSynchronous);
+    KeyValuePairs pairs(keyValuePair);
+    int device;
+    status_t status = pairs.get<int>(AUDIO_PARAMETER_DEVICE_CONNECT, device);
+    if (status == android::OK) {
+        mStreamRouteMap.handleDeviceConnectionState(device, true);
+    }
+    status = pairs.get<int>(AUDIO_PARAMETER_DEVICE_DISCONNECT, device);
+    if (status == android::OK) {
+        mStreamRouteMap.handleDeviceConnectionState(device, false);
+    }
     return ret;
 }
 

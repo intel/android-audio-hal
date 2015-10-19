@@ -66,7 +66,8 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
                    << "\n\t  flagMask=" << config.flagMask
                    << "\n\t  channels=" << config.channels
                    << "\n\t  rate=" << config.rate
-                   << "\n\t  format=" << static_cast<int32_t>(config.format);
+                   << "\n\t  format=" << static_cast<int32_t>(config.format)
+                   << "\n\t  device=" << config.supportedDeviceMask;
     mConfig = config;
 
     mSampleSpec = SampleSpec(mConfig.channels, mConfig.format,
