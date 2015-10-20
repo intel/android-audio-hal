@@ -31,7 +31,7 @@
 class CParameterMgrPlatformConnector;
 class Criterion;
 class CriterionType;
-class cnode;
+struct cnode;
 class ParameterMgrHelper;
 class CParameterHandle;
 

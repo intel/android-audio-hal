@@ -155,7 +155,6 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_SHARED_LIBRARIES := $(component_shared_lib_host)
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_CFLAGS := $(component_cflags)
-LOCAL_LDFLAGS += -pthread -lrt
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := audio.primary_host

@@ -143,9 +143,6 @@ LOCAL_CFLAGS := \
     $(component_cflags) -O0 -ggdb \
     -DPFW_CONF_FILE_PATH=\"$(HOST_OUT)\"'"/etc/parameter-framework/"'
 
-LOCAL_LDFLAGS += \
-    -pthread -lrt \
-
 LOCAL_MODULE := libaudioroutemanager_host
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional

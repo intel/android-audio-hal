@@ -229,7 +229,6 @@ private:
     compress *mCompress;
     float mVolume;
     bool mIsVolumeChangeRequestPending;
-    bool mIsVolumeChangePending;
     size_t mBufferSize;
     mutable audio_comms::utilities::Mutex mCodecLock;
     bool mIsNonBlocking;

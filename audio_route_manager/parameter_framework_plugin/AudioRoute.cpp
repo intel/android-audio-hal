@@ -36,9 +36,9 @@ const string AudioRoute::mStreamType = "streamRoute";
 const string AudioRoute::mPortDelimiter = "-";
 
 const AudioRoute::Status AudioRoute::mDefaultStatus = {
-    isApplicable    : false,
-    needReconfigure : false,
-    needReroute     : false
+    .isApplicable = false,
+    .needReconfigure = false,
+    .needReroute = false
 };
 
 AudioRoute::AudioRoute(const std::string &mappingValue,

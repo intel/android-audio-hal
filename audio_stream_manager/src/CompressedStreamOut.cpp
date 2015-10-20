@@ -545,7 +545,7 @@ status_t CompressedStreamOut::drain(audio_drain_type_t type)
 
     Log::Verbose() << __FUNCTION__;
     int status = -ENOSYS;
-    if ((type == AUDIO_DRAIN_EARLY_NOTIFY)) {
+    if (type == AUDIO_DRAIN_EARLY_NOTIFY) {
         Log::Verbose() << __FUNCTION__ << ": send command PARTIAL_DRAIN";
         status = sendOffloadCmdUnsafe(offload_cmd::PARTIAL_DRAIN);
         Log::Verbose() << __FUNCTION__ << ": recovery " << mRecoveryOnGoing;

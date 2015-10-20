@@ -21,7 +21,7 @@
 namespace intel_audio
 {
 
-class StreamRouteConfig;
+struct StreamRouteConfig;
 
 struct IRouteInterface
 {
@@ -184,9 +184,8 @@ struct IRouteInterface
      */
     virtual void setParameter(const std::string &name, uint32_t value) = 0;
 
-
-protected:
-    virtual ~IRouteInterface() {}
+    protected:
+        virtual ~IRouteInterface() {}
 };
 
 } // namespace intel_audio

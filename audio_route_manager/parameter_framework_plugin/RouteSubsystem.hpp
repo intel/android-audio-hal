@@ -29,7 +29,7 @@
 
 namespace intel_audio
 {
-class IRouteInterface;
+struct IRouteInterface;
 }
 
 class RouteSubsystem : public CSubsystem, private audio_comms::utilities::NonCopyable

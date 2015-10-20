@@ -21,7 +21,7 @@
 namespace intel_audio
 {
 
-class StreamRouteConfig;
+struct StreamRouteConfig;
 class IAudioDevice;
 
 class IStreamRoute

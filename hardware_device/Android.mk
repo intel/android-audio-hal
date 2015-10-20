@@ -76,7 +76,6 @@ LOCAL_STATIC_LIBRARIES += \
     libgtest_main_host \
 
 LOCAL_CFLAGS := -ggdb -O0
-LOCAL_LDFLAGS := -pthread    # Workaround needed for gmock
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := audiohw_intel_test
 LOCAL_MODULE_OWNER := intel

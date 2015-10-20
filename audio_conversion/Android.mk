@@ -156,7 +156,6 @@ LOCAL_CFLAGS := $(component_fcttest_defines)
 LOCAL_STATIC_LIBRARIES := $(component_fcttest_static_lib_host)
 LOCAL_LDFLAGS := $(component_fcttest_static_ldflags_host)
 
-LOCAL_LDFLAGS += -pthread
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files

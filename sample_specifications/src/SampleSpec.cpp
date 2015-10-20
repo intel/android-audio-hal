@@ -129,7 +129,7 @@ size_t SampleSpec::convertFramesToUsec(uint32_t frames) const
         Log::Error() << __FUNCTION__ << ": Null frame size";
         return 0;
     }
-    AUDIOCOMMS_ASSERT((frames / getSampleRate()) <=
+    AUDIOCOMMS_ASSERT((static_cast<uint64_t>(frames) / getSampleRate()) <=
                       (numeric_limits<size_t>::max() / mUsecPerSec),
                       "conversion exceeds limit");
     return (mUsecPerSec * static_cast<uint64_t>(frames)) / getSampleRate();

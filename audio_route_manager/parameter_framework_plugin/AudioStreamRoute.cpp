@@ -42,22 +42,22 @@ const string AudioStreamRoute::mChannelPolicyIgnore = "ignore";
 const string AudioStreamRoute::mChannelPolicyAverage = "average";
 
 const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
-    flagMask :   0,
-    useCaseMask: 0,
-    effectSupported :       {},
-    requirePreEnable :      false,
-    requirePostDisable :    false,
-    silencePrologInMs :     0,
-    channel :               0,
-    channelsPolicy :        {},
-    rate :                  0,
-    format :                0,
-    periodSize :            0,
-    periodCount :           0,
-    startThreshold :        0,
-    stopThreshold :         0,
-    silenceThreshold :      0,
-    availMin :              0
+    .flagMask =   0,
+    .useCaseMask = 0,
+    .effectSupported =       {},
+    .requirePreEnable =      false,
+    .requirePostDisable =    false,
+    .silencePrologInMs =     0,
+    .channel =               0,
+    .channelsPolicy =        {},
+    .rate =                  0,
+    .format =                0,
+    .periodSize =            0,
+    .periodCount =           0,
+    .startThreshold =        0,
+    .stopThreshold =         0,
+    .silenceThreshold =      0,
+    .availMin =              0
 };
 
 AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,

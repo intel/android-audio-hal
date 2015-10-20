@@ -483,7 +483,7 @@ bool Pfw<Trait>::setCriterion(const string &name, uint32_t value)
         Log::Error() << __FUNCTION__ << ": " << name << " is not a member of " << mTag << " PFW";
         return false;
     }
-    return mCriteria[name]->setCriterionState<int32_t>(value);
+    return mCriteria[name]->template setCriterionState<int32_t>(value);
 }
 
 template <class Trait>
@@ -493,7 +493,7 @@ bool Pfw<Trait>::stageCriterion(const string &name, uint32_t value)
         Log::Error() << __FUNCTION__ << ": " << name << " is not a member of " << mTag << " PFW";
         return false;
     }
-    return mCriteria[name]->setValue<uint32_t>(value);
+    return mCriteria[name]->template setValue<uint32_t>(value);
 }
 
 

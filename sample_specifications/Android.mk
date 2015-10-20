@@ -169,7 +169,6 @@ LOCAL_MODULE := samplespec_functional_test_host
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_LDFLAGS := -pthread
 LOCAL_SRC_FILES := $(component_functional_test_src_files)
 LOCAL_C_INCLUDES := $(component_functional_test_c_includes_host)
 LOCAL_CFLAGS := $(component_functional_test_defines)

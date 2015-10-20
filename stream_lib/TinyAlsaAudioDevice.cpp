@@ -16,7 +16,6 @@
 #define LOG_TAG "TinyAlsaAudioDevice"
 
 #include "TinyAlsaAudioDevice.hpp"
-#include <StreamRouteConfig.hpp>
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <AudioCommsAssert.hpp>

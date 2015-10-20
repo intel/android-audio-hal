@@ -15,13 +15,12 @@
  */
 #pragma once
 
+#include <StreamRouteConfig.hpp>
 #include <stdint.h>
 #include <utils/Errors.h>
 
 namespace intel_audio
 {
-
-class StreamRouteConfig;
 
 class IAudioDevice
 {

@@ -22,20 +22,19 @@ extern "C"
 {
 
 static struct hw_module_methods_t audio_module_methods = {
-open: intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_3_0>::open
+    .open = intel_audio::DeviceWrapper<intel_audio::Device, AUDIO_DEVICE_API_VERSION_3_0>::open
 };
 
 struct hw_module_t HAL_MODULE_INFO_SYM = {
-tag: HARDWARE_MODULE_TAG,
-module_api_version: AUDIO_MODULE_API_VERSION_0_1,
-hal_api_version: HARDWARE_HAL_API_VERSION,
-id: AUDIO_HARDWARE_MODULE_ID,
-name: "Intel Audio HW HAL",
-author: "Intel Corporation",
-methods: &audio_module_methods,
-dso: NULL,
-reserved:
-    {
+    .tag = HARDWARE_MODULE_TAG,
+    .module_api_version = AUDIO_MODULE_API_VERSION_0_1,
+    .hal_api_version = HARDWARE_HAL_API_VERSION,
+    .id = AUDIO_HARDWARE_MODULE_ID,
+    .name = "Intel Audio HW HAL",
+    .author = "Intel Corporation",
+    .methods = &audio_module_methods,
+    .dso = NULL,
+    .reserved = {
         0
     },
 };
