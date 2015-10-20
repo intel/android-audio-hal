@@ -33,12 +33,17 @@ public:
 
     void addStream(IoStream &stream)
     {
-        mStreamsList[stream.isOut()].push_back(&stream);
+        // Note: Priority shall be given to direct stream first when routing streams.
+        if (stream.isDirect()) {
+            mOrderedStreamList[stream.isOut()].push_front(&stream);
+        } else {
+            mOrderedStreamList[stream.isOut()].push_back(&stream);
+        }
     }
 
     void removeStream(IoStream &streamToRemove)
     {
-        mStreamsList[streamToRemove.isOut()].remove(&streamToRemove);
+        mOrderedStreamList[streamToRemove.isOut()].remove(&streamToRemove);
     }
 
     /**
@@ -55,7 +60,7 @@ public:
      */
     bool setStreamForRoute(AudioStreamRoute &route)
     {
-        for (auto stream : mStreamsList[route.isOut()]) {
+        for (auto stream : mOrderedStreamList[route.isOut()]) {
 
             if (stream->isStarted() && !stream->isNewRouteAvailable()) {
                 if (route.isMatchingWithStream(*stream)) {
@@ -69,7 +74,7 @@ public:
     IoStream *getVoiceStreamRoute()
     {
         // We take the first stream that corresponds to the primary output.
-        auto it = mStreamsList[Direction::Output].begin();
+        auto it = mOrderedStreamList[Direction::Output].begin();
         if (*it == NULL) {
             audio_comms::utilities::Log::Error() << __FUNCTION__
                                                  << ": current stream NOT FOUND for echo ref";
@@ -224,7 +229,7 @@ public:
     /**
      * array of list of streams opened.
      */
-    std::list<IoStream *> mStreamsList[Direction::gNbDirections];
+    std::list<IoStream *> mOrderedStreamList[Direction::gNbDirections];
 };
 
 } // namespace intel_audio
