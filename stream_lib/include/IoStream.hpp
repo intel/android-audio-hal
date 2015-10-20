@@ -100,6 +100,13 @@ public:
     virtual uint32_t getFlagMask() const = 0;
 
     /**
+     * Checks if a stream has been created with DIRECT flag attribute, i.e. bypassing Audio Flinger
+     * mixer thread. This flag is only applicable for output streams.
+     * @return true if the stream is an output stream flagged as direct, false otherwise.
+     */
+    inline bool isDirect() const { return isOut() && (getFlagMask() & AUDIO_OUTPUT_FLAG_DIRECT); }
+
+    /**
      * Use Case.
      * For an input stream, use case is known as the input source.
      * For an output stream: still not propagated to audio hal.
