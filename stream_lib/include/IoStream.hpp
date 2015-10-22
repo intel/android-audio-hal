@@ -166,6 +166,19 @@ public:
     }
 
     /**
+     * Set an audio configuration to a stream. It is limited to the sample rate, channel mask and
+     * format. The config must be valid, the check must be performed by the stream manager.
+     *
+     * @param[in] config to be set for the stream.
+     */
+    inline void setConfig(const audio_config_t &config)
+    {
+        setSampleRate(config.sample_rate);
+        setFormat(config.format);
+        setChannels(config.channel_mask);
+    }
+
+    /**
      * Get the sample rate of the stream.
      *
      * @return sample rate of the stream.
