@@ -51,6 +51,7 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
     config.start_threshold = routeConfig.startThreshold;
     config.stop_threshold = routeConfig.stopThreshold;
     config.silence_threshold = routeConfig.silenceThreshold;
+    config.silence_size = 0;
     config.avail_min = routeConfig.availMin;
 
     Log::Debug() << __FUNCTION__ << ": card (" << cardName << ", " << deviceId
