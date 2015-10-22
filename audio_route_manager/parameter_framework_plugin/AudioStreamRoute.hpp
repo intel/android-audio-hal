@@ -73,17 +73,6 @@ public:
 
 protected:
     /**
-     * Sync from HW.
-     * From CSubsystemObject
-     *
-     * @param[out] error: if return code is false, it contains the description
-     *                     of the error, empty std::string otherwise.
-     *
-     * @return true if success, false otherwise.
-     */
-    virtual bool receiveFromHW(std::string &error);
-
-    /**
      * Sync to HW.
      * From CSubsystemObject
      *
@@ -107,9 +96,6 @@ private:
 
     const RouteSubsystem *mRouteSubsystem; /**< Route subsytem plugin. */
     intel_audio::IRouteInterface *mRouteInterface; /**< Interface to communicate with Route Mgr. */
-
-    static const Config mDefaultConfig; /**< default route stream configuration at construction. */
-    Config mConfig; /**< stream route configuration. */
 
     std::string mRouteName; /**< stream route name. */
     std::string mCardName; /**< card name used by the stream route. */

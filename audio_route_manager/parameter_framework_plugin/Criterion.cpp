@@ -83,13 +83,6 @@ uint32_t Criterion::getIndex(const CElement *element) const
     return 0;
 }
 
-bool Criterion::receiveFromHW(std::string & /*error*/)
-{
-    blackboardWrite(&mValue, sizeof(mValue));
-
-    return true;
-}
-
 bool Criterion::sendToHW(std::string & /*error*/)
 {
     // Retrieve blackboard

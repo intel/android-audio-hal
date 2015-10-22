@@ -61,13 +61,6 @@ AudioPort::AudioPort(const std::string &mappingValue,
     }
 }
 
-bool AudioPort::receiveFromHW(string & /*error*/)
-{
-    blackboardWrite(&mIsBlocked, sizeof(mIsBlocked));
-
-    return true;
-}
-
 bool AudioPort::sendToHW(string & /*error*/)
 {
     // Retrieve blackboard

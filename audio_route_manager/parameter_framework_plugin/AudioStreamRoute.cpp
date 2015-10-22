@@ -41,26 +41,6 @@ const string AudioStreamRoute::mChannelPolicyCopy = "copy";
 const string AudioStreamRoute::mChannelPolicyIgnore = "ignore";
 const string AudioStreamRoute::mChannelPolicyAverage = "average";
 
-const AudioStreamRoute::Config AudioStreamRoute::mDefaultConfig = {
-    .flagMask =   0,
-    .useCaseMask = 0,
-    .effectSupported =       {},
-    .supportedDeviceMask =   AUDIO_DEVICE_NONE,
-    .requirePreEnable =      false,
-    .requirePostDisable =    false,
-    .silencePrologInMs =     0,
-    .channel =               0,
-    .channelsPolicy =        {},
-    .rate =                  0,
-    .format =                0,
-    .periodSize =            0,
-    .periodCount =           0,
-    .startThreshold =        0,
-    .stopThreshold =         0,
-    .silenceThreshold =      0,
-    .availMin =              0
-};
-
 AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
                                    CInstanceConfigurableElement *instanceConfigurableElement,
                                    const CMappingContext &context)
@@ -72,31 +52,12 @@ AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
       mRouteSubsystem(static_cast<const RouteSubsystem *>(
                           instanceConfigurableElement->getBelongingSubsystem())),
       mRouteInterface(mRouteSubsystem->getRouteInterface()),
-      mConfig(mDefaultConfig),
       mCardName(context.getItem(MappingKeyCard)),
       mDevice(context.getItemAsInteger(MappingKeyDevice)),
       mIsOut(context.getItem(MappingKeyDirection) == mOutputDirection),
       mIsStreamRoute(context.getItem(MappingKeyType) == mStreamType)
 {
     mRouteName = getFormattedMappingValue();
-
-    StreamRouteConfig config;
-    config.cardName = mCardName.c_str();
-    config.deviceId = mDevice;
-    config.requirePreEnable = mConfig.requirePreEnable;
-    config.requirePostDisable = mConfig.requirePostDisable;
-    config.channels = mConfig.channel;
-    config.rate = mConfig.rate;
-    config.periodSize = mConfig.periodSize;
-    config.periodCount = mConfig.periodCount;
-    config.format = static_cast<audio_format_t>(mConfig.format);
-    config.startThreshold = mConfig.startThreshold;
-    config.stopThreshold = mConfig.stopThreshold;
-    config.silenceThreshold = mConfig.silenceThreshold;
-    config.silencePrologInMs = mConfig.silencePrologInMs;
-    config.flagMask = mConfig.flagMask;
-    config.useCaseMask = mConfig.useCaseMask;
-    config.supportedDeviceMask = mConfig.supportedDeviceMask;
 
     string ports = context.getItem(MappingKeyPorts);
     Tokenizer mappingTok(ports, mPortDelimiter);
@@ -111,9 +72,6 @@ AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
     mRouteInterface->addAudioStreamRoute(context.getItem(MappingKeyAmend1),
                                          portSrc, portDst,
                                          mIsOut);
-
-    // Add the stream route configuration
-    mRouteInterface->updateStreamRouteConfig(mRouteName, config);
 }
 
 std::vector<SampleSpec::ChannelsPolicy>
@@ -144,13 +102,6 @@ AudioStreamRoute::parseChannelPolicyString(const std::string &channelPolicy)
         channelPolicyVector.push_back(policy);
     }
     return channelPolicyVector;
-}
-
-bool AudioStreamRoute::receiveFromHW(string & /*error*/)
-{
-    blackboardWrite(&mConfig, sizeof(mConfig));
-
-    return true;
 }
 
 bool AudioStreamRoute::sendToHW(string & /*error*/)

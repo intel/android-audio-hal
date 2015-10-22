@@ -41,17 +41,6 @@ public:
 
 protected:
     /**
-     * Sync from HW.
-     * From CSubsystemObject
-     *
-     * @param[out] error: if return code is false, it contains the description
-     *                     of the error, empty std::string otherwise.
-     *
-     * @return true if success, false otherwise.
-     */
-    virtual bool receiveFromHW(std::string &error);
-
-    /**
      * Sync to HW.
      * From CSubsystemObject
      *
