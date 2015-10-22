@@ -32,31 +32,18 @@ namespace intel_audio
     AUDIOCOMMS_ASSERT((sampleSpecItem) >= 0 && (sampleSpecItem) < NbSampleSpecItems, \
                       "Invalid Sample Specifications")
 
-
-SampleSpec::SampleSpec(uint32_t channel,
-                       uint32_t format,
-                       uint32_t rate)
-{
-    init(channel, format, rate);
-}
-
 SampleSpec::SampleSpec(uint32_t channel,
                        uint32_t format,
                        uint32_t rate,
                        const vector<ChannelsPolicy> &channelsPolicy)
 {
-    init(channel, format, rate);
-    setChannelsPolicy(channelsPolicy);
-}
-
-void SampleSpec::init(uint32_t channel,
-                      uint32_t format,
-                      uint32_t rate)
-{
     mChannelMask = 0;
     setSampleSpecItem(ChannelCountSampleSpecItem, channel);
     setSampleSpecItem(FormatSampleSpecItem, format);
     setSampleSpecItem(RateSampleSpecItem, rate);
+    if (!channelsPolicy.empty()) {
+        setChannelsPolicy(channelsPolicy);
+    }
 }
 
 // Generic Accessor
@@ -80,8 +67,10 @@ void SampleSpec::setSampleSpecItem(SampleSpecItem sampleSpecItem, uint32_t value
 
 void SampleSpec::setChannelsPolicy(const vector<ChannelsPolicy> &channelsPolicy)
 {
-    AUDIOCOMMS_ASSERT(channelsPolicy.size() <= mSampleSpec[ChannelCountSampleSpecItem],
-                      "Channel policy vector has more channel than sample spec");
+    if (channelsPolicy.size() != mSampleSpec[ChannelCountSampleSpecItem]) {
+        Log::Warning() << __FUNCTION__ << ": Cannot set requested channel policy";
+        return;
+    }
     mChannelsPolicy = channelsPolicy;
 }
 
@@ -125,8 +114,8 @@ size_t SampleSpec::convertFramesToBytes(size_t frames) const
 
 size_t SampleSpec::convertFramesToUsec(uint32_t frames) const
 {
-    if (getFrameSize() == 0) {
-        Log::Error() << __FUNCTION__ << ": Null frame size";
+    if (getSampleRate() == 0) {
+        Log::Error() << __FUNCTION__ << ": Null sample rate";
         return 0;
     }
     AUDIOCOMMS_ASSERT((static_cast<uint64_t>(frames) / getSampleRate()) <=

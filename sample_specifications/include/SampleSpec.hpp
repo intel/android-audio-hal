@@ -94,12 +94,8 @@ public:
 
     SampleSpec(uint32_t channel = mDefaultChannels,
                uint32_t format = mDefaultFormat,
-               uint32_t rate = mDefaultRate);
-
-    SampleSpec(uint32_t channel,
-               uint32_t format,
-               uint32_t rate,
-               const std::vector<ChannelsPolicy> &channelsPolicy);
+               uint32_t rate = mDefaultRate,
+               const std::vector<ChannelsPolicy> &channelsPolicy = std::vector<ChannelsPolicy>());
 
     // Specific Accessors
     void setChannelCount(uint32_t channelCount)
@@ -131,6 +127,7 @@ public:
     void setChannelMask(audio_channel_mask_t channelMask)
     {
         mChannelMask = channelMask;
+        setSampleSpecItem(ChannelCountSampleSpecItem, popcount(mChannelMask));
     }
     audio_channel_mask_t getChannelMask() const
     {
@@ -220,17 +217,6 @@ public:
                                       const SampleSpec &ssDst);
 
 private:
-    /**
-     * Initialise the sample specifications.
-     * Parts of the private constructor. It sets the basic fields, reset the channel mask to 0,
-     * and sets the channel policy to "Copy" for each of the channels used.
-     *
-     * @param[in] channel number of channels.
-     * @param[in] format sample format, eg 16 or 24 bits(coded on 32 bits).
-     * @param[in] rate sample rate.
-     */
-    void init(uint32_t channel, uint32_t format, uint32_t rate);
-
     uint32_t mSampleSpec[NbSampleSpecItems]; /**< Array of sample spec items:
                                               *         -channel number
                                               *         -format

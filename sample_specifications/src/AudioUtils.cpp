@@ -76,7 +76,7 @@ audio_format_t AudioUtils::convertTinyToHalFormat(pcm_format format)
     case PCM_FORMAT_S16_LE:
         convFormat = AUDIO_FORMAT_PCM_16_BIT;
         break;
-    case PCM_FORMAT_S32_LE:
+    case PCM_FORMAT_S24_LE:
         convFormat = AUDIO_FORMAT_PCM_8_24_BIT;
         break;
     default:
@@ -97,7 +97,7 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
         convFormat = PCM_FORMAT_S16_LE;
         break;
     case AUDIO_FORMAT_PCM_8_24_BIT:
-        convFormat = PCM_FORMAT_S32_LE;
+        convFormat = PCM_FORMAT_S24_LE; /* PCM_FORMAT_S24_LE is 24-bits in 4-bytes */
         break;
     default:
         Log::Error() << __FUNCTION__ << ": format not recognized";
