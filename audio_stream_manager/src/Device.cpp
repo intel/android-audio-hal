@@ -29,6 +29,10 @@
 #include <utilities/Log.hpp>
 #include <string>
 
+/**
+ * Introduce a primary flag for input as well to manage route applicability for stream symetrically.
+ */
+static const audio_input_flags_t AUDIO_INPUT_FLAG_PRIMARY = static_cast<audio_input_flags_t>(0x10);
 
 using namespace std;
 using android::status_t;
@@ -102,6 +106,9 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
         Log::Error() << __FUNCTION__ << ": called with bad devices";
         return android::BAD_VALUE;
     }
+    // If no flags is provided for output, use primary flag by default
+    flags = (flags == AUDIO_OUTPUT_FLAG_NONE) ? AUDIO_OUTPUT_FLAG_PRIMARY : flags;
+
     if (flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) {
         CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags);
         status_t err = out->set(config);
@@ -175,6 +182,9 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
         Log::Error() << __FUNCTION__ << ": called with bad device " << devices;
         return android::BAD_VALUE;
     }
+    // If no flags is provided for input, use primary by default
+    flags = (flags == AUDIO_INPUT_FLAG_NONE) ? AUDIO_INPUT_FLAG_PRIMARY : flags;
+
     StreamIn *in = new StreamIn(this, handle, flags, source);
     status_t err = in->set(config);
     if (err != android::OK) {
