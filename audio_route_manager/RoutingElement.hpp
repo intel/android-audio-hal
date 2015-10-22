@@ -26,7 +26,7 @@ class RoutingElement : public audio_comms::utilities::NonCopyable
 {
 public:
     RoutingElement(const std::string &name);
-    virtual ~RoutingElement();
+    virtual ~RoutingElement() {}
 
     /**
      * Returns identifier of current routing element

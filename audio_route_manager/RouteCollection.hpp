@@ -38,10 +38,8 @@ public:
 
     void prepareRouting()
     {
-        typename Base::Container::iterator it;
-        for (it = Base::begin(); it != Base::end(); ++it) {
-
-            RouteType *route = it->second;
+        for (auto it : Base::mElements) {
+            auto route = it.second;
             if (!route) {
                 continue;
             }

@@ -25,10 +25,6 @@ namespace intel_audio
 
 class StreamRouteCollection : public RouteCollection<AudioStreamRoute>
 {
-private:
-    typedef std::list<IoStream *>::iterator StreamListIterator;
-    typedef std::list<IoStream *>::const_iterator StreamListConstIterator;
-
 public:
     virtual void reset()
     {
@@ -59,16 +55,11 @@ public:
      */
     bool setStreamForRoute(AudioStreamRoute &route)
     {
-        bool isOut = route.isOut();
+        for (auto stream : mStreamsList[route.isOut()]) {
 
-        StreamListIterator it;
-        for (it = mStreamsList[isOut].begin(); it != mStreamsList[isOut].end(); ++it) {
-
-            IoStream &stream = **it;
-            if (stream.isStarted() && !stream.isNewRouteAvailable()) {
-
-                if (route.isMatchingWithStream(stream)) {
-                    return route.setStream(stream);
+            if (stream->isStarted() && !stream->isNewRouteAvailable()) {
+                if (route.isMatchingWithStream(*stream)) {
+                    return route.setStream(*stream);
                 }
             }
         }
@@ -77,9 +68,8 @@ public:
 
     IoStream *getVoiceStreamRoute()
     {
-        StreamListIterator it;
         // We take the first stream that corresponds to the primary output.
-        it = mStreamsList[Direction::Output].begin();
+        auto it = mStreamsList[Direction::Output].begin();
         if (*it == NULL) {
             audio_comms::utilities::Log::Error() << __FUNCTION__
                                                  << ": current stream NOT FOUND for echo ref";
@@ -109,10 +99,8 @@ public:
 
     void prepareRouting()
     {
-        typename Base::Container::iterator it;
-        for (it = Base::begin(); it != Base::end(); ++it) {
-
-            AudioStreamRoute *route = it->second;
+        for (auto it : Base::mElements) {
+            auto route = it.second;
             // The stream route collection must not only ensure that the route is applicable
             // but also that a stream matches the route.
             if (route && route->isApplicable() && setStreamForRoute(*route)) {
@@ -123,10 +111,8 @@ public:
 
     void configureRoutes()
     {
-        typename Base::Container::iterator it;
-        for (it = Base::begin(); it != Base::end(); ++it) {
-
-            AudioStreamRoute *route = it->second;
+        for (auto it : Base::mElements) {
+            auto route = it.second;
             if (route && route->needReflow()) {
                 route->configure();
             }
@@ -144,9 +130,8 @@ public:
      */
     void disableRoutes(bool isPostDisable = false)
     {
-        typename Base::Container::iterator it;
-        for (it = Base::begin(); it != Base::end(); ++it) {
-            AudioStreamRoute *route = it->second;
+        for (auto it : Base::mElements) {
+            auto route = it.second;
 
             if (route && ((route->previouslyUsed() && !route->isUsed()) || route->needRepath())) {
                 audio_comms::utilities::Log::Verbose() << __FUNCTION__
@@ -169,9 +154,8 @@ public:
      */
     void enableRoutes(bool isPreEnable = false)
     {
-        typename Base::Container::iterator it;
-        for (it = Base::begin(); it != Base::end(); ++it) {
-            AudioStreamRoute *route = it->second;
+        for (auto it : Base::mElements) {
+            auto route = it.second;
 
             if (route && ((!route->previouslyUsed() && route->isUsed()) || route->needRepath())) {
                 audio_comms::utilities::Log::Verbose() << __FUNCTION__
@@ -195,9 +179,8 @@ public:
      */
     const AudioStreamRoute *findMatchingRouteForStream(const IoStream &stream) const
     {
-        typename Base::Container::const_iterator it;
-        for (it = Base::begin(); it != Base::end(); ++it) {
-            const AudioStreamRoute *streamRoute = it->second;
+        for (auto it : Base::mElements) {
+            const auto streamRoute = it.second;
             if (streamRoute->isMatchingWithStream(stream)) {
                 return streamRoute;
             }
@@ -216,7 +199,6 @@ public:
     {
         disableRoutes(true);
     }
-
 
     /**
      * Performs the pre-enabling of the routes.

@@ -25,8 +25,4 @@ RoutingElement::RoutingElement(const string &name)
 {
 }
 
-RoutingElement::~RoutingElement()
-{
-}
-
 } // namespace intel_audio

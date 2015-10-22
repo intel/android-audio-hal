@@ -25,11 +25,6 @@ namespace intel_audio
 template <class T>
 class ElementCollection
 {
-protected:
-    typedef std::map<std::string, T *> Container;
-    typedef typename Container::iterator Iter;
-    typedef typename Container::const_iterator ConstIter;
-
 public:
     virtual ~ElementCollection()
     {
@@ -38,10 +33,8 @@ public:
 
     virtual void reset()
     {
-        for (typename Container::iterator it = mElements.begin();
-             it != mElements.end();
-             ++it) {
-            delete it->second;
+        for (auto it : mElements) {
+            delete it.second;
         }
         mElements.clear();
     }
@@ -78,7 +71,7 @@ public:
      */
     T *getElement(const std::string &name)
     {
-        typename Container::iterator it = mElements.find(name);
+        auto it = mElements.find(name);
         return it == mElements.end() ? NULL : it->second;
     }
 
@@ -93,30 +86,13 @@ public:
      */
     virtual void resetAvailability()
     {
-        typename Container::iterator it;
-        for (it = mElements.begin(); it != mElements.end(); ++it) {
-            it->second->resetAvailability();
+        for (auto it : mElements) {
+            it.second->resetAvailability();
         }
-    }
-    Iter begin()
-    {
-        return mElements.begin();
-    }
-    Iter end()
-    {
-        return mElements.end();
-    }
-    ConstIter begin() const
-    {
-        return mElements.begin();
-    }
-    ConstIter end() const
-    {
-        return mElements.end();
     }
 
 protected:
-    Container mElements;
+    std::map<std::string, T *>  mElements;
 };
 
 } // namespace intel_audio
