@@ -17,6 +17,7 @@
 
 #include <hardware/audio.h>
 #include <SampleSpec.hpp>
+#include <string>
 
 namespace intel_audio
 {
@@ -48,6 +49,10 @@ struct StreamRouteConfig
     uint32_t stopThreshold;
     uint32_t silenceThreshold;
     uint32_t availMin;
+
+    std::string dynamicChannelMapsControl; /**< Control to retrieve supported channel maps. */
+    std::string dynamicFormatsControl; /**< Control to retrieve supported formats. */
+    std::string dynamicRatesControl; /**< Control to retrieve supported rates. */
 
     uint32_t silencePrologInMs; /**< if needed, silence to be appended before valid samples. */
     uint32_t flagMask; /**< flags supported by this route. To be checked with stream flags. */

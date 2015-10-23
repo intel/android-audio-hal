@@ -64,6 +64,9 @@ private:
         uint32_t stopThreshold; /**< stop threshold. */
         uint32_t silenceThreshold; /**< silence threshold. */
         uint32_t availMin; /** avail min. */
+        char dynamicChannelMapsControl[mMaxStringSize];
+        char dynamicFormatsControl[mMaxStringSize];
+        char dynamicRatesControl[mMaxStringSize];
     } __attribute__((packed));
 
 public:

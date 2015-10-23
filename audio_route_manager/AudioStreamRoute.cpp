@@ -66,7 +66,10 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
                    << "\n\t  channels=" << config.channels
                    << "\n\t  rate=" << config.rate
                    << "\n\t  format=" << static_cast<int32_t>(config.format)
-                   << "\n\t  device=" << config.supportedDeviceMask;
+                   << "\n\t  device=" << config.supportedDeviceMask
+                   << "\n\t  channel control=" << config.dynamicChannelMapsControl
+                   << "\n\t  format control=" << config.dynamicFormatsControl
+                   << "\n\t  rate control=" << config.dynamicRatesControl;
     mConfig = config;
     if (!StreamRouteConfig::isDynamic(config.rate)) {
         mCapabilities.supportedRates.push_back(config.rate);

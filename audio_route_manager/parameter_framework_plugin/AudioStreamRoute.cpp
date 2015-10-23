@@ -127,6 +127,9 @@ bool AudioStreamRoute::sendToHW(string & /*error*/)
     streamConfig.flagMask = config.flagMask;
     streamConfig.useCaseMask = config.useCaseMask;
     streamConfig.supportedDeviceMask = config.supportedDeviceMask;
+    streamConfig.dynamicChannelMapsControl = config.dynamicChannelMapsControl;
+    streamConfig.dynamicFormatsControl = config.dynamicFormatsControl;
+    streamConfig.dynamicRatesControl = config.dynamicRatesControl;
 
     streamConfig.channelsPolicy.erase(streamConfig.channelsPolicy.begin(),
                                       streamConfig.channelsPolicy.end());
