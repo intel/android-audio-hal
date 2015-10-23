@@ -44,6 +44,14 @@ StreamOut::~StreamOut()
 {
 }
 
+status_t StreamOut::set(audio_config_t &config)
+{
+    if (config.channel_mask == AUDIO_CHANNEL_NONE) {
+        config.channel_mask = isDirect() ? AUDIO_CHANNEL_OUT_5POINT1 : AUDIO_CHANNEL_OUT_STEREO;
+    }
+    return Stream::set(config);
+}
+
 android::status_t StreamOut::setVolume(float left, float right)
 {
     (left == 0 && right == 0) ? mute() : unMute();

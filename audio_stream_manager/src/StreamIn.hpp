@@ -35,6 +35,7 @@ public:
     StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask, audio_source_t source);
 
     virtual ~StreamIn();
+    virtual android::status_t set(audio_config_t &config);
 
     // From AudioStreamIn
     virtual android::status_t addAudioEffect(effect_handle_t effect);

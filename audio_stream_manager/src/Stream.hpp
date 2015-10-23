@@ -44,12 +44,14 @@ public:
 
     /**
      * Sets the sample specifications of the stream.
+     * If fields are not set, or values are unsupported, Audio Flinger expects us to return an error
+     * and a config that would be suitable for us.
      *
      * @param[in,out] config: audio configuration of the stream (i.e. sample specifications).
      *
      * @return status: error code to set if parameters given by playback client not supported.
      */
-    android::status_t set(audio_config_t &config);
+    virtual android::status_t set(audio_config_t &config);
 
     // From StreamInterface
     virtual uint32_t getSampleRate() const;
@@ -263,7 +265,13 @@ protected:
      */
     static const uint32_t mMaxReadWriteRetried = 50;
 
+    static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
+    static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */
+    static const audio_format_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format.*/
+
 private:
+    void getDefaultConfig(audio_config_t &config) const;
+
     /**
      * Configures the conversion chain.
      * It configures the conversion chain that may be used to convert samples from the source
@@ -310,10 +318,6 @@ private:
      *          Note that 0 will be taken as none.
      */
     uint32_t mUseCaseMask;
-
-    static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
-    static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */
-    static const audio_format_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format.*/
 
     /**
      * Audio dump object used if one of the dump property before

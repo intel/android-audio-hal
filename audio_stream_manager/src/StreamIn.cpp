@@ -56,6 +56,14 @@ StreamIn::~StreamIn()
     freeAllocatedBuffers();
 }
 
+status_t StreamIn::set(audio_config_t &config)
+{
+    if (config.channel_mask == AUDIO_CHANNEL_NONE) {
+        config.channel_mask = AUDIO_CHANNEL_IN_STEREO;
+    }
+    return Stream::set(config);
+}
+
 status_t StreamIn::getNextBuffer(AudioBufferProvider::Buffer *buffer,
                                  int64_t /* presentationTimeStamp */)
 {

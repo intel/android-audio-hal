@@ -73,81 +73,28 @@ Stream::~Stream()
     delete mDumpBeforeConv;
 }
 
+void Stream::getDefaultConfig(audio_config_t &config) const
+{
+    config.channel_mask = isOut() ? AUDIO_CHANNEL_OUT_STEREO : AUDIO_CHANNEL_IN_STEREO;
+    config.format = mDefaultFormat;
+    config.sample_rate = mDefaultSampleRate;
+}
+
 status_t Stream::set(audio_config_t &config)
 {
-    bool badChannelCount = false;
-    bool badFormat = false;
-    audio_channel_mask_t channelMask = config.channel_mask;
-    uint32_t channelCount = popcount(config.channel_mask);
-
-    if (channelMask != 0) {
-        Log::Debug() << __FUNCTION__ << ": requested channel mask: " << channelMask
-                     << " (Channels count: " << channelCount << ")";
-        // Always accept the channels requested by the client
-        // as far as the channel count is supported
-        IoStream::setChannels(channelMask);
-        if (channelCount > 2) {
-            Log::Debug() << __FUNCTION__ << ": channels= " << channelCount << " not supported";
-            badChannelCount = true;
-        }
-    }
-    if ((badChannelCount) || (channelMask == 0)) {
-        // No channels information was provided by the client
-        // or not supported channels
-        // Use default: stereo
-        if (isOut()) {
-            config.channel_mask = AUDIO_CHANNEL_OUT_FRONT_LEFT |
-                                  AUDIO_CHANNEL_OUT_FRONT_RIGHT;
-        } else {
-            config.channel_mask = AUDIO_CHANNEL_IN_LEFT | AUDIO_CHANNEL_IN_RIGHT;
-        }
-        IoStream::setChannels(config.channel_mask);
-    }
-    Log::Debug() << __FUNCTION__ << ": set channels to " << config.channel_mask;
-
-    // Resampler is always working @ the channel count of the HAL
-    IoStream::setChannelCount(popcount(IoStream::getChannels()));
-
-    if (config.sample_rate != 0) {
-        Log::Debug() << __FUNCTION__ << ": requested rate: " << config.sample_rate;
-        // Always accept the rate provided by the client
-        setSampleRate(config.sample_rate);
-    } else {
-        // No rate information was provided by the client
-        // or set rate error
-        // Use default HAL rate
+    if (config.sample_rate == 0) {
         config.sample_rate = mDefaultSampleRate;
-        setSampleRate(config.sample_rate);
     }
-    Log::Debug() << __FUNCTION__ << ": set rate to " << config.sample_rate;
-
-    if (config.format != 0) {
-        Log::Debug() << __FUNCTION__
-                     << ": requested format: " << static_cast<int32_t>(config.format);
-        // Always accept the rate provided by the client
-        // as far as this rate is supported
-        if ((config.format != AUDIO_FORMAT_PCM_16_BIT) &&
-            (config.format != AUDIO_FORMAT_PCM_8_24_BIT)) {
-            Log::Debug() << __FUNCTION__ << ": format=( " << static_cast<int32_t>(config.format)
-                         << ") not supported";
-            badFormat = true;
-        }
-
-        setFormat(config.format);
+    if (config.format == AUDIO_FORMAT_DEFAULT) {
+        config.format = mDefaultFormat;
     }
-    if ((badFormat) || (config.format == 0)) {
-        // No format provided or set format error
-        // Use default HAL format
-        config.format = Stream::mDefaultFormat;
-        setFormat(config.format);
+    setConfig(config);
+    if (mParent->getStreamInterface().supportStreamConfig(*this)) {
+        updateLatency();
+        return android::OK;
     }
-    Log::Debug() << __FUNCTION__ << " : set format to " << static_cast<int32_t>(getFormat());
-
-    if (badChannelCount || badFormat) {
-        return android::BAD_VALUE;
-    }
-    updateLatency();
-    return android::OK;
+    getDefaultConfig(config);
+    return android::BAD_VALUE;
 }
 
 uint32_t Stream::getSampleRate() const

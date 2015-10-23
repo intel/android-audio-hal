@@ -31,6 +31,7 @@ public:
 
     virtual ~StreamOut();
 
+    virtual android::status_t set(audio_config_t &config);
 
     // From AudioStreamOut
     virtual uint32_t getLatency();
