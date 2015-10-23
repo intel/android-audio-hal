@@ -41,16 +41,14 @@ public:
      * Upon connection of device managed by this route, it loads the capabilities from the device
      * (example: for an HDMI screen, the driver will read EDID to retrieve the screen audio
      * capabilities.
-     *
-     * @return OK with capabilities retrieved correctly, error code otherwise.
      */
-    android::status_t loadCapabilities() { return android::NO_ERROR; }
+    void loadCapabilities();
 
     /**
      * For route with dynamic behavior: upon disconnection of device managed by this route,
      * the capabilities shall be resetted.
      */
-    void resetCapabilities() {}
+    void resetCapabilities();
 
     /**
      * Get the sample specifications of this route.
@@ -249,6 +247,13 @@ protected:
     uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
 
 private:
+    /**
+     * Load the capabilities in term of channel mask supported, i.e. it initializes the vector of
+     * supported channel mask (stereo, 5.1, 7.1, ...)
+     * @return OK is channel masks supported has been set correctly, error code otherwise.
+     */
+    android::status_t loadChannelMaskCapabilities();
+
     inline bool remapperSupported(const audio_channel_mask_t mask) const
     {
         // We only support convertion to / from at most 2 channels

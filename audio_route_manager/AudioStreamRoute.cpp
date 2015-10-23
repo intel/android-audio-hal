@@ -22,6 +22,7 @@
 #include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
+#include <tinyalsa/asoundlib.h>
 
 using std::string;
 using audio_comms::utilities::Log;
@@ -41,6 +42,84 @@ AudioStreamRoute::AudioStreamRoute(const string &name, bool isOut, uint32_t mask
 AudioStreamRoute::~AudioStreamRoute()
 {
     delete mAudioDevice;
+}
+
+android::status_t AudioStreamRoute::loadChannelMaskCapabilities()
+{
+    // Discover supported channel maps from control parameter
+    Log::Debug() << __FUNCTION__ << ": Control for channels: " << mConfig.dynamicFormatsControl;
+
+    struct mixer *mixer;
+    struct mixer_ctl *ctl;
+    unsigned int channelMaskSize;
+    int channelCount = 0;
+
+    int cardIndex = AudioUtils::getCardIndexByName(getCardName());
+    if (cardIndex < 0) {
+        return android::BAD_VALUE;
+    }
+    mixer = mixer_open(cardIndex);
+    if (!mixer) {
+        Log::Error() << __FUNCTION__ << ": Failed to open mixer for card " << getCardName();
+        return android::BAD_VALUE;
+    }
+    ctl = mixer_get_ctl_by_name(mixer, mConfig.dynamicChannelMapsControl.c_str());
+
+    if (mixer_ctl_get_type(ctl) != MIXER_CTL_TYPE_INT) {
+        Log::Error() << __FUNCTION__ << ": invalid mixer type";
+        mixer_close(mixer);
+        return android::BAD_VALUE;
+    }
+    channelMaskSize = mixer_ctl_get_num_values(ctl);
+
+    // Parse the channel allocation array to check if present or not.
+    for (uint32_t channelPosition = 0; channelPosition < channelMaskSize; channelPosition++) {
+        if (mixer_ctl_get_value(ctl, channelPosition) > 0) {
+            ++channelCount;
+            if (isOut() && channelCount != 2 && channelCount != 6 && channelCount != 8) {
+                // Until now, limit the support to stereo, 5.1 & 7.1
+                continue;
+            }
+            audio_channel_mask_t mask = isOut() ? audio_channel_out_mask_from_count(channelCount) :
+                                        audio_channel_in_mask_from_count(channelCount);
+            if (mask != AUDIO_CHANNEL_INVALID) {
+                mCapabilities.supportedChannelMasks.push_back(mask);
+            }
+        }
+    }
+    Log::Debug() << __FUNCTION__ << ": valid number of channels supported= " << channelCount;
+    mixer_close(mixer);
+    return android::OK;
+}
+
+void AudioStreamRoute::loadCapabilities()
+{
+    Log::Debug() << __FUNCTION__ << ": for route " << getName();
+
+    resetCapabilities();
+
+    if (!mConfig.dynamicChannelMapsControl.empty()) {
+        loadChannelMaskCapabilities();
+    }
+    if (!mConfig.dynamicRatesControl.empty()) {
+        Log::Debug() << __FUNCTION__ << ": Control for rate: " << mConfig.dynamicRatesControl;
+    }
+    if (!mConfig.dynamicFormatsControl.empty()) {
+        Log::Debug() << __FUNCTION__ << ": Control for format: " << mConfig.dynamicFormatsControl;
+    }
+}
+
+void AudioStreamRoute::resetCapabilities()
+{
+    if (StreamRouteConfig::isDynamic(mConfig.channels)) {
+        mCapabilities.supportedChannelMasks.clear();
+    }
+    if (StreamRouteConfig::isDynamic(mConfig.format)) {
+        mCapabilities.supportedFormats.clear();
+    }
+    if (StreamRouteConfig::isDynamic(mConfig.rate)) {
+        mCapabilities.supportedRates.clear();
+    }
 }
 
 const StreamRouteConfig AudioStreamRoute::getRouteConfig() const
@@ -81,7 +160,7 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
     }
     if (!StreamRouteConfig::isDynamic(mConfig.channels)) {
         audio_channel_mask_t mask = isOut() ? audio_channel_out_mask_from_count(mConfig.channels) :
-                                              audio_channel_in_mask_from_count(mConfig.channels);
+                                    audio_channel_in_mask_from_count(mConfig.channels);
         mCapabilities.supportedChannelMasks.push_back(mask);
         mCurrentChannelMask = mask;
     }
