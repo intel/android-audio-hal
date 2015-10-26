@@ -404,6 +404,15 @@ bool AudioRouteManager::supportStreamConfig(const IoStream &stream) const
     return mStreamRouteMap.findMatchingRouteForStream(stream) != nullptr;
 }
 
+AudioCapabilities AudioRouteManager::getCapabilities(const IoStream &stream) const
+{
+    auto streamRoute = mStreamRouteMap.findMatchingRouteForStream(stream);
+    if (streamRoute != nullptr) {
+        return streamRoute->getCapabilities();
+    }
+    return AudioCapabilities();
+}
+
 void AudioRouteManager::setPortBlocked(const string &name, bool isBlocked)
 {
     AudioPort *port = mPortMap.getElement(name);

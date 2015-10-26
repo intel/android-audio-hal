@@ -71,8 +71,7 @@ public:
     virtual android::status_t removeAudioEffect(effect_handle_t /*effect*/) { return android::OK; }
     /** @note API not used anymore for routing since Routing Control API 3.0. */
     virtual android::status_t setParameters(const std::string &keyValuePairs);
-    /** @note API not used anymore for routing since Routing Control API 3.0. */
-    virtual std::string getParameters(const std::string &keys) const { return keys; }
+    virtual std::string getParameters(const std::string &keys) const;
 
     // From TinyAlsaIoStream
     virtual bool isRoutedByPolicy() const;

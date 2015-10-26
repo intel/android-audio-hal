@@ -97,6 +97,27 @@ status_t Stream::set(audio_config_t &config)
     return android::BAD_VALUE;
 }
 
+std::string Stream::getParameters(const std::string &keys) const
+{
+    KeyValuePairs pairs(keys);
+    KeyValuePairs returnedPairs(keys);
+    const AudioCapabilities &capabilities = mParent->getStreamInterface().getCapabilities(*this);
+
+    string key(AUDIO_PARAMETER_STREAM_SUP_CHANNELS);
+    if (pairs.hasKey(key)) {
+        returnedPairs.add(key, capabilities.getSupportedChannelMasks(isOut()));
+    }
+    key = AUDIO_PARAMETER_STREAM_SUP_FORMATS;
+    if (pairs.hasKey(key)) {
+        returnedPairs.add(key, capabilities.getSupportedFormats());
+    }
+    key =  AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES;
+    if (pairs.hasKey(key)) {
+        returnedPairs.add(key, capabilities.getSupportedRates());
+    }
+    return returnedPairs.toString();
+}
+
 uint32_t Stream::getSampleRate() const
 {
     return IoStream::getSampleRate();

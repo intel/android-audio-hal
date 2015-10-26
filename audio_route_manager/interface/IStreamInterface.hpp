@@ -16,6 +16,7 @@
 #pragma once
 
 #include "StreamRouteConfig.hpp"
+#include "AudioCapabilities.hpp"
 #include <utils/Errors.h>
 #include <string>
 
@@ -117,6 +118,18 @@ struct IStreamInterface
      *              false otherwise.
      */
     virtual bool supportStreamConfig(const IoStream &stream) const = 0;
+
+    /**
+     * Retrieve the capabilities for a given stream, i.e. what is the list of sample rates, formats
+     * and channel masks allowed for a given stream, i.e. for a request to play / capture from a
+     * given device, during a given use case (aka input source, not defined for output), in a given
+     * manneer (aka with input or output flags).
+     *
+     * @param[in] stream for which the capabilities are requested
+     *
+     * @return capabilities supported for this stream.
+     */
+    virtual AudioCapabilities getCapabilities(const IoStream &stream) const = 0;
 
     virtual android::status_t setParameters(const std::string &keyValuePair,
                                             bool isSynchronous = false) = 0;

@@ -41,6 +41,7 @@ component_common_includes_dir := \
 
 component_static_lib := \
     libaudio_comms_utilities \
+    libaudio_comms_convert \
     libsamplespec_static \
     libpfw_utility \
 

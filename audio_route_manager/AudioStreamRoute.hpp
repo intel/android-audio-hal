@@ -239,6 +239,8 @@ public:
      */
     uint32_t getPeriodInUs() const;
 
+    AudioCapabilities getCapabilities() const { return mCapabilities; }
+
 protected:
     IoStream *mCurrentStream; /**< Current stream attached to this route. */
     IoStream *mNewStream; /**< New stream that will be attached to this route after rerouting. */
