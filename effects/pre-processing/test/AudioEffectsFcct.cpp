@@ -178,40 +178,39 @@ TEST_P(TAudioEffectsSetParamTests, TestEffectParameterBase)
 
     EXPECT_TRUE(checkPlatformHasEffectType(&effectUuidToTest));
 
+    const String16 opPackageName("AudioEffectTest");
+
     if (expectedPass) {
         // Initialise AudioRecord
         AudioEffect *effect;
 
         if (effectTest.getDirection() == TestEffectParameterBase::input) {
 
-            sp<AudioRecord> record = new AudioRecord();
-            // Configure the record
-            EXPECT_TRUE(record->set(AUDIO_SOURCE_VOICE_COMMUNICATION, /* Input source to use */
-                                    16000, /* sample rate. */
-                                    AUDIO_FORMAT_PCM_16_BIT, /* sample format. */
-                                    AUDIO_CHANNEL_IN_MONO, /* channels. */
-                                    24000, /* frame count. */
-                                    NULL, /* callback_t */
-                                    NULL, /* user */
-                                    0, /* notificationFrames */
-                                    false, /* threadCanCallJava */
-                                    0, /* sessionId */
-                                    AudioRecord::TRANSFER_OBTAIN) == NO_ERROR);
+            sp<AudioRecord> record = new AudioRecord(AUDIO_SOURCE_VOICE_COMMUNICATION, /* Input source to use */
+                                                     16000, /* sample rate. */
+                                                     AUDIO_FORMAT_PCM_16_BIT, /* sample format. */
+                                                     AUDIO_CHANNEL_IN_MONO, /* channels. */
+                                                     opPackageName, /* OpPackageName. */
+                                                     24000, /* frame count. */
+                                                     NULL, /* callback_t */
+                                                     NULL);
 
             // Create the effect
             effect = new AudioEffect(&effectUuidToTest, // type
+                                     opPackageName,
                                      NULL, // UUID
                                      -1, // priority
                                      NULL, // callback
                                      0, // user
                                      record->getSessionId(), // session Id
-                                     record->getInput() // io handle
+                                     0 // io handle
                                      );
 
 
         } else {
             // Create the effect
             effect = new AudioEffect(&effectUuidToTest, // type
+                                     opPackageName,
                                      NULL, // UUID
                                      -1, // priority
                                      NULL, // callback

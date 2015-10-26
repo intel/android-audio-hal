@@ -187,10 +187,14 @@ public:
         effect_param_t *p = reinterpret_cast<effect_param_t *>(buf32);
         p->psize = sizeof(paramType) * nbParam;
         p->vsize = expectedValueSize;
-        memcpy(p->data, mParamVector.begin(), sizeof(paramType) * nbParam);
+
+        std::copy(mParamVector.cbegin(),
+                  mParamVector.cbegin() + sizeof(paramType) * nbParam,
+                  p->data);
 
         uint32_t *pValue = (uint32_t *)p->data + paramSizeIncludingPadding / sizeof(uint32_t);
-        memcpy(pValue, mValue.begin(), expectedValueSize);
+
+        std::copy(mValue.begin(), mValue.begin() + expectedValueSize, pValue);
 
         setEffectParam(p, sizeof(buf32));
     }
