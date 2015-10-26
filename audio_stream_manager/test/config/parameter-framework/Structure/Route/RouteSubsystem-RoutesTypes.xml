@@ -3,40 +3,6 @@
     xsi:noNamespaceSchemaLocation="Schemas/ComponentLibrary.xsd">
     <ComponentTypeSet>
 
-        <ComponentType Name="InputFlags">
-            <BitParameterBlock Name="input_flags" Size="32">
-                <BitParameter Name="fast" Size="1" Pos="0"/>
-                <BitParameter Name="hw_hotword" Size="1" Pos="1"/>
-            </BitParameterBlock>
-        </ComponentType>
-
-        <ComponentType Name="InputUseCases">
-            <BitParameterBlock Name="input_sources" Size="32">
-                <BitParameter Name="default" Size="1" Pos="0"/>
-                <BitParameter Name="mic" Size="1" Pos="1"/>
-                <BitParameter Name="voice_uplink" Size="1" Pos="2"/>
-                <BitParameter Name="voice_downlink" Size="1" Pos="3"/>
-                <BitParameter Name="voice_call" Size="1" Pos="4"/>
-                <BitParameter Name="camcorder" Size="1" Pos="5"/>
-                <BitParameter Name="voice_recognition" Size="1" Pos="6"/>
-                <BitParameter Name="voice_communication" Size="1" Pos="7"/>
-                <BitParameter Name="remote_submix" Size="1" Pos="8"/>
-                <BitParameter Name="hotword" Size="1" Pos="9"/>
-            </BitParameterBlock>
-        </ComponentType>
-
-        <ComponentType Name="OutputFlags">
-            <BitParameterBlock Name="output_flags" Size="32">
-                <BitParameter Name="direct" Size="1" Pos="0"/>
-                <BitParameter Name="primary" Size="1" Pos="1"/>
-                <BitParameter Name="fast" Size="1" Pos="2"/>
-                <BitParameter Name="deep_buffer" Size="1" Pos="3"/>
-                <BitParameter Name="compress_offload" Size="1" Pos="4"/>
-                <BitParameter Name="non_blocking" Size="1" Pos="5"/>
-                <BitParameter Name="hw_av_sync" Size="1" Pos="6"/>
-            </BitParameterBlock>
-        </ComponentType>
-
         <ComponentType Name="Route">
             <ParameterBlock Name="status" Mapping="Route:'%1_%2'">
                 <BooleanParameter Name="applicable"/>
@@ -64,16 +30,124 @@
             </ParameterBlock>
         </ComponentType>
 
+        <ComponentType Name="OutputFlags">
+            <BitParameterBlock Name="output_flags" Size="32">
+                <BitParameter Name="direct" Size="1" Pos="0"/>
+                <BitParameter Name="primary" Size="1" Pos="1"/>
+                <BitParameter Name="fast" Size="1" Pos="2"/>
+                <BitParameter Name="deep_buffer" Size="1" Pos="3"/>
+                <BitParameter Name="compress_offload" Size="1" Pos="4"/>
+                <BitParameter Name="non_blocking" Size="1" Pos="5"/>
+                <BitParameter Name="hw_av_sync" Size="1" Pos="6"/>
+                <BitParameter Name="tts" Size="1" Pos="7"/>
+                <BitParameter Name="raw" Size="1" Pos="8"/>
+                <BitParameter Name="sync" Size="1" Pos="9"/>
+                <BitParameter Name="iec958_nonaudio" Size="1" Pos="10"/>
+            </BitParameterBlock>
+        </ComponentType>
+
+        <ComponentType Name="InputSources">
+            <BitParameterBlock Name="input_sources" Size="32">
+                <BitParameter Name="default" Size="1" Pos="0"/>
+                <BitParameter Name="mic" Size="1" Pos="1"/>
+                <BitParameter Name="voice_uplink" Size="1" Pos="2"/>
+                <BitParameter Name="voice_downlink" Size="1" Pos="3"/>
+                <BitParameter Name="voice_call" Size="1" Pos="4"/>
+                <BitParameter Name="camcorder" Size="1" Pos="5"/>
+                <BitParameter Name="voice_recognition" Size="1" Pos="6"/>
+                <BitParameter Name="voice_communication" Size="1" Pos="7"/>
+                <BitParameter Name="remote_submix" Size="1" Pos="8"/>
+                <BitParameter Name="fm" Size="1" Pos="9"/>
+                <BitParameter Name="hotword" Size="1" Pos="10"/>
+            </BitParameterBlock>
+        </ComponentType>
+
+
+    <!-- Output devices definition as a bitfield for the supported devices per Ouput
+    profile. It must match with the definition of the enum audio_devices_t from
+    system/media/audio/include/system/audio.h file.
+    -->
+    <ComponentType Name="OutputDevicesMask" Description="32th bit is not allowed as dedicated
+                                                     for input devices detection">
+        <BitParameterBlock Name="mask" Size="32">
+            <BitParameter Name="earpiece" Size="1" Pos="0"/>
+            <BitParameter Name="speaker" Size="1" Pos="1"/>
+            <BitParameter Name="wired_headset" Size="1" Pos="2"/>
+            <BitParameter Name="wired_headphone" Size="1" Pos="3"/>
+            <BitParameter Name="bluetooth_sco" Size="1" Pos="4"/>
+            <BitParameter Name="bluetooth_sco_headset" Size="1" Pos="5"/>
+            <BitParameter Name="bluetooth_sco_carkit" Size="1" Pos="6"/>
+            <BitParameter Name="bluetooth_a2dp" Size="1" Pos="7"/>
+            <BitParameter Name="bluetooth_a2dp_headphones" Size="1" Pos="8"/>
+            <BitParameter Name="bluetooth_a2dp_speaker" Size="1" Pos="9"/>
+            <BitParameter Name="hdmi" Size="1" Pos="10"/>
+            <BitParameter Name="angl_dock_headset" Size="1" Pos="11"/>
+            <BitParameter Name="dgtl_dock_headset" Size="1" Pos="12"/>
+            <BitParameter Name="usb_accessory" Size="1" Pos="13"/>
+            <BitParameter Name="usb_device" Size="1" Pos="14"/>
+            <BitParameter Name="remote_submix" Size="1" Pos="15"/>
+            <BitParameter Name="telephony_tx" Size="1" Pos="26"/>
+            <BitParameter Name="line" Size="1" Pos="17"/>
+            <BitParameter Name="hdmi_arc" Size="1" Pos="18"/>
+            <BitParameter Name="spdif" Size="1" Pos="19"/>
+            <BitParameter Name="fm" Size="1" Pos="20"/>
+            <BitParameter Name="aux_line" Size="1" Pos="21"/>
+            <BitParameter Name="speaker_safe" Size="1" Pos="22"/>
+        </BitParameterBlock>
+    </ComponentType>
+
+    <!-- Input devices definition as a bitfield for the supported devices per Input
+    profile. It must match with the definition of the enum audio_devices_t from
+    system/media/audio/include/system/audio.h file.
+    -->
+    <ComponentType Name="InputDevicesMask">
+        <BitParameterBlock Name="mask" Size="32">
+            <BitParameter Name="communication" Size="1" Pos="0"/>
+            <BitParameter Name="ambient" Size="1" Pos="1"/>
+            <BitParameter Name="builtin_mic" Size="1" Pos="2"/>
+            <BitParameter Name="bluetooth_sco_headset" Size="1" Pos="3"/>
+            <BitParameter Name="wired_headset" Size="1" Pos="4"/>
+            <BitParameter Name="hdmi" Size="1" Pos="5"/>
+            <BitParameter Name="telephony_rx" Size="1" Pos="6"/>
+            <BitParameter Name="back_mic" Size="1" Pos="7"/>
+            <BitParameter Name="remote_submix" Size="1" Pos="8"/>
+            <BitParameter Name="anlg_dock_headset" Size="1" Pos="9"/>
+            <BitParameter Name="dgtl_dock_headset" Size="1" Pos="10"/>
+            <BitParameter Name="usb_accessory" Size="1" Pos="11"/>
+            <BitParameter Name="usb_device" Size="1" Pos="12"/>
+            <BitParameter Name="fm_tuner" Size="1" Pos="13"/>
+            <BitParameter Name="tv_tuner" Size="1" Pos="14"/>
+            <BitParameter Name="line" Size="1" Pos="15"/>
+            <BitParameter Name="spdif" Size="1" Pos="16"/>
+            <BitParameter Name="bluetooth_a2dp" Size="1" Pos="17"/>
+            <BitParameter Name="loopback" Size="1" Pos="18"/>
+            <BitParameter Name="in" Size="1" Pos="31"/>
+        </BitParameterBlock>
+    </ComponentType>
+
+        <ComponentType Name="InputFlags">
+          <BitParameterBlock Name="input_flags" Size="32">
+            <BitParameter Name="fast" Size="1" Pos="0"/>
+            <BitParameter Name="hw_hotword" Size="1" Pos="1"/>
+            <BitParameter Name="raw" Size="1" Pos="2"/>
+            <BitParameter Name="sync" Size="1" Pos="3"/>
+            <BitParameter Name="primary" Size="1" Pos="4"/>
+          </BitParameterBlock>
+        </ComponentType>
+
         <!-- Base for playback StreamRoute configuration and capture StreamRoute configuration -->
         <ComponentType Name="StreamRouteConfig">
             <BooleanParameter Name="require_preenable"/>
             <BooleanParameter Name="require_postdisable"/>
             <IntegerParameter Name="silence_prolog_ms" Size="32"/>
-            <IntegerParameter Name="channels" Size="32"/>
+            <IntegerParameter Name="channels" Size="32" Description="Note that value 0 is used for
+                                                                     dynamic channels support"/>
             <StringParameter Name="channels_policy" MaxLength="256"
                 Description="CSV list of policy copy, average or ignore are supported"/>
-            <IntegerParameter Name="rate" Size="32"/>
+            <IntegerParameter Name="rate" Size="32" Description="Note that value 0 is used for
+                                                                 dynamic sample rate support"/>
             <EnumParameter Name="format" Size="8">
+                <ValuePair Literal="dynamic" Numerical="0"/>
                 <ValuePair Literal="Pcm16Bit" Numerical="1"/>
                 <ValuePair Literal="Pcm8Bit24Bit" Numerical="3"/>
                 <ValuePair Literal="Pcm32Bit" Numerical="4"/>
@@ -84,6 +158,12 @@
             <IntegerParameter Name="stop_threshold" Size="32" Description="in frames"/>
             <IntegerParameter Name="silence_threshold" Size="32" Description="in frames"/>
             <IntegerParameter Name="avail_min" Size="32" Description="in frames"/>
+            <StringParameter Name="dynamic_channel_map_control" MaxLength="256"
+                             Description="control to use to retrieve supported channel maps"/>
+            <StringParameter Name="dynamic_sample_rate_control" MaxLength="256"
+                             Description="control to use to retrieve supported sample rates"/>
+            <StringParameter Name="dynamic_format_control" MaxLength="256"
+                             Description="control to use to retrieve supported formats"/>
         </ComponentType>
 
         <!-- Specialized configuration for playback (effects_supported has to
@@ -96,14 +176,16 @@
             <IntegerParameter Name="supported_use_cases" Size="32" Description="Not Used"/>
             <StringParameter Name="effects_supported" MaxLength="256"
                              Description="CSV Human readeable effects list"/>
+            <Component Name="supported_output_devices" Type="OutputDevicesMask"/>
         </ComponentType>
         <ComponentType Name="StreamRouteConfigCapture"
                        Extends="StreamRouteConfig"
                        Mapping="StreamRoute:'%1_%2'">
             <Component Name="supported_flags" Type="InputFlags" Description="Applicable InputFlags"/>
-            <Component Name="supported_use_cases" Type="InputUseCases" Description="Applicable Input Use Cases mask"/>
+            <Component Name="supported_use_cases" Type="InputSources" Description="Applicable Input Use Cases mask"/>
             <StringParameter Name="effects_supported" MaxLength="256"
                              Description="CSV Human readeable effects list"/>
+             <Component Name="supported_input_devices" Type="InputDevicesMask"/>
         </ComponentType>
 
         <!-- These two types are hacks for the sake of nice paths in both
