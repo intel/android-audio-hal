@@ -427,10 +427,6 @@ bool AudioRouteManager::setAudioCriterion(const std::string &name, uint32_t valu
     return mPlatformState->stageCriterion<Audio>(name, value);
 }
 
-static uint32_t count[Direction::gNbDirections] = {
-    0, 0
-};
-
 void AudioRouteManager::addPort(const string &name)
 {
     Log::Debug() << __FUNCTION__ << ": Name=" << name;
@@ -485,11 +481,18 @@ std::string AudioRouteManager::getParameters(const std::string &keys) const
     return mPlatformState->getParameters(keys);
 }
 
-template <typename T>
-T *AudioRouteManager::instantiateRoute(const string &name, const string &portSrc,
-                                       const string &portDst, bool isOut)
+bool AudioRouteManager::addRoute(AudioRoute *route, const string &portSrc, const string &portDst,
+                                 bool isOut)
 {
-    T *route = new T(name, isOut, 1 << count[isOut]);
+    if (route == nullptr) {
+        return false;
+    }
+    std::string mapKeyName = route->getName() + (isOut ? "_Playback" : "_Capture");
+    if (mRouteMap.getElement(mapKeyName) != NULL) {
+        audio_comms::utilities::Log::Error() << __FUNCTION__ << ": route "
+                                             << mapKeyName << " already added to route list!";
+        return false;
+    }
     if (!portSrc.empty()) {
         route->addPort(*mPortMap.getElement(portSrc));
     }
@@ -497,9 +500,10 @@ T *AudioRouteManager::instantiateRoute(const string &name, const string &portSrc
         route->addPort(*mPortMap.getElement(portDst));
     }
     // Populate Route criterion type value pair for Audio PFW (values provided by Route Plugin)
-    mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[isOut], name,
-                                                     1 << count[isOut]++);
-    return route;
+    mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[isOut], route->getName(),
+                                                     route->getMask());
+    mRouteMap.addElement(mapKeyName, route);
+    return true;
 }
 
 } // namespace intel_audio

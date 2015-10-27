@@ -19,6 +19,7 @@
 #include "AudioPortGroup.hpp"
 #include "AudioStreamRoute.hpp"
 #include "StreamRouteCollection.hpp"
+#include "StreamRouteFactory.hpp"
 #include "RouteCollection.hpp"
 #include "ElementCollection.hpp"
 #include "AudioRoute.hpp"
@@ -97,29 +98,22 @@ private:
                                const std::string &portSrc, const std::string &portDst,
                                bool isOut)
     {
-        std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
-        if (mRouteMap.getElement(mapKeyName) != NULL) {
-            audio_comms::utilities::Log::Error() << __FUNCTION__ << ": route "
-                                                 << mapKeyName << " already added to route list!";
-            return;
+        AudioRoute *route = new AudioRoute(name, isOut);
+        if (!addRoute(route, portSrc, portDst, isOut)) {
+            delete route;
         }
-        AudioRoute *route = instantiateRoute<AudioRoute>(name, portSrc, portDst, isOut);
-        mRouteMap.addElement(mapKeyName, route);
     }
 
     virtual void addAudioStreamRoute(const std::string &name,
                                      const std::string &portSrc, const std::string &portDst,
                                      bool isOut)
     {
-        std::string mapKeyName = name + (isOut ? "_Playback" : "_Capture");
-        if (mRouteMap.getElement(mapKeyName) != NULL) {
-            audio_comms::utilities::Log::Error() << __FUNCTION__ << ": route "
-                                                 << mapKeyName << " already added to route list!";
+        AudioStreamRoute *route = StreamRouteFactory::createStreamRoute(name, isOut);
+        if (!addRoute(route, portSrc, portDst, isOut)) {
+            delete route;
             return;
         }
-        AudioStreamRoute *route = instantiateRoute<AudioStreamRoute>(name, portSrc, portDst, isOut);
-        mStreamRouteMap.addElement(mapKeyName, route);
-        mRouteMap.addElement(mapKeyName, route);
+        mStreamRouteMap.addElement(name + (isOut ? "_Playback" : "_Capture"), route);
     }
 
     virtual void updateStreamRouteConfig(const std::string &name,
@@ -183,17 +177,14 @@ private:
      * Instantiate an Audio Route.
      * Called at audio platform discovery.
      *
-     * @tparam T: route type (Audio Route or Audio Stream Route).
-     * @param[in] name: route name.
+     * @param[in]: route (Audio Route or Audio Stream Route).
      * @param[in] portSrc: source port used by route, may be null if no protection needed.
      * @param[in] portDst: destination port used by route, may be null if no protection needed.
      * @param[in] isOut: route direction (true for output, false for input).
+     * @return true if route added to collection, false if already added
      */
-    template <typename T>
-    T *instantiateRoute(const std::string &name,
-                        const std::string &portSrc,
-                        const std::string &portDst,
-                        bool isOut);
+    bool addRoute(AudioRoute *route, const std::string &portSrc,  const std::string &portDst,
+                  bool isOut);
 
     /**
      * From worker thread context

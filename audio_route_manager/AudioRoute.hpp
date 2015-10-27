@@ -41,7 +41,7 @@ public:
         ENbPorts
     };
 
-    AudioRoute(const std::string &name, bool isOut, uint32_t mask);
+    AudioRoute(const std::string &name, bool isOut);
     virtual ~AudioRoute();
 
     /**

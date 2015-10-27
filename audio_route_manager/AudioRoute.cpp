@@ -27,9 +27,13 @@ using audio_comms::utilities::Log;
 namespace intel_audio
 {
 
-AudioRoute::AudioRoute(const string &name, bool isOut, uint32_t mask)
+static uint32_t count[Direction::gNbDirections] = {
+    0, 0
+};
+
+AudioRoute::AudioRoute(const string &name, bool isOut)
     : mName(name),
-      mMask(mask),
+      mMask(1 << count[isOut]++),
       mIsOut(isOut),
       mIsUsed(false),
       mPreviouslyUsed(false),

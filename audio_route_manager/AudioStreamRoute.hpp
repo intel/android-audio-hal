@@ -30,10 +30,27 @@ namespace intel_audio
 
 class IAudioDevice;
 
+class AudioStreamRoute;
+
+/**
+ * Create a route from a given type, with a given name and direction.
+ *
+ * @tparam T type of audio stream route, default is stream routebase class.
+ * @param[in] name of the route to create
+ * @param[in] isOut direction indicator: true for playback route, false for capture
+ *
+ * @return stream route object
+ */
+template <typename T = AudioStreamRoute>
+AudioStreamRoute *createT(const std::string &name, bool isOut)
+{
+    return new T(name, isOut);
+}
+
 class AudioStreamRoute : public AudioRoute, private IStreamRoute
 {
 public:
-    AudioStreamRoute(const std::string &name, bool isOut, uint32_t mask);
+    AudioStreamRoute(const std::string &name, bool isOut);
 
     virtual ~AudioStreamRoute();
 
@@ -42,7 +59,7 @@ public:
      * (example: for an HDMI screen, the driver will read EDID to retrieve the screen audio
      * capabilities.
      */
-    void loadCapabilities();
+    virtual void loadCapabilities();
 
     /**
      * For route with dynamic behavior: upon disconnection of device managed by this route,
@@ -248,6 +265,8 @@ protected:
     std::list<std::string> mEffectSupported; /**< list of name of supported effects. */
     uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
 
+    AudioCapabilities mCapabilities;
+
 private:
     /**
      * Load the capabilities in term of channel mask supported, i.e. it initializes the vector of
@@ -354,8 +373,6 @@ private:
     StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 
     IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
-
-    AudioCapabilities mCapabilities;
 
     uint32_t mCurrentRate = 0;
     audio_format_t mCurrentFormat = AUDIO_FORMAT_DEFAULT;
