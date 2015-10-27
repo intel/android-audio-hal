@@ -138,7 +138,7 @@ LOCAL_C_INCLUDES := $(component_includes_dir_host)
 
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
 LOCAL_SHARED_LIBRARIES := $(component_shared_lib_host)
-LOCAL_SRC_FILES := $(component_src_files)
+LOCAL_SRC_FILES := $(component_src_files) test/HdmiAudioStreamRoute.cpp
 LOCAL_CFLAGS := \
     $(component_cflags) -O0 -ggdb \
     -DPFW_CONF_FILE_PATH=\"$(HOST_OUT)\"'"/etc/parameter-framework/"'

@@ -11,6 +11,7 @@
 
         <ComponentType Name="PlatformRoutes">
             <Component Name="media" Type="StreamRouteFullDuplex" Mapping="Amend1:Media,Device:0,Ports:"/>
+            <Component Name="hdmi" Type="StreamRoutePlayback" Mapping="Amend1:Hdmi,Device:0,Ports:"/>
         </ComponentType>
 
     </ComponentLibrary>

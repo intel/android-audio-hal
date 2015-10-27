@@ -308,3 +308,75 @@ INSTANTIATE_TEST_CASE_P(
         std::make_pair("screen_state", "666")
         )
     );
+
+std::string getStreamParameter(intel_audio::StreamOutInterface *out, const std::string &key)
+{
+    intel_audio::KeyValuePairs kvChannels(out->getParameters(key));
+
+    EXPECT_TRUE(kvChannels.hasKey(key));
+    std::string getValue;
+    EXPECT_EQ(android::OK, kvChannels.get(key, getValue));
+    return getValue;
+}
+
+TEST_F(AudioHalTest, hdmi)
+{
+
+    audio_config_t config;
+    setConfig(48000, AUDIO_CHANNEL_OUT_STEREO, AUDIO_FORMAT_PCM_16_BIT, config);
+    audio_output_flags_t flags = AUDIO_OUTPUT_FLAG_DIRECT;
+    intel_audio::StreamOutInterface *outStream = NULL;
+    audio_devices_t devices = static_cast<uint32_t>(AUDIO_DEVICE_OUT_HDMI);
+    const char *address = "dont_care";
+
+    status_t status = getDevice()->openOutputStream(0,
+                                                    devices,
+                                                    flags,
+                                                    config,
+                                                    outStream,
+                                                    address);
+    ASSERT_EQ(status, android::BAD_VALUE);
+    ASSERT_TRUE(outStream == NULL);
+
+    // Now connect the device to retrieve the dynamic settings of HDMI and try again to open.
+    {
+        intel_audio::KeyValuePairs valuePair;
+        valuePair.add(AUDIO_PARAMETER_DEVICE_CONNECT, AUDIO_DEVICE_OUT_HDMI);
+        ASSERT_EQ(android::OK, getDevice()->setParameters(valuePair.toString().c_str()));
+    }
+
+    status = getDevice()->openOutputStream(0,
+                                           devices,
+                                           flags,
+                                           config,
+                                           outStream,
+                                           address);
+    ASSERT_EQ(status, android::OK);
+    ASSERT_FALSE(outStream == NULL);
+
+    // Retrieve channels
+    EXPECT_EQ("AUDIO_CHANNEL_OUT_STEREO|AUDIO_CHANNEL_OUT_5POINT1|AUDIO_CHANNEL_OUT_7POINT1",
+              getStreamParameter(outStream, AUDIO_PARAMETER_STREAM_SUP_CHANNELS));
+    // Retrieve formats
+    EXPECT_EQ("AUDIO_FORMAT_PCM_16_BIT|AUDIO_FORMAT_PCM_8_24_BIT",
+              getStreamParameter(outStream, AUDIO_PARAMETER_STREAM_SUP_FORMATS));
+    // Retrieve rates
+    EXPECT_EQ("48000|192000",
+              getStreamParameter(outStream, AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES));
+
+    // Lets disconnect the device, the stream will be kept alive, and retrieve again the capabilities
+    {
+        intel_audio::KeyValuePairs valuePair;
+        valuePair.add(AUDIO_PARAMETER_DEVICE_DISCONNECT, AUDIO_DEVICE_OUT_HDMI);
+        ASSERT_EQ(android::OK, getDevice()->setParameters(valuePair.toString().c_str()));
+    }
+
+    // Retrieve channels
+    EXPECT_TRUE(getStreamParameter(outStream, AUDIO_PARAMETER_STREAM_SUP_CHANNELS).empty());
+    // Retrieve formats
+    EXPECT_TRUE(getStreamParameter(outStream, AUDIO_PARAMETER_STREAM_SUP_FORMATS).empty());
+    // Retrieve rates
+    EXPECT_TRUE(getStreamParameter(outStream, AUDIO_PARAMETER_STREAM_SUP_SAMPLING_RATES).empty());
+
+    getDevice()->closeOutputStream(outStream);
+}
