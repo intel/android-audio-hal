@@ -215,6 +215,9 @@ public:
         return mConfig.requirePreEnable;
     }
 
+    /** As prepare is called on both RouteCollection & StreamRouteCollection, Nope it here. */
+    virtual void prepare() {}
+
     /**
      * Check if the route requires post disabling.
      * Post disabling means that the path must be deconfigured before the pcm device is closed.

@@ -37,9 +37,9 @@ AudioRoute::AudioRoute(const string &name, bool isOut)
       mIsOut(isOut),
       mIsUsed(false),
       mPreviouslyUsed(false),
-      mIsApplicable(false),
-      mRoutingStageRequested(0)
+      mIsApplicable(false)
 {
+    mRoutingStageRequested.reset();
     mPort[EPortSource] = NULL;
     mPort[EPortDest] = NULL;
 }
@@ -67,6 +67,13 @@ void AudioRoute::resetAvailability()
     mBlocked = false;
     mPreviouslyUsed = mIsUsed;
     mIsUsed = false;
+}
+
+void AudioRoute::prepare()
+{
+    if (isApplicable()) {
+        setUsed();
+    }
 }
 
 bool AudioRoute::isApplicable() const

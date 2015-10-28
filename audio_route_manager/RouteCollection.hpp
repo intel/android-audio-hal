@@ -43,9 +43,8 @@ public:
             if (!route) {
                 continue;
             }
-            if (route->isApplicable()) {
-                route->setUsed();
-            }
+            route->prepare();
+
             if (route->isUsed()) {
                 mRoutes[route->isOut()].setEnabledRoute(route->getMask());
                 if (route->needReflow())

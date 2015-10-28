@@ -76,7 +76,13 @@ public:
      * Calling this API will propagate the in use attribute to the ports belonging to this route.
      *
      */
-    virtual void setUsed();
+    void setUsed();
+
+    /**
+     * Prepare hook point on an audio route. Allows to perform any required settings on a route
+     * before entering 5-steps routing process.
+     */
+    virtual void prepare();
 
     /**
      * Checks if the route is used.
