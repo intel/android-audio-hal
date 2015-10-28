@@ -44,13 +44,6 @@ AudioResampler::~AudioResampler()
 
 status_t AudioResampler::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
-    Log::Debug() << __FUNCTION__ << ": SOURCE rate=" << ssSrc.getSampleRate()
-                 << " format=" << static_cast<int32_t>(ssSrc.getFormat())
-                 << " channels=" << ssSrc.getChannelCount();
-    Log::Debug() << __FUNCTION__ << ": DST rate=" << ssDst.getSampleRate()
-                 << " format=" << static_cast<int32_t>(ssDst.getFormat())
-                 << " channels=" << ssDst.getChannelCount();
-
     if ((ssSrc.getSampleRate() == mSsSrc.getSampleRate()) &&
         (ssDst.getSampleRate() == mSsDst.getSampleRate()) &&
         (mResampler != NULL)) {

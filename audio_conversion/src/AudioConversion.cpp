@@ -85,6 +85,13 @@ status_t AudioConversion::configure(const SampleSpec &ssSrc, const SampleSpec &s
         return ret;
     }
 
+    Log::Debug() << __FUNCTION__ << ": SOURCE rate=" << ssSrc.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssSrc.getFormat())
+                 << " channels=" << ssSrc.getChannelCount();
+    Log::Debug() << __FUNCTION__ << ": DST rate=" << ssDst.getSampleRate()
+                 << " format=" << static_cast<int32_t>(ssDst.getFormat())
+                 << " channels=" << ssDst.getChannelCount();
+
     SampleSpec tmpSsSrc = ssSrc;
 
     // Start by adding the remapper, it will add consequently the reformatter and resampler
