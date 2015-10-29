@@ -52,7 +52,6 @@ const std::string Stream::dumpAfterConvProps[Direction::gNbDirections] = {
 Stream::Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
     : mParent(parent),
       mStandby(true),
-      mDevices(0),
       mAudioConversion(new AudioConversion),
       mLatencyMs(0),
       mFlagMask(flagMask),
@@ -152,7 +151,7 @@ status_t Stream::standby()
 
 audio_devices_t Stream::getDevice() const
 {
-    return mDevices;
+    return getDevices();
 }
 
 bool Stream::isRoutedByPolicy() const
@@ -170,13 +169,6 @@ uint32_t Stream::getUseCaseMask() const
 {
     AutoR lock(mStreamLock);
     return mUseCaseMask;
-}
-
-status_t Stream::setDevice(audio_devices_t device)
-{
-    AutoW lock(mStreamLock);
-    mDevices = device;
-    return android::OK;
 }
 
 status_t Stream::setParameters(const string &keyValuePairs)

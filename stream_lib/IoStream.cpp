@@ -94,6 +94,13 @@ uint32_t IoStream::getOutputSilencePrologMs() const
     return mCurrentStreamRoute->getOutputSilencePrologMs();
 }
 
+android::status_t IoStream::setDevices(audio_devices_t devices)
+{
+    AutoW lock(mStreamLock);
+    mDevices = devices;
+    return android::OK;
+}
+
 void IoStream::resetNewStreamRoute()
 {
     mNewStreamRoute = NULL;

@@ -337,6 +337,23 @@ public:
      */
     android::status_t detachRoute();
 
+    /**
+     * Set the device(s) assigned by the audio policy to this stream
+     * @param[in] devices selected by the policy
+     * @return OK if set correctly, error code otherwise.
+     */
+    android::status_t setDevices(audio_devices_t devices);
+
+    /**
+     * Retrieve the device(s) that has been assigned by the policy to this stream.
+     * @return device(s) selected by the policy for this stream.
+     */
+    audio_devices_t getDevices() const
+    {
+        AutoR lock(mStreamLock);
+        return mDevices;
+    }
+
 protected:
     /**
      * Attach the stream to its route.
@@ -386,6 +403,8 @@ private:
     SampleSpec mRouteSampleSpec;
 
     uint32_t mEffectsRequestedMask; /**< Mask of requested effects. */
+
+    audio_devices_t mDevices = AUDIO_DEVICE_NONE; /**< devices assgined by the policy.*/
 };
 
 } // namespace intel_audio

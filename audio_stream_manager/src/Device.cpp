@@ -110,7 +110,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     flags = (flags == AUDIO_OUTPUT_FLAG_NONE) ? AUDIO_OUTPUT_FLAG_PRIMARY : flags;
 
     if (flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) {
-        CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags);
+        CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags, devices);
         status_t err = out->set(config);
         if (err != android::OK) {
             delete out;
@@ -120,7 +120,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
         mStreams[handle] = out;
         return android::OK;
     }
-    StreamOut *out = new StreamOut(this, handle, flags);
+    StreamOut *out = new StreamOut(this, handle, flags, devices);
     status_t err = out->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": set error.";
@@ -185,7 +185,7 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
     // If no flags is provided for input, use primary by default
     flags = (flags == AUDIO_INPUT_FLAG_NONE) ? AUDIO_INPUT_FLAG_PRIMARY : flags;
 
-    StreamIn *in = new StreamIn(this, handle, flags, source);
+    StreamIn *in = new StreamIn(this, handle, flags, source, devices);
     status_t err = in->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": Set err";
@@ -476,7 +476,7 @@ void Device::onPortReleased(const audio_patch_handle_t &patchHandle,
     }
     AUDIOCOMMS_ASSERT(stream->getPatchHandle() == patchHandle,
                       "Mismatch between stream and patch handle");
-    stream->setPatchHandle(AUDIO_PATCH_HANDLE_NONE);
+    stream->setPatchHandle(AUDIO_PATCH_HANDLE_NONE); // Do not reset the device
 }
 
 status_t Device::createAudioPatch(size_t sourcesCount,
@@ -558,15 +558,6 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
     return android::INVALID_OPERATION;
 }
 
-uint32_t Device::getDeviceFromStream(const Stream &stream) const
-{
-    if (!stream.isRoutedByPolicy()) {
-        return AUDIO_DEVICE_NONE;
-    }
-    const Patch &patch = getPatchUnsafe(stream.getPatchHandle());
-    return patch.getDevices(getOppositeRole(stream.getRole()));
-}
-
 void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
                                         uint32_t &useCaseMask, uint32_t &deviceMask,
                                         uint32_t &requestedEffectMask)
@@ -574,7 +565,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
         if ((!hasPrimaryFlags(stream) || !hasFastFlags(stream)) && !stream.isMuted()) {
             // Primary devices are not appended as primary output plays a "special" role.
-            deviceMask |= getDeviceFromStream(stream);
+            deviceMask |= stream.getDevices();
         }
         flagMask |= stream.getFlagMask();
         useCaseMask |= stream.getUseCaseMask();
@@ -589,7 +580,7 @@ uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
     AUDIOCOMMS_ASSERT(mPrimaryOutput != NULL, "Primary HAL without primary output is impossible");
     if (isInCall()) {
         // Take the device of the primary output if in call
-        selectedDeviceMask = getDeviceFromStream(*mPrimaryOutput);
+        selectedDeviceMask = mPrimaryOutput->getDevices();
     } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
         // Take the devices of all active outputs with Primary flags if no other stream active
         // and unmuted.
@@ -633,6 +624,9 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
             Log::Error() << __FUNCTION__ << ": Mix Port IO handle does not match any stream).";
             continue;
         }
+        // Update device(s) info from patch to stream involved in this patch
+        stream->setDevices(patch.getDevices(devicePortRole));
+
         updateParametersFromStream(*stream, streamsFlagMask, streamsUseCaseMask, deviceMask,
                                    requestedEffectMask);
     }
@@ -690,8 +684,9 @@ uint32_t Device::getOutputDeviceMaskFromPrimaryOrFastOutputs() const
     uint32_t outputDeviceMaskFromPrimaryOrFastOutputs = AUDIO_DEVICE_NONE;
     for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
         const Stream *stream = it->second;
-        if ((hasPrimaryFlags(*stream) || hasFastFlags(*stream)) && stream->isStarted()) {
-            outputDeviceMaskFromPrimaryOrFastOutputs |= getDeviceFromStream(*stream);
+        if ((hasPrimaryFlags(*stream) || hasFastFlags(*stream)) && stream->isStarted()
+            && stream->isRoutedByPolicy()) {
+            outputDeviceMaskFromPrimaryOrFastOutputs |= stream->getDevices();
         }
     }
     return outputDeviceMaskFromPrimaryOrFastOutputs;

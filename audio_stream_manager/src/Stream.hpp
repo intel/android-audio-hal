@@ -64,7 +64,7 @@ public:
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t dump(int) const { return android::OK; }
     virtual audio_devices_t getDevice() const;
-    virtual android::status_t setDevice(audio_devices_t device);
+    virtual android::status_t setDevice(audio_devices_t device) = 0;
     /** @note API not implemented in stream base class, input specific implementation only. */
     virtual android::status_t addAudioEffect(effect_handle_t /*effect*/) { return android::OK; }
     /** @note API not implemented in stream base class, input specific implementation only. */
@@ -292,8 +292,6 @@ private:
 
 
     bool mStandby; /**< state of the stream, true if standby, false if started. */
-
-    uint32_t mDevices; /**< devices mask selected by the policy for this stream.*/
 
     AudioConversion *mAudioConversion; /**< Audio Conversion utility class. */
 

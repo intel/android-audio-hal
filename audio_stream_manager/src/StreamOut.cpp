@@ -32,12 +32,13 @@ const uint32_t StreamOut::mMaxAgainRetry = 2;
 const uint32_t StreamOut::mWaitBeforeRetryUs = 10000; // 10ms
 const uint32_t StreamOut::mUsecPerMsec = 1000;
 
-StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
+StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask, audio_devices_t devices)
     : Stream(parent, handle, flagMask),
       mFrameCount(0),
       mEchoReference(NULL),
       mIsMuted(false)
 {
+    setDevice(devices);
 }
 
 StreamOut::~StreamOut()
@@ -337,7 +338,7 @@ status_t StreamOut::setDevice(audio_devices_t device)
         Log::Error() << __FUNCTION__ << ": invalid output device " << device;
         return android::BAD_VALUE;
     }
-    return Stream::setDevice(device);
+    return setDevices(device);
 }
 
 } // namespace intel_audio

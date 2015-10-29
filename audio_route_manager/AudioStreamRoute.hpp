@@ -261,6 +261,14 @@ public:
 
     AudioCapabilities getCapabilities() const { return mCapabilities; }
 
+    /**
+     * Checks if the devices assigned by the policy to the stream are matching the devices supported
+     * by the stream route
+     * @param[in] streamDeviceMask Mask of devices of the stream
+     * @return true if supported, false otherwise.
+     */
+    bool supportDevices(audio_devices_t streamDeviceMask) const;
+
 protected:
     IoStream *mCurrentStream; /**< Current stream attached to this route. */
     IoStream *mNewStream; /**< New stream that will be attached to this route after rerouting. */

@@ -35,7 +35,7 @@ namespace intel_audio
 const std::string StreamIn::mHwEffectImplementor = "IntelLPE";
 
 StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
-                   audio_source_t source)
+                   audio_source_t source, audio_devices_t devices)
     : Stream(parent, handle, flagMask),
       mFramesLost(0),
       mFramesIn(0),
@@ -48,6 +48,7 @@ StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
       mPreprocessorsHandlerList(),
       mHwBuffer(NULL)
 {
+    setDevice(devices);
     setInputSource(source);
 }
 
@@ -417,7 +418,7 @@ status_t StreamIn::setDevice(audio_devices_t device)
         Log::Error() << __FUNCTION__ << ": invalid input device " << device;
         return android::BAD_VALUE;
     }
-    return Stream::setDevice(device & ~AUDIO_DEVICE_BIT_IN);
+    return setDevices(device & ~AUDIO_DEVICE_BIT_IN);
 }
 
 void StreamIn::setInputSource(audio_source_t inputSource)

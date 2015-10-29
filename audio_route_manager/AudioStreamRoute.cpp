@@ -282,6 +282,12 @@ bool AudioStreamRoute::isMatchingWithStream(const IoStream &stream) const
            supportStreamConfig(stream);
 }
 
+bool AudioStreamRoute::supportDevices(audio_devices_t streamDeviceMask) const
+{
+    return streamDeviceMask != AUDIO_DEVICE_NONE &&
+            (getSupportedDeviceMask() & streamDeviceMask) == streamDeviceMask;
+}
+
 inline bool AudioStreamRoute::areFlagsMatching(uint32_t streamFlagMask) const
 {
     return (streamFlagMask & getFlagsMask()) == streamFlagMask;

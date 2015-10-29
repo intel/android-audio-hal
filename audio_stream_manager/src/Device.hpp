@@ -199,15 +199,6 @@ private:
     }
 
     /**
-     * Retrieve the device mask from a given stream.
-     *
-     * @param[in] stream for which the request applies to.
-     *
-     * @return devices mask associated to the stream.
-     */
-    uint32_t getDeviceFromStream(const Stream &stream) const;
-
-    /**
      * Update synchronously the streams parameters according to the change of source and or sink
      * devices.
      * @param[in] updateSourceDevice: if set, we shall update the parameter linked to output devices

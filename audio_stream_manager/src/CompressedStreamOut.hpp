@@ -78,7 +78,8 @@ private:
     };
 
 public:
-    CompressedStreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask);
+    CompressedStreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
+                        audio_devices_t devices);
 
     virtual ~CompressedStreamOut();
 
