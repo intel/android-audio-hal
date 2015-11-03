@@ -86,9 +86,17 @@ public:
      */
     virtual bool isMuted() const { return mIsMuted; }
 
-    void mute() { mIsMuted = true; }
+    void mute()
+    {
+        AutoW lock(mStreamLock);
+        mIsMuted = true;
+    }
 
-    void unMute() { mIsMuted = false; }
+    void unMute()
+    {
+        AutoW lock(mStreamLock);
+        mIsMuted = false;
+    }
 
 protected:
     /**

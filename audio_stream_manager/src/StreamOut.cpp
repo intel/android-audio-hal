@@ -55,7 +55,11 @@ status_t StreamOut::set(audio_config_t &config)
 
 android::status_t StreamOut::setVolume(float left, float right)
 {
-    (left == 0 && right == 0) ? mute() : unMute();
+    bool muteRequested = (left == 0 && right == 0);
+    if (isMuted() != muteRequested) {
+        muteRequested ? mute() : unMute();
+        return mParent->updateStreamsParametersSync(getRole());
+    }
     return android::OK;
 }
 
@@ -71,11 +75,10 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     status_t status;
     const ssize_t srcFrames = streamSampleSpec().convertBytesToFrames(bytes);
 
-    // Check if the audio route is available for this stream
-    if (!isRoutedL()) {
-        Log::Warning() << __FUNCTION__ << ": (buffer=" << buffer << ", bytes=" << bytes
-                       << ") No route available. Trashing samples for stream " << this;
-
+    // Check if the audio route is available for this stream or if the stream is muted
+    if (!isRoutedL() || isMuted()) {
+        Log::Warning() << __FUNCTION__ << ": Trashing " << bytes << " bytes for stream " << this
+                       << (isMuted() ? ": Stream muted" : ": No route available");
         status = generateSilence(bytes);
         mFrameCount += srcFrames;
         mStreamLock.unlock();
