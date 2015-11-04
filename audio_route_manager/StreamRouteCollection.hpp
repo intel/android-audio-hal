@@ -30,11 +30,6 @@ private:
     typedef std::list<IoStream *>::const_iterator StreamListConstIterator;
 
 public:
-    virtual ~StreamRouteCollection()
-    {
-
-    }
-
     virtual void reset()
     {
         mElements.clear();
