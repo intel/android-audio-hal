@@ -170,6 +170,15 @@ public:
      */
     inline bool supportStreamConfig(const IoStream &stream) const
     {
+        // Ugly WA: the policy tries to open a stream to retrieve the capabilities BEFORE
+        // broadcastingcapabilities CONNECT message used by us to trig the discovery of the
+        // capabilities. So, as capabilities are still empty, try to populate it...
+        // @TODO: remove it once policy patch broadcasting device state before loading the profile
+        // has been merged.
+        if (mCapabilities.supportedFormats.empty() || mCapabilities.supportedChannelMasks.empty() ||
+            mCapabilities.supportedRates.empty()) {
+            const_cast<AudioStreamRoute *>(this)->loadCapabilities();
+        }
         return supportRate(stream.getSampleRate()) && supportFormat(stream.getFormat()) &&
                supportChannelMask(stream.getChannels());
     }
