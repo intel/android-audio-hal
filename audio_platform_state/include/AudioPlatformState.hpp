@@ -58,10 +58,8 @@ private:
 
         void operator()(Parameter *param)
         {
-
             std::string key(param->getKey());
-            std::string value;
-            if (mPairsIn->get(key, value) == android::OK) {
+            if (mPairsIn->hasKey(key)) {
 
                 std::string literalValue;
                 if (param->getValue(literalValue)) {
@@ -95,8 +93,7 @@ private:
         void operator()(Parameter *param)
         {
             std::string key(param->getKey());
-            std::string value;
-            if (mPairs->get(key, value) == android::OK) {
+            if (mPairs->hasKey(key)) {
                 mPairs->remove(key);
             }
         }

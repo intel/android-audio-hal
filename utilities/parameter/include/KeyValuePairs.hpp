@@ -39,6 +39,13 @@ public:
     virtual ~KeyValuePairs();
 
     /**
+     * Checks if a KeyValuePairs object has a key or not
+     * @param[in] key to be checked if present or not
+     * @return true if the key is found within the collection of pairs, false otherwise.
+     */
+    bool hasKey(const std::string &key) const { return mMap.find(key) != mMap.end(); }
+
+    /**
      * Convert the AudioParameter into a semi-colon separated string of {key, value} pairs.
      *
      * @return semi-colon separated string of {key, value} pairs
