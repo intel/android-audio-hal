@@ -17,14 +17,8 @@
 
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
-#include <mock/UnistdMock.hpp>
 #include <limits>
 #include <gtest/gtest.h>
-
-using ::testing::_;
-using ::testing::EndsWith;
-using ::testing::Return;
-using ::testing::SetErrnoAndReturn;
 
 namespace intel_audio
 {
@@ -58,8 +52,8 @@ TEST(AudioUtils, convertion)
     SampleSpec sampleSpecSrc(2, AUDIO_FORMAT_PCM_16_BIT, 8000);
     SampleSpec sampleSpecDst(2, AUDIO_FORMAT_PCM_16_BIT, 48000);
 
-    const ssize_t srcFrames = 1000;
-    const ssize_t srcBytes = 4000;
+    const size_t srcFrames = 1000;
+    const size_t srcBytes = 4000;
 
     EXPECT_EQ(srcBytes * 6,
               AudioUtils::convertSrcToDstInBytes(srcBytes, sampleSpecSrc, sampleSpecDst));
@@ -104,11 +98,16 @@ TEST(AudioUtils, timeConversion)
     EXPECT_EQ(1u, AudioUtils::convertUsecToMsec(1000));
     EXPECT_EQ(1u, AudioUtils::convertUsecToMsec(999));
     EXPECT_EQ(1u, AudioUtils::convertUsecToMsec(1));
-    EXPECT_EQ(2u, static_cast<int32_t>(AudioUtils::convertUsecToMsec(1001)));
-    EXPECT_EQ(0x418938,
+    EXPECT_EQ(2u, AudioUtils::convertUsecToMsec(1001));
+    EXPECT_EQ(0x418938u,
               AudioUtils::convertUsecToMsec(std::numeric_limits<uint32_t>::max()));
 }
 
+#if 0
+/**
+ * @todo: implement mock without gmock library to restore these test cases.
+ *
+ */
 TEST(AudioUtils, cardNameToIndexNominalCase)
 {
     // Valid card
@@ -183,4 +182,5 @@ TEST(AudioUtils, cardNameToIndexLinkDoesNotExist)
     .WillOnce(SetErrnoAndReturn(EACCES, -1));
     EXPECT_EQ(-EACCES, AudioUtils::getCardIndexByName(""));
 }
+#endif
 } // namespace intel_audio

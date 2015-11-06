@@ -103,13 +103,7 @@ component_functional_test_src_files += \
     test/SampleSpecTest.cpp \
     test/AudioUtilsTest.cpp
 
-component_functional_test_export_c_includes += \
-    mock
-
-# Android gtest and gmock
 component_functional_test_static_lib := \
-    libgmock \
-    unistd_mock \
     libsamplespec_static
 
 # Compile macro

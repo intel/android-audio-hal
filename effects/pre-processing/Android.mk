@@ -127,8 +127,6 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 #######################################################################
 
 audio_effects_functional_test_static_lib += \
-    libgmock_main \
-    libgmock \
     libaudio_comms_utilities \
 
 audio_effects_functional_test_src_files := \
