@@ -282,7 +282,16 @@ private:
      */
     bool hasPrimaryFlags(const Stream &stream) const;
 
-    uint32_t getOutputDeviceMaskFromPrimaryOutputs() const;
+    /**
+     * Checks if the stream is the output stream has FAST flags.
+     *
+     * @param[in] stream to check
+     *
+     * @return true if stream is the fast output, false otherwise.
+     */
+    bool hasFastFlags(const Stream &stream) const;
+
+    uint32_t getOutputDeviceMaskFromPrimaryOrFastOutputs() const;
 
 
     /**

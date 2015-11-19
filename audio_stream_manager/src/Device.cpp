@@ -562,7 +562,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
                                         uint32_t &requestedEffectMask)
 {
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!hasPrimaryFlags(stream) && !stream.isMuted()) {
+        if ((!hasPrimaryFlags(stream) || !hasFastFlags(stream)) && !stream.isMuted()) {
             // Primary devices are not appended as primary output plays a "special" role.
             deviceMask |= getDeviceFromStream(stream);
         }
@@ -583,7 +583,7 @@ uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
     } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
         // Take the devices of all active outputs with Primary flags if no other stream active
         // and unmuted.
-        selectedDeviceMask = getOutputDeviceMaskFromPrimaryOutputs();
+        selectedDeviceMask = getOutputDeviceMaskFromPrimaryOrFastOutputs();
     }
     return selectedDeviceMask;
 }
@@ -668,16 +668,23 @@ bool Device::hasPrimaryFlags(const Stream &stream) const
            AUDIO_OUTPUT_FLAG_PRIMARY;
 }
 
-uint32_t Device::getOutputDeviceMaskFromPrimaryOutputs() const
+bool Device::hasFastFlags(const Stream &stream) const
 {
-    uint32_t outputDeviceMaskFromPrimaryOutputs = AUDIO_DEVICE_NONE;
+    return stream.isOut() &&
+           (stream.getFlagMask() & AUDIO_OUTPUT_FLAG_FAST) ==
+           AUDIO_OUTPUT_FLAG_FAST;
+}
+
+uint32_t Device::getOutputDeviceMaskFromPrimaryOrFastOutputs() const
+{
+    uint32_t outputDeviceMaskFromPrimaryOrFastOutputs = AUDIO_DEVICE_NONE;
     for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
         const Stream *stream = it->second;
-        if (hasPrimaryFlags(*stream) && stream->isStarted()) {
-            outputDeviceMaskFromPrimaryOutputs |= getDeviceFromStream(*stream);
+        if ((hasPrimaryFlags(*stream) || hasFastFlags(*stream)) && stream->isStarted()) {
+            outputDeviceMaskFromPrimaryOrFastOutputs |= getDeviceFromStream(*stream);
         }
     }
-    return outputDeviceMaskFromPrimaryOutputs;
+    return outputDeviceMaskFromPrimaryOrFastOutputs;
 }
 
 } // namespace intel_audio
