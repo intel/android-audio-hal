@@ -563,8 +563,7 @@ void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask
                                         uint32_t &requestedEffectMask)
 {
     if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!hasPrimaryFlags(stream) && !stream.isMuted()) {
-            // Primary devices are not appended as primary output plays a "special" role.
+        if (!stream.isMuted()) {
             deviceMask |= stream.getDevices();
         }
         flagMask |= stream.getFlagMask();
@@ -581,11 +580,8 @@ uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
     if (isInCall()) {
         // Take the device of the primary output if in call
         selectedDeviceMask = mPrimaryOutput->getDevices();
-    } else if (selectedDeviceMask == AUDIO_DEVICE_NONE) {
-        // Take the devices of all active outputs with Primary flags if no other stream active
-        // and unmuted.
-        selectedDeviceMask = getOutputDeviceMaskFromPrimaryOutputs();
     }
+
     return selectedDeviceMask;
 }
 
@@ -670,18 +666,6 @@ bool Device::hasPrimaryFlags(const Stream &stream) const
     return stream.isOut() &&
            (stream.getFlagMask() & AUDIO_OUTPUT_FLAG_PRIMARY) ==
            AUDIO_OUTPUT_FLAG_PRIMARY;
-}
-
-uint32_t Device::getOutputDeviceMaskFromPrimaryOutputs() const
-{
-    uint32_t outputDeviceMaskFromPrimaryOutputs = AUDIO_DEVICE_NONE;
-    for (StreamCollection::const_iterator it = mStreams.begin(); it != mStreams.end(); ++it) {
-        const Stream *stream = it->second;
-        if (hasPrimaryFlags(*stream) && stream->isStarted() && stream->isRoutedByPolicy()) {
-            outputDeviceMaskFromPrimaryOutputs |= stream->getDevices();
-        }
-    }
-    return outputDeviceMaskFromPrimaryOutputs;
 }
 
 } // namespace intel_audio

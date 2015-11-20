@@ -273,9 +273,6 @@ private:
      */
     bool hasPrimaryFlags(const Stream &stream) const;
 
-    uint32_t getOutputDeviceMaskFromPrimaryOutputs() const;
-
-
     /**
      * Infer the band from a stream, using its sample rate information.
      *
