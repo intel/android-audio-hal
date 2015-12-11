@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2016 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -43,8 +43,10 @@ const string AudioStreamRoute::mChannelPolicyAverage = "average";
 
 AudioStreamRoute::AudioStreamRoute(const std::string &mappingValue,
                                    CInstanceConfigurableElement *instanceConfigurableElement,
-                                   const CMappingContext &context)
+                                   const CMappingContext &context,
+                                   core::log::Logger &logger)
     : CFormattedSubsystemObject(instanceConfigurableElement,
+                                logger,
                                 mappingValue,
                                 MappingKeyAmend1,
                                 (MappingKeyAmendEnd - MappingKeyAmend1 + 1),

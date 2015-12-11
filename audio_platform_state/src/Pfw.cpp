@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,15 +85,20 @@ public:
           mTag(tagName)
     {}
 
-    virtual void log(bool isWarning, const string &log)
+    virtual void info(const string &log)
     {
         const static string format = "-Instance: ";
 
-        if (isWarning) {
-            Log::Warning() << mTag << format << log;
-        } else if (mVerbose == "true") {
+        if (mVerbose == "true") {
             Log::Debug() << mTag << format << log;
         }
+    }
+
+    virtual void warning(const string &log)
+    {
+        const static string format = "-Instance: ";
+
+        Log::Warning() << mTag << format << log;
     }
 };
 

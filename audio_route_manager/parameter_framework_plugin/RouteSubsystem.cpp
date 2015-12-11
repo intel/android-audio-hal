@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2016 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -52,8 +52,8 @@ const char *const RouteSubsystem::mRouteComponentName = "Route";
 const char *const RouteSubsystem::mStreamRouteComponentName = "StreamRoute";
 const char *const RouteSubsystem::mCriterionComponentName = "Criterion";
 
-RouteSubsystem::RouteSubsystem(const std::string &name)
-    : CSubsystem(name),
+RouteSubsystem::RouteSubsystem(const std::string &name, core::log::Logger &logger)
+    : CSubsystem(name, logger),
       mRouteInterface(NULL)
 {
     mRouteInterface = intel_audio::RouteManagerInstance::getRouteInterface();

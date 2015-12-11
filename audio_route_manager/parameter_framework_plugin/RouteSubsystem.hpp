@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013-2015 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2016 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -35,7 +35,7 @@ struct IRouteInterface;
 class RouteSubsystem : public CSubsystem, private audio_comms::utilities::NonCopyable
 {
 public:
-    RouteSubsystem(const std::string &strName);
+    RouteSubsystem(const std::string &strName, core::log::Logger &logger);
 
     /**
      * Retrieve Route Manager interface.

@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2013-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,7 +49,8 @@ component_includes_dir_target := \
 
 component_static_lib := \
     libaudio_comms_utilities \
-    libaudio_comms_convert
+    libaudio_comms_convert \
+    libpfw_utility
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host)

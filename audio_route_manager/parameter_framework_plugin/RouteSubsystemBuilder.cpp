@@ -1,7 +1,7 @@
 /*
  * INTEL CONFIDENTIAL
  *
- * Copyright (c) 2013-2014 Intel Corporation All Rights Reserved.
+ * Copyright (c) 2013-2016 Intel Corporation All Rights Reserved.
  *
  * The source code contained or described herein and all documents related to
  * the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -22,16 +22,17 @@
  * express and approved by Intel in writing.
  */
 
-#include "SubsystemLibrary.h"
-#include "NamedElementBuilderTemplate.h"
+#include <Plugin.h>
+#include "LoggingElementBuilderTemplate.h"
 #include "RouteSubsystem.hpp"
 
 static const char *const ROUTE_SUBSYSTEM_NAME = "ROUTEMGR";
 extern "C"
 {
-void getROUTESubsystemBuilder(CSubsystemLibrary *subsystemLibrary)
+void PARAMETER_FRAMEWORK_PLUGIN_ENTRYPOINT_V1(CSubsystemLibrary *subsystemLibrary,
+                                              core::log::Logger &logger)
 {
     subsystemLibrary->addElementBuilder(ROUTE_SUBSYSTEM_NAME,
-                                        new TNamedElementBuilderTemplate<RouteSubsystem>());
+                                        new TLoggingElementBuilderTemplate<RouteSubsystem>(logger));
 }
 }

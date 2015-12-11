@@ -45,7 +45,8 @@ string CriterionType::getFormattedState(uint32_t value) const
 
 void CriterionType::addValuePair(int numerical, const string &literal)
 {
-    getTypeInterface()->addValuePair(numerical, literal.c_str());
+    string result;
+    getTypeInterface()->addValuePair(numerical, literal.c_str(), result);
 }
 
 bool CriterionType::hasValuePairByName(const std::string &name)
