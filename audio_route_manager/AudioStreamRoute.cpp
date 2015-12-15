@@ -84,10 +84,18 @@ android::status_t AudioStreamRoute::loadChannelMaskCapabilities()
                                         audio_channel_in_mask_from_count(channelCount);
             if (mask != AUDIO_CHANNEL_INVALID) {
                 mCapabilities.supportedChannelMasks.push_back(mask);
+                Log::Debug() << __FUNCTION__ << ": Supported channel mask 0x" << std::hex << mask;
             }
         }
     }
-    Log::Debug() << __FUNCTION__ << ": valid number of channels supported= " << channelCount;
+    if (mCapabilities.supportedChannelMasks.empty()) {
+        // Fallback on stereo channel map in case of no information retrieved from device
+        Log::Error() << __FUNCTION__ << ": No Channel info retrieved, falling back to stereo";
+        audio_channel_mask_t mask =
+                isOut() ? audio_channel_out_mask_from_count(AUDIO_CHANNEL_OUT_STEREO) :
+                          audio_channel_in_mask_from_count(AUDIO_CHANNEL_IN_STEREO);
+        mCapabilities.supportedChannelMasks.push_back(mask);
+    }
     mixer_close(mixer);
     return android::OK;
 }
