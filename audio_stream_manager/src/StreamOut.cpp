@@ -63,6 +63,22 @@ android::status_t StreamOut::setVolume(float left, float right)
     return android::OK;
 }
 
+android::status_t StreamOut::pause()
+{
+    if (!isDirect()) {
+        return android::INVALID_OPERATION;
+    }
+    return setStandby(true);
+}
+
+android::status_t StreamOut::resume()
+{
+    if (!isDirect()) {
+        return android::INVALID_OPERATION;
+    }
+    return setStandby(false);
+}
+
 status_t StreamOut::write(const void *buffer, size_t &bytes)
 {
     if (buffer == NULL) {

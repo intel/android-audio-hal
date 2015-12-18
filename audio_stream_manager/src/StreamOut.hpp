@@ -44,10 +44,10 @@ public:
     virtual android::status_t flush();
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t setCallback(stream_callback_t, void *) { return android::OK; }
-    /** @note API not implemented in our Audio HAL */
-    virtual android::status_t pause() { return android::OK; }
-    /** @note API not implemented in our Audio HAL */
-    virtual android::status_t resume() { return android::OK; }
+    /** @note API implemented in our Audio HAL only for direct streams */
+    virtual android::status_t pause();
+    /** @note API implemented in our Audio HAL only for direct streams */
+    virtual android::status_t resume();
     /** @note API not implemented in our Audio HAL */
     virtual android::status_t drain(audio_drain_type_t) { return android::OK; }
     virtual android::status_t getPresentationPosition(uint64_t &, struct timespec &) const;
