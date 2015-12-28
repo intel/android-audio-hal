@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,14 +192,14 @@ status_t CompressedStreamOut::setMuteUnsafe(bool muted, struct mixer *mixer)
     if (muted == isMuted()) {
         return android::OK;
     }
-    muted ? StreamOut::mute() : StreamOut::unMute();
+
     struct mixer_ctl *mute_ctl = mixer_get_ctl_by_name(mixer, mMixMuteCtl.c_str());
     if (!mute_ctl) {
         Log::Error() << __FUNCTION__ << ": Error opening mixerMutecontrol" << mMixMuteCtl;
         return android::BAD_VALUE;
     }
     mixer_ctl_set_value(mute_ctl, 0, muted);
-    Log::Verbose() << __FUNCTION__ << ": muting=" << isMuted();
+    Log::Verbose() << __FUNCTION__ << ": muting=" << muted;
     return android::OK;
 }
 
@@ -382,6 +382,9 @@ android::status_t CompressedStreamOut::setVolumeUnsafe(float left, float right)
         mixer_close(mixer);
         return ret;
     }
+
+    StreamOut::setVolume(left, right);
+
     if (isMuted()) {
         mixer_close(mixer);
         mIsVolumeChangeRequestPending = false;
