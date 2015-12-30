@@ -503,11 +503,8 @@ android::status_t CompressedStreamOut::write(const void *buffer, size_t &bytes)
 
 android::status_t CompressedStreamOut::getRenderPosition(uint32_t &dspFrames) const
 {
-    unsigned int avail;
-    struct timespec tstamp;
-    uint32_t calTimeMs;
-
     Mutex::Locker locker(mCodecLock);
+    unsigned int sampling_rate;
 
     dspFrames = 0;
     if (!isStarted()) {
@@ -521,12 +518,13 @@ android::status_t CompressedStreamOut::getRenderPosition(uint32_t &dspFrames) co
         return android::OK;
     }
 
-    if (compress_get_hpointer(mCompress, &avail, &tstamp) < 0) {
+    if (compress_get_tstamp(mCompress, (long unsigned int *)&dspFrames,
+                            &sampling_rate) < 0) {
         Log::Warning() << __FUNCTION__ << ": Failed Err=" << compress_get_error(mCompress);
         return -EINVAL;
     }
-    calTimeMs = (tstamp.tv_sec * 1000) + (tstamp.tv_nsec / 1000000);
-    dspFrames += calTimeMs;
+
+
     Log::Verbose() << __FUNCTION__ << ": [" << mState << "] time (ms) returned = " << dspFrames;
     return android::OK;
 }
