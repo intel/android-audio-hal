@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#define LOG_TAG "ParameterHelper/CriterionType"
+
 #include "CriterionType.hpp"
 #include "ParameterMgrPlatformConnector.h"
 #include <convert.hpp>
@@ -55,7 +57,7 @@ bool CriterionType::hasValuePairByName(const std::string &name)
 bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int &numerical) const
 {
     if (literalValue.empty()) {
-        Log::Error() << __FUNCTION__ << ": empty string given for criterion type " << getName();
+        Log::Verbose() << __FUNCTION__ << ": empty string given for criterion type " << getName();
         return false;
     }
     // First check if the literal value is a known value from the criterion type

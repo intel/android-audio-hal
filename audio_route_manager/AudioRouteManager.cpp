@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -489,8 +489,8 @@ bool AudioRouteManager::addRoute(AudioRoute *route, const string &portSrc, const
     }
     std::string mapKeyName = route->getName() + (isOut ? "_Playback" : "_Capture");
     if (mRouteMap.getElement(mapKeyName) != NULL) {
-        audio_comms::utilities::Log::Error() << __FUNCTION__ << ": route "
-                                             << mapKeyName << " already added to route list!";
+        Log::Verbose() << __FUNCTION__ << ": route "
+                       << mapKeyName << " already added to route list!";
         return false;
     }
     if (!portSrc.empty()) {
