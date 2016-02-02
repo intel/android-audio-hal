@@ -471,7 +471,8 @@ status_t Device::createAudioPatch(size_t sourcesCount,
     mPatchCollectionLock.unlock();
 
     updateParametersSync(patch.hasDevice(AUDIO_PORT_ROLE_SOURCE),
-                         patch.hasDevice(AUDIO_PORT_ROLE_SINK));
+                         patch.hasDevice(AUDIO_PORT_ROLE_SINK),
+                         handle);
     // Patch has been created, even if updateParameters failed on one or more parameters, need to
     // return OK to AudioFlinger, unless this patch will not be considered as created and will
     // never be deleted (orphans patch within Audio HAL)
@@ -500,7 +501,8 @@ status_t Device::releaseAudioPatch(audio_patch_handle_t handle)
     return android::OK;
 }
 
-status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice, bool synchronous)
+status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice,
+                                  audio_patch_handle_t lastPatch, bool synchronous)
 {
     KeyValuePairs pairs;
     // Update now the routing, i.e. the devices in input and/or output
@@ -510,7 +512,7 @@ status_t Device::updateParameters(bool updateSourceDevice, bool updateSinkDevice
     }
     if (updateSinkDevice) {
         // Sink Port update requested: it may impact output streams parameters
-        prepareStreamsParameters(AUDIO_PORT_ROLE_SOURCE, pairs);
+        prepareStreamsParameters(AUDIO_PORT_ROLE_SOURCE, pairs, lastPatch);
     }
     if (pairs.toString().empty()) {
         return android::OK;
@@ -531,20 +533,6 @@ status_t Device::setAudioPortConfig(const struct audio_port_config & /*config*/)
     return android::INVALID_OPERATION;
 }
 
-void Device::updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
-                                        uint32_t &useCaseMask, uint32_t &deviceMask,
-                                        uint32_t &requestedEffectMask)
-{
-    if (stream.isStarted() && stream.isRoutedByPolicy()) {
-        if (!stream.isMuted()) {
-            deviceMask |= stream.getDevices();
-        }
-        flagMask |= stream.getFlagMask();
-        useCaseMask |= stream.getUseCaseMask();
-        requestedEffectMask |= stream.getEffectRequested();
-    }
-}
-
 uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
 {
     uint32_t selectedDeviceMask = streamDeviceMask;
@@ -558,7 +546,8 @@ uint32_t Device::selectOutputDevices(uint32_t streamDeviceMask)
     return selectedDeviceMask;
 }
 
-void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs)
+void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs,
+                                      audio_patch_handle_t lastPatch)
 {
     audio_devices_t deviceMask = AUDIO_DEVICE_NONE;
     audio_devices_t internalDeviceMask = AUDIO_DEVICE_NONE;
@@ -566,6 +555,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     uint32_t streamsUseCaseMask = 0;
     uint32_t requestedEffectMask = 0;
 
+    bool forceDeviceFromLastPatch = (lastPatch != AUDIO_PATCH_HANDLE_NONE);
     // As Klockwork complains about potential dead leack, avoid using Locker helper here.
     mPatchCollectionLock.lock();
 
@@ -596,8 +586,17 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         // Update device(s) info from patch to stream involved in this patch
         stream->setDevices(patch.getDevices(devicePortRole));
 
-        updateParametersFromStream(*stream, streamsFlagMask, streamsUseCaseMask, deviceMask,
-                                   requestedEffectMask);
+        if (forceDeviceFromLastPatch && (lastPatch == patch.getHandle())) {
+            deviceMask |= stream->getDevices();
+        }
+        if (stream->isStarted() && stream->isRoutedByPolicy()) {
+            if (!stream->isMuted() && !forceDeviceFromLastPatch) {
+                deviceMask |= stream->getDevices();
+            }
+            streamsFlagMask |= stream->getFlagMask();
+            streamsUseCaseMask |= stream->getUseCaseMask();
+            requestedEffectMask |= stream->getEffectRequested();
+        }
     }
 
     if (streamPortRole == AUDIO_PORT_ROLE_SOURCE) {

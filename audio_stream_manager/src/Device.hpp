@@ -189,6 +189,7 @@ private:
         // If a stream is a source mix port: we need to update parameters related to sink devices.
         return updateParameters(streamPortRole == AUDIO_PORT_ROLE_SINK,
                                 streamPortRole == AUDIO_PORT_ROLE_SOURCE,
+                                AUDIO_PATCH_HANDLE_NONE,
                                 isSynchronous);
     }
 
@@ -205,9 +206,10 @@ private:
      *
      * @return OK if successfully updated streams parameters, error code otherwise.
      */
-    android::status_t updateParametersSync(bool updateSourceDevice, bool updateSinkDevice)
+    android::status_t updateParametersSync(bool updateSourceDevice, bool updateSinkDevice,
+                                           audio_patch_handle_t lastPatch = AUDIO_PATCH_HANDLE_NONE)
     {
-        return updateParameters(updateSourceDevice, updateSinkDevice, true);
+        return updateParameters(updateSourceDevice, updateSinkDevice, lastPatch, true);
     }
 
     /**
@@ -220,6 +222,7 @@ private:
      * @return OK if successfully updated streams parameters, error code otherwise.
      */
     android::status_t updateParameters(bool updateSourceDevice, bool updateSinkDevice,
+                                       audio_patch_handle_t handle,
                                        bool isSynchronous = false);
 
     /**
@@ -228,20 +231,8 @@ private:
      * @param[in] streamPortRole direction of stream from which the events is issued.
      * @param[out] pairs: parameters as collection of {key,value} pairs.
      */
-    void prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs);
-
-    /**
-     * Extract from a given stream the parameters that needs to be updated.
-     *
-     * @param[in] stream for which the request apply to.
-     * @param[in|out] flagMask of the active streams.
-     * @param[in|out] useCaseMask of the active streams.
-     * @param[in|out] devicesMask involved in stream operations.
-     * @param[in|out] requestedEffectMask of the active streams.
-     */
-    void updateParametersFromStream(const Stream &stream, uint32_t &flagMask,
-                                    uint32_t &useCaseMask, uint32_t &deviceMask,
-                                    uint32_t &requestedEffectMask);
+    void prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValuePairs &pairs,
+                                  audio_patch_handle_t handle = AUDIO_PATCH_HANDLE_NONE);
 
     /**
      * Selects the output devices from streams devices and internal devices. It also take into
