@@ -28,7 +28,7 @@
 #include <AudioBand.h>
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
-#include <NonCopyable.hpp>
+#include <AudioNonCopyable.hpp>
 #include <Mutex.hpp>
 #include <AudioCommsAssert.hpp>
 #include <string>

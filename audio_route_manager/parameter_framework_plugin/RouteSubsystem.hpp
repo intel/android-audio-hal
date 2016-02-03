@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Subsystem.h"
-#include <NonCopyable.hpp>
+#include <AudioNonCopyable.hpp>
 
 namespace intel_audio
 {
