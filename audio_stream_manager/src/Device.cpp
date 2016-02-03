@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 
 #include "Device.hpp"
 #include "AudioConversion.hpp"
-#include "AudioParameterHandler.hpp"
 #include "StreamIn.hpp"
 #include "StreamOut.hpp"
 #include "CompressedStreamOut.hpp"
@@ -41,12 +40,9 @@ using audio_comms::utilities::Mutex;
 
 namespace intel_audio
 {
-const char *const Device::mRestartingKey = "restarting";
-const char *const Device::mRestartingRequested = "true";
 
 Device::Device()
     : mEchoReference(NULL),
-      mAudioParameterHandler(new AudioParameterHandler()),
       mStreamInterface(NULL),
       mPrimaryOutput(NULL)
 {
@@ -72,8 +68,6 @@ Device::Device()
 Device::~Device()
 {
     mStreamInterface->stopService();
-    // Remove parameter handler
-    delete mAudioParameterHandler;
 }
 
 status_t Device::initCheck() const
@@ -278,28 +272,7 @@ status_t Device::setParameters(const string &keyValuePairs)
 {
     Log::Verbose() << __FUNCTION__ << ": key value pair " << keyValuePairs;
     KeyValuePairs pairs(keyValuePairs);
-    string restart;
-    string key(mRestartingKey);
-    status_t status = pairs.get(key, restart);
-    if (status == android::OK) {
-        pairs.remove(key);
-        if (restart == mRestartingRequested) {
-            // Replace the restarting key with all previously backuped {keys,value} pairs in order
-            // to restore the previous HAL state
-            Log::Info() << __FUNCTION__
-                        << ": Restore audio parameters as mediaserver is restarted param="
-                        << mAudioParameterHandler->getParameters();
-            KeyValuePairs backupedPairs(mAudioParameterHandler->getParameters());
-            backupedPairs.add(pairs.toString());
-            pairs = backupedPairs;
-        }
-    }
-    status = mStreamInterface->setParameters(pairs.toString());
-    if (status == android::OK) {
-        Log::Verbose() << __FUNCTION__
-                       << ": saving the parameters to recover in case of media server crash";
-        mAudioParameterHandler->saveParameters(pairs.toString());
-    }
+    status_t status = mStreamInterface->setParameters(pairs.toString());
     return status;
 }
 

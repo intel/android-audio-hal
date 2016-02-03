@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2013-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,8 +32,7 @@ component_src_files :=  \
     src/StreamOut.cpp \
     src/CompressedStreamOut.cpp \
     src/Patch.cpp \
-    src/Port.cpp \
-    src/AudioParameterHandler.cpp
+    src/Port.cpp
 
 component_includes_dir := \
     $(TARGET_OUT_HEADERS)/hal_audio_dump \

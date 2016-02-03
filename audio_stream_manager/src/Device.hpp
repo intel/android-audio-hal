@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ class StreamOut;
 class StreamIn;
 class Stream;
 class AudioPlatformState;
-class AudioParameterHandler;
 
 class Device : public DeviceInterface,
                public PatchInterface,
@@ -378,8 +377,6 @@ private:
 
     struct echo_reference_itfe *mEchoReference; /**< Echo reference to use for AEC effect. */
 
-    AudioParameterHandler *mAudioParameterHandler; /**< backup and restore audio parameters. */
-
     IStreamInterface *mStreamInterface; /**< Route Manager Stream Interface pointer. */
 
     audio_mode_t mMode; /**< Android telephony mode. */
@@ -391,8 +388,6 @@ private:
 
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
-    static const char *const mRestartingKey; /**< Restart key parameter. */
-    static const char *const mRestartingRequested; /**< Restart key parameter value. */
 
     static const uint32_t mRecordingBufferTimeUsec = 20000;
 
