@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,5 +46,11 @@ const std::string &Parameters::gKeyLpalDevice = "lpal_device";
 const std::string &Parameters::gkeyAlwaysListeningRouteOn = "on";
 
 const std::string &Parameters::gkeyAlwaysListeningRouteOff = "off";
+
+const std::string &Parameters::gkeyContextAwarenessRouteStatus = "context_awareness_status";
+
+const std::string &Parameters::gkeyContextAwarenessRouteOn = "on";
+
+const std::string &Parameters::gkeyContextAwarenessRouteOff = "off";
 
 }   // namespace intel_audio

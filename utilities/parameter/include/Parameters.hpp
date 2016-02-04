@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,11 @@ public:
     static const std::string &gKeyLpalDevice;
     static const std::string &gkeyAlwaysListeningRouteOn;
     static const std::string &gkeyAlwaysListeningRouteOff;
+
+    /** Context Awareness Parameters Keys */
+    static const std::string &gkeyContextAwarenessRouteStatus;
+    static const std::string &gkeyContextAwarenessRouteOn;
+    static const std::string &gkeyContextAwarenessRouteOff;
 };
 
 }   // namespace intel_audio
