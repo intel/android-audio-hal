@@ -48,8 +48,7 @@ public:
     virtual android::status_t setDevice(audio_devices_t device);
 
     // From AudioBufferProvider
-    virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer,
-                                            int64_t presentationTimeStamp = kInvalidPTS);
+    virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer);
 
     /** @note API not implemented in input stream*/
     virtual void releaseBuffer(android::AudioBufferProvider::Buffer */* buffer */) {}

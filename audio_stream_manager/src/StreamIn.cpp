@@ -65,8 +65,7 @@ status_t StreamIn::set(audio_config_t &config)
     return Stream::set(config);
 }
 
-status_t StreamIn::getNextBuffer(AudioBufferProvider::Buffer *buffer,
-                                 int64_t /* presentationTimeStamp */)
+status_t StreamIn::getNextBuffer(AudioBufferProvider::Buffer *buffer)
 {
     size_t maxFrames = getBufferSizeInFrames();
 

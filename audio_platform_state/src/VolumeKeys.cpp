@@ -55,8 +55,8 @@ int VolumeKeys::wakeup(bool isEnabled)
                      << fd << ")";
         return -1;
     }
-    rc = write(fd, mKeyVolumeDown, sizeof(mKeyVolumeDown));
-    rc += write(fd, mKeyVolumeUp, sizeof(mKeyVolumeUp));
+    rc = write(fd, mKeyVolumeDown, strlen(mKeyVolumeDown) + 1);
+    rc += write(fd, mKeyVolumeUp, strlen(mKeyVolumeUp) + 1);
     close(fd);
     if (rc != (sizeof(mKeyVolumeDown) + sizeof(mKeyVolumeUp))) {
         Log::Error() << __FUNCTION__ << ": " << (isEnabled ? "enable" : "disable")
