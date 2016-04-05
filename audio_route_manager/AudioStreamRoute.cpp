@@ -56,6 +56,7 @@ android::status_t AudioStreamRoute::loadChannelMaskCapabilities()
 
     int cardIndex = AudioUtils::getCardIndexByName(getCardName());
     if (cardIndex < 0) {
+        Log::Error() << __FUNCTION__ << ": Failed to get Card Name index " << cardIndex;
         return android::BAD_VALUE;
     }
     mixer = mixer_open(cardIndex);
@@ -92,8 +93,8 @@ android::status_t AudioStreamRoute::loadChannelMaskCapabilities()
         // Fallback on stereo channel map in case of no information retrieved from device
         Log::Error() << __FUNCTION__ << ": No Channel info retrieved, falling back to stereo";
         audio_channel_mask_t mask =
-                isOut() ? audio_channel_out_mask_from_count(AUDIO_CHANNEL_OUT_STEREO) :
-                          audio_channel_in_mask_from_count(AUDIO_CHANNEL_IN_STEREO);
+                isOut() ? AUDIO_CHANNEL_OUT_STEREO :
+                          AUDIO_CHANNEL_IN_STEREO;
         mCapabilities.supportedChannelMasks.push_back(mask);
     }
     mixer_close(mixer);

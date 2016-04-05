@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,13 +90,13 @@ int lpeGetDescriptor(const effect_uuid_t *uuid, effect_descriptor_t *descriptor)
  * and the fields of this data structure must begin with audio_effect_library_t
  */
 audio_effect_library_t AUDIO_EFFECT_LIBRARY_INFO_SYM = {
-    tag : AUDIO_EFFECT_LIBRARY_TAG,
-    version : EFFECT_LIBRARY_API_VERSION,
-    name : "Intel LPE Preprocessing Library",
-    implementor : "Intel",
-    create_effect : lpeCreate,
-    release_effect : lpeRelease,
-    get_descriptor : lpeGetDescriptor
+    .tag = AUDIO_EFFECT_LIBRARY_TAG,
+    .version = EFFECT_LIBRARY_API_VERSION,
+    .name = "Intel LPE Preprocessing Library",
+    .implementor = "Intel",
+    .create_effect = lpeCreate,
+    .release_effect = lpeRelease,
+    .get_descriptor = lpeGetDescriptor
 };
 
 } // extern "C"
