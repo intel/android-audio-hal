@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2015
+# Copyright (C) Intel 2015-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 LOCAL_PATH := $(call my-dir)
 
-PFW_CORE := external/parameter-framework/core
+PFW_CORE := vendor/intel/audio/parameter-framework
 BUILD_PFW_SETTINGS := $(PFW_CORE)/support/android/build_pfw_settings.mk
 PFW_DEFAULT_SCHEMAS_DIR := $(PFW_CORE)/Schemas
 PFW_SCHEMAS_DIR := $(PFW_DEFAULT_SCHEMAS_DIR)
