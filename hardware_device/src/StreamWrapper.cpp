@@ -124,6 +124,7 @@ InputStreamWrapper::InputStreamWrapper(StreamInInterface *cppInputStream)
     stream.set_gain = wrapSetGain;
     stream.read = wrapRead;
     stream.get_input_frames_lost = wrapGetInputFramesLost;
+    stream.get_capture_position = NULL;
 }
 
 int InputStreamWrapper::wrapSetGain(audio_stream_in_t *stream, float gain)
