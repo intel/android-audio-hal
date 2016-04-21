@@ -586,11 +586,13 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
         // Update device(s) info from patch to stream involved in this patch
         stream->setDevices(patch.getDevices(devicePortRole));
 
-        if (forceDeviceFromLastPatch && (lastPatch == patch.getHandle())) {
+        if (forceDeviceFromLastPatch && (lastPatch == patch.getHandle()) &&
+            !(stream->getDevices() & AUDIO_DEVICE_OUT_AUX_DIGITAL)) {
             deviceMask |= stream->getDevices();
         }
         if (stream->isStarted() && stream->isRoutedByPolicy()) {
-            if (!stream->isMuted() && !forceDeviceFromLastPatch) {
+            if ((!stream->isMuted() && !forceDeviceFromLastPatch) ||
+                deviceMask == AUDIO_DEVICE_NONE) {
                 deviceMask |= stream->getDevices();
             }
             streamsFlagMask |= stream->getFlagMask();
