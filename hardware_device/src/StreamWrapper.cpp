@@ -124,7 +124,7 @@ InputStreamWrapper::InputStreamWrapper(StreamInInterface *cppInputStream)
     stream.set_gain = wrapSetGain;
     stream.read = wrapRead;
     stream.get_input_frames_lost = wrapGetInputFramesLost;
-    stream.get_capture_position = NULL;
+    stream.get_capture_position = wrapGetCapturePosition;
 }
 
 int InputStreamWrapper::wrapSetGain(audio_stream_in_t *stream, float gain)
@@ -141,6 +141,15 @@ ssize_t InputStreamWrapper::wrapRead(audio_stream_in_t *stream, void *buffer, si
 uint32_t InputStreamWrapper::wrapGetInputFramesLost(audio_stream_in_t *stream)
 {
     return getCppStream(stream).getInputFramesLost();
+}
+
+int InputStreamWrapper::wrapGetCapturePosition(const audio_stream_in *stream,
+                                               int64_t *frames, int64_t *time)
+{
+    if (frames == NULL || time == NULL) {
+        return -EINVAL;
+    }
+    return static_cast<int>(getCppStream(stream).getCapturePosition(*frames, *time));
 }
 
 

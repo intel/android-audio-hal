@@ -45,6 +45,7 @@ public:
     virtual int setGain(float /* gain */) { return android::OK; }
     virtual android::status_t read(void *buffer, size_t &bytes);
     virtual uint32_t getInputFramesLost() const;
+    virtual android::status_t getCapturePosition(int64_t &frames, int64_t &time);
     virtual android::status_t setDevice(audio_devices_t device);
 
     // From AudioBufferProvider
@@ -306,6 +307,8 @@ private:
     unsigned int mFramesLost;
 
     ssize_t mFramesIn; /**< frames available in stream input buffer. */
+
+    ssize_t mFramesInCount; /**< Total frames read. */
 
     /**
      * This variable represents the number of frames of in mProcessingBuffer.

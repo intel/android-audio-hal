@@ -39,6 +39,7 @@ StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
     : Stream(parent, handle, flagMask),
       mFramesLost(0),
       mFramesIn(0),
+      mFramesInCount(0),
       mProcessingFramesIn(0),
       mProcessingBuffer(NULL),
       mProcessingBufferSizeInFrames(0),
@@ -335,6 +336,7 @@ status_t StreamIn::read(void *buffer, size_t &bytes)
         return -EBADFD;
     }
     bytes = streamSampleSpec().convertFramesToBytes(received_frames);
+    mFramesInCount += received_frames;
 
     mStreamLock.unlock();
     return android::OK;
@@ -357,6 +359,21 @@ unsigned int StreamIn::getInputFramesLost() const
     // returning the current value by this function call.
     mutable_this->resetFramesLost();
     return count;
+}
+
+status_t StreamIn::getCapturePosition(int64_t &frames, int64_t &time)
+{
+    struct timespec tstamp={0,0};
+    if(clock_gettime(CLOCK_MONOTONIC, &tstamp) != 0)
+    {
+        Log::Error() << __FUNCTION__ << ": Error getting Timestamp";
+        return android::INVALID_OPERATION;
+    }
+    mStreamLock.readLock();
+    frames = (int64_t) mFramesInCount;
+    mStreamLock.unlock();
+    time = (int64_t)(tstamp.tv_sec * 1000000000) + tstamp.tv_nsec;
+    return android::OK;
 }
 
 

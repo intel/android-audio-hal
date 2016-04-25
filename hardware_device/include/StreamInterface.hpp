@@ -307,6 +307,23 @@ public:
      *         last call of this function.
      */
     virtual uint32_t getInputFramesLost() const = 0;
+
+
+    /**
+     * Return a recent count of the number of audio frames received and
+     * the clock time associated with that frame count.
+     *
+     * @param frames is the total frame count received. This should be as early in
+     *        the capture pipeline as possible. In general,
+     *        frames should be non-negative and should not go "backwards".
+     *
+     * @param time is the clock MONOTONIC time when frames was measured. In general,
+     *     time should be a positive quantity and should not go "backwards".
+     *
+     * @return OK if succeed, error code else: -ENOSYS if the device is not
+     *         ready/available, or -EINVAL if the arguments are null or otherwise invalid.
+     */
+    virtual android::status_t getCapturePosition(int64_t &frames, int64_t &time) = 0;
 };
 
 } // namespace intel_audio

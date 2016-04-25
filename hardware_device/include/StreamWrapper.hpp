@@ -191,6 +191,8 @@ private:
     static int wrapSetGain(audio_stream_in_t *stream, float gain);
     static ssize_t wrapRead(audio_stream_in_t *stream, void *buffer, size_t bytes);
     static uint32_t wrapGetInputFramesLost(audio_stream_in_t *stream);
+    static int wrapGetCapturePosition(const audio_stream_in *stream,
+                                               int64_t *frames, int64_t *time);
 };
 
 template <class Trait>
