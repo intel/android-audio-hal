@@ -715,7 +715,7 @@ status_t StreamIn::pushEchoReference(ssize_t frames, effect_handle_t preprocesso
 
     audio_buffer_t buf;
 
-    buf.frameCount = mReferenceFramesIn;
+    buf.frameCount = frames;
     buf.s16 = mReferenceBuffer;
 
     status_t processingReturn = (*preprocessor)->process_reverse(preprocessor,
