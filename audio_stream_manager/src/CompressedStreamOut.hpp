@@ -105,6 +105,8 @@ public:
 
     virtual android::status_t getRenderPosition(uint32_t &dspFrames) const;
 
+    virtual android::status_t getPresentationPosition(uint64_t &frames, struct timespec &timestamp) const;
+
     virtual android::status_t setCallback(stream_callback_t, void *);
 
     virtual android::status_t drain(audio_drain_type_t);

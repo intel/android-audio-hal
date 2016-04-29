@@ -529,6 +529,16 @@ android::status_t CompressedStreamOut::getRenderPosition(uint32_t &dspFrames) co
     return android::OK;
 }
 
+android::status_t CompressedStreamOut::getPresentationPosition(uint64_t &frames, struct timespec &timestamp) const
+{
+    uint32_t dsp_frames;
+
+    getRenderPosition(dsp_frames);
+
+    frames = (uint64_t) dsp_frames;
+    clock_gettime(CLOCK_MONOTONIC, &timestamp);
+    return android::OK;
+}
 
 status_t CompressedStreamOut::setCallback(stream_callback_t callback, void *cookie)
 {
