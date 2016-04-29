@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,13 @@ private:
     {
 
         Left = 0,
-        Right
+        Right,
+        BackLeft,
+        BackRight
     };
+    static const size_t mono = 1;
+    static const size_t stereo = 2;
+    static const size_t quad = 4;
 
 public:
     /**
@@ -69,7 +74,7 @@ private:
     android::status_t configure();
 
     /**
-     * Remap from stereo to mono in typed format.
+     * Remap from X channels to mono in typed format.
      *
      * Convert a stereo source into a mono destination in typed format.
      *
@@ -83,13 +88,13 @@ private:
      * @return error code.
      */
     template <typename type>
-    android::status_t convertStereoToMono(const void *src,
-                                          void *dst,
-                                          const size_t inFrames,
-                                          size_t *outFrames);
+    android::status_t convertMultiToMono(const void *src,
+                                         void *dst,
+                                         const size_t inFrames,
+                                         size_t *outFrames);
 
     /**
-     * Remap from mono to stereo in typed format.
+     * Remap from mono to X channels in typed format.
      *
      * Convert a mono source into a stereo destination in typed format.
      *
@@ -103,7 +108,19 @@ private:
      * @return error code.
      */
     template <typename type>
-    android::status_t convertMonoToStereo(const void *src,
+    android::status_t convertMonoToMulti(const void *src,
+                                         void *dst,
+                                         const size_t inFrames,
+                                         size_t *outFrames);
+
+    template <typename type>
+    android::status_t convertStereoToQuad(const void *src,
+                                          void *dst,
+                                          const size_t inFrames,
+                                          size_t *outFrames);
+
+    template <typename type>
+    android::status_t convertQuadToStereo(const void *src,
                                           void *dst,
                                           const size_t inFrames,
                                           size_t *outFrames);

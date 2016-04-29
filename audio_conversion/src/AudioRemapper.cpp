@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,74 +69,155 @@ android::status_t AudioRemapper::configure()
 {
     formatSupported<type>();
 
-    if (mSsSrc.isMono() && mSsDst.isStereo()) {
-
-        mConvertSamplesFct =
-            static_cast<SampleConverter>(&AudioRemapper::convertMonoToStereo<type> );
-    } else if (mSsSrc.isStereo() && mSsDst.isMono()) {
-
-        mConvertSamplesFct =
-            static_cast<SampleConverter>(&AudioRemapper::convertStereoToMono<type> );
-    } else if (mSsSrc.isStereo() && mSsDst.isStereo()) {
-
-        // Iso channel, checks the channels policy
-        if (!SampleSpec::isSampleSpecItemEqual(ChannelCountSampleSpecItem, mSsSrc, mSsDst)) {
-
+    switch (mSsSrc.getChannelCount()) {
+    case mono:
+        switch (mSsDst.getChannelCount()) {
+        case stereo:
+        case quad:
             mConvertSamplesFct =
-                static_cast<SampleConverter>(&AudioRemapper::convertChannelsPolicyInStereo<type> );
+                static_cast<SampleConverter>(&AudioRemapper::convertMonoToMulti<type> );
+            return OK;
         }
-    } else {
-
         return INVALID_OPERATION;
-    }
+    case stereo:
+        switch (mSsDst.getChannelCount()) {
+        case mono:
+            mConvertSamplesFct =
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiToMono<type> );
+            return OK;
+        case stereo:
+            // Iso channel, checks the channels policy
+            if (!SampleSpec::isSampleSpecItemEqual(ChannelCountSampleSpecItem, mSsSrc, mSsDst)) {
 
-    return OK;
+                mConvertSamplesFct =
+                    static_cast<SampleConverter>(&AudioRemapper::convertChannelsPolicyInStereo<type> );
+                return OK;
+            }
+            return INVALID_OPERATION;
+        case quad:
+            mConvertSamplesFct =
+                static_cast<SampleConverter>(&AudioRemapper::convertStereoToQuad<type> );
+            return OK;
+        }
+        return INVALID_OPERATION;
+
+    case quad:
+        switch (mSsDst.getChannelCount()) {
+        case mono:
+            mConvertSamplesFct =
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiToMono<type> );
+            return OK;
+        case stereo:
+            mConvertSamplesFct =
+                static_cast<SampleConverter>(&AudioRemapper::convertQuadToStereo<type> );
+            return OK;
+        }
+    }
+    return INVALID_OPERATION;
 }
 
 template <typename type>
-status_t AudioRemapper::convertStereoToMono(const void *src,
-                                            void *dst,
-                                            const size_t inFrames,
-                                            size_t *outFrames)
+status_t AudioRemapper::convertMultiToMono(const void *src, void *dst, const size_t inFrames,
+                                           size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
-    uint32_t srcChannels = mSsSrc.getChannelCount();
-    size_t frames;
+    size_t srcChannels = mSsSrc.getChannelCount();
 
-    for (frames = 0; frames < inFrames; frames++) {
-
+    for (size_t frames = 0; frames < inFrames; frames++) {
         dstTyped[frames] = getAveragedSrcFrame<type>(&srcTyped[srcChannels * frames]);
     }
-
     // Transformation is "iso" frames
     *outFrames = inFrames;
     return NO_ERROR;
 }
 
 template <typename type>
-status_t AudioRemapper::convertMonoToStereo(const void *src,
-                                            void *dst,
-                                            const size_t inFrames,
-                                            size_t *outFrames)
+status_t AudioRemapper::convertMonoToMulti(const void *src, void *dst, const size_t inFrames,
+                                           size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
-    size_t frames = 0;
-    uint32_t dstChannels = mSsDst.getChannelCount();
+    size_t dstChannels = mSsDst.getChannelCount();
 
-    for (frames = 0; frames < inFrames; frames++) {
-
-        uint32_t channels;
-        for (channels = 0; channels < dstChannels; channels++) {
-
+    for (size_t frames = 0; frames < inFrames; frames++) {
+        for (size_t channels = 0; channels < dstChannels; channels++) {
             if (mSsDst.getChannelsPolicy(channels) != SampleSpec::Ignore) {
-
                 dstTyped[dstChannels * frames + channels] = srcTyped[frames];
             }
         }
     }
+    // Transformation is "iso" frames
+    *outFrames = inFrames;
+    return NO_ERROR;
+}
 
+template <typename type>
+status_t AudioRemapper::convertStereoToQuad(const void *src, void *dst, const size_t inFrames,
+                                            size_t *outFrames)
+{
+    const type *srcTyped = static_cast<const type *>(src);
+    type *dstTyped = static_cast<type *>(dst);
+    size_t srcChannels = mSsSrc.getChannelCount();
+    size_t dstChannels = mSsDst.getChannelCount();
+
+    for (size_t frames = 0; frames < inFrames; frames++) {
+        size_t srcIndex = srcChannels * frames;
+        size_t dstIndex = dstChannels * frames;
+
+        dstTyped[dstIndex + Left] = srcTyped[Left + srcIndex];
+        dstTyped[dstIndex + Right] = srcTyped[Right + srcIndex];
+        dstTyped[dstIndex + BackLeft] = srcTyped[Left + srcIndex];
+        dstTyped[dstIndex + BackRight] = srcTyped[Right + srcIndex];
+    }
+    // Transformation is "iso" frames
+    *outFrames = inFrames;
+    return NO_ERROR;
+}
+
+template <typename type>
+status_t AudioRemapper::convertQuadToStereo(const void *src, void *dst, const size_t inFrames,
+                                            size_t *outFrames)
+{
+    const type *srcTyped = static_cast<const type *>(src);
+    type *dstTyped = static_cast<type *>(dst);
+    size_t srcChannels = mSsSrc.getChannelCount();
+    size_t dstChannels = mSsDst.getChannelCount();
+
+    for (size_t frames = 0; frames < inFrames; frames++) {
+        size_t srcIndex = srcChannels * frames;
+        size_t dstIndex = dstChannels * frames;
+
+        type dstRight = 0;
+        size_t validSrcRightChannels = 0;
+        if (mSsSrc.getChannelsPolicy(srcIndex + Right) != SampleSpec::Ignore) {
+            dstRight += srcTyped[srcIndex + Right];
+            validSrcRightChannels++;
+        }
+        if (mSsSrc.getChannelsPolicy(srcIndex + BackRight) != SampleSpec::Ignore) {
+            dstRight += srcTyped[srcIndex + BackRight];
+            validSrcRightChannels++;
+        }
+        if (validSrcRightChannels) {
+            dstRight = dstRight / validSrcRightChannels;
+        }
+        dstTyped[dstIndex + Right] = dstRight;
+
+        type dstLeft = 0;
+        size_t validSrcLeftChannels = 0;
+        if (mSsSrc.getChannelsPolicy(srcIndex + Left) != SampleSpec::Ignore) {
+            dstLeft += srcTyped[srcIndex + Left];
+            validSrcLeftChannels++;
+        }
+        if (mSsSrc.getChannelsPolicy(srcIndex + BackLeft) != SampleSpec::Ignore) {
+            dstLeft += srcTyped[srcIndex + BackLeft];
+            validSrcLeftChannels++;
+        }
+        if (validSrcLeftChannels) {
+            dstLeft = dstLeft / validSrcLeftChannels;
+        }
+        dstTyped[dstIndex + Left] = dstLeft;
+    }
     // Transformation is "iso" frames
     *outFrames = inFrames;
     return NO_ERROR;

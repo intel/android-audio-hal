@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,7 @@ public:
     virtual bool needReflow() const
     {
         return stillUsed() &&
-                (mRoutingStageRequested.test(Flow) || mRoutingStageRequested.test(Path));
+               (mRoutingStageRequested.test(Flow) || mRoutingStageRequested.test(Path));
     }
 
     virtual bool needRepath() const
@@ -298,7 +298,10 @@ private:
     inline bool remapperSupported(const audio_channel_mask_t mask) const
     {
         // We only support convertion to / from at most 2 channels
-        return (popcount(mask) <= 2) && (popcount(mCapabilities.getDefaultChannelMask()) <= 2);
+        const int maxChannelCountSupported =
+            audio_channel_count_from_out_mask(AUDIO_CHANNEL_OUT_QUAD);
+        return (popcount(mask) <= maxChannelCountSupported) &&
+               (popcount(mCapabilities.getDefaultChannelMask()) <= maxChannelCountSupported);
     }
 
     inline bool reformatterSupported(const audio_format_t format) const
