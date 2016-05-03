@@ -68,10 +68,10 @@ TEST(AudioUtils, formatConversion)
     // Valid Tiny formats
     EXPECT_EQ(AUDIO_FORMAT_PCM_16_BIT, AudioUtils::convertTinyToHalFormat(PCM_FORMAT_S16_LE));
     EXPECT_EQ(AUDIO_FORMAT_PCM_8_24_BIT, AudioUtils::convertTinyToHalFormat(PCM_FORMAT_S24_LE));
+    EXPECT_EQ(AUDIO_FORMAT_PCM_32_BIT, AudioUtils::convertTinyToHalFormat(PCM_FORMAT_S32_LE));
 
     // Tiny format not supported by AudioHAL
     EXPECT_EQ(AUDIO_FORMAT_INVALID, AudioUtils::convertTinyToHalFormat(PCM_FORMAT_MAX));
-    EXPECT_EQ(AUDIO_FORMAT_INVALID, AudioUtils::convertTinyToHalFormat(PCM_FORMAT_S32_LE));
 
     // Invalid Tiny format
     EXPECT_EQ(AUDIO_FORMAT_INVALID,
@@ -83,7 +83,7 @@ TEST(AudioUtils, formatConversion)
 
     // Invalid format, returns default
     EXPECT_EQ(PCM_FORMAT_S16_LE, AudioUtils::convertHalToTinyFormat(AUDIO_FORMAT_PCM_8_BIT));
-    EXPECT_EQ(PCM_FORMAT_S16_LE, AudioUtils::convertHalToTinyFormat(AUDIO_FORMAT_PCM_32_BIT));
+    EXPECT_EQ(PCM_FORMAT_S32_LE, AudioUtils::convertHalToTinyFormat(AUDIO_FORMAT_PCM_32_BIT));
     EXPECT_EQ(PCM_FORMAT_S16_LE,
               AudioUtils::convertHalToTinyFormat(static_cast<audio_format_t>(0xFFFFFFFF)));
     EXPECT_EQ(PCM_FORMAT_S16_LE,

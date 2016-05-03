@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2013-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,6 +60,7 @@ component_includes_dir_target := \
 component_static_lib := \
     libstream_static \
     libsamplespec_static \
+    libaudioconversion_static \
     libaudio_hal_utilities \
     libaudioplatformstate \
     libparametermgr_static \

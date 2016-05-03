@@ -18,6 +18,8 @@
 #pragma once
 
 #include "AudioConverter.hpp"
+#include <utility>
+#include <vector>
 
 namespace intel_audio
 {
@@ -33,9 +35,7 @@ private:
         BackLeft,
         BackRight
     };
-    static const size_t mono = 1;
-    static const size_t stereo = 2;
-    static const size_t quad = 4;
+    static const std::vector<std::pair<uint32_t, uint32_t> > mSupportedConversions;
 
 public:
     /**
@@ -45,6 +45,8 @@ public:
      *            converter is working on.
      */
     AudioRemapper(SampleSpecItem sampleSpecItem);
+
+    static bool supportRemap(uint32_t srcChannels, uint32_t dstChannels);
 
 private:
     /**

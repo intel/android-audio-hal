@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ class AudioReformatter : public AudioConverter
 
 public:
     AudioReformatter(SampleSpecItem sampleSpecItem);
+
+    static bool supportReformat(audio_format_t srcFormat, audio_format_t dstFormat);
 
 private:
     /**
@@ -62,6 +64,24 @@ private:
     /**
      * Converts (Reformats) audio samples.
      *
+     * Reformatting is made from signed 16-bits depth format to signed 32-bits depth format.
+     * S32 bit is in fact a S24 stored on 32 bits and Left Justified.
+     *
+     * @param[in]  src Source buffer containing audio samples to reformat.
+     * @param[out] dst Destination buffer for reformatted audio samples.
+     * @param[in]  inFrames number of input frames.
+     * @param[out] outFrames output frames processed.
+     *
+     * @return status NO_ERROR is always returned.
+     */
+    android::status_t convertS16toS32(const void *src,
+                                      void *dst,
+                                      const size_t inFrames,
+                                      size_t *outFrames);
+
+    /**
+     * Converts (Reformats) audio samples.
+     *
      * Reformatting is made from signed 24-bits depth format to signed 16-bits depth format.
      *
      * @param[in]  src Source buffer containing audio samples to reformat.
@@ -75,6 +95,24 @@ private:
                                             void *dst,
                                             const size_t inFrames,
                                             size_t *outFrames);
+
+    /**
+     * Converts (Reformats) audio samples.
+     *
+     * Reformatting is made from signed 32-bits depth format to signed 16-bits depth format.
+     * S32 bit is in fact a S24 stored on 32 bits and Left Justified.
+     *
+     * @param[in]  src Source buffer containing audio samples to reformat.
+     * @param[out] dst Destination buffer for reformatted audio samples.
+     * @param[in]  inFrames number of input frames.
+     * @param[out] outFrames output frames processed.
+     *
+     * @return status NO_ERROR is always returned.
+     */
+    android::status_t convertS32toS16(const void *src,
+                                      void *dst,
+                                      const size_t inFrames,
+                                      size_t *outFrames);
 
     /**
      * Used to do 8-bits right shitfs during reformatting operation.

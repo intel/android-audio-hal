@@ -18,8 +18,10 @@
 #define LOG_TAG "AudioRemapper"
 
 #include "AudioRemapper.hpp"
+#include <utilities/Log.hpp>
 
 using namespace android;
+using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
@@ -29,38 +31,50 @@ struct AudioRemapper::formatSupported<int16_t> {};
 template <>
 struct AudioRemapper::formatSupported<uint32_t> {};
 
+static const size_t mono = 1;
+static const size_t stereo = 2;
+static const size_t quad = 4;
+
+const std::vector < std::pair < uint32_t, uint32_t >> AudioRemapper::mSupportedConversions = {
+    { mono, stereo },
+    { mono, quad },
+    { stereo, stereo },
+    { stereo, mono },
+    { stereo, quad },
+    { quad, mono },
+    { quad, stereo }
+};
+
 AudioRemapper::AudioRemapper(SampleSpecItem sampleSpecItem)
     : AudioConverter(sampleSpecItem)
 {
+}
+
+bool AudioRemapper::supportRemap(uint32_t srcChannels, uint32_t dstChannels)
+{
+    for (auto &candidate : mSupportedConversions) {
+        if (candidate.first == srcChannels && dstChannels == candidate.second) {
+            return true;
+        }
+    }
+    return false;
 }
 
 status_t AudioRemapper::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)
 {
     status_t ret = AudioConverter::configure(ssSrc, ssDst);
     if (ret != NO_ERROR) {
-
         return ret;
     }
-
     switch (ssSrc.getFormat()) {
-
     case AUDIO_FORMAT_PCM_16_BIT:
-
-        ret = configure<int16_t>();
-        break;
-
+        return configure<int16_t>();
     case AUDIO_FORMAT_PCM_8_24_BIT:
-
-        ret = configure<uint32_t>();
-        break;
-
+    case AUDIO_FORMAT_PCM_32_BIT:
+        return configure<uint32_t>();
     default:
-
-        ret = INVALID_OPERATION;
-        break;
+        return INVALID_OPERATION;
     }
-
-    return ret;
 }
 
 
@@ -68,6 +82,11 @@ template <typename type>
 android::status_t AudioRemapper::configure()
 {
     formatSupported<type>();
+
+    if (not supportRemap(mSsSrc.getChannelCount(), mSsDst.getChannelCount())) {
+        Log::Error() << __FUNCTION__ << ": remapper not available";
+        return INVALID_OPERATION;
+    }
 
     switch (mSsSrc.getChannelCount()) {
     case mono:

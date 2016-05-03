@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,9 +77,8 @@ public:
      *
      * @param[in] format in Tiny alsa domain.
      *
-     * @return format in HAL domain, note that AUDIO_FORMAT_PCM_8_24_BIT of tiny alsa is mapped on
-     *              PCM_FORMAT_S32_LE of Audio HAL.
-     *              It returns AUDIO_FORMAT_INVALID in case of unsupported Tiny format.
+     * @return format in HAL (aka Android) domain.
+     *         It returns AUDIO_FORMAT_INVALID in case of unsupported Tiny format.
      */
     static audio_format_t convertTinyToHalFormat(pcm_format format);
 
@@ -88,9 +87,8 @@ public:
      *
      * @param[in] format in HAL domain.
      *
-     * @return format in HAL domain, note that AUDIO_FORMAT_PCM_8_24_BIT of AudioHAL is mapped on
-     *              PCM_FORMAT_S32_LE of Tiny alsa. It returns PCM_FORMAT_S16_LE format in case of
-     *              unrecognized tiny alsa format.
+     * @return format in tiny alsa domain.
+     *         It returns PCM_FORMAT_S16_LE format in case of unrecognized tiny alsa format.
      */
     static pcm_format convertHalToTinyFormat(audio_format_t format);
 

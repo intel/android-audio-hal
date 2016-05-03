@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,9 @@ audio_format_t AudioUtils::convertTinyToHalFormat(pcm_format format)
     case PCM_FORMAT_S24_LE:
         convFormat = AUDIO_FORMAT_PCM_8_24_BIT;
         break;
+    case PCM_FORMAT_S32_LE:
+        convFormat = AUDIO_FORMAT_PCM_32_BIT;
+        break;
     default:
         Log::Error() << __FUNCTION__ << ": format not recognized";
         convFormat = AUDIO_FORMAT_INVALID;
@@ -98,6 +101,9 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
         break;
     case AUDIO_FORMAT_PCM_8_24_BIT:
         convFormat = PCM_FORMAT_S24_LE; /* PCM_FORMAT_S24_LE is 24-bits in 4-bytes */
+        break;
+    case AUDIO_FORMAT_PCM_32_BIT:
+        convFormat = PCM_FORMAT_S32_LE;
         break;
     default:
         Log::Error() << __FUNCTION__ << ": format not recognized";

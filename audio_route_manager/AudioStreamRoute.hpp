@@ -21,6 +21,7 @@
 #include "AudioCapabilities.hpp"
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
+#include <AudioConversion.hpp>
 #include <IoStream.hpp>
 #include <list>
 #include <utils/Errors.h>
@@ -297,24 +298,27 @@ private:
 
     inline bool remapperSupported(const audio_channel_mask_t mask) const
     {
-        // We only support convertion to / from at most 2 channels
-        const int maxChannelCountSupported =
-            audio_channel_count_from_out_mask(AUDIO_CHANNEL_OUT_QUAD);
-        return (popcount(mask) <= maxChannelCountSupported) &&
-               (popcount(mCapabilities.getDefaultChannelMask()) <= maxChannelCountSupported);
+        uint32_t srcChannels = isOut() ?
+                    audio_channel_count_from_out_mask(mask) :
+                    audio_channel_count_from_in_mask(mCapabilities.getDefaultChannelMask());
+        uint32_t dstChannels = isOut() ?
+                    audio_channel_count_from_out_mask(mCapabilities.getDefaultChannelMask()) :
+                    audio_channel_count_from_in_mask(mask);
+        return AudioConversion::supportRemap(srcChannels, dstChannels);
     }
 
     inline bool reformatterSupported(const audio_format_t format) const
     {
-        // We only support convertion to/from S16 from/to S8_24 respectively
-        return ((format == AUDIO_FORMAT_PCM_16_BIT) || (format == AUDIO_FORMAT_PCM_8_24_BIT)) &&
-               ((mCapabilities.getDefaultFormat() == AUDIO_FORMAT_PCM_16_BIT) ||
-                (mCapabilities.getDefaultFormat() == AUDIO_FORMAT_PCM_8_24_BIT));
+        audio_format_t srcFormat = isOut() ? format : mCapabilities.getDefaultFormat();
+        audio_format_t dstFormat = isOut() ? mCapabilities.getDefaultFormat() : format;
+        return AudioConversion::supportReformat(srcFormat, dstFormat);
     }
 
     inline bool resamplerSupported(uint32_t rate) const
     {
-        return (rate != 0) && (mCapabilities.getDefaultRate() != 0);
+        uint32_t srcRate = isOut() ? rate : mCapabilities.getDefaultRate();
+        uint32_t dstRate = isOut() ? mCapabilities.getDefaultRate() : rate;
+        return AudioConversion::supportResample(srcRate, dstRate);
     }
 
     inline bool supportRate(uint32_t rate) const

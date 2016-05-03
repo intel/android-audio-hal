@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,27 @@ AudioConversion::~AudioConversion()
 
     free(mConvOutBuffer);
     mConvOutBuffer = NULL;
+}
+
+bool AudioConversion::supportConversion(const SampleSpec &ssSrc, const SampleSpec &ssDst)
+{
+    return supportReformat(ssSrc.getFormat(), ssDst.getFormat()) &&
+           supportRemap(ssSrc.getChannelCount(), ssDst.getChannelCount()) &&
+           supportResample(ssSrc.getSampleRate(), ssDst.getSampleRate());
+}
+bool AudioConversion::supportReformat(audio_format_t srcFormat, audio_format_t dstFormat)
+{
+    return AudioReformatter::supportReformat(srcFormat, dstFormat);
+}
+
+bool AudioConversion::supportRemap(uint32_t srcChannels, uint32_t dstChannels)
+{
+    return AudioRemapper::supportRemap(srcChannels, dstChannels);
+}
+
+bool AudioConversion::supportResample(uint32_t srcRate, uint32_t dstRate)
+{
+    return AudioResampler::supportResample(srcRate, dstRate);
 }
 
 status_t AudioConversion::configure(const SampleSpec &ssSrc, const SampleSpec &ssDst)

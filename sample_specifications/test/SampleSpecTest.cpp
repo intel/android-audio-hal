@@ -173,8 +173,8 @@ TEST(SampleSpec, equalOperator)
     sampleSpec5.setSampleRate(22000);
     sampleSpec5.setChannelMask(1234);
 
-    EXPECT_TRUE(sampleSpec1 == sampleSpec2);
-    EXPECT_FALSE(sampleSpec1 == sampleSpec3);
+    EXPECT_FALSE(sampleSpec1 == sampleSpec2);
+    EXPECT_TRUE(sampleSpec1 == sampleSpec3);
     EXPECT_FALSE(sampleSpec1 == sampleSpec4);
     EXPECT_FALSE(sampleSpec1 == sampleSpec5);
 }
