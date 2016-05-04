@@ -321,18 +321,9 @@ private:
         return AudioConversion::supportResample(srcRate, dstRate);
     }
 
-    inline bool supportRate(uint32_t rate) const
-    {
-        return mCapabilities.supportRate(rate) || resamplerSupported(rate);
-    }
-    inline bool supportFormat(audio_format_t format) const
-    {
-        return mCapabilities.supportFormat(format) || reformatterSupported(format);
-    }
-    inline bool supportChannelMask(audio_channel_mask_t channelMask) const
-    {
-        return mCapabilities.supportChannelMask(channelMask) || remapperSupported(channelMask);
-    }
+    bool supportRate(uint32_t rate) const;
+    bool supportFormat(audio_format_t format) const;
+    bool supportChannelMask(audio_channel_mask_t channelMask) const;
 
     /**
      * Checks if the use cases supported by this route are matching with the stream use case mask.

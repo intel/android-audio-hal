@@ -359,4 +359,28 @@ uint32_t AudioStreamRoute::getPeriodInUs() const
     return getSampleSpec().convertFramesToUsec(mConfig.periodSize);
 }
 
+inline bool AudioStreamRoute::supportRate(uint32_t rate) const
+{
+    Log::Verbose() << __FUNCTION__ << ": "
+                   << (mCapabilities.supportRate(rate) ? "supported by route" :
+                      (resamplerSupported(rate) ? "conversion supported" : "NOT SUPPORTED"));
+    return mCapabilities.supportRate(rate) || resamplerSupported(rate);
+}
+
+inline bool AudioStreamRoute::supportFormat(audio_format_t format) const
+{
+    Log::Verbose() << __FUNCTION__ << ": "
+                   << (mCapabilities.supportFormat(format) ? "supported by route" :
+                      (reformatterSupported(format) ? "conversion supported" : "NOT SUPPORTED"));
+    return mCapabilities.supportFormat(format) || reformatterSupported(format);
+}
+
+inline bool AudioStreamRoute::supportChannelMask(audio_channel_mask_t channelMask) const
+{
+    Log::Verbose() << __FUNCTION__ << ": "
+                   << (mCapabilities.supportChannelMask(channelMask) ? "supported by route" :
+                      (remapperSupported(channelMask) ? "conversion supported" : "NOT SUPPORTED"));
+    return mCapabilities.supportChannelMask(channelMask) || remapperSupported(channelMask);
+}
+
 } // namespace intel_audio
