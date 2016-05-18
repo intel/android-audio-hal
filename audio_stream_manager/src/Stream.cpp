@@ -65,8 +65,6 @@ Stream::Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask)
 
 Stream::~Stream()
 {
-    setStandby(true);
-
     delete mAudioConversion;
     delete mDumpAfterConv;
     delete mDumpBeforeConv;

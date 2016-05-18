@@ -55,6 +55,7 @@ StreamIn::StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
 
 StreamIn::~StreamIn()
 {
+    setStandby(true);
     freeAllocatedBuffers();
 }
 

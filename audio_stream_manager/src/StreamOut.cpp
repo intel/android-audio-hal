@@ -43,6 +43,7 @@ StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask
 
 StreamOut::~StreamOut()
 {
+    setStandby(true);
 }
 
 status_t StreamOut::set(audio_config_t &config)
