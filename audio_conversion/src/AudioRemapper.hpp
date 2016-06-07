@@ -76,29 +76,10 @@ private:
     android::status_t configure();
 
     /**
-     * Remap from X channels to mono in typed format.
+     * Remap simply from M-channels to N-channels in typed format.
      *
-     * Convert a stereo source into a mono destination in typed format.
-     *
-     * @tparam type Audio data format from S16 to S32, no other type allowed.
-     * @param[in] src the source buffer.
-     * @param[out] dst the destination buffer, the caller must ensure the destination
-     *             is large enough.
-     * @param[in] inFrames number of input frames.
-     * @param[out] outFrames output frames processed.
-     *
-     * @return error code.
-     */
-    template <typename type>
-    android::status_t convertMultiToMono(const void *src,
-                                         void *dst,
-                                         const size_t inFrames,
-                                         size_t *outFrames);
-
-    /**
-     * Remap from mono to X channels in typed format.
-     *
-     * Convert a mono source into a stereo destination in typed format.
+     * Convert a multi N-channels source in a mutli M-channels destination in typed format
+     * by averaging the source and propagating the averaged value on all channels of the destination
      *
      * @tparam type Audio data format from S16 to S32, no other type allowed.
      * @param[in] src the source buffer.
@@ -110,10 +91,8 @@ private:
      * @return error code.
      */
     template <typename type>
-    android::status_t convertMonoToMulti(const void *src,
-                                         void *dst,
-                                         const size_t inFrames,
-                                         size_t *outFrames);
+    android::status_t convertMultiNToMultiM(const void *src, void *dst, const size_t inFrames,
+                                            size_t *outFrames);
 
     template <typename type>
     android::status_t convertStereoToQuad(const void *src,

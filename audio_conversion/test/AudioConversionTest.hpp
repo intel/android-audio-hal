@@ -54,12 +54,10 @@ public:
      * @param[out] buffer audio data to be provided to the client.
      *                    Buffer shall not be taken into account by the client if
      *                    error code is returned.
-     * @param[in] pts local time when the next sample yielded by getNextBuffer will be rendered.
      *
      * @return status_t OK if buffer provided, error code otherwise.
      */
-    virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer,
-                                            int64_t /*pts*/)
+    virtual android::status_t getNextBuffer(android::AudioBufferProvider::Buffer *buffer)
     {
 
         buffer->raw = &sourceBuffer[readPos];

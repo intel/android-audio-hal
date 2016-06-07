@@ -34,15 +34,20 @@ struct AudioRemapper::formatSupported<uint32_t> {};
 static const size_t mono = 1;
 static const size_t stereo = 2;
 static const size_t quad = 4;
+static const size_t multichan8 = 8;
 
 const std::vector < std::pair < uint32_t, uint32_t >> AudioRemapper::mSupportedConversions = {
     { mono, stereo },
     { mono, quad },
+    { mono, multichan8 },
     { stereo, stereo },
     { stereo, mono },
     { stereo, quad },
+    { stereo, multichan8 },
     { quad, mono },
-    { quad, stereo }
+    { quad, stereo },
+    { multichan8, mono },
+    { multichan8, stereo }
 };
 
 AudioRemapper::AudioRemapper(SampleSpecItem sampleSpecItem)
@@ -93,8 +98,9 @@ android::status_t AudioRemapper::configure()
         switch (mSsDst.getChannelCount()) {
         case stereo:
         case quad:
+        case multichan8:
             mConvertSamplesFct =
-                static_cast<SampleConverter>(&AudioRemapper::convertMonoToMulti<type> );
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiNToMultiM<type> );
             return OK;
         }
         return INVALID_OPERATION;
@@ -102,7 +108,7 @@ android::status_t AudioRemapper::configure()
         switch (mSsDst.getChannelCount()) {
         case mono:
             mConvertSamplesFct =
-                static_cast<SampleConverter>(&AudioRemapper::convertMultiToMono<type> );
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiNToMultiM<type> );
             return OK;
         case stereo:
             // Iso channel, checks the channels policy
@@ -117,6 +123,10 @@ android::status_t AudioRemapper::configure()
             mConvertSamplesFct =
                 static_cast<SampleConverter>(&AudioRemapper::convertStereoToQuad<type> );
             return OK;
+        case multichan8:
+            mConvertSamplesFct =
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiNToMultiM<type> );
+            return OK;
         }
         return INVALID_OPERATION;
 
@@ -124,11 +134,19 @@ android::status_t AudioRemapper::configure()
         switch (mSsDst.getChannelCount()) {
         case mono:
             mConvertSamplesFct =
-                static_cast<SampleConverter>(&AudioRemapper::convertMultiToMono<type> );
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiNToMultiM<type> );
             return OK;
         case stereo:
             mConvertSamplesFct =
                 static_cast<SampleConverter>(&AudioRemapper::convertQuadToStereo<type> );
+            return OK;
+        }
+    case multichan8:
+        switch (mSsDst.getChannelCount()) {
+        case mono:
+        case stereo:
+            mConvertSamplesFct =
+                static_cast<SampleConverter>(&AudioRemapper::convertMultiNToMultiM<type> );
             return OK;
         }
     }
@@ -136,33 +154,23 @@ android::status_t AudioRemapper::configure()
 }
 
 template <typename type>
-status_t AudioRemapper::convertMultiToMono(const void *src, void *dst, const size_t inFrames,
-                                           size_t *outFrames)
+status_t AudioRemapper::convertMultiNToMultiM(const void *src, void *dst, const size_t inFrames,
+                                              size_t *outFrames)
 {
     const type *srcTyped = static_cast<const type *>(src);
     type *dstTyped = static_cast<type *>(dst);
     size_t srcChannels = mSsSrc.getChannelCount();
-
-    for (size_t frames = 0; frames < inFrames; frames++) {
-        dstTyped[frames] = getAveragedSrcFrame<type>(&srcTyped[srcChannels * frames]);
-    }
-    // Transformation is "iso" frames
-    *outFrames = inFrames;
-    return NO_ERROR;
-}
-
-template <typename type>
-status_t AudioRemapper::convertMonoToMulti(const void *src, void *dst, const size_t inFrames,
-                                           size_t *outFrames)
-{
-    const type *srcTyped = static_cast<const type *>(src);
-    type *dstTyped = static_cast<type *>(dst);
     size_t dstChannels = mSsDst.getChannelCount();
 
     for (size_t frames = 0; frames < inFrames; frames++) {
+        size_t srcIndex = srcChannels * frames;
+        size_t dstIndex = dstChannels * frames;
+
+        type averagedSrc = getAveragedSrcFrame<type>(&srcTyped[srcIndex]);
+
         for (size_t channels = 0; channels < dstChannels; channels++) {
             if (mSsDst.getChannelsPolicy(channels) != SampleSpec::Ignore) {
-                dstTyped[dstChannels * frames + channels] = srcTyped[frames];
+                dstTyped[dstIndex + channels] = averagedSrc;
             }
         }
     }
