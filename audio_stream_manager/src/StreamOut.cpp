@@ -252,6 +252,44 @@ status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &t
     return android::OK;
 }
 
+status_t StreamOut::getNextWriteTimestamp(int64_t &ts) const
+{
+    AutoR lock(mStreamLock);
+
+    int64_t delay_us;
+    size_t kernelFrames;
+    struct timespec time = {
+        0, 0
+    };
+
+    if (!isRoutedL()) {
+        ALOGE("stream is not routed");
+        return android::INVALID_OPERATION;
+    }
+
+    if (getFramesAvailable(kernelFrames, time) != android::OK) {
+        ALOGE("unable to get available frames");
+        return android::BAD_VALUE;
+    }
+
+    // For output, getFramesAvailable returns available empty frames.
+    kernelFrames = getBufferSizeInFrames() - kernelFrames;
+
+    delay_us = streamSampleSpec().convertFramesToUsec(kernelFrames);
+
+    if (INT64_MAX - delay_us * 1000LL < static_cast<int64_t>(time.tv_sec) * 1000000000LL +
+        static_cast<int64_t>(time.tv_nsec)) {
+        Log::Error() << " timestamp evaluation overflows";
+        return android::BAD_VALUE;
+    }
+
+    ts = static_cast<int64_t>(time.tv_sec) * 1000000000LL
+         + static_cast<int64_t>(time.tv_nsec)
+         + streamSampleSpec().convertFramesToUsec(kernelFrames) * 1000LL;
+
+    return android::OK;
+}
+
 status_t StreamOut::flush()
 {
     AutoR lock(mStreamLock);
