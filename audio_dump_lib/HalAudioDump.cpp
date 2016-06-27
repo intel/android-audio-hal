@@ -32,7 +32,7 @@ using audio_comms::utilities::Log;
 const char *HalAudioDump::mStreamDirections[] = {
     "in", "out"
 };
-const char *HalAudioDump::mDumpDirPath = "/data/misc/media";
+const char *HalAudioDump::mDumpDirPath = "/data/misc/audioserver";
 const uint32_t HalAudioDump::mMaxNumberOfFiles = 4;
 
 HalAudioDump::HalAudioDump()
