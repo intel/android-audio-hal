@@ -575,9 +575,11 @@ status_t AudioRouteManager::setParameters(const std::string &keyValuePair, bool 
     AutoW lock(mRoutingLock);
     bool hasChanged = false;
     status_t ret = mPlatformState->setParameters(keyValuePair, hasChanged);
-    if (hasChanged) {
-        reconsiderRoutingUnsafe(isSynchronous);
-    }
+
+    // Inconditionnaly reconsider the routing as even if the parameters are the same, concurrent
+    // streams with identical settings may have been stopped/started.
+    reconsiderRoutingUnsafe(isSynchronous);
+
     KeyValuePairs pairs(keyValuePair);
     int device;
     status_t status = pairs.get<int>(AUDIO_PARAMETER_DEVICE_CONNECT, device);

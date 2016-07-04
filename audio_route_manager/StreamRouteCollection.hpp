@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,8 @@ public:
     {
         for (auto stream : mOrderedStreamList[route.isOut()]) {
 
-            if (stream->isStarted() && !stream->isNewRouteAvailable()) {
+            if (stream->isStarted() && stream->isRoutedByPolicy() &&
+                    !stream->isNewRouteAvailable()) {
                 if (route.isMatchingWithStream(*stream)) {
                     return route.setStream(*stream);
                 }
