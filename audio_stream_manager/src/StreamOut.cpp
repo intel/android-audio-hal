@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,10 @@ const uint32_t StreamOut::mMaxAgainRetry = 2;
 const uint32_t StreamOut::mWaitBeforeRetryUs = 10000; // 10ms
 const uint32_t StreamOut::mUsecPerMsec = 1000;
 
-StreamOut::StreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask, audio_devices_t devices)
+StreamOut::StreamOut(Device *parent,
+                     audio_io_handle_t handle,
+                     uint32_t flagMask,
+                     audio_devices_t devices)
     : Stream(parent, handle, flagMask),
       mFrameCount(0),
       mEchoReference(NULL),
@@ -96,9 +99,9 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     if (!isRoutedL() || isMuted()) {
         Log::Warning() << __FUNCTION__ << ": Trashing " << bytes << " bytes for stream " << this
                        << (isMuted() ? ": Stream muted" : ": No route available");
+        mStreamLock.unlock();
         status = generateSilence(bytes);
         mFrameCount += srcFrames;
-        mStreamLock.unlock();
         return status;
     }
 

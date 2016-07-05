@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -326,10 +326,8 @@ status_t StreamIn::read(void *buffer, size_t &bytes)
         Log::Error() << __FUNCTION__ << ": (buffer=" << buffer << ", bytes=" << bytes
                      << ") returns " << received_frames
                      << ". Generating silence for stream " << this;
-        generateSilence(bytes, buffer);
-
         mStreamLock.unlock();
-
+        generateSilence(bytes, buffer);
         if (status == android::DEAD_OBJECT) {
             Log::Error() << __FUNCTION__ << ": execute device recovery";
             setStandby(true);
