@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2013-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,8 @@ SUBDIRS := audio_conversion \
            utilities/active_value_set \
            utilities/parameter \
            utilities \
-	   audio_route_manager/parameter_framework_plugin \
+           audio_route_manager/parameter_framework_plugin \
+           uevent_emulation
 
 # Call sub-folders' Android.mk
 include $(call named-subdir-makefiles, $(SUBDIRS))

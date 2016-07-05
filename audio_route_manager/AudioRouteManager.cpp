@@ -28,7 +28,18 @@
 
 #include <utilities/Log.hpp>
 
+// #define EMULATE_UEVENT
+#ifdef EMULATE_UEVENT
+#include <cutils/sockets.h>
+#include <sys/socket.h>
+
+static const uint8_t RECOVER = 8;
+static const uint8_t CRASH = 9;
+static const char *const uevent_socket_name = "uevent_emulation";
+
+#else
 #include <cutils/uevent.h>
+#endif
 
 using android::status_t;
 using namespace std;
@@ -52,10 +63,18 @@ AudioRouteManager::AudioRouteManager()
       mIsStarted(false),
       mPlatformState(NULL)
 {
+#ifdef EMULATE_UEVENT
+    mUEventFd = socket_local_server(uevent_socket_name, ANDROID_SOCKET_NAMESPACE_ABSTRACT,
+                                    SOCK_STREAM);
+    if (mUEventFd == -1) {
+        Log::Error() << __FUNCTION__ << "socket_local_server connection to uevent_emulation failed";
+    }
+#else
     mUEventFd = uevent_open_socket(gSocketBufferDefaultSize, true);
     if (mUEventFd < 0) {
         Log::Error() << __FUNCTION__ << "uevent_open_socket failed, recovery will not work";
     }
+#endif
 }
 
 AudioRouteManager::~AudioRouteManager()
@@ -342,6 +361,34 @@ bool AudioRouteManager::onEvent(int fd)
 {
     if (fd == mEventThread->getFd(FdFromSstDriver)) {
         bool audioSubsystemAvailable = mAudioSubsystemAvailable;
+#ifdef EMULATE_UEVENT
+        int clientSocketFd = accept(mUEventFd, NULL, NULL);
+        if (clientSocketFd < 0) {
+            Log::Error() << __FUNCTION__ << ": accept failed";
+            return false;
+        }
+        uint8_t data;
+        uint8_t *pData = &data;
+        uint32_t size = sizeof(data);
+        while (size) {
+            int32_t accessedSize = ::recv(clientSocketFd, pData, size, MSG_NOSIGNAL);
+            if (!accessedSize || accessedSize == -1) {
+                return false;
+            }
+            size -= accessedSize;
+            pData += accessedSize;
+        }
+        if (data == RECOVER) {
+            Log::Debug() << __FUNCTION__ << ": Audio Subsystem Up and Running again :-)";
+            audioSubsystemAvailable = true;
+        } else if (data == CRASH) {
+            Log::Debug() << __FUNCTION__ << ": Audio Subsystem down :-(";
+            audioSubsystemAvailable = false;
+        } else {
+            Log::Debug() << __FUNCTION__ << ": Unrecognized message...";
+            return false;
+        }
+#else
         char msg[gUEventMsgMaxLeng +1] = {0};
         char *cp;
         int n;
@@ -364,6 +411,7 @@ bool AudioRouteManager::onEvent(int fd)
             }
             cp += strlen(cp) + 1;
         }
+#endif
         AutoW lock(mRoutingLock);
         if (audioSubsystemAvailable != mAudioSubsystemAvailable) {
             mAudioSubsystemAvailable = audioSubsystemAvailable;
