@@ -323,6 +323,24 @@ private:
     mutable android::RWLock mRoutingLock; /**< lock to protect the routing. */
 
     AudioPlatformState *mPlatformState; /**< Platform state handler for Route / Audio PFW. */
+
+    /**Socket Id enumerator */
+    enum UeventSockDesc
+    {
+        FdFromSstDriver,
+        NbSockDesc
+    };
+
+    /** Uevent Socket Fd */
+    int mUEventFd;
+
+    /** Uevent message max length */
+    static const int gUEventMsgMaxLeng;
+
+    /** Socket buffer default size (64K) */
+    static const int gSocketBufferDefaultSize;
+
+    bool mAudioSubsystemAvailable = true;
 };
 
 } // namespace intel_audio
