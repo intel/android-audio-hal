@@ -107,7 +107,6 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
 
     size_t dstFrames = 0;
     char *dstBuf = NULL;
-    uint32_t retryCount = 0;
 
     pushEchoReference(buffer, srcFrames);
 
@@ -131,49 +130,28 @@ status_t StreamOut::write(const void *buffer, size_t &bytes)
     Log::Verbose() << __FUNCTION__ << ": srcFrames=" << srcFrames << ", bytes=" << bytes
                    << " dstFrames=" << dstFrames;
 
-    do {
-        std::string error;
+    std::string error;
 
-        status = pcmWriteFrames(dstBuf, dstFrames, error);
+    status = pcmWriteFrames(dstBuf, dstFrames, error);
 
-        if (status < 0) {
-            Log::Error() << __FUNCTION__ << ": write error: " << error
-                         << " - requested " << srcFrames
-                         << " (bytes=" << streamSampleSpec().convertFramesToBytes(srcFrames)
-                         << ") frames";
+    if (status < 0) {
+        Log::Error() << __FUNCTION__ << ": write error: " << error
+                     << " - requested " << srcFrames
+                     << " (bytes=" << streamSampleSpec().convertFramesToBytes(srcFrames)
+                     << ") frames";
 
-            if (error.find(strerror(EIO)) != std::string::npos) {
-                // Dump hw registers debug file info in console
-                mParent->printPlatformFwErrorInfo();
+        if (error.find(strerror(EIO)) != std::string::npos) {
+            // Dump hw registers debug file info in console
+            mParent->printPlatformFwErrorInfo();
 
-            } else if (error.find(strerror(EBADFD)) != std::string::npos) {
-                mStreamLock.unlock();
-                Log::Error() << __FUNCTION__ << ": execute device recovery";
-                setStandby(true);
-                return android::DEAD_OBJECT;
-            }
-            AUDIOCOMMS_ASSERT(error.find(strerror(EBADF)) == std::string::npos,
-                              "Audio Device handle closed not by Audio HAL."
-                              " A corruption might have happenned, investigation required");
-
-            if (++retryCount > mMaxReadWriteRetried) {
-                mStreamLock.unlock();
-                Log::Error() << __FUNCTION__ << ": Hardware not responding";
-                return android::DEAD_OBJECT;
-            }
-
-            // Get the number of microseconds to sleep, inferred from the number of
-            // frames to write.
-            size_t sleepUsecs = routeSampleSpec().convertFramesToUsec(dstFrames);
-
-            // Go sleeping before trying I/O operation again.
-            if (safeSleep(sleepUsecs)) {
-                // If some error arises when trying to sleep, try I/O operation anyway.
-                // Error counter will provoke the restart of mediaserver.
-                Log::Error() << __FUNCTION__ << ":  Error while calling nanosleep interface";
-            }
         }
-    } while (status < 0);
+        AUDIOCOMMS_ASSERT(error.find(strerror(EBADF)) == std::string::npos,
+                          "Audio Device handle closed not by Audio HAL."
+                          " A corruption might have happenned, investigation required");
+        mStreamLock.unlock();
+        generateSilence(bytes);
+        return android::DEAD_OBJECT;
+    }
 
     Log::Verbose() << __FUNCTION__ << ": returns " << streamSampleSpec().convertFramesToBytes(
         AudioUtils::convertSrcToDstInFrames(status, routeSampleSpec(), streamSampleSpec()));

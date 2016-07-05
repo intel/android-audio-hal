@@ -255,15 +255,6 @@ protected:
      */
     android::RWLock mPreProcEffectLock;
 
-    /**
-     * maximum number of read/write retries.
-     *
-     * This constant is used to set maximum number of retries to do
-     * on write/read operations before stating that error is not
-     * recoverable and reset media server.
-     */
-    static const uint32_t mMaxReadWriteRetried = 50;
-
     static const uint32_t mDefaultSampleRate = 48000; /**< Default HAL sample rate. */
     static const uint32_t mDefaultChannelCount = 2; /**< Default HAL nb of channels. */
     static const audio_format_t mDefaultFormat = AUDIO_FORMAT_PCM_16_BIT; /**< Default HAL format.*/

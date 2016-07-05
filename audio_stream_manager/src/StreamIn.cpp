@@ -87,7 +87,6 @@ status_t StreamIn::getNextBuffer(AudioBufferProvider::Buffer *buffer)
 
 status_t StreamIn::readHwFrames(void *buffer, size_t frames)
 {
-    uint32_t retryCount = 0;
     status_t ret;
 
     if (frames == 0) {
@@ -95,39 +94,20 @@ status_t StreamIn::readHwFrames(void *buffer, size_t frames)
         return android::BAD_VALUE;
     }
 
-    do {
-        std::string error;
+    std::string error;
 
-        ret = pcmReadFrames(buffer, frames, error);
+    ret = pcmReadFrames(buffer, frames, error);
 
-        if (ret < 0) {
-            Log::Error() << __FUNCTION__ << ": read error: " << error << " - requested " << frames
-                         << " (bytes=" << streamSampleSpec().convertFramesToBytes(frames)
-                         << ") frames";
+    if (ret < 0) {
+        Log::Error() << __FUNCTION__ << ": read error: " << error << " - requested " << frames
+                     << " (bytes=" << streamSampleSpec().convertFramesToBytes(frames)
+                     << ") frames";
 
-            if (error.find(strerror(EBADFD)) != std::string::npos) {
-                return android::DEAD_OBJECT;
-            }
-
-            if (++retryCount >= mMaxReadWriteRetried) {
-                Log::Error() << __FUNCTION__ << ": Hardware not responding after " << retryCount
-                             << " retries";
-                return android::DEAD_OBJECT;
-            }
-
-            // Get the number of microseconds to sleep, inferred from the number of
-            // frames to write.
-            size_t sleepUSecs = routeSampleSpec().convertFramesToUsec(frames);
-
-            // Go sleeping before trying I/O operation again.
-            if (safeSleep(sleepUSecs)) {
-                // If some error arises when trying to sleep, try I/O operation anyway.
-                // Error counter will provoke the restart of mediaserver.
-                Log::Error() << __FUNCTION__ << ":  Error while calling nanosleep interface";
-            }
+        if (error.find(strerror(EBADFD)) != std::string::npos) {
+            return android::DEAD_OBJECT;
         }
-
-    } while (ret < 0);
+        return ret;
+    }
 
     // Dump audio input before eventual conversions
     // FOR DEBUG PURPOSE ONLY
@@ -328,11 +308,7 @@ status_t StreamIn::read(void *buffer, size_t &bytes)
                      << ". Generating silence for stream " << this;
         mStreamLock.unlock();
         generateSilence(bytes, buffer);
-        if (status == android::DEAD_OBJECT) {
-            Log::Error() << __FUNCTION__ << ": execute device recovery";
-            setStandby(true);
-        }
-        return -EBADFD;
+        return status;
     }
     bytes = streamSampleSpec().convertFramesToBytes(received_frames);
     mFramesInCount += received_frames;
