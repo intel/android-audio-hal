@@ -65,6 +65,10 @@ android::status_t KeyValuePairs::add(const string &keyValuePairs)
 {
     android::status_t status = android::OK;
     char *pairs = strdup(keyValuePairs.c_str());
+    if(pairs == NULL) {
+        Log::Error() << __FUNCTION__ << ": No Enough Memory for keyValuePairs String duplicate ";
+        return android::BAD_VALUE;
+    }
     char *context;
     char *pair = strtok_r(pairs, mPairDelimiter, &context);
     while (pair != NULL) {
