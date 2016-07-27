@@ -116,7 +116,7 @@ status_t CompressedStreamOut::set(audio_config_t &config)
     }
     setFormat(config.format);
     setSampleRate(config.sample_rate);
-    setChannels(config.channel_mask);
+    setChannels(config.channel_mask, true);
 
     mCodec.avgBitRate = config.offload_info.bit_rate;
     mCodec.sampleRate = config.sample_rate;

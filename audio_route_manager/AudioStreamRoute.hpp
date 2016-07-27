@@ -76,7 +76,11 @@ public:
      */
     virtual const SampleSpec getSampleSpec() const
     {
-        return SampleSpec(popcount(mCurrentChannelMask), mCurrentFormat, mCurrentRate,
+        uint32_t channels = isOut() ?
+                    audio_channel_count_from_out_mask(mCurrentChannelMask) :
+                    audio_channel_count_from_in_mask(mCurrentChannelMask);
+
+        return SampleSpec(channels, mCurrentFormat, mCurrentRate,
                           mConfig.channelsPolicy);
     }
 

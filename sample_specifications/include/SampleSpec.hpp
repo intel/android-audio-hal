@@ -124,10 +124,14 @@ public:
     {
         return static_cast<audio_format_t>(getSampleSpecItem(FormatSampleSpecItem));
     }
-    void setChannelMask(audio_channel_mask_t channelMask)
+    void setChannelMask(audio_channel_mask_t channelMask, bool isOut)
     {
         mChannelMask = channelMask;
-        setSampleSpecItem(ChannelCountSampleSpecItem, popcount(mChannelMask));
+        if (isOut) {
+            setSampleSpecItem(ChannelCountSampleSpecItem, audio_channel_count_from_out_mask(mChannelMask));
+        } else {
+            setSampleSpecItem(ChannelCountSampleSpecItem, audio_channel_count_from_in_mask(mChannelMask));
+        }
     }
     audio_channel_mask_t getChannelMask() const
     {

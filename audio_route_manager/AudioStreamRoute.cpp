@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,8 @@ const StreamRouteConfig AudioStreamRoute::getRouteConfig() const
     StreamRouteConfig config = mConfig;
     config.rate = mCurrentRate;
     config.format = mCurrentFormat;
-    config.channels = popcount(mCurrentChannelMask);
+    config.channels = isOut() ? audio_channel_count_from_out_mask(mCurrentChannelMask) :
+                      audio_channel_count_from_in_mask(mCurrentChannelMask);
     return config;
 }
 

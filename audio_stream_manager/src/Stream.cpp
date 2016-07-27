@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,7 @@ status_t Stream::set(audio_config_t &config)
     if (config.format == AUDIO_FORMAT_DEFAULT) {
         config.format = mDefaultFormat;
     }
-    setConfig(config);
+    setConfig(config, isOut());
     if (mParent->getStreamInterface().supportStreamConfig(*this)) {
         updateLatency();
         return android::OK;

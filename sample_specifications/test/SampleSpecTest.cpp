@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2015 Intel Corporation
+ * Copyright (C) 2012-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,9 +56,9 @@ TEST(SampleSpec, setGet)
     EXPECT_EQ(AUDIO_FORMAT_PCM_8_24_BIT, sampleSpec.getFormat());
 
     // Channel mask
-    sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_ALL);
+    sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_ALL, true);
     EXPECT_EQ(AUDIO_CHANNEL_OUT_ALL, sampleSpec.getChannelMask());
-    sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_5POINT1);
+    sampleSpec.setChannelMask(AUDIO_CHANNEL_OUT_5POINT1, true);
     EXPECT_EQ(AUDIO_CHANNEL_OUT_5POINT1, sampleSpec.getChannelMask());
 
     // Test setSampleSpecItem
@@ -147,31 +147,31 @@ TEST(SampleSpec, equalOperator)
     sampleSpec1.setChannelCount(1);
     sampleSpec1.setFormat(AUDIO_FORMAT_PCM_16_BIT);
     sampleSpec1.setSampleRate(48000);
-    sampleSpec1.setChannelMask(1234);
+    sampleSpec1.setChannelMask(1234, true);
 
     SampleSpec sampleSpec2;
     sampleSpec2.setChannelCount(1);
     sampleSpec2.setFormat(AUDIO_FORMAT_PCM_16_BIT);
     sampleSpec2.setSampleRate(48000);
-    sampleSpec2.setChannelMask(9876);
+    sampleSpec2.setChannelMask(9876, true);
 
     SampleSpec sampleSpec3;
     sampleSpec3.setChannelCount(2);
     sampleSpec3.setFormat(AUDIO_FORMAT_PCM_16_BIT);
     sampleSpec3.setSampleRate(48000);
-    sampleSpec3.setChannelMask(1234);
+    sampleSpec3.setChannelMask(1234, true);
 
     SampleSpec sampleSpec4;
     sampleSpec4.setChannelCount(1);
     sampleSpec4.setFormat(AUDIO_FORMAT_PCM_8_24_BIT);
     sampleSpec4.setSampleRate(48000);
-    sampleSpec4.setChannelMask(1234);
+    sampleSpec4.setChannelMask(1234, true);
 
     SampleSpec sampleSpec5;
     sampleSpec5.setChannelCount(1);
     sampleSpec5.setFormat(AUDIO_FORMAT_PCM_8_24_BIT);
     sampleSpec5.setSampleRate(22000);
-    sampleSpec5.setChannelMask(1234);
+    sampleSpec5.setChannelMask(1234, true);
 
     EXPECT_FALSE(sampleSpec1 == sampleSpec2);
     EXPECT_TRUE(sampleSpec1 == sampleSpec3);

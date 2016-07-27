@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -170,12 +170,13 @@ public:
      * format. The config must be valid, the check must be performed by the stream manager.
      *
      * @param[in] config to be set for the stream.
+     * @param[in] direction of the stream (true=playback, false=capture).
      */
-    inline void setConfig(const audio_config_t &config)
+    inline void setConfig(const audio_config_t &config, bool isOut)
     {
         setSampleRate(config.sample_rate);
         setFormat(config.format);
-        setChannels(config.channel_mask);
+        setChannels(config.channel_mask, isOut);
     }
 
     /**
@@ -255,10 +256,11 @@ public:
      * Channels is a mask, each bit represents a specific channel.
      *
      * @param[in] channel mask of the stream.
+     * @param[in] direction of the stream (true=playback, false=capture).
      */
-    inline void setChannels(audio_channel_mask_t mask)
+    inline void setChannels(audio_channel_mask_t mask, bool isOut)
     {
-        mSampleSpec.setChannelMask(mask);
+        mSampleSpec.setChannelMask(mask, isOut);
     }
 
     /**
