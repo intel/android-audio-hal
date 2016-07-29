@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,20 @@ public:
     virtual bool isOpened() = 0;
 
     virtual ~IAudioDevice() {}
+
+    virtual android::status_t pcmReadFrames(void *buffer, size_t frames,
+                                            std::string &error) const = 0;
+
+    virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames,
+                                             std::string &error) const = 0;
+
+    virtual uint32_t getBufferSizeInBytes() const = 0;
+
+    virtual size_t getBufferSizeInFrames() const = 0;
+
+    virtual android::status_t getFramesAvailable(size_t &avail, struct timespec &tStamp) const = 0;
+
+    virtual android::status_t pcmStop() const = 0;
 };
 
 } // namespace intel_audio

@@ -19,7 +19,7 @@
 #include <StreamInterface.hpp>
 #include <AudioNonCopyable.hpp>
 #include <Direction.hpp>
-#include <TinyAlsaIoStream.hpp>
+#include <IoStream.hpp>
 #include <media/AudioBufferProvider.h>
 #include <hardware/audio.h>
 #include <string>
@@ -36,7 +36,7 @@ class AudioConversion;
 
 class Stream
     : public virtual StreamInterface,
-      public TinyAlsaIoStream,
+      public IoStream,
       private audio_comms::utilities::NonCopyable
 {
 public:
@@ -73,7 +73,7 @@ public:
     virtual android::status_t setParameters(const std::string &keyValuePairs);
     virtual std::string getParameters(const std::string &keys) const;
 
-    // From TinyAlsaIoStream
+    // From IoStream
     virtual bool isRoutedByPolicy() const;
     virtual uint32_t getFlagMask() const;
     virtual uint32_t getUseCaseMask() const;

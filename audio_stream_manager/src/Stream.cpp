@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-#ifdef LOG_TAG
-#undef LOG_TAG
-#endif
 #define LOG_TAG "AudioStream"
 
 #include "Device.hpp"
@@ -227,7 +224,7 @@ void Stream::updateLatency()
 {
     AutoR lock(mStreamLock);
     mLatencyMs =
-            AudioUtils::convertUsecToMsec(mParent->getStreamInterface().getLatencyInUs(*this));
+        AudioUtils::convertUsecToMsec(mParent->getStreamInterface().getLatencyInUs(*this));
 }
 
 status_t Stream::setStandby(bool isSet)
@@ -248,7 +245,7 @@ status_t Stream::setStandby(bool isSet)
 status_t Stream::attachRouteL()
 {
     Log::Verbose() << __FUNCTION__ << ": " << (isOut() ? "output" : "input") << " stream";
-    TinyAlsaIoStream::attachRouteL();
+    IoStream::attachRouteL();
 
     SampleSpec ssSrc;
     SampleSpec ssDst;
@@ -269,7 +266,7 @@ status_t Stream::attachRouteL()
 status_t Stream::detachRouteL()
 {
     Log::Verbose() << __FUNCTION__ << ": " << (isOut() ? "output" : "input") << " stream";
-    TinyAlsaIoStream::detachRouteL();
+    IoStream::detachRouteL();
 
     return android::OK;
 }

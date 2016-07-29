@@ -25,9 +25,9 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 # Common variables
 
 component_src_files :=  \
+    src/Device.cpp \
     src/Stream.cpp \
     src/audio_hw.cpp \
-    src/Device.cpp \
     src/StreamIn.cpp \
     src/StreamOut.cpp \
     src/CompressedStreamOut.cpp \
@@ -81,6 +81,7 @@ component_static_lib_target += \
 component_shared_lib_common := \
     libparameter \
     libaudioroutemanager \
+    libasound
 
 component_shared_lib_target := \
     $(component_shared_lib_common) \
@@ -175,17 +176,19 @@ LOCAL_C_INCLUDES := \
         $(TARGET_OUT_HEADERS)/parameter \
         frameworks/av/include \
         system/media/audio_utils/include \
-        system/media/audio_effects/include \
+        system/media/audio_effects/include
 
 LOCAL_STATIC_LIBRARIES := \
         libaudioparameters \
         libaudio_comms_utilities \
         libaudio_comms_convert \
         libmedia_helper \
+        libutils
 
 LOCAL_SHARED_LIBRARIES := \
         libhardware \
         liblog \
+        libcutils libutils
 
 LOCAL_MODULE := audio-hal-functional_test
 LOCAL_MODULE_OWNER := intel

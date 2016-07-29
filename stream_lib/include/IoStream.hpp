@@ -277,9 +277,9 @@ public:
      */
     void setNewStreamRoute(IStreamRoute *newStreamRoute);
 
-    virtual uint32_t getBufferSizeInBytes() const = 0;
+    uint32_t getBufferSizeInBytes() const;
 
-    virtual size_t getBufferSizeInFrames() const = 0;
+    size_t getBufferSizeInFrames() const;
 
     /**
      * Read frames from audio device.
@@ -290,8 +290,7 @@ public:
      *
      * @return status_t error code of the pcm read operation.
      */
-    virtual android::status_t pcmReadFrames(void *buffer, size_t frames,
-                                            std::string &error) const = 0;
+    android::status_t pcmReadFrames(void *buffer, size_t frames, std::string &error) const;
 
     /**
      * Write frames to audio device.
@@ -302,10 +301,9 @@ public:
      *
      * @return status_t error code of the pcm write operation.
      */
-    virtual android::status_t pcmWriteFrames(void *buffer, ssize_t frames,
-                                             std::string &error) const = 0;
+    android::status_t pcmWriteFrames(void *buffer, ssize_t frames, std::string &error) const;
 
-    virtual android::status_t pcmStop() const = 0;
+    android::status_t pcmStop() const;
 
     /**
      * Returns available frames in pcm buffer and corresponding time stamp.
@@ -314,8 +312,7 @@ public:
      * For an output stream, frames available are the number of empty frames available
      * for the application to write.
      */
-    virtual android::status_t getFramesAvailable(size_t &avail,
-                                                 struct timespec &tStamp) const = 0;
+    android::status_t getFramesAvailable(size_t &avail, struct timespec &tStamp) const;
 
     IStreamRoute *getCurrentStreamRoute() const { return mCurrentStreamRoute; }
 
@@ -386,6 +383,8 @@ protected:
     SampleSpec mSampleSpec; /**< stream sample specifications. */
 
 private:
+    IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
+
     void setCurrentStreamRouteL(IStreamRoute *currentStreamRoute);
 
     /**

@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2013-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -89,7 +89,8 @@ LOCAL_STATIC_LIBRARIES := $(component_static_lib)
 LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_SHARED_LIBRARIES := \
-    libparameter
+    libparameter \
+    libasound
 
 ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
 LOCAL_CFLAGS += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"

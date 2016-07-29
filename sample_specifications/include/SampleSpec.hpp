@@ -18,6 +18,7 @@
 
 #include <hardware/audio.h>
 #include <tinyalsa/asoundlib.h>
+#include <alsa/asoundlib.h>
 #include <string.h>
 #include <vector>
 

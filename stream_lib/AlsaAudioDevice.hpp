@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 #pragma once
 
 #include "AudioDevice.hpp"
-#include <tinyalsa/asoundlib.h>
+#include <alsa/asoundlib.h>
 
 namespace intel_audio
 {
 
 struct StreamRouteConfig;
 
-class TinyAlsaAudioDevice : public IAudioDevice
+class AlsaAudioDevice : public IAudioDevice
 {
 public:
-    TinyAlsaAudioDevice() : mPcmDevice(NULL) {}
+    AlsaAudioDevice() : mPcmDevice(NULL) {}
 
     virtual android::status_t open(const char *cardName, uint32_t deviceId,
                                    const StreamRouteConfig &config, bool isOut);
@@ -34,6 +34,8 @@ public:
     virtual bool isOpened();
 
     virtual android::status_t close();
+
+    static const uint32_t mUsecToSec = 1000000;
 
     virtual android::status_t pcmReadFrames(void *buffer, size_t frames, std::string &error) const;
 
@@ -49,7 +51,10 @@ public:
     virtual android::status_t pcmStop() const;
 
 private:
-    pcm *mPcmDevice; /**< Handle on tiny alsa PCM device. */
+    int setPcmParams(snd_pcm_stream_t stream, const StreamRouteConfig &config,
+                     snd_pcm_access_t access, int soft_resample);
+
+    snd_pcm_t *mPcmDevice; /**< Handle on alsa PCM device. */
 };
 
 } // namespace intel_audio

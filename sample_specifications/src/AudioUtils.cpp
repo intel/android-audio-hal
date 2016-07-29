@@ -113,6 +113,52 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
     return convFormat;
 }
 
+audio_format_t AudioUtils::convertAlsaToHalFormat(snd_pcm_format_t format)
+{
+    audio_format_t convFormat;
+
+    switch (format) {
+
+    case SND_PCM_FORMAT_S16_LE:
+        convFormat = AUDIO_FORMAT_PCM_16_BIT;
+        break;
+    case SND_PCM_FORMAT_S24_LE:
+        convFormat = AUDIO_FORMAT_PCM_8_24_BIT;
+        break;
+    case SND_PCM_FORMAT_S32_LE:
+        convFormat = AUDIO_FORMAT_PCM_32_BIT;
+        break;
+    default:
+        Log::Error() << __FUNCTION__ << ": format not recognized";
+        convFormat = AUDIO_FORMAT_INVALID;
+        break;
+    }
+    return convFormat;
+}
+
+snd_pcm_format_t AudioUtils::convertHalToAlsaFormat(audio_format_t format)
+{
+    snd_pcm_format_t convFormat;
+
+    switch (format) {
+
+    case AUDIO_FORMAT_PCM_16_BIT:
+        convFormat = SND_PCM_FORMAT_S16_LE;
+        break;
+    case AUDIO_FORMAT_PCM_8_24_BIT:
+        convFormat = SND_PCM_FORMAT_S24_LE; /* SND_PCM_FORMAT_S24_LE is 24-bits in 4-bytes */
+        break;
+    case AUDIO_FORMAT_PCM_32_BIT:
+        convFormat = SND_PCM_FORMAT_S32_LE;
+        break;
+    default:
+        Log::Error() << __FUNCTION__ << ": format not recognized";
+        convFormat = SND_PCM_FORMAT_S16_LE;
+        break;
+    }
+    return convFormat;
+}
+
 int AudioUtils::getCardIndexByName(const char *name)
 {
     if (name == NULL) {

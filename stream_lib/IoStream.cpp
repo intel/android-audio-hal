@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ android::status_t IoStream::attachRouteL()
     }
     setCurrentStreamRouteL(mNewStreamRoute);
     setRouteSampleSpecL(mCurrentStreamRoute->getSampleSpec());
+    mAudioDevice = getNewStreamRoute()->getAudioDevice();
     return android::OK;
 }
 
@@ -72,6 +73,7 @@ android::status_t IoStream::attachRouteL()
 android::status_t IoStream::detachRouteL()
 {
     mCurrentStreamRoute = NULL;
+    mAudioDevice = NULL;
     return android::OK;
 }
 
@@ -121,4 +123,33 @@ void IoStream::setRouteSampleSpecL(SampleSpec sampleSpec)
     mRouteSampleSpec = sampleSpec;
 }
 
+android::status_t IoStream::pcmReadFrames(void *buffer, size_t frames, string &error) const
+{
+    return mAudioDevice->pcmReadFrames(buffer, frames, error);
+}
+
+android::status_t IoStream::pcmWriteFrames(void *buffer, ssize_t frames, string &error) const
+{
+    return mAudioDevice->pcmWriteFrames(buffer, frames, error);
+}
+
+uint32_t IoStream::getBufferSizeInBytes() const
+{
+    return mAudioDevice->getBufferSizeInBytes();
+}
+
+size_t IoStream::getBufferSizeInFrames() const
+{
+    return mAudioDevice->getBufferSizeInFrames();
+}
+
+android::status_t IoStream::getFramesAvailable(size_t &avail, struct timespec &tStamp) const
+{
+    return mAudioDevice->getFramesAvailable(avail, tStamp);
+}
+
+android::status_t IoStream::pcmStop() const
+{
+    return mAudioDevice->pcmStop();
+}
 } // namespace intel_audio

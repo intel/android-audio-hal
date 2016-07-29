@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,10 @@
 #include <utilities/Log.hpp>
 
 using audio_comms::utilities::Log;
+using namespace std;
 
 namespace intel_audio
 {
-
-pcm *TinyAlsaAudioDevice::getPcmDevice()
-{
-    AUDIOCOMMS_ASSERT(mPcmDevice != NULL, "NULL tiny alsa device");
-
-    return mPcmDevice;
-}
 
 android::status_t TinyAlsaAudioDevice::open(const char *cardName,
                                             uint32_t deviceId,
@@ -118,6 +112,68 @@ android::status_t TinyAlsaAudioDevice::close()
     mPcmDevice = NULL;
 
     return android::OK;
+}
+
+android::status_t TinyAlsaAudioDevice::pcmReadFrames(void *buffer, size_t frames,
+                                                     string &error) const
+{
+    if (frames == 0) {
+        Log::Error() << "Invalid frame number to read (" << frames << ")";
+        return android::BAD_VALUE;
+    }
+
+    android::status_t ret;
+    ret = pcm_read(mPcmDevice, (char *)buffer, pcm_frames_to_bytes(mPcmDevice, frames));
+
+    if (ret < 0) {
+        error = pcm_get_error(mPcmDevice);
+        return ret;
+    }
+
+    return android::OK;
+}
+
+android::status_t TinyAlsaAudioDevice::pcmWriteFrames(void *buffer, ssize_t frames,
+                                                      string &error) const
+{
+    android::status_t ret;
+
+    ret = pcm_write(mPcmDevice, (char *)buffer, pcm_frames_to_bytes(mPcmDevice, frames));
+
+    if (ret < 0) {
+        error = pcm_get_error(mPcmDevice);
+        return ret;
+    }
+
+    return android::OK;
+}
+
+uint32_t TinyAlsaAudioDevice::getBufferSizeInBytes() const
+{
+    return pcm_frames_to_bytes(mPcmDevice, getBufferSizeInFrames());
+}
+
+size_t TinyAlsaAudioDevice::getBufferSizeInFrames() const
+{
+    return pcm_get_buffer_size(mPcmDevice);
+}
+
+android::status_t TinyAlsaAudioDevice::getFramesAvailable(size_t &avail,
+                                                          struct timespec &tStamp) const
+{
+    unsigned int availFrames;
+    int err =  pcm_get_htimestamp(mPcmDevice, &availFrames, &tStamp);
+    if (err < 0) {
+        Log::Error() << __FUNCTION__ << ": Unable to get available frames";
+        return android::INVALID_OPERATION;
+    }
+    avail = availFrames;
+    return android::OK;
+}
+
+android::status_t TinyAlsaAudioDevice::pcmStop() const
+{
+    return pcm_stop(mPcmDevice);
 }
 
 } // namespace intel_audio

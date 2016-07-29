@@ -35,7 +35,7 @@ AudioStreamRoute::AudioStreamRoute(const string &name, bool isOut)
       mCurrentStream(NULL),
       mNewStream(NULL),
       mEffectSupported(0),
-      mAudioDevice(StreamLib::createAudioDevice())
+      mAudioDevice(nullptr)
 {
 }
 
@@ -143,6 +143,13 @@ const StreamRouteConfig AudioStreamRoute::getRouteConfig() const
 
 void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
 {
+    // Either the name of the Audio Card could be read from proc fs -> use tiny alsa library
+    // or the name could not be identified and must be refered by alsa device in asound.conf file
+    bool isAlsaPluginDevice = (AudioUtils::getCardIndexByName(config.cardName) < 0);
+    if (mAudioDevice == nullptr) {
+        mAudioDevice = StreamLib::createAudioDevice(isAlsaPluginDevice);
+    }
+
     Log::Verbose() << __FUNCTION__
                    << ": config for route " << getName() << ":"
                    << "\n\t requirePreEnable=" << config.requirePreEnable
@@ -178,6 +185,7 @@ void AudioStreamRoute::updateStreamRouteConfig(const StreamRouteConfig &config)
 
 android::status_t AudioStreamRoute::route(bool isPreEnable)
 {
+    AUDIOCOMMS_ASSERT(mAudioDevice != nullptr, "No valid device attached");
     if (isPreEnable == isPreEnableRequired()) {
 
         android::status_t err = mAudioDevice->open(getCardName(), getPcmDeviceId(),
@@ -213,6 +221,7 @@ android::status_t AudioStreamRoute::route(bool isPreEnable)
 
 void AudioStreamRoute::unroute(bool isPostDisable)
 {
+    AUDIOCOMMS_ASSERT(mAudioDevice != nullptr, "No valid device attached");
     if (!isPostDisable) {
 
         if (!mAudioDevice->isOpened()) {

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 #define LOG_TAG "AudioConversion"
 
 #include "AudioConversion.hpp"

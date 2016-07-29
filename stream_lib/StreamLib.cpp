@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2016 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,17 @@
 #include "StreamLib.hpp"
 #include "AudioDevice.hpp"
 #include "TinyAlsaAudioDevice.hpp"
+#include "AlsaAudioDevice.hpp"
 
 namespace intel_audio
 {
 
-IAudioDevice *StreamLib::createAudioDevice()
+IAudioDevice *StreamLib::createAudioDevice(bool alsadevice)
 {
+
+    if (alsadevice) {
+        return new AlsaAudioDevice();
+    }
     return new TinyAlsaAudioDevice();
 }
 

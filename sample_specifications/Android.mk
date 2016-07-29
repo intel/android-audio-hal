@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2015
+# Copyright (C) Intel 2013-2016
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ component_static_lib += \
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
 
+component_dynamic_lib := libasound
+
 component_cflags := -Wall -Werror -Wextra -Wno-unused-parameter
 
 #######################################################################
@@ -91,6 +93,7 @@ LOCAL_C_INCLUDES :=  \
 
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_STATIC_LIBRARIES := $(component_static_lib)
+LOCAL_SHARED_LIBRARIES := $(component_dynamic_lib)
 LOCAL_CFLAGS := $(component_cflags)
 
 include $(BUILD_STATIC_LIBRARY)
@@ -128,7 +131,8 @@ component_functional_test_static_lib_target += \
     $(component_functional_test_static_lib) \
 
 component_functional_test_shared_lib_target += \
-    libcutils
+    libcutils \
+    libasound
 
 
 #######################################################################

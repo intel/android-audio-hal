@@ -56,6 +56,7 @@ component_static_lib_host := \
 component_shared_lib:= \
     libparameter \
     libaudioroutemanager \
+    libasound
 
 component_shared_lib_common := \
     liblog \
