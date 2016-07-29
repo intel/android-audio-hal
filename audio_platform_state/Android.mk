@@ -116,7 +116,7 @@ include $(BUILD_PREBUILT)
 
 #######################################################################
 # Component Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libaudioplatformstate_host
@@ -140,7 +140,7 @@ LOCAL_SHARED_LIBRARIES := \
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 #######################################################################
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)

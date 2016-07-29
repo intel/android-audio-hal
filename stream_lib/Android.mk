@@ -62,7 +62,7 @@ component_cflags := -Wall -Werror -Wno-unused-parameter
 
 #######################################################################
 # Component Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libstream_static_host
@@ -80,7 +80,7 @@ LOCAL_STRIP_MODULE := false
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 
 #######################################################################
 # Component Target Build

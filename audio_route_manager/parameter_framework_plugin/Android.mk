@@ -72,7 +72,7 @@ component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
 # Host Component Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libroute-subsystem_host
@@ -90,7 +90,7 @@ LOCAL_CFLAGS := $(component_cflags)
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_SHARED_LIBRARY)
-
+endif
 #######################################################################
 # Target Component Build
 

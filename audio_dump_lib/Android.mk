@@ -61,7 +61,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Component Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libhalaudiodump_host
@@ -79,3 +79,4 @@ LOCAL_STRIP_MODULE := false
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
+endif

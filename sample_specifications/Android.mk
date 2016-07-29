@@ -53,7 +53,7 @@ component_cflags := -Wall -Werror -Wextra -Wno-unused-parameter
 
 #######################################################################
 # Host Component Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libsamplespec_static_host
@@ -74,7 +74,7 @@ LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 #######################################################################
 # Target Component Build
 
@@ -157,7 +157,7 @@ include $(BUILD_NATIVE_TEST)
 
 #######################################################################
 # Component Functional Test Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 LOCAL_MODULE := samplespec_functional_test_host
 LOCAL_MODULE_OWNER := intel
@@ -173,7 +173,7 @@ include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files
 include $(BUILD_HOST_EXECUTABLE)
-
+endif
 
 include $(OPTIONAL_QUALITY_RUN_TEST)
 

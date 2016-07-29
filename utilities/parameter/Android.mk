@@ -60,7 +60,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Host Component Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
@@ -79,10 +79,10 @@ LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 # Functional test
 #######################################################################
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES += test/KeyValuePairsTest.cpp \
@@ -101,7 +101,7 @@ LOCAL_MODULE := key_value_pairs_test
 LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_NATIVE_TEST)
-
+endif
 
 include $(OPTIONAL_QUALITY_RUN_TEST)
 

@@ -109,7 +109,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Build for host
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
@@ -122,6 +122,7 @@ LOCAL_MODULE := liblpepreprocessinghelper_host
 LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
+endif
 
 # Component functional test
 #######################################################################
@@ -148,7 +149,7 @@ audio_effects_functional_test_defines += -Wall -Werror -ggdb -O0
 
 ###############################
 # Functional test target
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := audio_effects_functional_test
@@ -161,5 +162,6 @@ LOCAL_SHARED_LIBRARIES := $(audio_effects_functional_test_shared_lib_target)
 LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_NATIVE_TEST)
+endif
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)

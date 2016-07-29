@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+ifeq (0,1)
 LOCAL_PATH := $(call my-dir)
 
 PFW_CORE := vendor/intel/audio/parameter-framework
@@ -182,3 +182,6 @@ LOCAL_SRC_FILES := $(LOCAL_MODULE_STEM)
 LOCAL_MODULE_PATH := $(HOST_OUT)/etc
 LOCAL_MODULE_RELATIVE_PATH := parameter-framework
 include $(BUILD_PREBUILT)
+
+
+endif

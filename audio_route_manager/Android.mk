@@ -130,7 +130,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
 # Component Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes)
@@ -152,7 +152,7 @@ LOCAL_STRIP_MODULE := false
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_SHARED_LIBRARY)
-
+endif
 #######################################################################
 # Build for target to export headers
 
@@ -167,7 +167,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Build for host to export headers
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_includes_common)
@@ -178,7 +178,7 @@ LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 #######################################################################
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)

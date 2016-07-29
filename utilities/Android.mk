@@ -31,7 +31,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Host Component Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
@@ -39,3 +39,4 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_MODULE := libaudio_hal_utilities_host
 
 include $(BUILD_HOST_STATIC_LIBRARY)
+endif

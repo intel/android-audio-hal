@@ -59,7 +59,7 @@ component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
 # Component Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libparametermgr_static_host
@@ -76,7 +76,7 @@ LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 #######################################################################
 # Component Target Build
 

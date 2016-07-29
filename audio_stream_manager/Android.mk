@@ -143,7 +143,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
 # Component Host Build
-
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/src
@@ -162,7 +162,7 @@ LOCAL_MODULE_OWNER := intel
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
-
+endif
 
 # Target Component functional test
 #######################################################################
@@ -198,6 +198,7 @@ include $(BUILD_NATIVE_TEST)
 
 # Component functional test for HOST
 #######################################################################
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= test/FunctionalTestHost.cpp
@@ -231,6 +232,7 @@ include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files
 include $(BUILD_HOST_EXECUTABLE)
+endif
 
 #######################################################################
 # Build for configuration file

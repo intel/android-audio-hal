@@ -40,6 +40,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 # Host build
 #######################################################################
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
@@ -83,6 +84,7 @@ include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # Cannot use $(BUILD_HOST_NATIVE_TEST) because of compilation flag
 # misalignment against gtest mk files
 include $(BUILD_HOST_EXECUTABLE)
+endif
 
 include $(OPTIONAL_QUALITY_RUN_TEST)
 

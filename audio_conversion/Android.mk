@@ -58,6 +58,7 @@ component_cflags := -Wall -Werror -Wextra
 #######################################################################
 # Component Host Build
 
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libaudioconversion_static_host
@@ -77,6 +78,7 @@ LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_HOST_STATIC_LIBRARY)
+endif
 
 #######################################################################
 # Component Target Build
@@ -139,11 +141,13 @@ component_fcttest_static_lib_target := \
 
 component_fcttest_shared_lib_target := \
     libcutils \
-    libaudioutils
+    libaudioutils \
+    libasound
 
 #######################################################################
 # Component Functional Test Host Build
 
+ifeq (0,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := audio_conversion_fcttest_host
@@ -161,7 +165,7 @@ include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 # misalignment against gtest mk files
 
 include $(BUILD_HOST_EXECUTABLE)
-
+endif
 
 #######################################################################
 # Component Functional Test Target Build
