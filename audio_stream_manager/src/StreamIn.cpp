@@ -339,15 +339,18 @@ unsigned int StreamIn::getInputFramesLost() const
 status_t StreamIn::getCapturePosition(int64_t &frames, int64_t &time)
 {
     struct timespec tstamp={0,0};
-    if(clock_gettime(CLOCK_MONOTONIC, &tstamp) != 0)
+    if (clock_gettime(CLOCK_MONOTONIC, &tstamp) != 0)
     {
         Log::Error() << __FUNCTION__ << ": Error getting Timestamp";
         return android::INVALID_OPERATION;
     }
     mStreamLock.readLock();
-    frames = (int64_t) mFramesInCount;
+    frames = (int64_t)mFramesInCount;
     mStreamLock.unlock();
-    time = (int64_t)(tstamp.tv_sec * 1000000000) + tstamp.tv_nsec;
+    uint64_t now;
+    now = ((tstamp.tv_sec) * 1000000000ull) +
+          (tstamp.tv_nsec);
+    time = (int64_t)now;
     return android::OK;
 }
 
