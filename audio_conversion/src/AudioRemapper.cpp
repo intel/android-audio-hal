@@ -220,11 +220,11 @@ status_t AudioRemapper::convertQuadToStereo(const void *src, void *dst, const si
 
         type dstRight = 0;
         size_t validSrcRightChannels = 0;
-        if (mSsSrc.getChannelsPolicy(srcIndex + Right) != SampleSpec::Ignore) {
+        if (mSsSrc.getChannelsPolicy(Right) != SampleSpec::Ignore) {
             dstRight += srcTyped[srcIndex + Right];
             validSrcRightChannels++;
         }
-        if (mSsSrc.getChannelsPolicy(srcIndex + BackRight) != SampleSpec::Ignore) {
+        if (mSsSrc.getChannelsPolicy(BackRight) != SampleSpec::Ignore) {
             dstRight += srcTyped[srcIndex + BackRight];
             validSrcRightChannels++;
         }
@@ -235,11 +235,11 @@ status_t AudioRemapper::convertQuadToStereo(const void *src, void *dst, const si
 
         type dstLeft = 0;
         size_t validSrcLeftChannels = 0;
-        if (mSsSrc.getChannelsPolicy(srcIndex + Left) != SampleSpec::Ignore) {
+        if (mSsSrc.getChannelsPolicy(Left) != SampleSpec::Ignore) {
             dstLeft += srcTyped[srcIndex + Left];
             validSrcLeftChannels++;
         }
-        if (mSsSrc.getChannelsPolicy(srcIndex + BackLeft) != SampleSpec::Ignore) {
+        if (mSsSrc.getChannelsPolicy(BackLeft) != SampleSpec::Ignore) {
             dstLeft += srcTyped[srcIndex + BackLeft];
             validSrcLeftChannels++;
         }
