@@ -30,6 +30,8 @@ template <>
 struct AudioRemapper::formatSupported<int16_t> {};
 template <>
 struct AudioRemapper::formatSupported<uint32_t> {};
+template <>
+struct AudioRemapper::formatSupported<int32_t> {};
 
 static const size_t mono = 1;
 static const size_t stereo = 2;
@@ -75,8 +77,9 @@ status_t AudioRemapper::configure(const SampleSpec &ssSrc, const SampleSpec &ssD
     case AUDIO_FORMAT_PCM_16_BIT:
         return configure<int16_t>();
     case AUDIO_FORMAT_PCM_8_24_BIT:
-    case AUDIO_FORMAT_PCM_32_BIT:
         return configure<uint32_t>();
+    case AUDIO_FORMAT_PCM_32_BIT:
+        return configure<int32_t>();
     default:
         return INVALID_OPERATION;
     }
