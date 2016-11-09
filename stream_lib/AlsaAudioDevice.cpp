@@ -241,6 +241,7 @@ android::status_t AlsaAudioDevice::close()
         return android::DEAD_OBJECT;
     }
     Log::Debug() << __FUNCTION__;
+    snd_pcm_drain(mPcmDevice);
     snd_pcm_close(mPcmDevice);
     mPcmDevice = NULL;
 
