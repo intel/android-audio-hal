@@ -89,6 +89,18 @@ public:
     audio_devices_t getDevices(audio_port_role_t role) const;
 
     /**
+     * Returns the device address involved in this patch according to the role requested
+     * Note that it removes the sign bit introduced by the policy for input device in order to keep
+     * the cardinality between a bit and a device within the devices mask.
+     *
+     * @param[in] role for which the devices are requested, i.e. sink or source.
+     *
+     * @return valid device address of the requested role,
+     *         empty string if no device port of the requested role attached to this patch
+     */
+    std::string getDeviceAddress(audio_port_role_t role) const;
+
+    /**
      * Checks if a port is involving port devices in the given role.
      *
      * @param[in] role of the port device to check.

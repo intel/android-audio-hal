@@ -341,7 +341,7 @@ public:
      * @param[in] devices selected by the policy
      * @return OK if set correctly, error code otherwise.
      */
-    android::status_t setDevices(audio_devices_t devices);
+    android::status_t setDevices(audio_devices_t devices, const std::string &address);
 
     /**
      * Retrieve the device(s) that has been assigned by the policy to this stream.
@@ -351,6 +351,12 @@ public:
     {
         AutoR lock(mStreamLock);
         return mDevices;
+    }
+
+    std::string getDeviceAddress() const
+    {
+        AutoR lock(mStreamLock);
+        return mDeviceAddress;
     }
 
 protected:
@@ -406,6 +412,7 @@ private:
     uint32_t mEffectsRequestedMask; /**< Mask of requested effects. */
 
     audio_devices_t mDevices = AUDIO_DEVICE_NONE; /**< devices assgined by the policy.*/
+    std::string mDeviceAddress;
 };
 
 } // namespace intel_audio

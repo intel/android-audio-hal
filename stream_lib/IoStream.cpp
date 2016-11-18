@@ -96,10 +96,11 @@ uint32_t IoStream::getOutputSilencePrologMs() const
     return mCurrentStreamRoute->getOutputSilencePrologMs();
 }
 
-android::status_t IoStream::setDevices(audio_devices_t devices)
+android::status_t IoStream::setDevices(audio_devices_t devices, const std::string &address)
 {
     AutoW lock(mStreamLock);
     mDevices = devices;
+    mDeviceAddress = address;
     return android::OK;
 }
 

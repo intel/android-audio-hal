@@ -35,13 +35,13 @@ const uint32_t StreamOut::mUsecPerMsec = 1000;
 StreamOut::StreamOut(Device *parent,
                      audio_io_handle_t handle,
                      uint32_t flagMask,
-                     audio_devices_t devices)
+                     audio_devices_t devices, const std::string &address)
     : Stream(parent, handle, flagMask),
       mFrameCount(0),
       mEchoReference(NULL),
       mIsMuted(false)
 {
-    setDevice(devices);
+    setDevices(devices, address);
 }
 
 StreamOut::~StreamOut()
@@ -377,7 +377,7 @@ status_t StreamOut::setDevice(audio_devices_t device)
         Log::Error() << __FUNCTION__ << ": invalid output device " << device;
         return android::BAD_VALUE;
     }
-    return setDevices(device);
+    return setDevices(device, {});
 }
 
 } // namespace intel_audio

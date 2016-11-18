@@ -79,7 +79,7 @@ private:
 
 public:
     CompressedStreamOut(Device *parent, audio_io_handle_t handle, uint32_t flagMask,
-                        audio_devices_t devices);
+                        audio_devices_t devices, const std::string &address);
 
     virtual ~CompressedStreamOut();
 

@@ -17,6 +17,7 @@
 
 #include <system/audio.h>
 #include <utils/Errors.h>
+#include <string>
 
 namespace intel_audio
 {
@@ -67,6 +68,7 @@ public:
     audio_devices_t getDeviceType() const { return mConfig.ext.device.type; }
     audio_io_handle_t getMixIoHandle() const { return mConfig.ext.mix.handle; }
     audio_source_t getMixUseCaseSource() const { return mConfig.ext.mix.usecase.source; }
+    std::string getDeviceAddress() const { return mConfig.ext.device.address; }
 
 private:
     /**

@@ -60,6 +60,17 @@ audio_devices_t Patch::getDevices(audio_port_role_t role) const
     return role == AUDIO_PORT_ROLE_SOURCE ? devices & ~AUDIO_DEVICE_BIT_IN : devices;
 }
 
+std::string Patch::getDeviceAddress(audio_port_role_t role) const
+{
+    for (const auto &port : mPorts) {
+        AUDIOCOMMS_ASSERT(port != NULL, "Invalid Port");
+        if (port->getRole() == role && port->getType() == AUDIO_PORT_TYPE_DEVICE) {
+            return port->getDeviceAddress();
+        }
+    }
+    return {};
+}
+
 const Port *Patch::getMixPort(audio_port_role_t role) const
 {
     for (PortConstIterator portIter = mPorts.begin(); portIter != mPorts.end(); ++portIter) {

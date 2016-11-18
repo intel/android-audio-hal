@@ -33,7 +33,7 @@ private:
 
 public:
     StreamIn(Device *parent, audio_io_handle_t handle, uint32_t flagMask, audio_source_t source,
-             audio_devices_t devices);
+             audio_devices_t devices, const std::string &address);
 
     virtual ~StreamIn();
     virtual android::status_t set(audio_config_t &config);

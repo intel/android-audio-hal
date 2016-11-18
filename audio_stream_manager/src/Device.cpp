@@ -91,7 +91,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
                                            audio_output_flags_t flags,
                                            audio_config_t &config,
                                            StreamOutInterface * &stream,
-                                           const std::string & /*address*/)
+                                           const std::string & address)
 {
     Log::Debug() << __FUNCTION__ << ": handle=" << handle << ", flags=" << std::hex
                  << static_cast<uint32_t>(flags) << ", devices: 0x" << devices;
@@ -104,7 +104,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
     flags = (flags == AUDIO_OUTPUT_FLAG_NONE) ? AUDIO_OUTPUT_FLAG_PRIMARY : flags;
 
     if (flags & AUDIO_OUTPUT_FLAG_COMPRESS_OFFLOAD) {
-        CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags, devices);
+        CompressedStreamOut *out = new CompressedStreamOut(this, handle, flags, devices, address);
         status_t err = out->set(config);
         if (err != android::OK) {
             delete out;
@@ -114,7 +114,7 @@ android::status_t Device::openOutputStream(audio_io_handle_t handle,
         mStreams[handle] = out;
         return android::OK;
     }
-    StreamOut *out = new StreamOut(this, handle, flags, devices);
+    StreamOut *out = new StreamOut(this, handle, flags, devices, address);
     status_t err = out->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": set error.";
@@ -166,7 +166,7 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
                                           audio_config_t &config,
                                           StreamInInterface * &stream,
                                           audio_input_flags_t flags,
-                                          const std::string & /*address*/,
+                                          const std::string & address,
                                           audio_source_t source)
 {
     Log::Debug() << __FUNCTION__ << ": handle=" << handle << ", devices: 0x" << std::hex << devices
@@ -179,7 +179,7 @@ android::status_t Device::openInputStream(audio_io_handle_t handle,
     // If no flags is provided for input, use primary by default
     flags = (flags == AUDIO_INPUT_FLAG_NONE) ? AUDIO_INPUT_FLAG_PRIMARY : flags;
 
-    StreamIn *in = new StreamIn(this, handle, flags, source, devices);
+    StreamIn *in = new StreamIn(this, handle, flags, source, devices, address);
     status_t err = in->set(config);
     if (err != android::OK) {
         Log::Error() << __FUNCTION__ << ": Set err";
@@ -584,7 +584,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
             continue;
         }
         // Update device(s) info from patch to stream involved in this patch
-        stream->setDevices(patch.getDevices(devicePortRole));
+        stream->setDevices(patch.getDevices(devicePortRole), patch.getDeviceAddress(devicePortRole));
 
         if (forceDeviceFromLastPatch && (lastPatch == patch.getHandle()) &&
             !(stream->getDevices() & AUDIO_DEVICE_OUT_AUX_DIGITAL)) {

@@ -57,8 +57,9 @@ static const uint32_t gOffloadTransferIntervalInSec = 8;
 static const uint32_t gCodecOffloadDefaultBitrateInBps = 128000;
 
 CompressedStreamOut::CompressedStreamOut(Device *parent, audio_io_handle_t handle,
-                                         uint32_t flagMask, audio_devices_t devices)
-    : StreamOut(parent, handle, flagMask, devices),
+                                         uint32_t flagMask, audio_devices_t devices,
+                                         const std::string &address)
+    : StreamOut(parent, handle, flagMask, devices, address),
       mCompress(NULL),
       mVolume(SST_VOLUME_MUTE),
       mIsVolumeChangeRequestPending(false),
