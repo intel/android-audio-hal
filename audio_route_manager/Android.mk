@@ -87,6 +87,7 @@ component_static_lib_target := \
 component_shared_lib_common := \
     libparameter \
     libicuuc \
+    liblog \
     libasound
 
 component_shared_lib_target := \
