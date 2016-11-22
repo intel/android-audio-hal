@@ -160,7 +160,7 @@ int AudioEffect::setParameter(const effect_param_t *param)
     AudioParameter audioParam;
     audioParam.addInt(key, value);
 
-    if (AudioSystem::setParameters(0, audioParam.toString()) != NO_ERROR) {
+    if (AudioSystem::setParameters(audioParam.toString()) != NO_ERROR) {
         return -EINVAL;
     }
     return 0;
@@ -177,7 +177,7 @@ int AudioEffect::getParameter(effect_param_t *param) const
     Log::Verbose() << __FUNCTION__
                    << ":  effect " << getDescriptor()->name << " key " << key.string();
 
-    String8 keyValuePair = AudioSystem::getParameters(0, key);
+    String8 keyValuePair = AudioSystem::getParameters(key);
 
     AudioParameter audioParam(keyValuePair);
 
