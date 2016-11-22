@@ -61,6 +61,7 @@ effect_pre_proc_static_lib_target += \
 effect_pre_proc_shared_lib_target += \
     libutils  \
     libcutils \
+    liblog \
     libmedia
 
 effect_pre_proc_cflags := -Wall -Werror -Wno-unused-parameter
