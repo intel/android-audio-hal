@@ -35,6 +35,7 @@ namespace intel_audio
 enum RoutingStage
 {
     Flow = 0,   /**< It refers to umute/unmute steps.   */
+    StreamPath, /**< It refers to enable/disable steps for stream operations (aka open devices)  */
     Path,       /**< It refers to enable/disable steps  */
     Configure   /**< It refers to configure step        */
 };
@@ -42,10 +43,11 @@ enum RoutingStage
 enum RoutingStageMask
 {
     FlowMask = (1 << Flow),       /**< It refers to umute/unmute steps.   */
+    StreamPathMask = (1 << StreamPath), /**< Enable/disable for streams (aka open devices)  */
     PathMask = (1 << Path),       /**< It refers to enable/disable steps  */
     ConfigureMask = (1 << Configure)   /**< It refers to configure step        */
 };
 
-static const uint32_t gNbRoutingStages = 3;
+static const uint32_t gNbRoutingStages = 4;
 
 } // namespace intel_audio
