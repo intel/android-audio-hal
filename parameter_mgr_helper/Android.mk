@@ -45,7 +45,9 @@ component_includes_dir_host := \
 component_includes_dir_target := \
     $(foreach inc, $(component_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
     $(call include-path-for, bionic) \
-    $(component_common_includes_dir)
+    $(component_common_includes_dir) \
+    vendor/intel/audio/parameter-framework/upstream/parameter/include \
+    vendor/intel/audio/parameter-framework/support/android/parameter
 
 component_static_lib := \
     libaudio_comms_utilities \
