@@ -104,6 +104,7 @@ private:
     std::string mRouteName; /**< stream route name. */
     std::string mCardName; /**< card name used by the stream route. */
     int32_t mDevice; /**< audio device used by the stream route. */
+    std::string mDeviceAddress; /**< device address supported by this route. */
     bool mIsOut; /**< direction qualifier of the stream route. */
     bool mIsStreamRoute; /**< qualifier of the stream route. */
 

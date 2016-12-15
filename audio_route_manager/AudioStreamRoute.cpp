@@ -298,7 +298,17 @@ bool AudioStreamRoute::isMatchingWithStream(const IoStream &stream) const
            areFlagsMatching(stream.getFlagMask()) &&
            areUseCasesMatching(stream.getUseCaseMask()) &&
            implementsEffects(stream.getEffectRequested()) &&
+           supportDeviceAddress(stream.getDeviceAddress()) &&
            supportStreamConfig(stream);
+}
+
+bool AudioStreamRoute::supportDeviceAddress(const std::string& streamDeviceAddress) const
+{
+    Log::Verbose() << __FUNCTION__ << ": gustave route device address " << mConfig.deviceAddress
+                 << ", stream device address " << streamDeviceAddress;
+    // If both stream and route do not specify a supported device address, consider as matching
+    return (streamDeviceAddress.empty() && mConfig.deviceAddress.empty()) ||
+            (streamDeviceAddress == mConfig.deviceAddress);
 }
 
 bool AudioStreamRoute::supportDevices(audio_devices_t streamDeviceMask) const

@@ -40,6 +40,7 @@ const char *const RouteSubsystem::mKeyDirection = "Direction";
 const char *const RouteSubsystem::mKeyType = "Type";
 const char *const RouteSubsystem::mKeyCard = "Card";
 const char *const RouteSubsystem::mKeyDevice = "Device";
+const char *const RouteSubsystem::mKeyDeviceAddress = "DeviceAddress";
 const char *const RouteSubsystem::mKeyPort = "Ports";
 const char *const RouteSubsystem::mKeyGroups = "Groups";
 const char *const RouteSubsystem::mKeyInclusive = "Inclusive";
@@ -66,6 +67,7 @@ RouteSubsystem::RouteSubsystem(const std::string &name, core::log::Logger &logge
     addContextMappingKey(mKeyType);
     addContextMappingKey(mKeyCard);
     addContextMappingKey(mKeyDevice);
+    addContextMappingKey(mKeyDeviceAddress);
     addContextMappingKey(mKeyPort);
     addContextMappingKey(mKeyGroups);
     addContextMappingKey(mKeyInclusive);

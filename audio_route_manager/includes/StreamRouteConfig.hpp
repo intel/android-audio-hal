@@ -37,6 +37,8 @@ struct StreamRouteConfig
     const char *cardName;   /**< Alsa card used by the stream route. */
     uint32_t deviceId;       /**< Alsa card used by the stream route. */
 
+    std::string deviceAddress; /**< Supported device address. */
+
     /**
      * pcm configuration supported by the stream route.
      */

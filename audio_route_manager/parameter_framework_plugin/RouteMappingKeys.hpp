@@ -34,6 +34,7 @@ enum RouteItemType
     MappingKeyType,
     MappingKeyCard,
     MappingKeyDevice,
+    MappingKeyDeviceAddress,
     MappingKeyPorts,
     MappingKeyGroups,
     MappingKeyInclusive,

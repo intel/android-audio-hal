@@ -53,6 +53,7 @@ private:
     static const char *const mKeyType; /**< type key mapping string. */
     static const char *const mKeyCard; /**< card key mapping string. */
     static const char *const mKeyDevice; /**< device key mapping string. */
+    static const char *const mKeyDeviceAddress; /**< device address key mapping string. */
     static const char *const mKeyPort; /**< port key mapping string. */
     static const char *const mKeyGroups; /**< groups key mapping string. */
     static const char *const mKeyInclusive; /**< inclusive key mapping string. */

@@ -328,6 +328,7 @@ private:
     bool supportRate(uint32_t rate) const;
     bool supportFormat(audio_format_t format) const;
     bool supportChannelMask(audio_channel_mask_t channelMask) const;
+    bool supportDeviceAddress(const std::string& streamDeviceAddress) const;
 
     /**
      * Checks if the use cases supported by this route are matching with the stream use case mask.
