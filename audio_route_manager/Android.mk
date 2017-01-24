@@ -55,7 +55,8 @@ component_includes_dir_host := \
 component_includes_dir_target := \
     $(foreach inc, $(component_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
     $(component_includes_common) \
-    $(call include-path-for, bionic)
+    $(call include-path-for, bionic) \
+    $(TOP_DIR)frameworks/av/services/audiopolicy/common/include
 
 component_static_lib := \
     libstream_static \
