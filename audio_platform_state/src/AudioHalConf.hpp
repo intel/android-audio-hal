@@ -54,6 +54,7 @@ static const std::string gMappingTableTag = "Mapping";
 static const std::string gTypeTag = "Type";
 static const std::string gPathTag = "Path";
 static const std::string gUnsignedIntegerTypeTag = "uint32_t";
+static const std::string gSignedIntegerTypeTag = "int32_t";
 static const std::string gStringTypeTag = "string";
 static const std::string gDoubleTypeTag = "double";
 

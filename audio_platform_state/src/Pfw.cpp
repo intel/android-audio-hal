@@ -336,6 +336,10 @@ void Pfw<Trait>::addRogueParameter(const string &typeName, const string &paramKe
         RogueParameter<uint32_t> *paramRogue =
             new RogueParameter<uint32_t>(paramKey, name, mConnector, defaultValue);
         addParameter(paramRogue, valuePairs, parameterVector);
+    } else if (typeName == gSignedIntegerTypeTag) {
+        RogueParameter<int32_t> *paramRogue =
+            new RogueParameter<int32_t>(paramKey, name, mConnector, defaultValue);
+        addParameter(paramRogue, valuePairs, parameterVector);
     } else if (typeName == gStringTypeTag) {
         RogueParameter<string> *paramRogue =
             new RogueParameter<string>(paramKey, name, mConnector, defaultValue);

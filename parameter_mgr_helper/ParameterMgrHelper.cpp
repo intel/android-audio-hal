@@ -44,6 +44,39 @@ ParameterMgrHelper::~ParameterMgrHelper()
 }
 
 template <>
+bool ParameterMgrHelper::setAsTypedValue<int32_t>(CParameterHandle *parameterHandle,
+                                                   const int32_t &value, string &error)
+{
+    bool success;
+    if (parameterHandle->isArray()) {
+        vector<int32_t> arrayValue(parameterHandle->getArrayLength(), value);
+        success = parameterHandle->setAsSignedIntegerArray(arrayValue, error);
+    } else {
+        success = parameterHandle->setAsSignedInteger(value, error);
+    }
+
+    if (!success) {
+        Log::Error() << "Unable to set value: " << error
+                     << ", value requested=" << value
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
+bool ParameterMgrHelper::getAsTypedValue<int32_t>(CParameterHandle *parameterHandle,
+                                                   int32_t &value, string &error)
+{
+    if (!parameterHandle->getAsSignedInteger(value, error)) {
+        Log::Error() << "Unable to get value: " << error
+                     << ", from parameter path: " << parameterHandle->getPath();
+        return false;
+    }
+    return true;
+}
+
+template <>
 bool ParameterMgrHelper::setAsTypedValue<uint32_t>(CParameterHandle *parameterHandle,
                                                    const uint32_t &value, string &error)
 {
