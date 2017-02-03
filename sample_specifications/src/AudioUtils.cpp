@@ -234,7 +234,7 @@ int AudioUtils::getCompressDeviceIndex()
     const char *devName = fileList[0]->d_name;
     Log::Verbose() << __FUNCTION__ << ": compressed device node: " << devName;
 
-    int dev;
+    int dev = 0;
     static const char *compressDevice = "comprCxD";
     if (!convertTo<std::string, int>(devName + strlen(compressDevice), dev)) {
         return -ENODEV;
