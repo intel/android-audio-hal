@@ -37,7 +37,7 @@ component_export_includes := \
 component_includes_common := \
     $(component_export_includes) \
     external/tinyalsa/include \
-    frameworks/av/include/media \
+    frameworks/av/include/media
 
 component_includes_dir := \
     hw \
@@ -63,7 +63,8 @@ component_static_lib := \
     libproperty \
     audio.routemanager.includes \
     libaudioparameters \
-    libevent-listener_static
+    libevent-listener_static \
+    libboost
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host) \

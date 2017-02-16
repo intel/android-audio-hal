@@ -20,6 +20,7 @@
 #include <convert.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
+#include <boost/tokenizer.hpp>
 
 using std::string;
 using audio_comms::utilities::Log;
@@ -57,28 +58,34 @@ bool CriterionType::hasValuePairByName(const std::string &name)
 
 bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int &numerical) const
 {
-    if (literalValue.empty()) {
-        Log::Verbose() << __FUNCTION__ << ": empty string given for criterion type " << getName();
-        return false;
-    }
-    // First check if the literal value is a known value from the criterion type
-    if (mCriterionTypeInterface->getNumericalValue(literalValue, numerical)) {
-        return true;
-    }
-    // The literal value does not belong to the value declared for this criterion type.
-    // The literal may represent the numerical converted as a string
-    bool isValueProvidedAsHexa = !literalValue.compare(0, 2, "0x");
-    if (isValueProvidedAsHexa) {
-        uint32_t numericalUValue = 0;
-        if (!audio_comms::utilities::convertTo(literalValue, numericalUValue)) {
-            return false;
+    boost::char_separator<char> sep("|");
+    boost::tokenizer<boost::char_separator<char>> tokenizeLiteral(literalValue, sep);
+
+    for (const auto &value : tokenizeLiteral) {
+        int numericalValue = 0;
+
+        // First check if the literal value is a known value from the criterion type
+        if (mCriterionTypeInterface->getNumericalValue(value, numericalValue)) {
+            numerical += numericalValue;
+            continue;
         }
-        numerical = numericalUValue;
-    } else {
-        if (!audio_comms::utilities::convertTo(literalValue, numerical)) {
-            return false;
+        // The literal value does not belong to the value declared for this criterion type.
+        // The literal may represent the numerical converted as a string
+        bool isValueProvidedAsHexa = !literalValue.compare(0, 2, "0x");
+        if (isValueProvidedAsHexa) {
+            uint32_t numericalUValue = 0;
+            if (!audio_comms::utilities::convertTo(value, numericalUValue)) {
+                return false;
+            }
+            numerical += numericalUValue;
+        } else {
+            if (!audio_comms::utilities::convertTo(value, numericalValue)) {
+                return false;
+            }
+            numerical += numericalValue;
         }
     }
+
     // We succeeded to convert the literal value as an numerical, checking now that this numerical
     // value is a valid value for this criterion type (test limited to exclusive criterion)
     return mCriterionTypeInterface->isTypeInclusive() ? true : isNumericValueValid(numerical);

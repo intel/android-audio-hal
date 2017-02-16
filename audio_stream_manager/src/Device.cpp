@@ -554,6 +554,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     uint32_t streamsFlagMask = 0;
     uint32_t streamsUseCaseMask = 0;
     uint32_t requestedEffectMask = 0;
+    std::string deviceAddress{};
 
     bool forceDeviceFromLastPatch = (lastPatch != AUDIO_PATCH_HANDLE_NONE);
     // As Klockwork complains about potential dead leack, avoid using Locker helper here.
@@ -595,6 +596,8 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
                 deviceMask == AUDIO_DEVICE_NONE) {
                 deviceMask |= stream->getDevices();
             }
+            deviceAddress += (deviceAddress.empty() ? "" : "|") +
+                    patch.getDeviceAddress(devicePortRole);
             streamsFlagMask |= stream->getFlagMask();
             streamsUseCaseMask |= stream->getUseCaseMask();
             requestedEffectMask |= stream->getEffectRequested();
@@ -611,6 +614,7 @@ void Device::prepareStreamsParameters(audio_port_role_t streamPortRole, KeyValue
     pairs.add(Parameters::gKeyUseCases[getDirectionFromMix(streamPortRole)], streamsUseCaseMask);
     pairs.add(Parameters::gKeyDevices[getDirectionFromMix(streamPortRole)],
               deviceMask | internalDeviceMask);
+    pairs.add(Parameters::gKeyDeviceAddresses[getDirectionFromMix(streamPortRole)], deviceAddress);
     pairs.add(Parameters::gKeyFlags[getDirectionFromMix(streamPortRole)], streamsFlagMask);
     mPatchCollectionLock.unlock();
 }

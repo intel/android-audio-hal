@@ -17,6 +17,7 @@
 #include "Parameter.hpp"
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
+#include <boost/tokenizer.hpp>
 
 using std::string;
 using audio_comms::utilities::Log;
@@ -36,19 +37,24 @@ void Parameter::setMappingValuePair(const string &name, const string &value)
 bool Parameter::getLiteralValueFromParam(const string &androidParam, string &literalValue) const
 {
     if (mMappingValuesMap.empty()) {
-
         // No Mapping table has been provided, all value that may take the Android Param
         // will be propagated to the PFW Parameter
         literalValue = androidParam;
         return true;
     }
-    MappingValuesMapConstIterator it = mMappingValuesMap.find(androidParam);
-    if (it == mMappingValuesMap.end()) {
-        Log::Verbose() << __FUNCTION__ << ": unknown parameter value \"" << androidParam
-                       << "\" for " << mAndroidParameterKey;
-        return false;
+    // More than one android param may be sent with pipe delimiter
+    boost::char_separator<char> sep("|");
+    boost::tokenizer<boost::char_separator<char>> tokenizeParam(androidParam, sep);
+
+    for (const auto &param : tokenizeParam) {
+        MappingValuesMapConstIterator it = mMappingValuesMap.find(param);
+        if (it == mMappingValuesMap.end()) {
+            Log::Verbose() << __FUNCTION__ << ": unknown parameter value \"" << param
+                           << "\" for " << mAndroidParameterKey;
+            return false;
+        }
+        literalValue += (literalValue.empty() ? "" : "|") + it->second;
     }
-    literalValue = it->second;
     return true;
 }
 
@@ -57,20 +63,24 @@ bool Parameter::getParamFromLiteralValue(string &androidParam, const string &lit
     // No Mapping table has been provided, all value that may take the PFW Param
     // will be propagated to the Android Parameter
     if (mMappingValuesMap.empty()) {
-
         androidParam = literalValue;
         return true;
     }
-    for (MappingValuesMapConstIterator it = mMappingValuesMap.begin();
-         it != mMappingValuesMap.end();
-         ++it) {
 
-        if (it->second == literalValue) {
-            androidParam = it->first;
-            return true;
+    boost::char_separator<char> sep("|");
+    boost::tokenizer<boost::char_separator<char>> tokenizeLiteral(literalValue, sep);
+
+    for (const auto &literal : tokenizeLiteral) {
+        for (MappingValuesMapConstIterator it = mMappingValuesMap.begin();
+             it != mMappingValuesMap.end();
+             ++it) {
+            if (it->second == literal) {
+                androidParam += it->first;
+                androidParam += (androidParam.empty() ? "" : "|") + it->first;
+            }
         }
     }
-    return false;
+    return true;
 }
 
 } // namespace intel_audio

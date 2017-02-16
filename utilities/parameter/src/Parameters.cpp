@@ -27,6 +27,10 @@ Parameters::Key<std::string>::const_bidirectionalKey Parameters::gKeyDevices = {
     "input_devices", "output_devices"
 };
 
+Parameters::Key<std::string>::const_bidirectionalKey Parameters::gKeyDeviceAddresses = {
+    "input_device_addresses", "output_device_addresses"
+};
+
 Parameters::Key<std::string>::const_bidirectionalKey Parameters::gKeyFlags = {
     "input_flags", "output_flags"
 };

@@ -44,6 +44,9 @@ public:
     /** Output and Input Devices Parameter Key. */
     static Key<std::string>::const_bidirectionalKey gKeyDevices;
 
+    /** Output and Input Devices Addresses Parameter Key. */
+    static Key<std::string>::const_bidirectionalKey gKeyDeviceAddresses;
+
     /** Output and input flags key. */
     static Key<std::string>::const_bidirectionalKey gKeyFlags;
 

@@ -50,7 +50,8 @@ component_includes_dir_target := \
 component_static_lib := \
     libaudio_comms_utilities \
     libaudio_comms_convert \
-    libpfw_utility
+    libpfw_utility \
+    libboost
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host)
