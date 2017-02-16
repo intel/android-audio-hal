@@ -137,6 +137,7 @@ bool AudioStreamRoute::sendToHW(string & /*error*/)
     streamConfig.dynamicChannelMapsControl = config.dynamicChannelMapsControl;
     streamConfig.dynamicFormatsControl = config.dynamicFormatsControl;
     streamConfig.dynamicRatesControl = config.dynamicRatesControl;
+    streamConfig.availMin = config.availMin;
 
     streamConfig.channelsPolicy.erase(streamConfig.channelsPolicy.begin(),
                                       streamConfig.channelsPolicy.end());
