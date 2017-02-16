@@ -306,12 +306,18 @@ size_t AlsaAudioDevice::getBufferSizeInFrames() const
 
 android::status_t AlsaAudioDevice::getFramesAvailable(size_t &avail, struct timespec &tStamp) const
 {
+#if 0
     snd_pcm_uframes_t availFrames;
     int err =  snd_pcm_htimestamp(mPcmDevice, &availFrames, &tStamp);
     if (err < 0) {
         Log::Error() << __FUNCTION__ << ": Unable to get available frames";
         return android::INVALID_OPERATION;
     }
+    avail = availFrames;
+#endif
+    // @todo snd_pcm_htimestamp not supported by ioplug so emulating the behavior
+    clock_gettime(CLOCK_MONOTONIC, &tStamp);
+    snd_pcm_uframes_t availFrames = snd_pcm_avail(mPcmDevice);
     avail = availFrames;
     return android::OK;
 }
