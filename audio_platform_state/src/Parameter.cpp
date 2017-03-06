@@ -75,7 +75,6 @@ bool Parameter::getParamFromLiteralValue(string &androidParam, const string &lit
              it != mMappingValuesMap.end();
              ++it) {
             if (it->second == literal) {
-                androidParam += it->first;
                 androidParam += (androidParam.empty() ? "" : "|") + it->first;
             }
         }
