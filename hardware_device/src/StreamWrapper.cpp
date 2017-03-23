@@ -40,6 +40,10 @@ OutputStreamWrapper::OutputStreamWrapper(StreamOutInterface *cppOutputStream)
     stream.resume = wrapResume;
     stream.drain = wrapDrain;
     stream.get_presentation_position = wrapGetPresentationPosition;
+    stream.start = NULL;
+    stream.stop = NULL;
+    stream.create_mmap_buffer = NULL;
+    stream.get_mmap_position = NULL;
 }
 
 uint32_t OutputStreamWrapper::wrapGetLatency(const audio_stream_out_t *stream)
@@ -125,6 +129,10 @@ InputStreamWrapper::InputStreamWrapper(StreamInInterface *cppInputStream)
     stream.read = wrapRead;
     stream.get_input_frames_lost = wrapGetInputFramesLost;
     stream.get_capture_position = wrapGetCapturePosition;
+    stream.start = NULL;
+    stream.stop = NULL;
+    stream.create_mmap_buffer = NULL;
+    stream.get_mmap_position = NULL;
 }
 
 int InputStreamWrapper::wrapSetGain(audio_stream_in_t *stream, float gain)
