@@ -61,6 +61,7 @@ bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int
     boost::char_separator<char> sep("|");
     boost::tokenizer<boost::char_separator<char>> tokenizeLiteral(literalValue, sep);
 
+    numerical = 0;
     for (const auto &value : tokenizeLiteral) {
         int numericalValue = 0;
 
