@@ -458,9 +458,7 @@ status_t Device::createAudioPatch(size_t sourcesCount,
                                   const struct audio_port_config sinks[],
                                   audio_patch_handle_t &handle)
 {
-    if (handle == AUDIO_PATCH_HANDLE_NONE) {
-        handle = Patch::nextUniqueHandle();
-    }
+    handle = Patch::nextUniqueHandle();
     mPatchCollectionLock.lock();
 
     std::pair<PatchCollection::iterator, bool> ret;
