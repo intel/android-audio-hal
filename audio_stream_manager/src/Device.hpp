@@ -380,8 +380,6 @@ private:
     static const char *const mDefaultGainPropName; /**< Gain property name. */
     static const float mDefaultGainValue; /**< Default gain value if empty property. */
 
-    static const uint32_t mRecordingBufferTimeUsec = 20000;
-
     /**
      * Stream Rate associated with narrow band in case of VoIP.
      */

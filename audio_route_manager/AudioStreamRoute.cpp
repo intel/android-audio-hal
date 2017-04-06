@@ -308,7 +308,8 @@ bool AudioStreamRoute::supportDeviceAddress(const std::string& streamDeviceAddre
     Log::Verbose() << __FUNCTION__ << ": gustave route device address " << mConfig.deviceAddress
                  << ", stream device address " << streamDeviceAddress;
     // If both stream and route do not specify a supported device address, consider as matching
-    return (!device_distinguishes_on_address(device) || (streamDeviceAddress == mConfig.deviceAddress));
+    return ((!device_distinguishes_on_address(device) && mConfig.deviceAddress.empty())
+            || (streamDeviceAddress == mConfig.deviceAddress));
 }
 
 bool AudioStreamRoute::supportDevices(audio_devices_t streamDeviceMask) const
