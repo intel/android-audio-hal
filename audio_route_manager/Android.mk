@@ -121,6 +121,7 @@ LOCAL_CFLAGS += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
 endif
 
 LOCAL_MODULE := libaudioroutemanager
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
@@ -163,6 +164,7 @@ include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_includes_common)
 LOCAL_MODULE := audio.routemanager.includes
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 

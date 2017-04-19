@@ -98,6 +98,7 @@ LOCAL_SHARED_LIBRARIES := $(component_shared_lib)
 LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_MODULE := libparametermgr_static
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 

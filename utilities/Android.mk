@@ -27,6 +27,8 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 
 LOCAL_MODULE := libaudio_hal_utilities
 
+LOCAL_PROPRIETARY_MODULE := true
+
 include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################

@@ -46,6 +46,7 @@ component_static_lib_host := \
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libhalaudiodump
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes_dir)

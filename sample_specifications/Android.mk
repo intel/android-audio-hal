@@ -83,6 +83,7 @@ endif
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libsamplespec_static
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 

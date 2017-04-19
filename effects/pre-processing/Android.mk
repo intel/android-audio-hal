@@ -80,6 +80,7 @@ LOCAL_SRC_FILES := $(effect_pre_proc_src_files)
 LOCAL_CFLAGS := $(effect_pre_proc_cflags)
 
 LOCAL_MODULE := liblpepreprocessing
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := \
@@ -104,6 +105,7 @@ LOCAL_SRC_FILES := src/EffectHelper.cpp
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_MODULE := liblpepreprocessinghelper
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)

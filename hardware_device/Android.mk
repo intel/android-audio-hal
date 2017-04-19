@@ -33,6 +33,7 @@ LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudiohw_intel
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 
 include $(BUILD_STATIC_LIBRARY)

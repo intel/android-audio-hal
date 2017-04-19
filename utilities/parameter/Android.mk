@@ -54,6 +54,7 @@ LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudioparameters
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 
 include $(BUILD_STATIC_LIBRARY)

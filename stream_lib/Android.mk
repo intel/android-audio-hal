@@ -89,6 +89,7 @@ endif
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libstream_static
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
