@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,9 +45,7 @@ component_includes_dir_host := \
 component_includes_dir_target := \
     $(foreach inc, $(component_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
     $(call include-path-for, bionic) \
-    $(component_common_includes_dir) \
-    vendor/intel/audio/parameter-framework/upstream/parameter/include \
-    vendor/intel/audio/parameter-framework/support/android/parameter
+    $(component_common_includes_dir)
 
 component_static_lib := \
     libaudio_comms_utilities \
@@ -57,6 +55,12 @@ component_static_lib := \
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host)
+
+component_shared_lib := \
+    libparameter
+
+component_shared_lib_host := \
+    $(foreach lib, $(component_shared_lib), $(lib)_host)
 
 component_cflags := -Wall -Werror -Wextra
 
@@ -74,6 +78,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 LOCAL_C_INCLUDES := $(component_includes_dir_host)
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib_host)
 LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
@@ -89,6 +94,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 LOCAL_C_INCLUDES := $(component_includes_dir_target)
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_STATIC_LIBRARIES := $(component_static_lib)
+LOCAL_SHARED_LIBRARIES := $(component_shared_lib)
 LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_MODULE := libparametermgr_static
