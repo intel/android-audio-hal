@@ -304,6 +304,8 @@ public:
 
     AudioCapabilities getCapabilities() const { return mConfig.mAudioCapabilities; }
 
+    android::status_t dump(const int fd, int spaces = 0) const;
+
 protected:
     IoStream *mCurrentStream; /**< Current stream attached to this route. */
     IoStream *mNewStream; /**< New stream that will be attached to this route after rerouting. */

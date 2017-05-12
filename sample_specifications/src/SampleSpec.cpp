@@ -16,11 +16,13 @@
 #define LOG_TAG "SampleSpec"
 
 #include "SampleSpec.hpp"
+#include <typeconverter/TypeConverter.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <stdint.h>
 #include <errno.h>
 #include <limits>
+#include <utils/String8.h>
 
 using audio_comms::utilities::Log;
 using namespace std;
@@ -138,4 +140,26 @@ bool SampleSpec::isSampleSpecItemEqual(SampleSpecItem sampleSpecItem,
     return (sampleSpecItem != ChannelCountSampleSpecItem) ||
            ssSrc.getChannelsPolicy() == ssDst.getChannelsPolicy();
 }
+
+android::status_t SampleSpec::dump(const int fd, bool isOut, int spaces) const
+{
+    const size_t SIZE = 256;
+    char buffer[SIZE];
+    android::String8 result;
+    snprintf(buffer, SIZE, "%*s- rate %d\n", spaces, "", getSampleRate());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- channels %d\n", spaces, "", getChannelCount());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- channel mask %s\n", spaces, "",
+             isOut ? OutputChannelConverter::toString(mChannelMask).c_str() :
+             InputChannelConverter::toString(mChannelMask).c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- format %s\n", spaces, "", FormatConverter::toString(
+                 getFormat()).c_str());
+    result.append(buffer);
+
+    write(fd, result.string(), result.size());
+    return android::OK;
+}
+
 }  // namespace intel_audio

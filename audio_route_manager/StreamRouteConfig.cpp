@@ -204,4 +204,12 @@ android::status_t StreamRouteConfig::loadChannelMaskCapabilities(AudioCapability
     return android::OK;
 }
 
+android::status_t StreamRouteConfig::dump(const int fd, int spaces) const
+{
+    for (auto &capabilities : mAudioCapabilities) {
+        capabilities.dump(fd, spaces, isOut);
+    }
+    return android::OK;
+}
+
 } // namespace intel_audio

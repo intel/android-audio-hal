@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,6 +149,8 @@ public:
      * @return unique patch handle, which is in fact a unique identifier
      */
     static audio_patch_handle_t nextUniqueHandle();
+
+    android::status_t dump(const int fd, int spaces = 0) const;
 
 private:
     PatchInterface *getPatchInterface();

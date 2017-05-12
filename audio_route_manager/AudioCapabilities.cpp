@@ -19,6 +19,7 @@
 #include "AudioCapabilities.hpp"
 #include <AudioConversion.hpp>
 #include <typeconverter/TypeConverter.hpp>
+#include <utils/String8.h>
 
 namespace intel_audio
 {
@@ -82,6 +83,28 @@ void AudioCapability::reset()
     if (isFormatDynamic) {
         mSupportedFormat = AUDIO_FORMAT_DEFAULT;
     }
+}
+
+android::status_t AudioCapability::dump(const int fd, int spaces, bool isOut) const
+{
+    const size_t SIZE = 512;
+    char buffer[SIZE];
+    android::String8 result;
+
+    snprintf(buffer, SIZE, "%*s Audio Profile:\n", spaces, "");
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- supported format: %s\n", spaces + 4, "",
+             FormatConverter::toString(mSupportedFormat).c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- supported channel Masks: %s\n", spaces + 4, "",
+             getSupportedChannelMasks(isOut).c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- supported rates: %s\n", spaces + 4, "",
+             getSupportedRates().c_str());
+    result.append(buffer);
+
+    write(fd, result.string(), result.size());
+    return android::OK;
 }
 
 const std::string AudioCapability::getSupportedFormat() const

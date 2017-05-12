@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,8 @@ public:
     audio_io_handle_t getMixIoHandle() const { return mConfig.ext.mix.handle; }
     audio_source_t getMixUseCaseSource() const { return mConfig.ext.mix.usecase.source; }
     std::string getDeviceAddress() const { return mConfig.ext.device.address; }
+
+    android::status_t dump(const int fd, int spaces = 0) const;
 
 private:
     /**

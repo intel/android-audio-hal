@@ -624,4 +624,31 @@ bool Device::hasPrimaryFlags(const Stream &stream) const
            AUDIO_OUTPUT_FLAG_PRIMARY;
 }
 
+android::status_t Device::dump(const int fd) const
+{
+    std::string log("\nIntel Audio Primary HAL:\n");
+    write(fd, log.c_str(), log.size());
+
+    mStreamInterface->dump(fd, 4);
+
+    log = " Streams:\n";
+    write(fd, log.c_str(), log.size());
+    for (const auto &it : mStreams) {
+        it.second->dump(fd);
+    }
+
+    log = " Patches:\n";
+    write(fd, log.c_str(), log.size());
+    for (const auto &it : mPatches) {
+        it.second.dump(fd, 4);
+    }
+
+    log = " Ports:\n";
+    write(fd, log.c_str(), log.size());
+    for (const auto &it : mPorts) {
+        it.second.dump(fd, 4);
+    }
+    return android::OK;
+}
+
 } // namespace intel_audio

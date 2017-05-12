@@ -61,8 +61,7 @@ public:
     virtual audio_format_t getFormat() const;
     virtual android::status_t setFormat(audio_format_t format);
     virtual android::status_t standby();
-    /** @note API not implemented in our Audio HAL */
-    virtual android::status_t dump(int) const { return android::OK; }
+    virtual android::status_t dump(int fd) const;
     virtual audio_devices_t getDevice() const;
     virtual android::status_t setDevice(audio_devices_t device) = 0;
     /** @note API not implemented in stream base class, input specific implementation only. */

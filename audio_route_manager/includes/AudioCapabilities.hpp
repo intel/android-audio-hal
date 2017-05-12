@@ -105,6 +105,8 @@ struct AudioCapability
     bool isChannelMaskDynamic = false;
     bool isRateDynamic = false;
     bool isFormatDynamic = false;
+
+    android::status_t dump(const int fd, int spaces, bool isOut) const;
 };
 
 struct AudioCapabilities : public std::vector<AudioCapability>

@@ -22,6 +22,7 @@
 #include <utilities/Log.hpp>
 #include <list>
 #include <map>
+#include <utils/String8.h>
 
 namespace intel_audio
 {
@@ -327,6 +328,24 @@ public:
     inline uint32_t routesToDisable(Direction::Values dir) const
     {
         return mRoutes[dir].routesToDisable();
+    }
+
+    android::status_t dump(const int fd, int spaces) const
+    {
+        const size_t SIZE = 256;
+        char buffer[SIZE];
+        android::String8 result;
+
+        snprintf(buffer, SIZE, "%*sStream Routes:\n", spaces, "");
+        result.append(buffer);
+
+        write(fd, result.string(), result.size());
+
+        for (const auto &it : *this) {
+            const auto &route = it.second;
+            route->dump(fd, spaces + 4);
+        }
+        return android::OK;
     }
 
 private:

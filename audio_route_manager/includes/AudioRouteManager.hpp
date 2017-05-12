@@ -149,6 +149,8 @@ public:
      */
     void printPlatformFwErrorInfo() const {}
 
+    android::status_t dump(const int  fd, int spaces = 0) const;
+
 private:
     /**
      * From worker thread context

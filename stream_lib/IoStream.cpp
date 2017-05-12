@@ -15,11 +15,13 @@
  */
 #include "IoStream.hpp"
 #include "AudioDevice.hpp"
+#include <typeconverter/TypeConverter.hpp>
 #include <IStreamRoute.hpp>
 #include <AudioCommsAssert.hpp>
 #include <SampleSpec.hpp>
 #include <utils/RWLock.h>
 #include <utilities/Log.hpp>
+#include <utils/String8.h>
 
 using audio_comms::utilities::Log;
 using std::string;
@@ -171,6 +173,36 @@ void IoStream::setNeedReconfigure()
         return;
     }
     mNeedReconfigure = true;
+}
+
+android::status_t IoStream::dump(const int fd, int spaces) const
+{
+    const size_t SIZE = 256;
+    char buffer[SIZE];
+    android::String8 result;
+
+    snprintf(buffer, SIZE, "%*s- mEffectsRequestedMask: 0x%X\n", spaces, "", mEffectsRequestedMask);
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Need Reconfigure: %s\n", spaces, "", mNeedReconfigure ? "Y" : "N");
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- is attached to route: %s\n", spaces, "",
+             (mCurrentStreamRoute == nullptr ? "none" : mCurrentStreamRoute->getName().c_str()));
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- will be attached to route: %s\n", spaces, "",
+             (mNewStreamRoute == nullptr ? "none" : mNewStreamRoute->getName().c_str()));
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Device Types: %s\n", spaces, "",
+             DeviceConverter::maskToString(mDevices, ",").c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Device Address: %s\n", spaces, "", mDeviceAddress.c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Stream Sample Specification: \n", spaces, "");
+    result.append(buffer);
+    write(fd, result.string(), result.size());
+
+    mSampleSpec.dump(fd, isOut(), spaces + 2);
+
+    return android::OK;
 }
 
 } // namespace intel_audio

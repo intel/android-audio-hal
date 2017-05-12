@@ -101,6 +101,8 @@ struct StreamRouteConfig
      * @return OK is channel masks supported has been set correctly, error code otherwise.
      */
     android::status_t loadChannelMaskCapabilities(AudioCapability &capability);
+
+    android::status_t dump(const int fd, int spaces) const;
 };
 
 } // namespace intel_audio

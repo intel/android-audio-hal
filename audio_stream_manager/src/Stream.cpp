@@ -20,12 +20,14 @@
 #include "Stream.hpp"
 #include <Parameters.hpp>
 #include <KeyValuePairs.hpp>
+#include <typeconverter/TypeConverter.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <property/Property.hpp>
 #include <AudioConversion.hpp>
 #include <HalAudioDump.hpp>
 #include <string>
+#include <utils/String8.h>
 
 using android::status_t;
 using audio_comms::utilities::Log;
@@ -372,6 +374,31 @@ bool Stream::safeSleep(uint32_t sleepTimeUs)
 void Stream::setPatchHandle(audio_patch_handle_t patchHandle)
 {
     mPatchHandle = patchHandle;
+}
+
+android::status_t Stream::dump(int fd) const
+{
+    AutoR lock(mStreamLock);
+    const size_t SIZE = 256;
+    char buffer[SIZE];
+    android::String8 result;
+    int spaces = 2;
+
+    snprintf(buffer, SIZE, "%*s Stream: %s\n", spaces, "", (isOut() ? "playback" : "capture"));
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Handle: %d\n", spaces + 2, "", mHandle);
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Patch Handle: %d\n", spaces + 2, "", mPatchHandle);
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Flags: %s\n", spaces + 2, "", isOut() ?
+             OutputFlagConverter::maskToString(mFlagMask, ",").c_str() :
+             InputFlagConverter::maskToString(mFlagMask, ",").c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- Use Cases: %s\n", spaces + 2, "", isOut() ? "n/a" :
+             InputSourceConverter::maskToString(mUseCaseMask, ",").c_str());
+    result.append(buffer);
+    write(fd, result.string(), result.size());
+    return IoStream::dump(fd, spaces + 2);
 }
 
 } // namespace intel_audio

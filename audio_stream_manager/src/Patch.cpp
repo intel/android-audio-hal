@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <utilities/Log.hpp>
 #include <utils/Errors.h>
 #include <utils/Atomic.h>
+#include <utils/String8.h>
 
 using android::status_t;
 using audio_comms::utilities::Log;
@@ -68,7 +69,7 @@ std::string Patch::getDeviceAddress(audio_port_role_t role) const
             return port->getDeviceAddress();
         }
     }
-    return {};
+    return "";
 }
 
 const Port *Patch::getMixPort(audio_port_role_t role) const
@@ -137,6 +138,24 @@ void Patch::addPorts(size_t portCount, const struct audio_port_config portConfig
         port.updateConfig(portConfig[portConfigIndex]);
         addPort(port);
     }
+}
+
+android::status_t Patch::dump(const int fd, int spaces) const
+{
+    const size_t SIZE = 256;
+    char buffer[SIZE];
+    android::String8 result;
+
+    snprintf(buffer, SIZE, "%*sPatch:\n", spaces, "");
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- handle: %d\n", spaces + 2, "", mHandle);
+    result.append(buffer);
+    write(fd, result.string(), result.size());
+
+    for (const auto &port : mPorts) {
+        port->dump(fd, spaces + 2);
+    }
+    return android::OK;
 }
 
 } // namespace intel_audio

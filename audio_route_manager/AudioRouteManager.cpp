@@ -590,4 +590,19 @@ std::string AudioRouteManager::getParameters(const std::string &keys) const
     return mPlatformState->getParameters(keys);
 }
 
+android::status_t AudioRouteManager::dump(const int fd, int spaces) const
+{
+    AutoR lock(mRoutingLock);
+    const size_t SIZE = 256;
+    char buffer[SIZE];
+    String8 result;
+
+    snprintf(buffer, SIZE, "%*sAudio Route Manager:\n", spaces, "");
+    result.append(buffer);
+
+    write(fd, result.string(), result.size());
+    mStreamRoutes->dump(fd, spaces + 4);
+    return android::OK;
+}
+
 } // namespace intel_audio

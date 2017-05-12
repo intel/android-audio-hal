@@ -17,6 +17,7 @@
 
 
 #include <hardware/audio.h>
+#include <utils/Errors.h>
 #include <string.h>
 #include <vector>
 
@@ -223,6 +224,8 @@ public:
     static bool isSampleSpecItemEqual(SampleSpecItem sampleSpecItem,
                                       const SampleSpec &ssSrc,
                                       const SampleSpec &ssDst);
+
+    android::status_t dump(const int fd, bool isOut, int spaces) const;
 
 private:
     uint32_t mSampleSpec[NbSampleSpecItems]; /**< Array of sample spec items:

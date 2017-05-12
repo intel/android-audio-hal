@@ -100,8 +100,7 @@ public:
     virtual android::status_t setParameters(const std::string &keyValuePairs);
     virtual std::string getParameters(const std::string &keys) const;
     virtual size_t getInputBufferSize(const audio_config_t &config) const;
-    /** @note API not implemented in our Audio HAL */
-    virtual android::status_t dump(const int /* fd */) const { return android::OK; }
+    virtual android::status_t dump(const int  fd) const;
     /** @note Routing Control API used for routing with AUDIO_DEVICE_API_VERSION >= 3.0. */
     virtual android::status_t createAudioPatch(size_t sourcesCount,
                                                const struct audio_port_config sources[],

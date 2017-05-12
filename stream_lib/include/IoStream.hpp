@@ -363,6 +363,8 @@ public:
     void setNeedReconfigure();
     void resetNeedReconfigure() { mNeedReconfigure = false; }
 
+    android::status_t dump(const int fd, int spaces) const;
+
 protected:
     /**
      * Attach the stream to its route.

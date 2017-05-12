@@ -25,6 +25,7 @@
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <policy.h>
+#include <utils/String8.h>
 
 using namespace std;
 using audio_comms::utilities::Log;
@@ -280,5 +281,74 @@ uint32_t AudioStreamRoute::getPeriodInUs() const
     return getSampleSpec().convertFramesToUsec(mConfig.periodSize);
 }
 
+android::status_t AudioStreamRoute::dump(const int fd, int spaces) const
+{
+    const size_t SIZE = 512;
+    char buffer[SIZE];
+    android::String8 result;
+
+    snprintf(buffer, SIZE, "%*sStream Route: %s %s\n", spaces, "", getName().c_str(),
+             (isOut() ? "playback" : "capture"));
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*sRuntime information:\n", spaces + 2, "");
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- isUsed: %s", spaces + 4, "", (mIsUsed ? "Yes" : "No"));
+    result.append(buffer);
+
+    if (mIsUsed && (mCurrentStream != nullptr)) {
+        snprintf(buffer, SIZE, " by stream %p", mCurrentStream);
+        result.append(buffer);
+    }
+    snprintf(buffer, SIZE, "\n%*s- CurrentRate: %d\n", spaces + 4, "", mConfig.getRate());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- CurrentChannelMask: %s\n", spaces + 4, "",
+             channelMaskToString(mConfig.getChannelMask(), isOut()).c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- CurrentFormat: %s\n", spaces + 4, "",
+             FormatConverter::toString(mConfig.getFormat()).c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*sConfiguration:\n", spaces + 2, "");
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- requirePreEnable: %d\n", spaces + 4, "", mConfig.requirePreEnable);
+    result.append(buffer);
+    snprintf(buffer,
+             SIZE,
+             "%*s- requirePostDisable: %d\n",
+             spaces + 4,
+             "",
+             mConfig.requirePostDisable);
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- cardName: %s\n", spaces + 4, "", mConfig.cardName.c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- deviceId: %d\n", spaces + 4, "", mConfig.deviceId);
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- device Address: %s\n", spaces + 4, "",
+             mConfig.deviceAddress.c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- flagMask: %s\n", spaces + 4, "",
+             isOut() ? OutputFlagConverter::maskToString(mConfig.flagMask, ",").c_str() :
+             InputFlagConverter::maskToString(mConfig.flagMask, ",").c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- supported devices: %s\n", spaces + 4, "",
+             DeviceConverter::maskToString(mConfig.supportedDeviceMask, ",").c_str());
+    result.append(buffer);
+    snprintf(buffer, SIZE, "%*s- supported use cases: %s\n", spaces + 4, "",
+             isOut() ? "n/a" : InputSourceConverter::maskToString(mConfig.useCaseMask,
+                                                                  ",").c_str());
+    result.append(buffer);
+    snprintf(buffer,
+             SIZE,
+             "%*s- channel control: %s\n",
+             spaces + 4,
+             "",
+             mConfig.dynamicChannelMapsControl.c_str());
+    result.append(buffer);
+
+    write(fd, result.string(), result.size());
+
+    mConfig.dump(fd, spaces + 4);
+
+    return android::OK;
+}
 
 } // namespace intel_audio
