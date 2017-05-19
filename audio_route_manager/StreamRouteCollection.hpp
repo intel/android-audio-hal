@@ -62,16 +62,15 @@ public:
      *
      * @return Newly created and added element, NULL otherwise..
      */
-    bool add(AudioStreamRoute *element)
+    void push_back(AudioStreamRoute *element)
     {
         std::string key = element->getName() + (element->isOut() ? "_Playback" : "_Capture");
         if ((*this).find(key) != (*this).end()) {
             audio_comms::utilities::Log::Warning() << __FUNCTION__
                                                    << ": element(" << key << ") already added";
-            return false;
+            return;
         }
         (*this)[key] = element;
-        return true;
     }
 
     void prepareRouting()

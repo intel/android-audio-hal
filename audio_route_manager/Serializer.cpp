@@ -59,7 +59,7 @@ string getXmlAttribute(const xmlNode *cur, const char *attribute)
     return value;
 }
 
-const char *const RouteSerializer::rootName = "routeConfiguration";
+const char *const RouteSerializer::rootName = "audioPolicyConfiguration";
 const char *const RouteSerializer::versionAttribute = "version";
 const uint32_t RouteSerializer::gMajor = 1;
 const uint32_t RouteSerializer::gMinor = 0;
@@ -110,12 +110,8 @@ static status_t deserializeCollection(_xmlDoc *doc, const _xmlNode *cur,
             if (!xmlStrcmp(child->name, (const xmlChar *)Trait::tag)) {
                 typename Trait::PtrElement element;
                 status_t status = Trait::deserialize(doc, child, element, serializingContext);
-                if (status != NO_ERROR) {
-                    return status;
-                }
-                if (collection.add(element) < 0) {
-                    Log::Error() << __FUNCTION__ << ": could not add element to "
-                                 << Trait::collectionTag << " collection";
+                if (status == NO_ERROR) {
+                    collection.push_back(element);
                 }
             }
             child = child->next;
@@ -430,6 +426,96 @@ status_t AudioProfileTraits::deserialize(_xmlDoc */*doc*/,
     return NO_ERROR;
 }
 
+const char *const DevicePortTraits::tag = "devicePort";
+const char *const DevicePortTraits::collectionTag = "devicePorts";
+
+const char DevicePortTraits::Attributes::name[] = "tagName";
+const char DevicePortTraits::Attributes::role[] = "role";
+const char DevicePortTraits::Attributes::type[] = "type";
+const char DevicePortTraits::Attributes::address[] = "address";
+
+status_t DevicePortTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrElement &element,
+                                       PtrSerializingCtx /*serializingContext*/)
+{
+    string name = getXmlAttribute(root, Attributes::name);
+    if (name.empty()) {
+        Log::Error() << __FUNCTION__ << ": DevicePort: No attribute " << Attributes::name <<
+            " found.";
+        return BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": DevicePort: attribute " << Attributes::name << "=" << name;
+    string typeName = getXmlAttribute(root, Attributes::type);
+    if (typeName.empty()) {
+        Log::Error() << __FUNCTION__ << ": DevicePort: No attribute " << Attributes::type <<
+            " found.";
+        return BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": DevicePort: attribute " << Attributes::type << "=" <<
+        typeName;
+    string role = getXmlAttribute(root, Attributes::role);
+    if (role.empty()) {
+        Log::Error() << __FUNCTION__ << ": DevicePort: No attribute " << Attributes::role <<
+            " found.";
+        return BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": DevicePort: attribute " << Attributes::role << "=" << role;
+    audio_devices_t type = AUDIO_DEVICE_NONE;
+    if (not DeviceConverter::toEnum(typeName, type)) {
+        Log::Error() << __FUNCTION__ << ": DevicePort: Wrong " << typeName << "for attribute " <<
+            Attributes::type << " found.";
+        return BAD_VALUE;
+    }
+    string address = getXmlAttribute(root, Attributes::address);
+    if (not address.empty()) {
+        Log::Verbose() << __FUNCTION__ << ": DevicePort: attribute " << Attributes::address <<
+            " = " << address;
+    }
+    element = new Element(type, name, address);
+
+    return NO_ERROR;
+}
+
+const char *const RouteTraits::tag = "route";
+const char *const RouteTraits::collectionTag = "routes";
+
+const char RouteTraits::Attributes::sink[] = "sink";
+const char RouteTraits::Attributes::sources[] = "sources";
+
+
+status_t RouteTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrElement &element,
+                                  PtrSerializingCtx /*ctx*/)
+{
+    string sinkAttr = getXmlAttribute(root, Attributes::sink);
+    if (sinkAttr.empty()) {
+        Log::Error() << __FUNCTION__ << ": Route: No attribute " << Attributes::sink << " found.";
+        return BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": Route: attribute " << Attributes::sink << "=" << sinkAttr;
+
+    string sourcesAttr = getXmlAttribute(root, Attributes::sources);
+    if (sourcesAttr.empty()) {
+        Log::Error() << __FUNCTION__ << ": No attribute " << Attributes::sources << " found.";
+        return BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": Route: attribute " << Attributes::sources << "=" <<
+        sourcesAttr;
+
+    // Tokenize and Convert Sources name to port pointer
+    std::vector<std::string> sources;
+    char *sourcesLiteral = strndup(sourcesAttr.c_str(), strlen(sourcesAttr.c_str()));
+    char *devTag = strtok(sourcesLiteral, ",");
+    while (devTag != NULL) {
+        if (strlen(devTag) != 0) {
+            sources.push_back(devTag);
+        }
+        devTag = strtok(NULL, ",");
+    }
+    free(sourcesLiteral);
+
+    element = new Element(sinkAttr, sources);
+    return NO_ERROR;
+}
+
 const char *const MixPortTraits::tag = "mixPort";
 const char *const MixPortTraits::collectionTag = "mixPorts";
 
@@ -460,7 +546,7 @@ const char MixPortTraits::Attributes::devicePorts[] = "devicePorts";
 const char MixPortTraits::Attributes::effects[] = "effectsSupported";
 
 status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElement &mixPort,
-                                    PtrSerializingCtx /*serializingContext*/)
+                                    PtrSerializingCtx ctx)
 {
     string name = getXmlAttribute(child, Attributes::name);
     if (name.empty()) {
@@ -518,6 +604,13 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
                                   OutputFlagConverter::maskFromString(flags, ",") :
                                   InputFlagConverter::maskFromString(flags, ","));
     }
+
+    // If no flags is provided for input, use custom primary input flag by default
+    if (role == "sink") {
+        mixPortConfig.flagMask = (mixPortConfig.flagMask == AUDIO_INPUT_FLAG_NONE) ?
+                                 AUDIO_INPUT_FLAG_PRIMARY : mixPortConfig.flagMask;
+    }
+
     string periodSize = getXmlAttribute(child, Attributes::periodSize);
     if (periodSize.empty() || !convertTo<string, uint32_t>(periodSize, mixPortConfig.periodSize)) {
         Log::Error() << __FUNCTION__ << ": No valid attribute " << Attributes::periodSize
@@ -593,20 +686,50 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
     mixPortConfig.dynamicFormatsControl = getXmlAttribute(child, Attributes::dynamicFormatsControl);
     mixPortConfig.dynamicRatesControl =
         getXmlAttribute(child, Attributes::dynamicSampleRatesControl);
-    mixPortConfig.deviceAddress = getXmlAttribute(child, Attributes::deviceAddress);
+    //    mixPortConfig.deviceAddress = getXmlAttribute(child, Attributes::deviceAddress);
 
     mixPortConfig.useCaseMask = 0;
     string supportedUseCases = getXmlAttribute(child, Attributes::supportedUseCases);
     mixPortConfig.useCaseMask = (role == "source") ?
                                 0 : InputSourceConverter::maskFromString(supportedUseCases, ",");
+    mixPortConfig.supportedDeviceMask = 0;
+    for (const auto route : ctx->mRoutes) {
+        if (role == "sink") {
+            // Find all route invoking this mixPort as sink and populate the sources
+            // (of device port type) to the list of devicePorts reachable from this sink
+            if (route->mSink == name) {
+                for (const auto &source : route->mSources) {
+                    const auto port = ctx->mDevicePorts.findByName(source);
+                    if (port != nullptr) {
+                        Log::Verbose() << __FUNCTION__ << ": adding " << port->mName <<
+                            " to mix port" << name;
+                        mixPortConfig.supportedDeviceMask |= port->mType;
 
-    string devicePorts = getXmlAttribute(child, Attributes::devicePorts);
-    mixPortConfig.supportedDeviceMask = DeviceConverter::maskFromString(devicePorts, ",");
-    if (devicePorts.empty() || (mixPortConfig.supportedDeviceMask == 0)) {
-        Log::Error() << __FUNCTION__ << ": Invalid " << devicePorts << " for attribute "
-                     << Attributes::devicePorts;
-        delete mixPort;
-        return BAD_VALUE;
+                        if (not port->mAddress.empty()) {
+                            mixPortConfig.deviceAddress = port->mAddress;
+                            Log::Verbose() << __FUNCTION__ << ": adding @" << port->mAddress <<
+                                " to mix port" << name;
+                        }
+                    }
+                }
+            }
+        } else {
+            // find all route involving this mixPort as a source and add the sink device port
+            // involved in this route to the list of devicePorts reachable from this source
+            if (route->involveSource(name)) {
+                const auto port = ctx->mDevicePorts.findByName(route->mSink);
+                if (port != nullptr) {
+                    mixPortConfig.supportedDeviceMask |= port->mType;
+                    Log::Verbose() << __FUNCTION__ << ": adding " << port->mName <<
+                        " to mix port " << name;
+                    if (not port->mAddress.empty()) {
+                        mixPortConfig.deviceAddress = port->mAddress;
+                        Log::Verbose() << __FUNCTION__ << ": adding @" << port->mAddress <<
+                            " to mix port " << name;
+                    }
+                }
+            }
+        }
     }
     string channelsPolicy = getXmlAttribute(child, Attributes::channelsPolicy);
     if (not channelsPolicy.empty()) {
@@ -641,6 +764,27 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
         collectionFromString<DefaultTraits<string> >(effects, effectsSupported, ",");
         mixPort->setEffectSupported(effectsSupported);
     }
+    return NO_ERROR;
+}
+
+
+const char *const ModuleTraits::tag = "module";
+const char *const ModuleTraits::collectionTag = "modules";
+
+status_t ModuleTraits::deserialize(xmlDocPtr doc, const xmlNode *root, PtrElement & /*module*/,
+                                   PtrSerializingCtx ctx)
+{
+    std::string name = getXmlAttribute(root, "name");
+    if (name != "primary") {
+        Log::Warning() << __FUNCTION__ << ": Module " << name <<
+            " outside primary outside HAL Scope";
+        return BAD_VALUE;
+    }
+    // Deserialize childrens: mixPorts, devicePorts and routes
+    Context context;
+    deserializeCollection<DevicePortTraits>(doc, root, context.mDevicePorts, nullptr);
+    deserializeCollection<RouteTraits>(doc, root, context.mRoutes, nullptr);
+    deserializeCollection<MixPortTraits>(doc, root, ctx->mMixPorts, &context);
     return NO_ERROR;
 }
 
@@ -690,7 +834,8 @@ status_t RouteSerializer::deserialize(const char *configFile, RouteManagerConfig
         return BAD_VALUE;
     }
     // Lets deserialize children
-    deserializeCollection<MixPortTraits>(doc, cur, config.mMixPorts, &config);
+    ModuleTraits::Collection modules;
+    deserializeCollection<ModuleTraits>(doc, cur, modules, &config);
     deserializeCollection<RogueParameterTraits>(doc, cur, config.mParameters, &config);
     deserializeCollection<AudioCriterionTypeTraits>(doc, cur, config.mCriterionTypes, &config);
     deserializeCollection<AudioCriterionTraits>(doc, cur, config.mCriteria, &config);

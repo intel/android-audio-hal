@@ -178,6 +178,7 @@ def parseCriteriaAndCriterionTypes(criteriaFile, criterionTypesFile):
                 break
 
     return all_criteria
+
 def parseEdd(EDDFiles):
     parsed_edds = []
 

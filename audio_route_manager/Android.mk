@@ -193,49 +193,6 @@ include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 endif
 #######################################################################
-# Build for configuration file
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := route_manager_configuration.xml
-LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
-LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
-LOCAL_ADDITIONAL_DEPENDENCIES := \
-    audio_criteria.xml \
-    audio_criterion_types.xml \
-    audio_rogue_parameters.xml
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := audio_criteria.xml
-LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
-LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := audio_criterion_types.xml
-LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
-LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := audio_rogue_parameters.xml
-LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
-LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
-
-#######################################################################
 # Tools for audio pfw settings generation
 
 include $(CLEAR_VARS)

@@ -114,11 +114,6 @@ struct AudioCapabilities : public std::vector<AudioCapability>
     const std::string getSupportedFormats() const;
     const std::string getSupportedChannelMasks(bool isOut) const;
     const std::string getSupportedRates() const;
-    bool add(AudioCapability &element)
-    {
-        push_back(element);
-        return true;
-    }
 };
 
 } // namespace intel_audio

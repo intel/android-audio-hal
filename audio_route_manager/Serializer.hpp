@@ -116,6 +116,107 @@ struct AudioProfileTraits
                                          PtrSerializingCtx serializingContext);
 };
 
+struct DevicePortTraits
+{
+    static const char *const tag;
+    static const char *const collectionTag;
+
+    struct Attributes
+    {
+        static const char name[];
+        static const char type[];
+        static const char role[];
+        static const char address[];
+    };
+
+    struct DevicePort
+    {
+        DevicePort(audio_devices_t type, const std::string &name, const std::string &address)
+            : mType(type), mName(name), mAddress(address) {}
+
+        audio_devices_t mType;
+        std::string mName;
+        std::string mAddress;
+    };
+    struct DevicePorts : public std::vector<DevicePort *>
+    {
+        DevicePort *findByName(const std::string &name) const
+        {
+            for (auto port : *this) {
+                if (port->mName == name) {
+                    return port;
+                }
+            }
+            return nullptr;
+        }
+    };
+    typedef DevicePort Element;
+    typedef DevicePort *PtrElement;
+    typedef DevicePorts Collection;
+    typedef void *PtrSerializingCtx;
+
+    static android::status_t deserialize(_xmlDoc *doc, const _xmlNode *root, PtrElement &element,
+                                         PtrSerializingCtx serializingContext);
+};
+
+struct RouteTraits
+{
+    static const char *const tag;
+    static const char *const collectionTag;
+
+    struct Attributes
+    {
+        static const char sink[];
+        static const char sources[];
+    };
+
+    struct Route
+    {
+        Route(const std::string &sinkName, const std::vector<std::string> &sources)
+            : mSink(sinkName), mSources(sources) {}
+
+        bool involveSource(const std::string &name)
+        {
+            for (const auto &source : mSources) {
+                if (source == name) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        std::string mSink;
+        std::vector<std::string> mSources;
+    };
+    typedef Route Element;
+    typedef Route *PtrElement;
+    typedef std::vector<Route *> Collection;
+    typedef void *PtrSerializingCtx;
+
+    static android::status_t deserialize(_xmlDoc *doc, const _xmlNode *root, PtrElement &element,
+                                         PtrSerializingCtx serializingContext);
+};
+
+struct ModuleTraits
+{
+    static const char *const tag;
+    static const char *const collectionTag;
+
+    struct Module {};
+    struct Context
+    {
+        DevicePortTraits::Collection mDevicePorts;
+        RouteTraits::Collection mRoutes;
+    };
+    typedef Module Element;
+    typedef Module *PtrElement;
+    typedef std::vector<Module *> Collection;
+    typedef RouteManagerConfig *PtrSerializingCtx;
+
+    static android::status_t deserialize(_xmlDoc * doc, const _xmlNode * root, PtrElement & element,
+                                         PtrSerializingCtx /*serializingContext*/);
+};
+
 struct MixPortTraits
 {
     static const char *const tag;
@@ -153,7 +254,7 @@ struct MixPortTraits
     typedef AudioStreamRoute Element;
     typedef AudioStreamRoute *PtrElement;
     typedef StreamRouteCollection Collection;
-    typedef void *PtrSerializingCtx;
+    typedef ModuleTraits::Context *PtrSerializingCtx;
 
     static android::status_t deserialize(_xmlDoc *doc, const _xmlNode *root, PtrElement &element,
                                          PtrSerializingCtx serializingContext);

@@ -53,7 +53,7 @@ using android::status_t;
 static const char *gConfigFilePathList[] = {
     "/vendor/etc/", "/system/etc/"
 };
-static const char *gConfigFileName = "route_manager_configuration.xml";
+static const char *gConfigFileName = "audio_policy_configuration.xml";
 
 static const std::string gVoiceVolume = "/Audio/CONFIGURATION/VOICE_VOLUME_CTRL_PARAMETER";
 

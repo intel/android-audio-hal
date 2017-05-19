@@ -90,7 +90,11 @@ def parseCriteria(routesFile, criterionTypesFile, outputFile):
     routes_root = routes_tree.getroot()
     criterion_types_root = criterion_types_tree.getroot()
 
-    routes_mix_ports_root = routes_root.find('mixPorts')
+    modules_root = routes_root.find('modules')
+    for module in modules_root.findall('module'):
+        if module.get('name') == "primary":
+            routes_mix_ports_root = module.find('mixPorts')
+            break
 
     all_playback_routes = ""
     all_capture_routes = ""
