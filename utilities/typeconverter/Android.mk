@@ -30,7 +30,8 @@ component_src_files := TypeConverter.cpp
 component_includes_common := \
     $(LOCAL_PATH)/include/typeconverter \
     external/tinyalsa/include \
-    $(call include-path-for, audio-utils)
+    $(call include-path-for, audio-utils) \
+    $(TOP_DIR)frameworks/av/services/audiopolicy/common/include
 
 component_includes_dir_host := \
     $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
