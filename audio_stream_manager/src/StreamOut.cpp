@@ -69,16 +69,16 @@ android::status_t StreamOut::setVolume(float left, float right)
 
 android::status_t StreamOut::pause()
 {
-    if (!isDirect()) {
-        return android::INVALID_OPERATION;
+    if (!isDirect() || !isStarted()) {
+        return android::BAD_TYPE;
     }
     return setStandby(true);
 }
 
 android::status_t StreamOut::resume()
 {
-    if (!isDirect()) {
-        return android::INVALID_OPERATION;
+    if (!isDirect() || isStarted()) {
+        return android::BAD_TYPE;
     }
     return setStandby(false);
 }
