@@ -94,7 +94,7 @@ status_t Stream::set(audio_config_t &config)
 std::string Stream::getParameters(const std::string &keys) const
 {
     KeyValuePairs pairs(keys);
-    KeyValuePairs returnedPairs(keys);
+    KeyValuePairs returnedPairs;
     const AudioCapabilities &capabilities = mParent->getStreamInterface().getCapabilities(*this);
 
     string key(AUDIO_PARAMETER_STREAM_SUP_CHANNELS);
@@ -109,6 +109,7 @@ std::string Stream::getParameters(const std::string &keys) const
     if (pairs.hasKey(key)) {
         returnedPairs.add(key, capabilities.getSupportedRates());
     }
+
     return returnedPairs.toString();
 }
 
