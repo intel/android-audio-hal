@@ -169,9 +169,33 @@ uint32_t Stream::getUseCaseMask() const
 
 status_t Stream::setParameters(const string &keyValuePairs)
 {
+    status_t result(android::BAD_VALUE);
+
+    KeyValuePairs pairs(keyValuePairs);
+
+    string key(AUDIO_PARAMETER_STREAM_CHANNELS);
+    uint32_t value;
+    if (pairs.hasKey(key)) {
+        pairs.get(key, value);
+        IoStream::setChannels(value, isOut());
+        result = android::OK;
+    }
+    key = AUDIO_PARAMETER_STREAM_FORMAT;
+    if (pairs.hasKey(key)) {
+        pairs.get(key, value);
+        setFormat(static_cast<audio_format_t>(value));
+        result = android::OK;
+    }
+    key =  AUDIO_PARAMETER_STREAM_SAMPLING_RATE;
+    if (pairs.hasKey(key)) {
+        pairs.get(key, value);
+        setSampleRate(value);
+        result = android::OK;
+    }
+
     Log::Warning() << __FUNCTION__ << ": " << keyValuePairs
                    << ": Not implemented, Using routing API 3.0";
-    return keyValuePairs.empty() ? android::OK : android::BAD_VALUE;
+    return keyValuePairs.empty() ? android::OK : result;
 }
 
 size_t Stream::getBufferSize() const
