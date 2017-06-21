@@ -170,7 +170,7 @@ status_t Stream::setParameters(const string &keyValuePairs)
 {
     Log::Warning() << __FUNCTION__ << ": " << keyValuePairs
                    << ": Not implemented, Using routing API 3.0";
-    return android::INVALID_OPERATION;
+    return keyValuePairs.empty() ? android::OK : android::BAD_VALUE;
 }
 
 size_t Stream::getBufferSize() const
