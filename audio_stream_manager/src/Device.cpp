@@ -278,7 +278,7 @@ string Device::getParameters(const string &keys) const
 android::status_t Device::setMode(audio_mode_t mode)
 {
     mMode = mode;
-    return android::OK;
+    return mMode == AUDIO_MODE_INVALID ? android::BAD_VALUE : android::OK;
 }
 
 void Device::resetEchoReference(struct echo_reference_itfe *reference)
