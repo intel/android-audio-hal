@@ -230,7 +230,7 @@ status_t StreamOut::getPresentationPosition(uint64_t &frames, struct timespec &t
     AutoR lock(mStreamLock);
     // Check if the audio route is available for this stream (i.e. an audio device is assign to it).
     if (!isRoutedL()) {
-        return android::INVALID_OPERATION;
+        return android::NOT_ENOUGH_DATA;
     }
     size_t avail;
     status_t error = getFramesAvailable(avail, timestamp);
