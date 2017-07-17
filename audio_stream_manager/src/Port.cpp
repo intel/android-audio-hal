@@ -38,7 +38,6 @@ Port::~Port()
 {
     // On port deletion, i.e. ref count is 0, remove the associated device from the
     // routed devices.
-    AUDIOCOMMS_ASSERT(!isUsed(), "Removing still used port is not allowed, please analyse");
 }
 
 void Port::updateConfig(const audio_port_config &config)
