@@ -135,17 +135,18 @@ status_t AudioRouteManager::startService()
     {
         AutoW lock(mRoutingLock);
 
+        if (mIsStarted) {
+            Log::Warning() << "Route Manager service already started.";
+            /* Ignore the start; consider this case is not critical */
+            return android::OK;
+        }
+
         // Add UEvent to list of Fd to poll BEFORE starting this event thread.
         if (mUEventFd >= 0) {
             Log::Debug() << __FUNCTION__ << ": UEvent fd added to event thread";
             mEventThread->addOpenedFd(FdFromSstDriver, mUEventFd, true);
         }
 
-        if (mIsStarted) {
-            Log::Warning() << "Route Manager service already started.";
-            /* Ignore the start; consider this case is not critical */
-            return android::OK;
-        }
         mPlatformState = new AudioPlatformState();
     }
 

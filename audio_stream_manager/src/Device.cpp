@@ -67,7 +67,19 @@ Device::Device()
 
 Device::~Device()
 {
-    mStreamInterface->stopService();
+    for(auto it = mPatches.begin(); it!= mPatches.end(); ++it) {
+        Patch &patch = it->second;
+        patch.release(true);
+    }
+
+    for(auto& it : mStreams) {
+        Stream *stream = it.second;
+        if(stream->isOut()) {
+            closeOutputStream(static_cast<StreamOut*>(stream));
+        } else {
+            closeInputStream(static_cast<StreamIn*>(stream));
+        }
+    }
 }
 
 status_t Device::initCheck() const
