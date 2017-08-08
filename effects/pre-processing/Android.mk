@@ -56,14 +56,12 @@ effect_pre_proc_static_lib_host += \
 
 effect_pre_proc_static_lib_target += \
     $(effect_pre_proc_static_lib) \
-    libmedia_helper \
 
 effect_pre_proc_shared_lib_target += \
     libutils  \
     libcutils \
     liblog \
-    libaudioclient \
-    libmedia
+    libaudiohal_parameters \
 
 effect_pre_proc_cflags := -Wall -Werror -Wno-unused-parameter
 
@@ -146,7 +144,6 @@ audio_effects_functional_test_static_lib_target := \
 audio_effects_functional_test_shared_lib_target := \
     libcutils \
     libbinder \
-    libmedia \
     libutils
 
 audio_effects_functional_test_defines += -Wall -Werror -ggdb -O0

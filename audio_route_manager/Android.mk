@@ -82,7 +82,6 @@ component_static_lib_host := \
 
 component_static_lib_target := \
     $(component_static_lib) \
-    libmedia_helper \
 
 component_shared_lib_common := \
     libparameter \

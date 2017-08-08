@@ -22,13 +22,10 @@
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <convert.hpp>
-#include <media/AudioSystem.h>
-#include <media/AudioParameter.h>
+#include <parameters/AudioParameters.hpp>
 
 using android::status_t;
-using android::AudioParameter;
 using android::String8;
-using android::AudioSystem;
 using android::NO_ERROR;
 using audio_comms::utilities::convertTo;
 using audio_comms::utilities::Log;
@@ -157,12 +154,7 @@ int AudioEffect::setParameter(const effect_param_t *param)
         return -EINVAL;
     }
 
-    AudioParameter audioParam;
-    audioParam.addInt(key, value);
-
-    if (AudioSystem::setParameters(audioParam.toString()) != NO_ERROR) {
-        return -EINVAL;
-    }
+    audio_comms::utilities::AudioParameters::set(key.c_str(), value);
     return 0;
 }
 
@@ -177,19 +169,17 @@ int AudioEffect::getParameter(effect_param_t *param) const
     Log::Verbose() << __FUNCTION__
                    << ":  effect " << getDescriptor()->name << " key " << key.string();
 
-    String8 keyValuePair = AudioSystem::getParameters(key);
+    std::string value;
+    bool result = audio_comms::utilities::AudioParameters::get(key.c_str(), value);
 
-    AudioParameter audioParam(keyValuePair);
-
-    String8 strValue;
-    if (audioParam.get(key, strValue) != NO_ERROR) {
+    if (!result) {
         Log::Error() << __FUNCTION__
                      << ": effect " << getDescriptor()->name << ", could not get the read value";
         return -EINVAL;
     }
     int32_t *pValue = reinterpret_cast<int32_t *>(param->data + param->psize);
     if (param->vsize == sizeof(int16_t)) {
-        if (!convertTo(std::string(strValue.string()),
+        if (!convertTo(value,
                        *reinterpret_cast<int16_t *>(pValue))) {
             Log::Error() << __FUNCTION__
                          << ": effect " << getDescriptor()->name
@@ -197,7 +187,7 @@ int AudioEffect::getParameter(effect_param_t *param) const
             return -EINVAL;
         }
     } else if (param->vsize == sizeof(int32_t)) {
-        if (!convertTo(std::string(strValue.string()), *pValue)) {
+        if (!convertTo(value, *pValue)) {
             Log::Error() << __FUNCTION__
                          << ": effect " << getDescriptor()->name
                          << ", could not get the read value as int32_t";
