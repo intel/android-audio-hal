@@ -18,7 +18,9 @@
 #include <IStreamInterface.hpp>
 #include <convert.hpp>
 #include <utilities/Log.hpp>
+#include <property/Property.hpp>
 
+using audio_comms::utilities::Property;
 using audio_comms::utilities::Log;
 
 namespace intel_audio
@@ -27,8 +29,9 @@ namespace intel_audio
 CriterionParameter::CriterionParameter(const std::string &key,
                                        const std::string &name,
                                        Criterion &criterion,
-                                       const std::string &defaultValue /* = "" */)
-    : Parameter(key, name, defaultValue),
+                                       const std::string &defaultValue /* = "" */,
+                                       const std::string &androidProperty)
+    : Parameter(key, name, defaultValue, androidProperty),
       mCriterion(criterion)
 {
     mCriterion.setCriterionState<std::string>(getDefaultLiteralValue());
@@ -42,6 +45,11 @@ bool CriterionParameter::setValue(const std::string &value)
                        << ": unknown parameter value(" << value << ") for " << getKey();
         return false;
     }
+
+    if(!getProperty().empty()) {
+        Property<std::string>(getProperty(), literalValue).setValue(literalValue);
+    }
+
     Log::Verbose() << __FUNCTION__ << ": " << getName() << " " << value << "=" << literalValue;
     return mCriterion.setValue(literalValue);
 }

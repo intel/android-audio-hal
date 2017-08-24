@@ -316,12 +316,13 @@ void Pfw<Trait>::addCriterionParameter(const string &typeName,
                                        const string &paramKey,
                                        const string &name,
                                        const string &defaultValue,
+                                       const string &androidProperty,
                                        const std::vector<AndroidParamMappingValuePair> &valuePairs,
                                        std::vector<Parameter *> &parameterVector)
 {
-    addCriterion(name, typeName, defaultValue);
+    addCriterion(name, typeName, defaultValue, androidProperty);
     CriterionParameter *paramCriterion = new CriterionParameter(paramKey, name, *mCriteria[name],
-                                                                defaultValue);
+                                                                defaultValue, androidProperty);
     addParameter(paramCriterion, valuePairs, parameterVector);
 }
 
@@ -329,24 +330,25 @@ template <class Trait>
 void Pfw<Trait>::addRogueParameter(const string &typeName, const string &paramKey,
                                    const string &name,
                                    const string &defaultValue,
+                                   const string &androidProperty,
                                    const std::vector<AndroidParamMappingValuePair> &valuePairs,
                                    std::vector<Parameter *> &parameterVector)
 {
     if (typeName == gUnsignedIntegerTypeTag) {
         RogueParameter<uint32_t> *paramRogue =
-            new RogueParameter<uint32_t>(paramKey, name, mConnector, defaultValue);
+            new RogueParameter<uint32_t>(paramKey, name, mConnector, defaultValue, androidProperty);
         addParameter(paramRogue, valuePairs, parameterVector);
     } else if (typeName == gSignedIntegerTypeTag) {
         RogueParameter<int32_t> *paramRogue =
-            new RogueParameter<int32_t>(paramKey, name, mConnector, defaultValue);
+            new RogueParameter<int32_t>(paramKey, name, mConnector, defaultValue, androidProperty);
         addParameter(paramRogue, valuePairs, parameterVector);
     } else if (typeName == gStringTypeTag) {
         RogueParameter<string> *paramRogue =
-            new RogueParameter<string>(paramKey, name, mConnector, defaultValue);
+            new RogueParameter<string>(paramKey, name, mConnector, defaultValue, androidProperty);
         addParameter(paramRogue, valuePairs, parameterVector);
     } else if (typeName == gDoubleTypeTag) {
         RogueParameter<double> *paramRogue =
-            new RogueParameter<double>(paramKey, name, mConnector, defaultValue);
+            new RogueParameter<double>(paramKey, name, mConnector, defaultValue, androidProperty);
         addParameter(paramRogue, valuePairs, parameterVector);
     } else {
         Log::Error() << __FUNCTION__ << ": type " << typeName << " not supported ";
@@ -356,7 +358,7 @@ void Pfw<Trait>::addRogueParameter(const string &typeName, const string &paramKe
 
 template <class Trait>
 void Pfw<Trait>::parseChildren(cnode &root, string &path, string &defaultValue, string &key,
-                               string &type, std::vector<AndroidParamMappingValuePair> &valuePairs)
+                               string &type, string &androidProperty, std::vector<AndroidParamMappingValuePair> &valuePairs)
 {
     cnode *node;
     for (node = root.first_child; node != NULL; node = node->next) {
@@ -366,6 +368,8 @@ void Pfw<Trait>::parseChildren(cnode &root, string &path, string &defaultValue, 
             defaultValue = node->value;
         } else if (string(node->name) == gAndroidParameterTag) {
             key = node->value;
+        } else if (string(node->name) == gAndroidPropertyTag) {
+            androidProperty = node->value;
         } else if (string(node->name) == gMappingTableTag) {
             valuePairs = parseMappingTable(node->value);
         } else if (string(node->name) == gTypeTag) {
@@ -389,13 +393,14 @@ void Pfw<Trait>::loadRogueParameterType(cnode &root, std::vector<Parameter *> &p
     string rogueParameterPath = "";
     string typeName = "";
     string defaultValue = "";
+    string androidProperty = "";
 
-    parseChildren(root, rogueParameterPath, defaultValue, paramKeyName, typeName, valuePairs);
+    parseChildren(root, rogueParameterPath, defaultValue, paramKeyName, typeName, androidProperty, valuePairs);
 
     AUDIOCOMMS_ASSERT(!paramKeyName.empty(), "Rogue Parameter " << rogueParameterName <<
                       " not associated to any Android parameter");
 
-    addRogueParameter(typeName, paramKeyName, rogueParameterPath, defaultValue, valuePairs,
+    addRogueParameter(typeName, paramKeyName, rogueParameterPath, defaultValue, androidProperty, valuePairs,
                       parameterVector);
 }
 
@@ -481,7 +486,8 @@ std::vector<AndroidParamMappingValuePair> Pfw<Trait>::parseMappingTable(const ch
 
 template <class Trait>
 void Pfw<Trait>::addCriterion(const string &name, const string &typeName,
-                              const string &defaultValue)
+                              const string &defaultValue,
+                              const string &androidProperty)
 {
     AUDIOCOMMS_ASSERT(!collectionHasElement<Criterion *>(name, mCriteria),
                       "Criterion " << name << " already added for " << mTag << " PFW");
@@ -538,18 +544,19 @@ void Pfw<Trait>::loadCriterion(cnode &root, std::vector<Parameter *> &parameterV
     string path = "";
     string typeName = "";
     string defaultValue = "";
+    string androidProperty = "";
 
-    parseChildren(root, path, defaultValue, paramKeyName, typeName, valuePairs);
+    parseChildren(root, path, defaultValue, paramKeyName, typeName, androidProperty, valuePairs);
 
     if (!paramKeyName.empty()) {
         /**
          * If a parameter key is found, this criterion is linked to a parameter received from
          * AudioSystem::setParameters.
          */
-        addCriterionParameter(typeName, paramKeyName, criterionName, defaultValue, valuePairs,
+        addCriterionParameter(typeName, paramKeyName, criterionName, defaultValue, androidProperty, valuePairs,
                               parameterVector);
     } else {
-        addCriterion(criterionName, typeName, defaultValue);
+        addCriterion(criterionName, typeName, androidProperty, defaultValue);
     }
 }
 

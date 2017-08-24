@@ -33,7 +33,8 @@ public:
     CriterionParameter(const std::string &key,
                        const std::string &name,
                        Criterion &criterion,
-                       const std::string &defaultValue);
+                       const std::string &defaultValue,
+                       const std::string &androidProperty);
 
     virtual Type getType() const { return Parameter::CriterionParameter; }
 

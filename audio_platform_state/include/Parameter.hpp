@@ -43,12 +43,8 @@ public:
 
     Parameter(const std::string &key,
               const std::string &name,
-              const std::string &defaultValue)
-        : mDefaultLiteralValue(defaultValue),
-          mAndroidParameterKey(key),
-          mAndroidParameter(name)
-    {
-    }
+              const std::string &defaultValue,
+              const std::string &androidProperty);
 
     virtual ~Parameter() {}
 
@@ -74,6 +70,13 @@ public:
      * @return default literal value of the PFW parameter
      */
     const std::string &getDefaultLiteralValue() const { return mDefaultLiteralValue; }
+
+    /**
+     * Returns the name of associated Android Property.
+     *
+     * @return name of the android property.
+     */
+    const std::string &getProperty() const { return mAndroidProperty; }
 
     /**
      * Adds a mapping value pair, i.e. a pair or Android Value, PFW Parameter Value.
@@ -148,6 +151,8 @@ private:
     const std::string mAndroidParameterKey; /**< key name of the parameter. */
 
     const std::string mAndroidParameter; /**< Name of the parameter. */
+
+    const std::string mAndroidProperty; /**< Name of android property. */
 };
 
 } // namespace intel_audio

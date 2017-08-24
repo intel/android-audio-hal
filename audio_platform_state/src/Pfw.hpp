@@ -92,10 +92,12 @@ public:
      * @param[in] name of the PFW criterion.
      * @param[in] typeName criterion type name to which this criterion is associated to.
      * @param[in] defaultLiteralValue of the PFW criterion.
+     * @param[in] associated android property.
      */
     void addCriterion(const std::string &name,
                       const std::string &typeName,
-                      const std::string &defaultLiteralValue);
+                      const std::string &defaultLiteralValue,
+                      const std::string &androidProperty = "");
 
     /**
      * Set a criterion to PFW. This value will be taken into account at next applyConfiguration.
@@ -173,6 +175,7 @@ public:
      */
     void addRogueParameter(const std::string &typeName, const std::string &paramKey,
                            const std::string &name, const std::string &defaultValue,
+                           const std::string &androidProperty,
                            const std::vector<AndroidParamMappingValuePair> &valuePairs,
                            std::vector<Parameter *> &parameterVector);
 
@@ -187,6 +190,7 @@ public:
      */
     void addCriterionParameter(const std::string &typeName, const std::string &paramKey,
                                const std::string &name, const std::string &defaultValue,
+                               const std::string &androidProperty,
                                const std::vector<AndroidParamMappingValuePair> &valuePairs,
                                std::vector<Parameter *> &parameterVector);
     /**
@@ -236,7 +240,7 @@ public:
      * @param[out] valuePairs pair of android value / parameter Manager value.
      */
     void parseChildren(cnode &root, std::string &path, std::string &defaultValue, std::string &key,
-                       std::string &type, std::vector<AndroidParamMappingValuePair> &valuePairs);
+                       std::string &type, std::string &androidProperty, std::vector<AndroidParamMappingValuePair> &valuePairs);
 
     void loadConfig(cnode &root, std::vector<Parameter *> &parameterVector);
 

@@ -18,12 +18,25 @@
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <boost/tokenizer.hpp>
+#include <property/Property.hpp>
 
 using std::string;
 using audio_comms::utilities::Log;
+using audio_comms::utilities::Property;
 
 namespace intel_audio
 {
+
+Parameter::Parameter(const std::string &key,
+          const std::string &name,
+          const std::string &defaultValue,
+          const std::string &androidProperty)
+    : mDefaultLiteralValue(androidProperty.empty() ? defaultValue : Property<string>(androidProperty, defaultValue).getValue()),
+      mAndroidParameterKey(key),
+      mAndroidParameter(name),
+      mAndroidProperty(androidProperty)
+{
+}
 
 void Parameter::setMappingValuePair(const string &name, const string &value)
 {

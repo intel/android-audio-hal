@@ -20,6 +20,9 @@
 #include <convert.hpp>
 #include <ParameterMgrHelper.hpp>
 #include <utilities/Log.hpp>
+#include <property/Property.hpp>
+
+using audio_comms::utilities::Property;
 
 namespace intel_audio
 {
@@ -40,8 +43,9 @@ public:
     RogueParameter(const std::string &key,
                    const std::string &name,
                    CParameterMgrPlatformConnector *parameterMgrConnector,
-                   const std::string &defaultValue = "")
-        : Parameter(key, name, defaultValue),
+                   const std::string &defaultValue = "",
+                   const std::string &androidProperty = "")
+        : Parameter(key, name, defaultValue, androidProperty),
           mParameterMgrConnector(parameterMgrConnector)
     {}
 
@@ -92,10 +96,22 @@ protected:
                getParamFromLiteralValue(androidParamValue, literalValue);
     }
 
+    /**
+     * Helper function to set rogue parameter value to associated android property
+     *
+     * @param[in] roguevalue parameter value to set to android property.
+     *
+     * @return true if value was successfully set, false otherwise.
+     */
+    bool setAndroidProperty(const T &rogueValue) {
+        return getProperty().empty() ? true : Property<T>(getProperty(), rogueValue).setValue(rogueValue);
+    }
+
     virtual bool setValue(const std::string &value)
     {
         T typedValue;
         return convertAndroidParamValueToValue(value, typedValue) &&
+               setAndroidProperty(typedValue) &&
                ParameterMgrHelper::setParameterValue<T>(mParameterMgrConnector,
                                                         getName(), typedValue);
     }
