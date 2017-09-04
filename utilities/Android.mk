@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2015-2016
+# Copyright (C) Intel 2015-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Host Component Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include

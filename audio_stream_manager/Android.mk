@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -42,11 +42,11 @@ component_includes_dir := \
     external/tinyalsa/include \
     $(call include-path-for, audio-utils) \
     $(call include-path-for, audio-effects) \
-    external/tinycompress/include \
+    external/tinycompress/include
 
 component_includes_dir_host := \
     $(component_includes_dir) \
-    bionic/libc/kernel/uapi/ \
+    bionic/libc/kernel/uapi/
 
 component_includes_dir_target := \
     $(component_includes_dir) \
@@ -63,7 +63,7 @@ component_static_lib += \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libhalaudiodump \
-    liblpepreprocessinghelper \
+    liblpepreprocessinghelper
 
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host) \
@@ -72,10 +72,10 @@ component_static_lib_host += \
     libaudioutils \
     libspeexresampler \
     libtinyalsa \
-    libtinycompress \
+    libtinycompress
 
 component_static_lib_target += \
-    $(component_static_lib) \
+    $(component_static_lib)
 
 component_shared_lib_common := \
     libparameter \
@@ -90,12 +90,12 @@ component_shared_lib_target := \
     libcutils \
     libutils \
     libhardware \
-    libaudioutils \
+    libaudioutils
 
 component_shared_lib_host := \
     $(foreach lib, $(component_shared_lib_common), $(lib)_host) \
     libicuuc-host \
-    liblog \
+    liblog
 
 
 component_whole_static_lib := \
@@ -143,7 +143,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
 # Component Host Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/src
@@ -200,7 +200,7 @@ include $(BUILD_NATIVE_TEST)
 
 # Component functional test for HOST
 #######################################################################
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES:= test/FunctionalTestHost.cpp
@@ -215,7 +215,7 @@ LOCAL_STATIC_LIBRARIES := \
     $(component_static_lib_host) \
     $(component_whole_static_lib)_host \
     libgtest_host \
-    libgtest_main_host \
+    libgtest_main_host
 
 LOCAL_SHARED_LIBRARIES := \
     $(component_shared_lib_host)

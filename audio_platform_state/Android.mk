@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ component_src_files :=  \
     src/CriterionParameter.cpp \
     src/Pfw.cpp \
     src/VolumeKeys.cpp \
-    src/AudioPlatformState.cpp \
+    src/AudioPlatformState.cpp
 
 component_export_includes := \
     $(LOCAL_PATH)/include \
@@ -41,11 +41,11 @@ component_includes_common := \
 
 component_includes_dir := \
     hw \
-    parameter \
+    parameter
 
 component_includes_dir_host := \
     $(component_includes_common) \
-    $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
+    $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc))
 
 component_includes_dir_target := \
     $(component_includes_common) \
@@ -67,7 +67,7 @@ component_static_lib := \
     libboost
 
 component_static_lib_host := \
-    $(foreach lib, $(component_static_lib), $(lib)_host) \
+    $(foreach lib, $(component_static_lib), $(lib)_host)
 
 component_cflags := -Wall -Werror -Wextra -Wno-unused-parameter
 
@@ -119,7 +119,7 @@ include $(BUILD_PREBUILT)
 
 #######################################################################
 # Component Host Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libaudioplatformstate_host

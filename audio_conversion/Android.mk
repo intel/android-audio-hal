@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 # Common variables
 
 component_export_include_dir := \
-    $(LOCAL_PATH)/include \
+    $(LOCAL_PATH)/include
 
 component_src_files :=  \
     src/AudioConversion.cpp \
     src/AudioConverter.cpp \
     src/AudioReformatter.cpp \
     src/AudioRemapper.cpp \
-    src/AudioResampler.cpp \
+    src/AudioResampler.cpp
 
 component_includes_common := \
     $(component_export_include_dir) \
@@ -48,7 +48,7 @@ component_includes_dir_target := \
 
 component_static_lib := \
     libsamplespec_static \
-    libaudio_comms_utilities \
+    libaudio_comms_utilities
 
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
@@ -60,7 +60,7 @@ component_cflags := -Wall -Werror -Wextra
 #######################################################################
 # Component Host Build
 
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libaudioconversion_static_host
@@ -71,7 +71,7 @@ LOCAL_STRIP_MODULE := false
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 LOCAL_C_INCLUDES := \
     $(component_includes_common) \
-    $(component_includes_dir_host) \
+    $(component_includes_dir_host)
 
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_CFLAGS := $(component_cflags) -O0 -ggdb
@@ -94,7 +94,7 @@ LOCAL_MODULE_OWNER := intel
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 LOCAL_C_INCLUDES := \
     $(component_includes_common) \
-    $(component_includes_dir_target) \
+    $(component_includes_dir_target)
 
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_CFLAGS := $(component_cflags)
@@ -152,7 +152,7 @@ component_fcttest_shared_lib_target := \
 #######################################################################
 # Component Functional Test Host Build
 
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := audio_conversion_fcttest_host
@@ -193,7 +193,7 @@ LOCAL_LDFLAGS := $(component_fcttest_static_ldflags_target)
 # by each client of GMock and / or tuple.
 LOCAL_CFLAGS += \
     -DGTEST_HAS_TR1_TUPLE=1 \
-    -DGTEST_USE_OWN_TR1_TUPLE=1 \
+    -DGTEST_USE_OWN_TR1_TUPLE=1
 
 include $(BUILD_NATIVE_TEST)
 

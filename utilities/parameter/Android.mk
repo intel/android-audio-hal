@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2014-2016
+# Copyright (C) Intel 2014-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Host Component Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
@@ -83,7 +83,7 @@ include $(BUILD_HOST_STATIC_LIBRARY)
 endif
 # Functional test
 #######################################################################
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES += test/KeyValuePairsTest.cpp \
@@ -93,7 +93,7 @@ LOCAL_C_INCLUDES := \
 LOCAL_STATIC_LIBRARIES += \
     libaudioparameters_host \
     libaudio_comms_utilities_host \
-    libaudio_comms_convert_host \
+    libaudio_comms_convert_host
 
 LOCAL_CFLAGS := -Wall -Werror -Wextra
 

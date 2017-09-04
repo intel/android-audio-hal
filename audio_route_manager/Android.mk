@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ component_src_files :=  \
     AudioStreamRoute.cpp \
     AudioRouteManager.cpp \
     AudioRouteManagerObserver.cpp \
-    RouteManagerInstance.cpp \
+    RouteManagerInstance.cpp
 
 component_export_includes := \
     $(LOCAL_PATH)/includes \
@@ -46,11 +46,11 @@ component_includes_common := \
 
 component_includes_dir := \
     hw \
-    parameter \
+    parameter
 
 component_includes_dir_host := \
     $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
-    $(component_includes_common) \
+    $(component_includes_common)
 
 component_includes_dir_target := \
     $(foreach inc, $(component_includes_dir), $(TARGET_OUT_HEADERS)/$(inc)) \
@@ -71,17 +71,17 @@ component_static_lib := \
     libproperty \
     liblpepreprocessinghelper \
     libevent-listener_static \
-    libaudiocomms_naive_tokenizer \
+    libaudiocomms_naive_tokenizer
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host) \
     libtinyalsa \
     libcutils \
     libutils \
-    libaudioutils \
+    libaudioutils
 
 component_static_lib_target := \
-    $(component_static_lib) \
+    $(component_static_lib)
 
 component_shared_lib_common := \
     libparameter \
@@ -93,7 +93,7 @@ component_shared_lib_target := \
     libtinyalsa \
     libcutils \
     libutils \
-    libaudioutils \
+    libaudioutils
 
 component_shared_lib_host := \
     libicuuc-host \
@@ -132,7 +132,7 @@ include $(BUILD_SHARED_LIBRARY)
 
 #######################################################################
 # Component Host Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes)
@@ -170,7 +170,7 @@ include $(BUILD_STATIC_LIBRARY)
 
 #######################################################################
 # Build for host to export headers
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_includes_common)

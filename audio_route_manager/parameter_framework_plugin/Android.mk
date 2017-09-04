@@ -1,6 +1,6 @@
 # INTEL CONFIDENTIAL
 #
-# Copyright (c) 2013-2016 Intel Corporation All Rights Reserved.
+# Copyright (c) 2013-2017 Intel Corporation All Rights Reserved.
 #
 # The source code contained or described herein and all documents related to
 # the source code ("Material") are owned by Intel Corporation or its suppliers
@@ -37,13 +37,13 @@ component_src_files :=  \
     Criterion.cpp
 
 component_common_includes_dir := \
-    external/tinyalsa/include \
+    external/tinyalsa/include
 
 component_static_lib := \
     libaudio_comms_utilities \
     libaudio_comms_convert \
     libsamplespec_static \
-    libpfw_utility \
+    libpfw_utility
 
 component_static_lib_target := \
     $(component_static_lib) \
@@ -59,7 +59,7 @@ component_shared_lib:= \
     libasound
 
 component_shared_lib_common := \
-    liblog \
+    liblog
 
 component_shared_lib_target := \
     $(component_shared_lib_common) \
@@ -73,7 +73,7 @@ component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
 # Host Component Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libroute-subsystem_host

@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2015-2016
+# Copyright (C) Intel 2015-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 LOCAL_PATH := $(call my-dir)
 
 PFW_CORE := vendor/intel/audio/parameter-framework

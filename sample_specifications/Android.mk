@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ component_src_files :=  \
     src/SampleSpec.cpp
 
 component_export_include_dir := \
-    $(LOCAL_PATH)/include \
+    $(LOCAL_PATH)/include
 
 component_common_includes_dir := \
     $(component_export_include_dir) \
@@ -44,7 +44,7 @@ component_includes_dir_target := \
 
 component_static_lib += \
     libaudio_comms_convert \
-    libaudio_comms_utilities \
+    libaudio_comms_utilities
 
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
@@ -55,7 +55,7 @@ component_cflags := -Wall -Werror -Wextra -Wno-unused-parameter
 
 #######################################################################
 # Host Component Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libsamplespec_static_host
@@ -67,7 +67,7 @@ LOCAL_STRIP_MODULE := false
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 LOCAL_C_INCLUDES := \
     $(component_common_includes_dir) \
-    $(component_includes_dir_host) \
+    $(component_includes_dir_host)
 
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_host)
@@ -113,7 +113,7 @@ component_functional_test_static_lib := \
 # Compile macro
 component_functional_test_c_includes_target += \
     $(foreach inc, $(component_functional_test_export_c_includes), $(TARGET_OUT_HEADERS)/$(inc)) \
-    external/tinyalsa/include \
+    external/tinyalsa/include
 
 component_functional_test_c_includes_host += \
     $(foreach inc, $(component_functional_test_export_c_includes), $(HOST_OUT_HEADERS)/$(inc)) \
@@ -126,10 +126,10 @@ component_functional_test_static_lib_host += \
     libtinyalsa \
     liblog \
     libgtest_host \
-    libgtest_main_host \
+    libgtest_main_host
 
 component_functional_test_static_lib_target += \
-    $(component_functional_test_static_lib) \
+    $(component_functional_test_static_lib)
 
 component_functional_test_shared_lib_target += \
     libcutils \
@@ -156,13 +156,13 @@ LOCAL_MODULE_TAGS := optional
 # by each client of GMock and / or tuple.
 LOCAL_CFLAGS += \
     -DGTEST_HAS_TR1_TUPLE=1 \
-    -DGTEST_USE_OWN_TR1_TUPLE=1 \
+    -DGTEST_USE_OWN_TR1_TUPLE=1
 
 include $(BUILD_NATIVE_TEST)
 
 #######################################################################
 # Component Functional Test Host Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 LOCAL_MODULE := samplespec_functional_test_host
 LOCAL_MODULE_OWNER := intel

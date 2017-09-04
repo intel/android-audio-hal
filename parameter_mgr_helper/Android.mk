@@ -25,7 +25,7 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 # Common variables
 
 component_export_include_dir := \
-    $(LOCAL_PATH)/includes \
+    $(LOCAL_PATH)/includes
 
 component_src_files := \
     ParameterMgrHelper.cpp \
@@ -33,10 +33,10 @@ component_src_files := \
     CriterionType.cpp
 
 component_common_includes_dir := \
-    $(component_export_include_dir) \
+    $(component_export_include_dir)
 
 component_includes_dir := \
-    parameter \
+    parameter
 
 component_includes_dir_host := \
     $(foreach inc, $(component_includes_dir), $(HOST_OUT_HEADERS)/$(inc)) \
@@ -66,7 +66,7 @@ component_cflags := -Wall -Werror -Wextra
 
 #######################################################################
 # Component Host Build
-ifeq (0,1)
+ifeq (ENABLE_HOST_VERSION,1)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libparametermgr_static_host
