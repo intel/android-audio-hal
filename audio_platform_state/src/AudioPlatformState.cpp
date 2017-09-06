@@ -190,8 +190,13 @@ public:
         std::string key(param->getKey());
         std::string value;
         if (mPairs->get(key, value) == android::OK) {
+            std::string oldValue;
+            param->getValue(oldValue);
+
             if (!param->setValue(value)) {
-                mRet = android::BAD_VALUE;
+                if (value.compare(oldValue) != 0) {
+                  mRet = android::BAD_VALUE;
+                }
                 return;
             }
             mHasChanged = true;
