@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2016 Intel Corporation
+ * Copyright (C) 2014-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,15 @@
 #include <AudioCommsAssert.hpp>
 #include <AudioNonCopyable.hpp>
 #include <string.h> /* for strdup */
+#include <mutex.h>
+#include <utilities/Log.hpp>
 
+using audio_comms::utilities::Log;
+
+static hw_device_t *primary_dev = NULL; /*primary device instance */
+static int32_t ref_count = 0; /*ref count of primary device instance*/
+
+static std::mutex mtx;
 namespace intel_audio
 {
 
@@ -175,25 +183,45 @@ int DeviceWrapper<Device, CDeviceApiVersion>::open(const hw_module_t *module,
         return -EINVAL;
     }
 
-    Device *obj = new Device();
-    if (obj == NULL) {
-        return -EIO;
+    mtx.try_lock();
+    if (primary_dev == NULL) {
+        Device *obj = new Device();
+        if (obj == NULL) {
+            mtx.unlock();
+            return -EIO;
+        }
+
+        WrappedDevice *wrappedDev = new DeviceWrapper<Device, CDeviceApiVersion>(obj, module);
+
+        primary_dev = reinterpret_cast<hw_device_t *>(wrappedDev);
     }
 
-    WrappedDevice *wrappedDev = new DeviceWrapper<Device, CDeviceApiVersion>(obj, module);
-
-    *device = reinterpret_cast<hw_device_t *>(wrappedDev);
-
+    *device = primary_dev;
+    ref_count++;
+    mtx.unlock();
     return 0;
 }
 
 template <class Device, int CDeviceApiVersion>
 int DeviceWrapper<Device, CDeviceApiVersion>::close(hw_device_t *device)
 {
-    const WrappedDevice *fakeThis = reinterpret_cast<const Glue *>(device)->mWrapper;
+    mtx.try_lock();
+    if (ref_count <= 0) { /*actually here it cannot <0*/
+        mtx.unlock();
+        Log::Error() << "The device has been closed, no need close again";
+        return -EINVAL;
+    }
 
-    delete fakeThis;
+    ref_count--;
+    if (ref_count == 0) {
+        const WrappedDevice *fakeThis = reinterpret_cast<const Glue *>(device)->mWrapper;
+        if (fakeThis != NULL) {
+            delete fakeThis;
+            primary_dev = NULL;
+        }
+    }
 
+    mtx.unlock();
     return 0;
 }
 
