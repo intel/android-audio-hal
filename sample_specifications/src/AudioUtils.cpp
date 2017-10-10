@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include <AudioCommsAssert.hpp>
 #include <cerrno>
 #include <convert.hpp>
-#include <AudioCommsAssert.hpp>
 #include <limits.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -108,52 +107,6 @@ pcm_format AudioUtils::convertHalToTinyFormat(audio_format_t format)
     default:
         Log::Error() << __FUNCTION__ << ": format not recognized";
         convFormat = PCM_FORMAT_S16_LE;
-        break;
-    }
-    return convFormat;
-}
-
-audio_format_t AudioUtils::convertAlsaToHalFormat(snd_pcm_format_t format)
-{
-    audio_format_t convFormat;
-
-    switch (format) {
-
-    case SND_PCM_FORMAT_S16_LE:
-        convFormat = AUDIO_FORMAT_PCM_16_BIT;
-        break;
-    case SND_PCM_FORMAT_S24_LE:
-        convFormat = AUDIO_FORMAT_PCM_8_24_BIT;
-        break;
-    case SND_PCM_FORMAT_S32_LE:
-        convFormat = AUDIO_FORMAT_PCM_32_BIT;
-        break;
-    default:
-        Log::Error() << __FUNCTION__ << ": format not recognized";
-        convFormat = AUDIO_FORMAT_INVALID;
-        break;
-    }
-    return convFormat;
-}
-
-snd_pcm_format_t AudioUtils::convertHalToAlsaFormat(audio_format_t format)
-{
-    snd_pcm_format_t convFormat;
-
-    switch (format) {
-
-    case AUDIO_FORMAT_PCM_16_BIT:
-        convFormat = SND_PCM_FORMAT_S16_LE;
-        break;
-    case AUDIO_FORMAT_PCM_8_24_BIT:
-        convFormat = SND_PCM_FORMAT_S24_LE; /* SND_PCM_FORMAT_S24_LE is 24-bits in 4-bytes */
-        break;
-    case AUDIO_FORMAT_PCM_32_BIT:
-        convFormat = SND_PCM_FORMAT_S32_LE;
-        break;
-    default:
-        Log::Error() << __FUNCTION__ << ": format not recognized";
-        convFormat = SND_PCM_FORMAT_S16_LE;
         break;
     }
     return convFormat;

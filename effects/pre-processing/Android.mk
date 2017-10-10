@@ -63,7 +63,7 @@ effect_pre_proc_shared_lib_target += \
     liblog \
     libaudiohal_parameters \
 
-effect_pre_proc_cflags := -Wall -Werror -Wno-unused-parameter
+effect_pre_proc_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Build for target

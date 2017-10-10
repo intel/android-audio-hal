@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2016
+# Copyright (C) Intel 2013-2017
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,9 +25,25 @@ define named-subdir-makefiles
 $(wildcard $(addsuffix /Android.mk, $(addprefix $(LOCAL_PATH)/,$(1))))
 endef
 
+HAL_COMMON_CFLAGS :=
+
+USE_ALSA_LIB := 1
+ifeq ($(USE_ALSA_LIB), 1)
+HAL_COMMON_CFLAGS := $(HAL_COMMON_CFLAGS) -DUSE_ALSA_LIB
+endif
+
+HAVE_BOOST := 0
+ifeq ($(HAVE_BOOST), 1)
+HAL_COMMON_CFLAGS := $(HAL_COMMON_CFLAGS) -DHAVE_BOOST
+endif
+
+HAL_COMMON_CFLAGS := $(HAL_COMMON_CFLAGS) \
+    -Wall -Werror -Wextra -Wno-unused-parameter -Wno-unused-function
+
 SUBDIRS := audio_conversion \
            audio_dump_lib \
            audio_policy \
+           utilities/typeconverter \
            audio_route_manager \
            audio_stream_manager \
            effects \
@@ -39,7 +55,6 @@ SUBDIRS := audio_conversion \
            utilities/active_value_set \
            utilities/parameter \
            utilities \
-           audio_route_manager/parameter_framework_plugin \
            uevent_emulation
 
 # Call sub-folders' Android.mk

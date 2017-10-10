@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,6 @@
  */
 #pragma once
 
-#include "AudioHalConf.hpp"
-#include "Parameter.hpp"
 #include <Pfw.hpp>
 #include <AudioNonCopyable.hpp>
 #include <KeyValuePairs.hpp>
@@ -24,9 +22,7 @@
 #include <Direction.hpp>
 #include <utils/Errors.h>
 #include <utils/RWLock.h>
-#include <list>
 #include <string>
-#include <vector>
 
 class CParameterMgrPlatformConnector;
 class Criterion;
@@ -126,6 +122,13 @@ public:
      */
     android::status_t start();
 
+    template <pfwtype pfw>
+    void setConfig(Criteria criteria, CriterionTypes criterionTypes, Parameters parameters)
+    {
+        mParameterVector = parameters;
+        getPfw<pfw>()->setConfig(criteria, criterionTypes);
+    }
+
     /**
      * Generic setParameter handler.
      * It can for example:
@@ -201,6 +204,18 @@ public:
         return getPfw<pfw>()->setCriterion(name, value);
     }
 
+    template <pfwtype pfw>
+    bool commitCriterion(const std::string &name)
+    {
+        return getPfw<pfw>()->commitCriterion(name);
+    }
+
+    template <pfwtype pfw>
+    CParameterMgrPlatformConnector *getConnector()
+    {
+        return getPfw<pfw>()->getConnector();
+    }
+
     /**
      * Stage a criterion to PFW.
      * This value will NOT be taken into account at next applyConfiguration unless the criterion
@@ -219,19 +234,6 @@ public:
     }
 
     /**
-     * Add a criterion type to PFW.
-     *
-     * @tparam pfw instance of Parameter Manager targeted for this call.
-     * @param[in] typeName of the PFW criterion type.
-     * @param[in] isInclusive attribute of the criterion type.
-     */
-    template <pfwtype pfw>
-    bool addCriterionType(const std::string &name, bool isInclusive)
-    {
-        return getPfw<pfw>()->addCriterionType(name, isInclusive);
-    }
-
-    /**
      * Add a criterion type value pair to PFW.
      *
      * @tparam pfw instance of Parameter Manager targeted for this call.
@@ -244,21 +246,6 @@ public:
                                    uint32_t value)
     {
         getPfw<pfw>()->addCriterionTypeValuePair(name, value, literal);
-    }
-
-    /**
-     * Add a criterion to PFW.
-     *
-     * @tparam pfw instance of Parameter Manager targeted for this call.
-     * @param[in] name of the PFW criterion.
-     * @param[in] typeName criterion type name to which this criterion is associated to.
-     * @param[in] defaultLiteralValue of the PFW criterion.
-     */
-    template <pfwtype pfw>
-    void addCriterion(const std::string &name, const std::string &criterionType,
-                      const std::string &defaultLiteralValue = "")
-    {
-        getPfw<pfw>()->addCriterion(name, criterionType, defaultLiteralValue);
     }
 
     /**
@@ -298,8 +285,7 @@ public:
 
 private:
     /**
-     * Synchronise all parameters (rogue / criteria on Route and Audio PFW)
-     * and apply the configuration on Route PFW.
+     * Synchronise all parameters (rogue / criteria on Audio PFW)
      */
     void sync();
 
@@ -316,26 +302,9 @@ private:
      */
     void clearKeys(KeyValuePairs *pairs);
 
-    /**
-     * Load the criterion configuration file.
-     *
-     * @param[in] path Criterion conf file path.
-     *
-     * @return OK is parsing successful, error code otherwise.
-     */
-    android::status_t loadAudioHalConfig(const char *path);
-
-    /**
-     * Sets a platform state event.
-     *
-     * @param[in] eventStateName name of the event that happened.
-     */
-    void setPlatformStateEvent(const std::string &eventStateName);
-
     Pfw<PfwTrait<Audio> > *mAudioPfw;
-    Pfw<PfwTrait<Route> > *mRoutePfw;
 
-    std::vector<Parameter *> mParameterVector; /**< Map of parameters. */
+    Parameters mParameterVector; /**< Map of parameters. */
 
     /**
      * String containing a list of paths to the hardware debug files on target

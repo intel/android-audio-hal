@@ -28,6 +28,10 @@ component_src_files :=  \
     src/AudioUtils.cpp \
     src/SampleSpec.cpp
 
+ifeq ($(USE_ALSA_LIB), 1)
+component_src_files += src/AlsaAudioUtils.cpp
+endif
+
 component_export_include_dir := \
     $(LOCAL_PATH)/include
 
@@ -49,9 +53,14 @@ component_static_lib += \
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
 
-component_dynamic_lib := libasound
 
-component_cflags := -Wall -Werror -Wextra -Wno-unused-parameter
+component_dynamic_lib := libtypeconverter
+
+ifeq ($(USE_ALSA_LIB), 1)
+component_dynamic_lib += libasound
+endif
+
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Host Component Build
@@ -129,11 +138,15 @@ component_functional_test_static_lib_host += \
     libgtest_main_host
 
 component_functional_test_static_lib_target += \
-    $(component_functional_test_static_lib)
+    $(component_functional_test_static_lib) \
+    liblog
 
 component_functional_test_shared_lib_target += \
-    libcutils \
-    libasound
+    libcutils
+
+ifeq ($(USE_ALSA_LIB), 1)
+component_functional_test_shared_lib_target += libasound
+endif
 
 
 #######################################################################

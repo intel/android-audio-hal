@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 
 
 #include <hardware/audio.h>
-#include <tinyalsa/asoundlib.h>
-#include <alsa/asoundlib.h>
 #include <string.h>
 #include <vector>
 
@@ -101,7 +99,6 @@ public:
     // Specific Accessors
     void setChannelCount(uint32_t channelCount)
     {
-
         setSampleSpecItem(ChannelCountSampleSpecItem, channelCount);
     }
     uint32_t getChannelCount() const
@@ -110,7 +107,6 @@ public:
     }
     void setSampleRate(uint32_t sampleRate)
     {
-
         setSampleSpecItem(RateSampleSpecItem, sampleRate);
     }
     uint32_t getSampleRate() const
@@ -129,9 +125,11 @@ public:
     {
         mChannelMask = channelMask;
         if (isOut) {
-            setSampleSpecItem(ChannelCountSampleSpecItem, audio_channel_count_from_out_mask(mChannelMask));
+            setSampleSpecItem(ChannelCountSampleSpecItem,
+                              audio_channel_count_from_out_mask(mChannelMask));
         } else {
-            setSampleSpecItem(ChannelCountSampleSpecItem, audio_channel_count_from_in_mask(mChannelMask));
+            setSampleSpecItem(ChannelCountSampleSpecItem,
+                              audio_channel_count_from_in_mask(mChannelMask));
         }
     }
     audio_channel_mask_t getChannelMask() const

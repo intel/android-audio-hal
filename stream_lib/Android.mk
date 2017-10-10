@@ -25,9 +25,11 @@ component_export_include_dir := $(LOCAL_PATH)/include
 
 component_src_files :=  \
     IoStream.cpp \
-    TinyAlsaAudioDevice.cpp \
-    StreamLib.cpp \
-    AlsaAudioDevice.cpp
+    TinyAlsaAudioDevice.cpp 
+
+ifeq ($(USE_ALSA_LIB), 1)
+component_src_files += AlsaAudioDevice.cpp
+endif
 
 component_includes_common := \
     $(component_export_include_dir) \
@@ -54,12 +56,14 @@ component_static_lib += \
     audio.routemanager.includes \
     libproperty
 
-component_dynamic_lib := libasound
+ifeq ($(USE_ALSA_LIB), 1)
+component_dynamic_lib += libasound
+endif
 
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
 
-component_cflags := -Wall -Werror -Wno-unused-parameter
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Component Host Build

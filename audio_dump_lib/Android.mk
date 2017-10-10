@@ -23,7 +23,7 @@ LOCAL_PATH := $(call my-dir)
 
 component_src_files := HalAudioDump.cpp
 
-component_cflags := -Wall -Werror -Wno-unused-parameter
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 component_export_includes_dir := $(LOCAL_PATH)/include
 

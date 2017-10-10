@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Intel Corporation
+ * Copyright (C) 2015-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,15 +35,16 @@ void HdmiAudioStreamRoute::loadCapabilities()
 
     if (getName() == "Hdmi") {
         Log::Debug() << __FUNCTION__ << ": TEST for route " << getName();
-        mCapabilities.supportedChannelMasks.push_back(AUDIO_CHANNEL_OUT_STEREO);
-        mCapabilities.supportedChannelMasks.push_back(AUDIO_CHANNEL_OUT_5POINT1);
-        mCapabilities.supportedChannelMasks.push_back(AUDIO_CHANNEL_OUT_7POINT1);
+        for (auto &capability : mConfig.mAudioCapabilities) {
+            capability.mSupportedChannelMasks.push_back(AUDIO_CHANNEL_OUT_STEREO);
+            capability.mSupportedChannelMasks.push_back(AUDIO_CHANNEL_OUT_5POINT1);
+            capability.mSupportedChannelMasks.push_back(AUDIO_CHANNEL_OUT_7POINT1);
 
-        mCapabilities.supportedFormats.push_back(AUDIO_FORMAT_PCM_16_BIT);
-        mCapabilities.supportedFormats.push_back(AUDIO_FORMAT_PCM_8_24_BIT);
+            capability.mSupportedFormat = AUDIO_FORMAT_PCM_8_24_BIT;
 
-        mCapabilities.supportedRates.push_back(48000);
-        mCapabilities.supportedRates.push_back(192000);
+            capability.mSupportedRates.push_back(48000);
+            capability.mSupportedRates.push_back(192000);
+        }
     }
 }
 

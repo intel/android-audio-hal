@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routeConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <xi:include href="audio_rogue_parameters.xml"/>
+    <xi:include href="audio_criterion_types.xml"/>
+    <xi:include href="audio_criteria.xml"/>
+
+    <mixPorts>
+        <mixPort name="Media" role="source" card="HDA-Intel" device="0"
+                 devicePorts="AUDIO_DEVICE_OUT_EARPIECE,AUDIO_DEVICE_OUT_SPEAKER,AUDIO_DEVICE_OUT_WIRED_HEADSET,AUDIO_DEVICE_OUT_WIRED_HEADPHONE,AUDIO_DEVICE_OUT_BLUETOOTH_SCO,AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET,AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT"
+                 deviceAddress=""
+                 flags="AUDIO_OUTPUT_FLAG_PRIMARY"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 periodSize="960"
+                 periodCount="4"
+                 startThreshold="959"
+                 stopThreshold="3840"
+                 silenceThreshold="0"
+                 availMin="960"
+                 dynamicChannelMapControl=""
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases=""
+                 effectsSupported="">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+        </mixPort>
+        <mixPort name="Media" role="sink" card="HDA-Intel" device="0"
+                 deviceAddress=""
+                 flags="AUDIO_INPUT_FLAG_PRIMARY"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 channelsPolicy="copy,copy"
+                 periodSize="960"
+                 periodCount="2"
+                 startThreshold="1"
+                 stopThreshold="1920"
+                 silenceThreshold="0"
+                 availMin="960"
+                 dynamicChannelMapControl=""
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases="AUDIO_SOURCE_MIC,AUDIO_SOURCE_VOICE_COMMUNICATION,AUDIO_SOURCE_CAMCORDER,AUDIO_SOURCE_VOICE_RECOGNITION,AUDIO_SOURCE_HOTWORD"
+                 effectsSupported="Acoustic Echo Canceler,Automatic Gain Control,Noise Suppression,Beam Forming,Wind Noise Reduction"
+                 devicePorts="AUDIO_DEVICE_IN_BUILTIN_MIC,AUDIO_DEVICE_IN_WIRED_HEADSET,AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+        </mixPort>
+        <mixPort name="DeepMedia" role="source" card="HDA-Intel" device="1"
+                 deviceAddress=""
+                 flags="AUDIO_OUTPUT_FLAG_DEEP_BUFFER"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 channelsPolicy="copy,copy"
+                 periodSize="3072"
+                 periodCount="2"
+                 startThreshold="3071"
+                 stopThreshold="6144"
+                 silenceThreshold="0"
+                 availMin="3072"
+                 dynamicChannelMapControl=""
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases="0"
+                 effectsSupported=""
+                 devicePorts="AUDIO_DEVICE_OUT_EARPIECE,AUDIO_DEVICE_OUT_SPEAKER,AUDIO_DEVICE_OUT_WIRED_HEADSET,AUDIO_DEVICE_OUT_WIRED_HEADPHONE,AUDIO_DEVICE_OUT_BLUETOOTH_SCO,AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET,AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+        </mixPort>
+        <mixPort name="Hdmi" role="source" card="HDA-Intel" device="9"
+                 deviceAddress=""
+                 flags="AUDIO_OUTPUT_FLAG_DIRECT,AUDIO_OUTPUT_FLAG_PRIMARY,AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 channelsPolicy="copy,copy"
+                 periodSize="1024"
+                 periodCount="4"
+                 startThreshold="1023"
+                 stopThreshold="4096"
+                 silenceThreshold="0"
+                 availMin="1024"
+                 dynamicChannelMapControl="Playback Channel Map"
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases="0"
+                 effectsSupported=""
+                 devicePorts="AUDIO_DEVICE_OUT_HDMI">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000"/>
+        </mixPort>
+    </mixPorts>
+</routeConfiguration>

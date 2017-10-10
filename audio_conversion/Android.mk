@@ -53,9 +53,12 @@ component_static_lib := \
 component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
 
-component_dynamic_lib := libasound
 
-component_cflags := -Wall -Werror -Wextra
+ifeq ($(USE_ALSA_LIB), 1)
+component_dynamic_lib += libasound
+endif
+
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Component Host Build
@@ -142,12 +145,19 @@ component_fcttest_static_lib_host := \
     liblog
 
 component_fcttest_static_lib_target := \
-    $(component_fcttest_static_lib)
+    $(component_fcttest_static_lib) \
+    liblog \
+    libutils
+
 
 component_fcttest_shared_lib_target := \
     libcutils \
-    libaudioutils \
-    libasound
+    libaudioutils
+
+ifeq ($(USE_ALSA_LIB), 1)
+component_fcttest_shared_lib_target += libasound
+endif
+
 
 #######################################################################
 # Component Functional Test Host Build

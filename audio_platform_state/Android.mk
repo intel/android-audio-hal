@@ -24,8 +24,6 @@ LOCAL_PATH := $(call my-dir)
 # Common variables
 
 component_src_files :=  \
-    src/Parameter.cpp \
-    src/CriterionParameter.cpp \
     src/Pfw.cpp \
     src/VolumeKeys.cpp \
     src/AudioPlatformState.cpp
@@ -69,7 +67,7 @@ component_static_lib := \
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host)
 
-component_cflags := -Wall -Werror -Wextra -Wno-unused-parameter
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 
@@ -91,8 +89,12 @@ LOCAL_STATIC_LIBRARIES := $(component_static_lib)
 LOCAL_CFLAGS := $(component_cflags)
 
 LOCAL_SHARED_LIBRARIES := \
-    libparameter \
-    libasound
+    libparameter
+
+ifeq ($(USE_ALSA_LIB), 1)
+LOCAL_SHARED_LIBRARIES += libasound
+endif
+
 
 ifneq ($(strip $(PFW_CONFIGURATION_FOLDER)),)
 LOCAL_CFLAGS += -DPFW_CONF_FILE_PATH=\"$(PFW_CONFIGURATION_FOLDER)\"
@@ -102,19 +104,6 @@ LOCAL_MODULE_TAGS := optional
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
 include $(BUILD_STATIC_LIBRARY)
-
-#######################################################################
-# Build for configuration file
-
-include $(CLEAR_VARS)
-LOCAL_MODULE := route_criteria.conf
-LOCAL_PROPRIETARY_MODULE := true
-LOCAL_MODULE_OWNER := intel
-LOCAL_MODULE_TAGS := optional
-LOCAL_MODULE_CLASS := ETC
-LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
-include $(BUILD_PREBUILT)
-
 
 
 #######################################################################

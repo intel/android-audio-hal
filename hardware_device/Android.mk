@@ -27,7 +27,7 @@ include $(CLEAR_VARS)
 LOCAL_C_INCLUDES := $(LOCAL_PATH)/include
 LOCAL_SRC_FILES := \
     src/StreamWrapper.cpp
-LOCAL_CFLAGS := -Wall -Werror -Wextra
+LOCAL_CFLAGS := $(HAL_COMMON_CFLAGS)
 LOCAL_STATIC_LIBRARIES := libaudio_comms_utilities
 
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "SampleSpec.hpp"
+#include <SampleSpec.hpp>
 #include <StreamInterface.hpp>
 #include <AudioNonCopyable.hpp>
 #include <Direction.hpp>
@@ -97,6 +97,14 @@ public:
      *                    is involved
      */
     audio_patch_handle_t getPatchHandle() const { return mPatchHandle; }
+
+    /**
+     * Update the latency according to the flag.
+     * Request will be done to the route manager to informs the latency introduced by the route
+     * supporting this stream flags.
+     *
+     */
+    void updateLatency();
 
 protected:
     Stream(Device *parent, audio_io_handle_t handle, uint32_t flagMask);
@@ -189,14 +197,6 @@ protected:
      * @return latency in milliseconds.
      */
     uint32_t getLatencyMs() const;
-
-    /**
-     * Update the latency according to the flag.
-     * Request will be done to the route manager to informs the latency introduced by the route
-     * supporting this stream flags.
-     *
-     */
-    void updateLatency();
 
     /**
      * Sets the state of the status.

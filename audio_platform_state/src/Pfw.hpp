@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,14 @@
 #pragma once
 
 #include <AudioNonCopyable.hpp>
-#include "Parameter.hpp"
+#include <Parameter.hpp>
+#include <Criterion.hpp>
+#include <CriterionType.hpp>
 #include <cutils/config_utils.h>
 #include <utils/Errors.h>
 #include <inttypes.h>
-#include <list>
-#include <map>
-#include <string>
-#include <vector>
 
 class CParameterMgrPlatformConnector;
-class Criterion;
-class CriterionType;
 struct cnode;
 class ParameterMgrHelper;
 class CParameterHandle;
@@ -37,7 +33,6 @@ namespace intel_audio
 
 enum pfwtype
 {
-    Route,
     Audio
 };
 
@@ -46,21 +41,9 @@ class PfwTrait;
 
 class ParameterMgrPlatformConnectorLogger;
 
-typedef std::pair<std::string, std::string> AndroidParamMappingValuePair;
-
 template <class Trait>
 class Pfw : private audio_comms::utilities::NonCopyable
 {
-private:
-    typedef std::map<std::string, CriterionType *> CriterionTypes;
-    typedef std::map<std::string, Criterion *> Criteria;
-    typedef std::pair<int, const char *> CriterionTypeValuePair;
-    typedef Criteria::iterator CriterionMapIterator;
-    typedef Criteria::const_iterator CriterionMapConstIterator;
-    typedef CriterionTypes::iterator CriterionTypeMapIterator;
-    typedef CriterionTypes::const_iterator CriteriaTypeMapConstIterator;
-    typedef std::vector<Parameter *>::iterator ParamIterator;
-
 public:
     Pfw();
 
@@ -68,13 +51,11 @@ public:
 
     android::status_t start();
 
-    /**
-     * Add a criterion type to PFW.
-     *
-     * @param[in] typeName of the PFW criterion type.
-     * @param[in] isInclusive attribute of the criterion type.
-     */
-    bool addCriterionType(const std::string &typeName, bool isInclusive);
+    void setConfig(Criteria criteria, CriterionTypes criterionTypes)
+    {
+        mCriteria = criteria;
+        mCriterionTypes = criterionTypes;
+    }
 
     /**
      * Add a criterion type value pair to PFW.
@@ -85,19 +66,6 @@ public:
      */
     void addCriterionTypeValuePair(const std::string &typeName, uint32_t numeric,
                                    const std::string &literal);
-
-    /**
-     * Add a criterion to PFW.
-     *
-     * @param[in] name of the PFW criterion.
-     * @param[in] typeName criterion type name to which this criterion is associated to.
-     * @param[in] defaultLiteralValue of the PFW criterion.
-     * @param[in] associated android property.
-     */
-    void addCriterion(const std::string &name,
-                      const std::string &typeName,
-                      const std::string &defaultLiteralValue,
-                      const std::string &androidProperty = "");
 
     /**
      * Set a criterion to PFW. This value will be taken into account at next applyConfiguration.
@@ -121,6 +89,15 @@ public:
      */
     bool stageCriterion(const std::string &name, uint32_t value);
 
+    /**
+     * Commit a criterion to PFW. The value will be taken into account at next applyConfiguration.
+     *
+     * @param[in] name of the PFW criterion.
+     *
+     * @return true if the criterion value has changed, false otherwise.
+     */
+    bool commitCriterion(const std::string &name);
+
     uint32_t getCriterion(const std::string &name) const;
 
     /**
@@ -139,161 +116,7 @@ public:
 
     bool getNumericalValue(const std::string &typeName, const std::string &literal,
                            int &numeric) const;
-
-    /**
-     * Parse and load the inclusive criterion type from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadInclusiveCriterionType(cnode &root);
-
-    /**
-     * Parse and load the exclusive criterion type from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadExclusiveCriterionType(cnode &root);
-
-    /**
-     * Add a parameter and its mapping pairs to the Platform state.
-     *
-     * @param[in] param object to add.
-     * @param[in] valuePairs Mapping table between android-parameter values and PFW parameter values
-     */
-    void addParameter(Parameter *param,
-                      const std::vector<AndroidParamMappingValuePair> &valuePairs,
-                      std::vector<Parameter *> &parameterVector);
-
-    /**
-     * Add a Rogue parameter to PFW.
-     *
-     * @param[in] typeName parameter type.
-     * @param[in] paramKey android-parameter key to which this PFW parameter is associated to.
-     * @param[in] name of the PFW parameter.
-     * @param[in] defaultValue of the PFW parameter.
-     * @param[in] valuePairs Mapping table between android-parameter values and PFW parameter values
-     */
-    void addRogueParameter(const std::string &typeName, const std::string &paramKey,
-                           const std::string &name, const std::string &defaultValue,
-                           const std::string &androidProperty,
-                           const std::vector<AndroidParamMappingValuePair> &valuePairs,
-                           std::vector<Parameter *> &parameterVector);
-
-    /**
-     * Add a Criterion parameter to PFW.
-     *
-     * @param[in] typeName parameter type.
-     * @param[in] paramKey android-parameter key to which this PFW parameter is associated to.
-     * @param[in] name of the PFW parameter.
-     * @param[in] defaultValue of the PFW parameter.
-     * @param[in] valuePairs Mapping table between android-parameter values and PFW parameter values
-     */
-    void addCriterionParameter(const std::string &typeName, const std::string &paramKey,
-                               const std::string &name, const std::string &defaultValue,
-                               const std::string &androidProperty,
-                               const std::vector<AndroidParamMappingValuePair> &valuePairs,
-                               std::vector<Parameter *> &parameterVector);
-    /**
-     * Parse and load the rogue parameter type from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadRogueParameterType(cnode &root, std::vector<Parameter *> &parameterVector);
-
-    /**
-     * Parse and load the rogue parameters type from configuration file and push them into a list.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadRogueParameterTypeList(cnode &root, std::vector<Parameter *> &parameterVector);
-
-    /**
-     * Parse and load the criteria from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadCriteria(cnode &root, std::vector<Parameter *> &parameterVector);
-
-    /**
-     * Parse and load a criterion from configuration file.
-     *
-     * @param[in] root node of the configuration file.
-     */
-    void loadCriterion(cnode &root, std::vector<Parameter *> &parameterVector);
-
-    /**
-     * Parse and load the criterion types from configuration file.
-     *
-     * @param[in] root node of the configuration file
-     * @param[in] isInclusive true if inclusive, false is exclusive.
-     */
-    void loadCriterionType(cnode &root, bool isInclusive);
-
-    /**
-     * Parse and load the chidren node from a given root node.
-     *
-     * @param[in] root node of the configuration file
-     * @param[out] path of the parameter manager element to retrieve.
-     * @param[out] defaultValue of the parameter manager element to retrieve.
-     * @param[out] key of the android parameter to retrieve.
-     * @param[out] type of the parameter manager element to retrieve.
-     * @param[out] valuePairs pair of android value / parameter Manager value.
-     */
-    void parseChildren(cnode &root, std::string &path, std::string &defaultValue, std::string &key,
-                       std::string &type, std::string &androidProperty, std::vector<AndroidParamMappingValuePair> &valuePairs);
-
-    void loadConfig(cnode &root, std::vector<Parameter *> &parameterVector);
-
-private:
-    CParameterMgrPlatformConnector *getConnector();
-
-    /**
-     * Parse and load the mapping table of a criterion from configuration file.
-     * A mapping table associates the Android Parameter values to the criterion values.
-     *
-     * @param[in] values: csv list of param value/criterion values to parse.
-     *
-     * @return vector of value pairs.
-     */
-    std::vector<AndroidParamMappingValuePair> parseMappingTable(const char *values);
-
-    /**
-     * Check if the given collection has the element indexed by the name key
-     *
-     * @tparam T type of element to search.
-     * @param[in] name name of the element to find.
-     * @param[in] elementsMap maps of elements to search into.
-     *
-     * @return true if element found within collection, false otherwise.
-     */
-    template <typename T>
-    bool collectionHasElement(const std::string &name,
-                              const std::map<std::string, T> &collection) const;
-
-    /**
-     * Retrieve an element from a map by its name.
-     *
-     * @tparam T type of element to search.
-     * @param[in] name name of the element to find.
-     * @param[in] elementsMap maps of elements to search into.
-     *
-     * @return valid pointer on element if found, NULL otherwise.
-     */
-    template <typename T>
-    T *getElement(const std::string &name, std::map<std::string, T *> &elementsMap);
-
-    /**
-     * Retrieve an element from a map by its name. Const version.
-     *
-     * @tparam T type of element to search.
-     * @param[in] name name of the element to find.
-     * @param[in] elementsMap maps of elements to search into.
-     *
-     * @return valid pointer on element if found, NULL otherwise.
-     */
-    template <typename T>
-    const T *getElement(const std::string &name,
-                        const std::map<std::string, T *> &elementsMap) const;
+    CParameterMgrPlatformConnector *getConnector() { return mConnector; }
 
 private:
     CriterionTypes mCriterionTypes; /**< Criterion type collection Map. */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,7 @@
 #define LOG_TAG "AudioIntelHal/AudioPlatformState"
 
 #include "AudioPlatformState.hpp"
-#include "Pfw.hpp"
-#include "CriterionParameter.hpp"
-#include "RogueParameter.hpp"
-#include "ParameterMgrPlatformConnector.h"
 #include "VolumeKeys.hpp"
-#include <IoStream.hpp>
-#include <Criterion.hpp>
-#include <CriterionType.hpp>
 #include <ParameterMgrHelper.hpp>
 #include <property/Property.hpp>
 #include "NaiveTokenizer.h"
@@ -34,6 +27,7 @@
 #include <cutils/misc.h>
 #include <utilities/Log.hpp>
 #include <fstream>
+#include <system/audio.h>
 
 using namespace std;
 using audio_comms::utilities::convertTo;
@@ -41,27 +35,16 @@ using android::status_t;
 using audio_comms::utilities::Log;
 using audio_comms::utilities::Property;
 
+static const std::string gAndroidModeCriterion = "AndroidMode";
+
 namespace intel_audio
 {
-
-template <>
-Pfw<PfwTrait<Route> > *AudioPlatformState::getPfw()
-{
-    return mRoutePfw;
-}
 
 template <>
 Pfw<PfwTrait<Audio> > *AudioPlatformState::getPfw()
 {
     return mAudioPfw;
 }
-
-template <>
-Pfw<PfwTrait<Route> > *AudioPlatformState::getPfw() const
-{
-    return mRoutePfw;
-}
-
 template <>
 Pfw<PfwTrait<Audio> > *AudioPlatformState::getPfw() const
 {
@@ -69,25 +52,13 @@ Pfw<PfwTrait<Audio> > *AudioPlatformState::getPfw() const
 }
 
 const std::string AudioPlatformState::mHwDebugFilesPathList =
-    "/Route/debug_fs/debug_files/path_list/";
+    "/Audio/debug_fs/debug_files/path_list/";
 
 // For debug purposes. This size is enough for dumping relevant informations
 const uint32_t AudioPlatformState::mMaxDebugStreamSize = 998;
 
-AudioPlatformState::AudioPlatformState()
+AudioPlatformState::AudioPlatformState() : mAudioPfw(new Pfw<PfwTrait<Audio> >())
 {
-    /// Audio PFW must be created first
-    mAudioPfw = new Pfw<PfwTrait<Audio> >();
-
-    /// Route PFW must be created after Audio PFW
-    mRoutePfw = new Pfw<PfwTrait<Route> >();
-
-    /// Load Audio HAL configuration file to populate Criterion types, criteria and rogues.
-    if ((loadAudioHalConfig(gAudioHalVendorConfFilePath) != android::OK) &&
-        (loadAudioHalConfig(gAudioHalConfFilePath) != android::OK)) {
-        Log::Error() << "Neither vendor conf file (" << gAudioHalVendorConfFilePath
-                     << ") nor system conf file (" << gAudioHalConfFilePath << ") could be found";
-    }
 }
 
 /**
@@ -111,16 +82,10 @@ AudioPlatformState::~AudioPlatformState()
     std::for_each(mParameterVector.begin(), mParameterVector.end(), DeleteParamHelper());
 
     delete mAudioPfw;
-    delete mRoutePfw;
 }
 
 status_t AudioPlatformState::start()
 {
-    // Route PFW must be started first
-    if (getPfw<Route>()->start() != android::OK) {
-        return android::NO_INIT;
-    }
-    // Audio PFW must be created after Route PFW
     if (getPfw<Audio>()->start() != android::OK) {
         return android::NO_INIT;
     }
@@ -128,39 +93,9 @@ status_t AudioPlatformState::start()
     return android::OK;
 }
 
-status_t AudioPlatformState::loadAudioHalConfig(const char *path)
-{
-    if (path == NULL) {
-        Log::Error() << __FUNCTION__ << ": invalid path ";
-        return android::BAD_VALUE;
-    }
-    cnode *root;
-    char *data;
-    Log::Debug() << __FUNCTION__ << ": loading configuration file " << path;
-    data = (char *)load_file(path, NULL);
-    if (data == NULL) {
-        return -ENODEV;
-    }
-    root = config_node("", "");
-    if (root == NULL) {
-        Log::Error() << __FUNCTION__ << ": failed to parse configuration file";
-        return android::BAD_VALUE;
-    }
-    config_load(root, data);
-
-    getPfw<Audio>()->loadConfig(*root, mParameterVector);
-    getPfw<Route>()->loadConfig(*root, mParameterVector);
-
-    config_free(root);
-    free(root);
-    free(data);
-    return android::OK;
-}
-
 void AudioPlatformState::sync()
 {
     std::for_each(mParameterVector.begin(), mParameterVector.end(), SyncParameterHelper());
-    applyConfiguration<Route>();
 }
 
 void AudioPlatformState::clearKeys(KeyValuePairs *pairs)
@@ -195,7 +130,7 @@ public:
 
             if (!param->setValue(value)) {
                 if (value.compare(oldValue) != 0) {
-                  mRet = android::BAD_VALUE;
+                    mRet = android::BAD_VALUE;
                 }
                 return;
             }
@@ -223,23 +158,14 @@ status_t AudioPlatformState::setParameters(const string &keyValuePairs, bool &ha
     std::for_each(mParameterVector.begin(), mParameterVector.end(),
                   SetFromAndroidParameterHelper(&pairs, hasChanged, ret, this));
     clearKeys(&pairs);
-    if (!hasChanged) {
-        return ret;
-    }
-    // Apply Configuration on route PFW only, any change of Audio PFW must be done
-    // within the 5-steps routing.
-    getPfw<Route>()->commitCriteriaAndApplyConfiguration();
-    // Reset stateChanged criterion
-    stageCriterion<Route>(gStateChangedCriterion, 0);
     return ret;
 }
 
 void AudioPlatformState::criterionHasChanged(const std::string &event)
 {
     if (event == gAndroidModeCriterion) {
-        VolumeKeys::wakeup(getPfw<Route>()->getCriterion(event) == AUDIO_MODE_IN_CALL);
+        VolumeKeys::wakeup(getPfw<Audio>()->getCriterion(event) == AUDIO_MODE_IN_CALL);
     }
-    setPlatformStateEvent(event);
 }
 
 string AudioPlatformState::getParameters(const string &keys)
@@ -253,17 +179,6 @@ string AudioPlatformState::getParameters(const string &keys)
     return returnedPairs.toString();
 }
 
-void AudioPlatformState::setPlatformStateEvent(const string &eventStateName)
-{
-    uint32_t stateChanged = getPfw<Route>()->getCriterion(gStateChangedCriterion);
-    int eventId;
-    // Checks if eventStateName is a possible value of StateChanged criterion
-    if (!getPfw<Route>()->getNumericalValue(gStateChangedCriterion, eventStateName, eventId)) {
-        return;
-    }
-    stageCriterion<Route>(gStateChangedCriterion, stateChanged | eventId);
-}
-
 void AudioPlatformState::printPlatformFwErrorInfo() const
 {
     Log::Error() << "^^^^  Print platform Audio firmware error info  ^^^^";
@@ -272,9 +187,9 @@ void AudioPlatformState::printPlatformFwErrorInfo() const
 
     /**
      * Get the list of files path we wish to print. This list is represented as a
-     * string defined in the route manager RouteDebugFs plugin.
+     * string defined in the route manager DebugFs plugin.
      */
-    CParameterHandle *handle = getPfw<Route>()->getDynamicParameterHandle(mHwDebugFilesPathList);
+    CParameterHandle *handle = getPfw<Audio>()->getDynamicParameterHandle(mHwDebugFilesPathList);
     if (handle == NULL) {
         Log::Error() << "Could not get path list from XML configuration";
         return;

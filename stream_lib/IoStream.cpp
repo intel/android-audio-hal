@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,6 +66,8 @@ android::status_t IoStream::attachRouteL()
     setCurrentStreamRouteL(mNewStreamRoute);
     setRouteSampleSpecL(mCurrentStreamRoute->getSampleSpec());
     mAudioDevice = getNewStreamRoute()->getAudioDevice();
+    // now we are attached to a route, it is high time to reset need reconfigure flag
+    resetNeedReconfigure();
     return android::OK;
 }
 
@@ -74,17 +76,21 @@ android::status_t IoStream::detachRouteL()
 {
     mCurrentStreamRoute = NULL;
     mAudioDevice = NULL;
+    // not routed anymore, it is high time to reset need reconfigure flag
+    resetNeedReconfigure();
     return android::OK;
 }
 
 void IoStream::addRequestedEffect(uint32_t effectId)
 {
     mEffectsRequestedMask |= effectId;
+    setNeedReconfigure();
 }
 
 void IoStream::removeRequestedEffect(uint32_t effectId)
 {
     mEffectsRequestedMask &= ~effectId;
+    setNeedReconfigure();
 }
 
 uint32_t IoStream::getOutputSilencePrologMs() const
@@ -99,6 +105,10 @@ uint32_t IoStream::getOutputSilencePrologMs() const
 android::status_t IoStream::setDevices(audio_devices_t devices, const std::string &address)
 {
     AutoW lock(mStreamLock);
+    // A change of device requires to be reconfigure (aka muted / unmuted) to garantee safe transition
+    if ((mDevices != devices) || (mDeviceAddress != address)) {
+        setNeedReconfigure();
+    }
     mDevices = devices;
     mDeviceAddress = address;
     return android::OK;
@@ -153,4 +163,14 @@ android::status_t IoStream::pcmStop() const
 {
     return mAudioDevice->pcmStop();
 }
+
+void IoStream::setNeedReconfigure()
+{
+    if (not isRoutedL()) {
+        // No-operation if not routed
+        return;
+    }
+    mNeedReconfigure = true;
+}
+
 } // namespace intel_audio

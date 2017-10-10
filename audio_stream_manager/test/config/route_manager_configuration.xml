@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<routeConfiguration version="1.0" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+    <xi:include href="audio_rogue_parameters.xml"/>
+    <xi:include href="audio_criterion_types.xml"/>
+    <xi:include href="audio_criteria.xml"/>
+
+    <mixPorts>
+        <mixPort name="Media" role="source" card="broxtongpmrb" device="0"
+                 devicePorts="AUDIO_DEVICE_OUT_EARPIECE,AUDIO_DEVICE_OUT_SPEAKER,AUDIO_DEVICE_OUT_WIRED_HEADSET,AUDIO_DEVICE_OUT_WIRED_HEADPHONE,AUDIO_DEVICE_OUT_BLUETOOTH_SCO,AUDIO_DEVICE_OUT_BLUETOOTH_SCO_HEADSET,AUDIO_DEVICE_OUT_BLUETOOTH_SCO_CARKIT"
+                 deviceAddress=""
+                 flags="AUDIO_OUTPUT_FLAG_PRIMARY"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 periodSize="960"
+                 periodCount="4"
+                 startThreshold="959"
+                 stopThreshold="3840"
+                 silenceThreshold="0"
+                 availMin="960"
+                 dynamicChannelMapControl=""
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases=""
+                 effectsSupported="">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_OUT_STEREO"/>
+            <profile format="AUDIO_FORMAT_PCM_32_BIT"
+                     samplingRates="22000,44100,48000" channelMasks="AUDIO_CHANNEL_OUT_MONO,AUDIO_CHANNEL_OUT_STEREO,AUDIO_CHANNEL_OUT_QUAD"/>
+        </mixPort>
+        <mixPort name="Media" role="sink" card="broxtongpmrb" device="0"
+                 deviceAddress=""
+                 flags="AUDIO_INPUT_FLAG_PRIMARY"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 channelsPolicy="copy,copy"
+                 periodSize="960"
+                 periodCount="2"
+                 startThreshold="1"
+                 stopThreshold="1920"
+                 silenceThreshold="0"
+                 availMin="960"
+                 dynamicChannelMapControl=""
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases="AUDIO_SOURCE_MIC,AUDIO_SOURCE_VOICE_COMMUNICATION,AUDIO_SOURCE_CAMCORDER,AUDIO_SOURCE_VOICE_RECOGNITION,AUDIO_SOURCE_HOTWORD"
+                 effectsSupported="Acoustic Echo Canceler,Automatic Gain Control,Noise Suppression,Beam Forming,Wind Noise Reduction"
+                 devicePorts="AUDIO_DEVICE_IN_BUILTIN_MIC,AUDIO_DEVICE_IN_WIRED_HEADSET,AUDIO_DEVICE_IN_BLUETOOTH_SCO_HEADSET">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000" channelMasks="AUDIO_CHANNEL_IN_STEREO"/>
+        </mixPort>
+        <mixPort name="hdmi" role="source" card="broxtongpmrb" device="9"
+                 deviceAddress=""
+                 flags="AUDIO_OUTPUT_FLAG_DIRECT,AUDIO_OUTPUT_FLAG_PRIMARY,AUDIO_OUTPUT_FLAG_IEC958_NONAUDIO"
+                 requirePreEnable="0"
+                 requirePostDisable="0"
+                 silencePrologMs="0"
+                 channelsPolicy="copy,copy"
+                 periodSize="1024"
+                 periodCount="4"
+                 startThreshold="1023"
+                 stopThreshold="4096"
+                 silenceThreshold="0"
+                 availMin="1024"
+                 dynamicChannelMapControl="Playback Channel Map"
+                 dynamicSampleRateControl=""
+                 dynamicFormatControl=""
+                 supportedUseCases="0"
+                 effectsSupported=""
+                 devicePorts="AUDIO_DEVICE_OUT_HDMI">
+            <profile format="AUDIO_FORMAT_PCM_16_BIT" samplingRates="48000"/>
+        </mixPort>
+    </mixPorts>
+    <criterion_types>
+        <criterion_type name="RoutingStageType" type="inclusive" values="Flow,PostPath,StreamPath,Path,Configure"/>
+        <criterion_type name="RoutePlaybackType" type="inclusive" values=""/>
+        <criterion_type name="RouteCaptureType" type="inclusive" values=""/>
+        <criterion_type name="OutputDevicesMaskType" type="inclusive" values="Earpiece,Ihf,Headset,Headphones,Sco,ScoHeadset,ScoCarkit,A2dp,A2dpHeadphones,A2dpSpeaker,AuxDigital,AnlgDockHeadset,DgtlDockHeadset,UsbAccessory,UsbDevice,RemoteSubmix,TelephonyTx,Line,HdmiArc,Spdif,Fm,AuxLine,SpeakerSafe,Ip,Bus"/>
+        <criterion_type name="InputSourcesType" type="inclusive" values="Default,Mic,VoiceUplink,VoiceDownlink,VoiceCall,Camcorder,VoiceRecognition,VoiceCommunication,RemoteSubmix,Unprocessed,FmTuner,Hotword"/>
+        <criterion_type name="PreProcessingType" type="inclusive" values="Aec,Agc,Ns,Bmf,Wnr"/>
+        <criterion_type name="InputDevicesMaskType" type="inclusive" values="ommunication,Ambient,Main,ScoHeadset,Headset,AuxDigital,VoiceCall,Back,RemoteSubmix,AnlgDockHeadset,DgtlDockHeadset,UsbAccessory,UsbDevice,FmTuner,TvTune,Line,Spdif,BluetoothA2dp,Loopback"/>
+        <criterion_type name="OutputFlagsType" type="inclusive" values="Direct,Primary,Fast,Deep,Offload,NonBlocking,HwAvSync,Tts,Raw,Sync,Iec958NonAudio"/>
+        <criterion_type name="InputFlagsType" type="inclusive" values="Fast,HwHotword,Raw,Sync,Primary"/>
+        <criterion_type name="OutputDeviceAddressType" type="inclusive" values="Media,Navigation,Hmi"/>
+        <criterion_type name="InputDeviceAddressType" type="inclusive" values="Mic1,Mic2"/>
+        <criterion_type name="AndroidModeType" type="exclusive" values="Normal,RingTone,InCsvCall,InVoipCall"/>
+        <criterion_type name="InputDeviceType" type="exclusive" values="0x0:None,0x80000001:Communication,0x80000002:Ambient,0x80000004:Main,0x80000008:ScoHeadset,0x80000010:Headset,0x80000020:AuxDigital,0x80000040:VoiceCall,0x80000080:Back,0x80000100:RemoteSubmix,0x80000200:AnlgDockHeadset,0x80000400:DgtlDockHeadset,0x80000800:UsbAccessory,0x80001000:UsbDevice,0x80002000:FmTuner,0x80004000:TvTuner,0x80008000:Line,0x80010000:Spdif,0x80020000:BluetoothA2dp,0x80040000:Loopback"/>
+        <criterion_type name="BooleanType" type="exclusive" values="False,True"/>
+        <criterion_type name="BandType" type="exclusive" values="Unknown,NB,WB,SuperWB"/>
+        <criterion_type name="EqualizationType" type="exclusive" values="None,Slight,Medium,Strong"/>
+        <criterion_type name="VolumeType" type="exclusive" values="muted,max"/>
+    </criterion_types>
+    <criteria>
+        <criterion name="SelectedOutputDevices" type="OutputDevicesMaskType" default="none" parameter="output_devices"/>
+        <criterion name="InputSources" type="InputSourcesType" default="none" parameter="input_sources"/>
+        <criterion name="MicMuted" type="BooleanType" default="False" parameter="mic_mute" mapping="false:False,true:True"/>
+        <criterion name="ScreenState" type="BooleanType" default="False" parameter="screen_state" mapping="off:False,on:True"/>
+        <criterion name="PreProcEnabled" type="PreProcessingType" default="none" parameter="pre_proc_requested"/>
+        <criterion name="HacSelected" type="BooleanType" default="False" parameter="HACSetting"
+                   mapping="OFF:False,ON:True"/>
+        <criterion name="SelectedInputDevices" type="InputDevicesMaskType" default="none" parameter="input_devices"/>
+        <criterion name="OutputFlags" type="OutputFlagsType" default="none" parameter="output_flags"/>
+        <criterion name="InputFlags" type="InputFlagsType" default="none" parameter="input_flags"/>
+        <criterion name="Mode" type="AndroidModeType" default="Normal" parameter="android_mode"/>
+        <criterion name="OutputDeviceAddresses" type="OutputDeviceAddressType" default="none" parameter="output_device_addresses"
+                   mapping="BUS00_MEDIA:Media,REMOTE_SUBMIX00_MEDIA:Media,BUS01_NAVIGATION:Navigation,REMOTE_SUBMIX01_NAVIGATION:Navigation,BUS02_HMI:Hmi,REMOTE_SUBMIX02_HMI:Hmi"/>
+        <criterion name="InputDeviceAddresses" type="InputDeviceAddressType" default="none" parameter="input_device_addresses"
+                   mapping="BUS00_MIC1:Mic1,REMOTE_SUBMIX00_MIC1:Mic1,BUS01_MIC2:Mic2,REMOTE_SUBMIX01_MIC2:Mic2"/>
+        <criterion name="RoutageState" type="RoutingStageType" default="Flow|PostPath|StreamPath|Path|Configure"/>
+        <criterion name="OpenedCaptureRoutes" type="RouteCaptureType" default="none"/>
+        <criterion name="OpenedPlaybackRoutes" type="RoutePlaybackType" default="none"/>
+        <criterion name="Volume" type="VolumeType" default="muted"/>
+    </criteria>
+</routeConfiguration>

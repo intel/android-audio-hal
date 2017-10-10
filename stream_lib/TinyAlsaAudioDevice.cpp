@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ android::status_t TinyAlsaAudioDevice::open(const char *cardName,
     AUDIOCOMMS_ASSERT(cardName != NULL, "Null card name");
 
     pcm_config config;
-    config.rate = routeConfig.rate;
-    config.channels = routeConfig.channels;
-    config.format = AudioUtils::convertHalToTinyFormat(routeConfig.format);
+    config.rate = routeConfig.getRate();
+    config.channels = routeConfig.getChannelCount();
+    config.format = AudioUtils::convertHalToTinyFormat(routeConfig.getFormat());
     config.period_size = routeConfig.periodSize;
     config.period_count = routeConfig.periodCount;
     config.start_threshold = routeConfig.startThreshold;

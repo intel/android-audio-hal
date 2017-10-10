@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <hardware/audio.h>
+#include <AudioCapabilities.hpp>
 #include <SampleSpec.hpp>
 #include <string>
 
@@ -24,6 +24,7 @@ namespace intel_audio
 
 struct StreamRouteConfig
 {
+    bool isOut;
     /**
      * flags to indicate whether the route must be enabled before or after opening the device.
      */
@@ -34,23 +35,26 @@ struct StreamRouteConfig
      */
     bool requirePostDisable;
 
-    const char *cardName;   /**< Alsa card used by the stream route. */
-    uint32_t deviceId;       /**< Alsa card used by the stream route. */
-
-    std::string deviceAddress; /**< Supported device address. */
+    std::string cardName;   /**< Audio card name used by the stream route. */
+    uint32_t deviceId;       /**< Audio Device Id used by the stream route. */
 
     /**
      * pcm configuration supported by the stream route.
      */
-    uint32_t channels;
-    uint32_t rate;
     uint32_t periodSize;
     uint32_t periodCount;
-    audio_format_t format;
     uint32_t startThreshold;
     uint32_t stopThreshold;
     uint32_t silenceThreshold;
     uint32_t availMin;
+
+    AudioCapabilities mAudioCapabilities;
+
+    bool supportSampleSpec(const SampleSpec &spec) const;
+
+    bool supportSampleSpecNear(const SampleSpec &spec) const;
+
+    bool setCurrentSampleSpec(const SampleSpec &streamSpec);
 
     std::string dynamicChannelMapsControl; /**< Control to retrieve supported channel maps. */
     std::string dynamicFormatsControl; /**< Control to retrieve supported formats. */
@@ -76,8 +80,27 @@ struct StreamRouteConfig
      * (for example: HDMI devices, need to retrieve capabilities by reading EDID informations).
      */
     uint32_t supportedDeviceMask;
+    std::string deviceAddress; /**< Supported device address. */
 
-    static bool isDynamic(uint32_t param) { return param == 0; }
+    uint32_t mCurrentRate = 0;
+    audio_format_t mCurrentFormat = AUDIO_FORMAT_DEFAULT;
+    audio_channel_mask_t mCurrentChannelMask = AUDIO_CHANNEL_NONE;
+
+    uint32_t getRate() const;
+    audio_format_t getFormat() const;
+    audio_channel_mask_t getChannelMask() const;
+    uint32_t getChannelCount() const;
+
+    void resetCapabilities();
+
+    void loadCapabilities();
+
+    /**
+     * Load the capabilities in term of channel mask supported, i.e. it initializes the vector of
+     * supported channel mask (stereo, 5.1, 7.1, ...)
+     * @return OK is channel masks supported has been set correctly, error code otherwise.
+     */
+    android::status_t loadChannelMaskCapabilities(AudioCapability &capability);
 };
 
 } // namespace intel_audio

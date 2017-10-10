@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <string>
+#include <vector>
 
 class CParameterMgrPlatformConnector;
 class ISelectionCriterionTypeInterface;
@@ -106,4 +107,37 @@ private:
     std::string mName; /**< criterion type name. */
     bool mIsInclusive; /**< inclusive attribute. */
     CParameterMgrPlatformConnector *mParameterMgrConnector; /**< parameter manager connector. */
+};
+
+class CriterionTypes : public std::vector<CriterionType *>
+{
+public:
+    CriterionType *getByName(const std::string &name)
+    {
+        for (auto criterionType : *this) {
+            if (criterionType->getName() == name) {
+                return criterionType;
+            }
+        }
+        return nullptr;
+    }
+
+    const CriterionType *getByName(const std::string &name) const
+    {
+        for (const auto &criterionType : *this) {
+            if (criterionType->getName() == name) {
+                return criterionType;
+            }
+        }
+        return nullptr;
+    }
+
+    bool add(CriterionType *criterionType)
+    {
+        if (getByName(criterionType->getName()) != nullptr) {
+            return false;
+        }
+        push_back(criterionType);
+        return true;
+    }
 };

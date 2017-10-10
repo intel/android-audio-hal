@@ -1,7 +1,0 @@
-InclusiveCriterion SelectedOutputDevices    :    Earpiece         Ihf           Headset       Headphones    Sco        ScoHeadset   ScoCarkit        A2dp               A2dpHeadphones    A2dpSpeaker     AuxDigital      AnlgDockHeadset DgtlDockHeadset UsbAccessory  UsbDevice    RemoteSubmix TelephonyTx  Line          HdmiArc          Spdif     Fm              AuxLine           SpeakerSafe
-InclusiveCriterion SelectedInputDevices     :    Communication    Ambient       Main          ScoHeadset    Headset    AuxDigital   VoiceCall        Back               RemoteSubmix      AnlgDockHeadset DgtlDockHeadset UsbAccessory    UsbDevice       FmTuner       TvTuner      Line         Spdif        BluetoothA2dp Loopback
-InclusiveCriterion OutputFlags              :    Direct           Primary       Fast          Deep          Offload    NonBlocking  HwAvSync         Tts                Raw          Sync    Iec958NonAudio
-InclusiveCriterion InputFlags               :    Fast             HwHotword     Raw           Sync          Primary
-InclusiveCriterion InputSources             :    Default          Mic           VoiceUplink   VoiceDownlink VoiceCall  Camcorder    VoiceRecognition VoiceCommunication RemoteSubmix FmTuner Hotword
-InclusiveCriterion StatesChanged            :    SelectedOutputDevices    SelectedInputDevices  OutputFlags   InputSources ScreenState
-ExclusiveCriterion ScreenState              :    False            True

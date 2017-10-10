@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Intel Corporation
+ * Copyright (C) 2016-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 #define LOG_TAG "AlsaAudioDevice"
 
 #include "AlsaAudioDevice.hpp"
-#include <AudioUtils.hpp>
+#include <AlsaAudioUtils.hpp>
 #include <SampleSpec.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
@@ -53,10 +53,10 @@ android::status_t AlsaAudioDevice::open(const char *deviceName, uint32_t /*devic
     }
     Log::Debug() << __FUNCTION__ << ": pcm device successfully initialized: "
                  << "\n\t card (" << deviceName
-                 << ") \n\t config (rate=" << routeConfig.rate
+                 << ") \n\t config (rate=" << routeConfig.getRate()
                  << " format=" <<
-        static_cast<int32_t>(AudioUtils::convertHalToAlsaFormat(routeConfig.format))
-                 << " channels=" << routeConfig.channels
+        static_cast<int32_t>(AlsaAudioUtils::convertHalToAlsaFormat(routeConfig.getFormat()))
+                 << " channels=" << routeConfig.getChannelCount()
                  << ").";
 
     return android::OK;
@@ -74,11 +74,11 @@ int AlsaAudioDevice::setPcmParams(snd_pcm_stream_t stream, const StreamRouteConf
     snd_pcm_sw_params_t *swparams;
     const char *s = snd_pcm_stream_name(snd_pcm_stream(mPcmDevice));
     unsigned int latency =
-        ((float)config.periodSize * config.periodCount / config.rate) * mUsecToSec;
+        ((float)config.periodSize * config.periodCount / config.getRate()) * mUsecToSec;
     snd_pcm_uframes_t period_size = config.periodSize;
     unsigned int period_time = latency / config.periodCount;
     snd_pcm_uframes_t buffer_size = config.periodSize * config.periodCount;
-    unsigned int rrate = config.rate;
+    unsigned int rate = config.getRate();
     int err;
 
     snd_pcm_hw_params_alloca(&params);
@@ -87,41 +87,50 @@ int AlsaAudioDevice::setPcmParams(snd_pcm_stream_t stream, const StreamRouteConf
     /* choose all parameters */
     err = snd_pcm_hw_params_any(mPcmDevice, params);
     if (err < 0) {
-        Log::Error() << __FUNCTION__ << " Broken configuration for " << s << " : no configurations available";
+        Log::Error() << __FUNCTION__ << " Broken configuration for " << s <<
+            " : no configurations available";
         return err;
     }
     /* set software resampling */
     err = snd_pcm_hw_params_set_rate_resample(mPcmDevice, params, soft_resample);
     if (err < 0) {
-        Log::Error() << __FUNCTION__ << " Resampling setup failed for " << s << ": " <<  snd_strerror(err);
+        Log::Error() << __FUNCTION__ << " Resampling setup failed for " << s << ": " <<
+            snd_strerror(err);
         return err;
     }
     /* set the selected read/write format */
     err = snd_pcm_hw_params_set_access(mPcmDevice, params, access);
     if (err < 0) {
-        Log::Error() << __FUNCTION__ << " Access type not available for " << s << " :" << snd_strerror(err);
+        Log::Error() << __FUNCTION__ << " Access type not available for " << s << " :" <<
+            snd_strerror(err);
         return err;
     }
     /* set the sample format */
-    err = snd_pcm_hw_params_set_format(mPcmDevice, params, AudioUtils::convertHalToAlsaFormat(config.format));
+    err =
+        snd_pcm_hw_params_set_format(mPcmDevice, params,
+                                     AlsaAudioUtils::convertHalToAlsaFormat(config.getFormat()));
     if (err < 0) {
-        Log::Error() << __FUNCTION__ << " Sample format not available for " << s << " :" << snd_strerror(err);
+        Log::Error() << __FUNCTION__ << " Sample format not available for " << s << " :" <<
+            snd_strerror(err);
         return err;
     }
     /* set the count of channels */
-    err = snd_pcm_hw_params_set_channels(mPcmDevice, params, config.channels);
+    err = snd_pcm_hw_params_set_channels(mPcmDevice, params, config.getChannelCount());
     if (err < 0) {
-        Log::Error() << __FUNCTION__ << " Channels count " << config.channels << " not available for " << s << " :" << snd_strerror(err);
+        Log::Error() << __FUNCTION__ << " Channels count " << config.getChannelCount() <<
+            " not available for " << s << " :" << snd_strerror(err);
         return err;
     }
     /* set the stream rate */
-    err = snd_pcm_hw_params_set_rate_near(mPcmDevice, params, &rrate, 0);
+    err = snd_pcm_hw_params_set_rate_near(mPcmDevice, params, &rate, 0);
     if (err < 0) {
-        Log::Error() << __FUNCTION__ << " Rate " << config.rate << "Hz not available for playback: " << snd_strerror(err);
+        Log::Error() << __FUNCTION__ << " Rate " << config.getRate() <<
+            "Hz not available for playback: " << snd_strerror(err);
         return err;
     }
-    if (rrate != config.rate) {
-        Log::Error() << __FUNCTION__ << " Rate doesn't match (requested " << config.rate << "Hz, got " << rrate << "Hz)";
+    if (rate != config.getRate()) {
+        Log::Error() << __FUNCTION__ << " Rate doesn't match (requested " << config.getRate() <<
+            "Hz, got " << rate << "Hz)";
         return -EINVAL;
     }
     /* set the buffer time */
@@ -248,7 +257,6 @@ android::status_t AlsaAudioDevice::close()
     return android::OK;
 }
 
-/////////////////////////////////////////////////////////////////:::
 android::status_t AlsaAudioDevice::pcmReadFrames(void *buffer, size_t frames, string &error) const
 {
     if (frames == 0) {
@@ -279,8 +287,9 @@ android::status_t AlsaAudioDevice::pcmWriteFrames(void *buffer, ssize_t frames, 
     snd_pcm_sframes_t frames_written = snd_pcm_writei(mPcmDevice, (char *)buffer, frames);
     if (frames_written < 0) {
         error = snd_strerror(frames_written);
-        if(snd_pcm_recover(mPcmDevice, frames_written, 0) != android::OK) {
-            Log::Error() << "Unable to recover from pcm_write, error: " << snd_strerror(frames_written);
+        if (snd_pcm_recover(mPcmDevice, frames_written, 0) != android::OK) {
+            Log::Error() << "Unable to recover from pcm_write, error: " << snd_strerror(
+                frames_written);
         }
         return frames_written;
     }

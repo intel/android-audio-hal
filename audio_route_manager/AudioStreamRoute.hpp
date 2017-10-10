@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,11 @@
  */
 #pragma once
 
-#include "AudioRoute.hpp"
 #include "IStreamRoute.hpp"
 #include "StreamRouteConfig.hpp"
 #include "AudioCapabilities.hpp"
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
-#include <AudioConversion.hpp>
 #include <IoStream.hpp>
 #include <list>
 #include <utils/Errors.h>
@@ -48,7 +46,7 @@ AudioStreamRoute *createT(const std::string &name, bool isOut)
     return new T(name, isOut);
 }
 
-class AudioStreamRoute : public AudioRoute, private IStreamRoute
+class AudioStreamRoute : public IStreamRoute
 {
 public:
     AudioStreamRoute(const std::string &name, bool isOut);
@@ -76,12 +74,8 @@ public:
      */
     virtual const SampleSpec getSampleSpec() const
     {
-        uint32_t channels = isOut() ?
-                    audio_channel_count_from_out_mask(mCurrentChannelMask) :
-                    audio_channel_count_from_in_mask(mCurrentChannelMask);
-
-        return SampleSpec(channels, mCurrentFormat, mCurrentRate,
-                          mConfig.channelsPolicy);
+        return SampleSpec(mConfig.getChannelCount(), mConfig.getFormat(),
+                          mConfig.getRate(), mConfig.channelsPolicy);
     }
 
     /**
@@ -107,13 +101,13 @@ public:
     }
 
     /**
-     * Add an effect supported by this route.
+     * Set an effect supported by this route.
      * This API is intended to be called by the Route Parameter Manager to add an audio effect
      * supported by this route according to the platform settings (XML configuration).
      *
      * @param[in] effect Audio Effect Name supported by this route.
      */
-    void addEffectSupported(const std::string &effect);
+    void setEffectSupported(const std::vector<std::string> &effects);
 
     /**
      * Update the stream route configuration.
@@ -122,7 +116,14 @@ public:
      *
      * @param[in] config Stream Route configuration.
      */
-    void updateStreamRouteConfig(const StreamRouteConfig &config);
+    void setConfig(const StreamRouteConfig &config) { mConfig = config; }
+
+    /**
+     * Set the audio device managed by this stream route
+     *
+     * @param[in] device audio to be associated to this stream route.
+     */
+    void setDevice(IAudioDevice *device) { mAudioDevice = device; }
 
     /**
      * Assign a new stream to this route.
@@ -137,13 +138,13 @@ public:
      * route hook point.
      * Called by the route manager at enable step.
      */
-    virtual android::status_t route(bool isPreEnable);
+    android::status_t route(bool isPreEnable);
 
     /**
      * unroute hook point.
      * Called by the route manager at disable step.
      */
-    virtual void unroute(bool isPostDisable);
+    void unroute(bool isPostDisable);
 
     /**
      * Reset the availability of the route.
@@ -175,8 +176,7 @@ public:
      */
     inline bool supportStreamConfig(const IoStream &stream) const
     {
-        return supportRate(stream.getSampleRate()) && supportFormat(stream.getFormat()) &&
-               supportChannelMask(stream.getChannels());
+        return mConfig.supportSampleSpec(stream.streamSampleSpec());
     }
 
     /**
@@ -198,16 +198,35 @@ public:
         return mConfig.useCaseMask;
     }
 
-    virtual bool needReflow() const
+    /**
+     * Sets the route as in use.
+     *
+     * Calling this API will propagate the in use attribute to the ports belonging to this route.
+     *
+     */
+    void setUsed() { mIsUsed = true; }
+
+    bool isUsed() const
     {
-        return stillUsed() &&
-               (mRoutingStageRequested.test(Flow) || mRoutingStageRequested.test(Path));
+        return mIsUsed;
     }
 
-    virtual bool needRepath() const
+    /**
+     * Checks if the route was previously used.
+     *
+     * Previously used means if the route was in use before the routing
+     * reconsideration of the route manager.
+     *
+     * @return true if the route was in use, false otherwise.
+     */
+    bool previouslyUsed() const
     {
-        return stillUsed() && (mRoutingStageRequested.test(Path) || mCurrentStream != mNewStream);
+        return mPreviouslyUsed;
     }
+
+    inline bool stillUsed() const { return previouslyUsed() && isUsed(); }
+
+    uint32_t getMask() const { return mMask; }
 
     /**
      * Check if the route requires pre enabling.
@@ -215,13 +234,7 @@ public:
      *
      * @return true if the route needs pre enabling, false otherwise.
      */
-    bool isPreEnableRequired()
-    {
-        return mConfig.requirePreEnable;
-    }
-
-    /** As prepare is called on both RouteCollection & StreamRouteCollection, Nope it here. */
-    virtual void prepare() {}
+    bool isPreEnableRequired() const { return mConfig.requirePreEnable; }
 
     /**
      * Check if the route requires post disabling.
@@ -229,22 +242,16 @@ public:
      *
      * @return true if the route needs pre enabling, false otherwise.
      */
-    bool isPostDisableRequired()
-    {
-        return mConfig.requirePostDisable;
-    }
+    bool isPostDisableRequired() const { return mConfig.requirePostDisable; }
 
     /**
      * Get the pcm configuration associated with this route.
      *
      * @return pcm configuration of the route (from Route Parameter Manager settings).
      */
-    const StreamRouteConfig getRouteConfig() const;
+    const StreamRouteConfig &getRouteConfig() const { return mConfig; }
 
-    uint32_t getSupportedDeviceMask() const
-    {
-        return mConfig.supportedDeviceMask;
-    }
+    uint32_t getSupportedDeviceMask() const { return mConfig.supportedDeviceMask; }
 
     /**
      * Get the latency associated with this route.
@@ -264,8 +271,6 @@ public:
      */
     uint32_t getPeriodInUs() const;
 
-    AudioCapabilities getCapabilities() const { return mCapabilities; }
-
     /**
      * Checks if the devices assigned by the policy to the stream are matching the devices supported
      * by the stream route
@@ -274,52 +279,41 @@ public:
      */
     bool supportDevices(audio_devices_t streamDeviceMask) const;
 
+    /**
+     * Checks if a route needs to be muted / unmuted.
+     *
+     * It overrides the need reconfigure of Route Parameter Manager to ensure the route was
+     * previously used and will be used after the routing reconsideration.
+     *
+     * @return true if the route needs reconfiguring, false otherwise.
+     */
+    bool needReflow();
+
+    /**
+     * Checks if a route needs to be disabled / enabled.
+     *
+     * It overrides the need reroute of Route Parameter Manager to ensure the route was
+     * previously used and will be used after the routing reconsideration.
+     *
+     * @return true if the route needs rerouting, false otherwise.
+     */
+    bool needRepath() const
+    {
+        return stillUsed() && (mCurrentStream != mNewStream);
+    }
+
+    AudioCapabilities getCapabilities() const { return mConfig.mAudioCapabilities; }
+
 protected:
     IoStream *mCurrentStream; /**< Current stream attached to this route. */
     IoStream *mNewStream; /**< New stream that will be attached to this route after rerouting. */
 
     std::list<std::string> mEffectSupported; /**< list of name of supported effects. */
     uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
-
-    AudioCapabilities mCapabilities;
+    StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
 
 private:
-    /**
-     * Load the capabilities in term of channel mask supported, i.e. it initializes the vector of
-     * supported channel mask (stereo, 5.1, 7.1, ...)
-     * @return OK is channel masks supported has been set correctly, error code otherwise.
-     */
-    android::status_t loadChannelMaskCapabilities();
-
-    inline bool remapperSupported(const audio_channel_mask_t mask) const
-    {
-        uint32_t srcChannels = isOut() ?
-                    audio_channel_count_from_out_mask(mask) :
-                    audio_channel_count_from_in_mask(mCapabilities.getDefaultChannelMask());
-        uint32_t dstChannels = isOut() ?
-                    audio_channel_count_from_out_mask(mCapabilities.getDefaultChannelMask()) :
-                    audio_channel_count_from_in_mask(mask);
-        return AudioConversion::supportRemap(srcChannels, dstChannels);
-    }
-
-    inline bool reformatterSupported(const audio_format_t format) const
-    {
-        audio_format_t srcFormat = isOut() ? format : mCapabilities.getDefaultFormat();
-        audio_format_t dstFormat = isOut() ? mCapabilities.getDefaultFormat() : format;
-        return AudioConversion::supportReformat(srcFormat, dstFormat);
-    }
-
-    inline bool resamplerSupported(uint32_t rate) const
-    {
-        uint32_t srcRate = isOut() ? rate : mCapabilities.getDefaultRate();
-        uint32_t dstRate = isOut() ? mCapabilities.getDefaultRate() : rate;
-        return AudioConversion::supportResample(srcRate, dstRate);
-    }
-
-    bool supportRate(uint32_t rate) const;
-    bool supportFormat(audio_format_t format) const;
-    bool supportChannelMask(audio_channel_mask_t channelMask) const;
-    bool supportDeviceAddress(const std::string& streamDeviceAddress, audio_devices_t device) const;
+    bool supportDeviceAddress(const std::string &streamDeviceAddress, audio_devices_t device) const;
 
     /**
      * Checks if the use cases supported by this route are matching with the stream use case mask.
@@ -367,7 +361,7 @@ private:
 
     const char *getCardName() const
     {
-        return mConfig.cardName;
+        return mConfig.cardName.c_str();
     }
 
     /**
@@ -384,13 +378,12 @@ private:
      */
     android::status_t detachCurrentStream();
 
-    StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
+    uint32_t mMask; /**< A route is identified with a mask, it helps for criteria representation. */
+
+    bool mIsUsed; /**< Route will be used after reconsidering the routing. */
+    bool mPreviouslyUsed; /**< Route was used before reconsidering the routing. */
 
     IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
-
-    uint32_t mCurrentRate = 0;
-    audio_format_t mCurrentFormat = AUDIO_FORMAT_DEFAULT;
-    audio_channel_mask_t mCurrentChannelMask = AUDIO_CHANNEL_NONE;
 };
 
 } // namespace intel_audio

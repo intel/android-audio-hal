@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -359,6 +359,10 @@ public:
         return mDeviceAddress;
     }
 
+    bool needReconfigure() const { return mNeedReconfigure; }
+    void setNeedReconfigure();
+    void resetNeedReconfigure() { mNeedReconfigure = false; }
+
 protected:
     /**
      * Attach the stream to its route.
@@ -413,6 +417,8 @@ private:
 
     audio_devices_t mDevices = AUDIO_DEVICE_NONE; /**< devices assgined by the policy.*/
     std::string mDeviceAddress;
+
+    bool mNeedReconfigure = false;
 };
 
 } // namespace intel_audio

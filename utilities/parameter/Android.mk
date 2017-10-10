@@ -37,7 +37,7 @@ component_static_lib := \
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host) \
 
-component_cflags := -Wall -Werror -Wno-unused-parameter
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Target Component Build

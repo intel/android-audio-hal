@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2016 Intel Corporation
+ * Copyright (C) 2015-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,20 +15,107 @@
  */
 #pragma once
 
-#include "RouteCollection.hpp"
 #include "AudioStreamRoute.hpp"
+#include <Direction.hpp>
 #include <IoStream.hpp>
+#include <AudioCommsAssert.hpp>
+#include <utilities/Log.hpp>
 #include <list>
+#include <map>
 
 namespace intel_audio
 {
 
-class StreamRouteCollection : public RouteCollection<AudioStreamRoute>
+class StreamRouteCollection : public std::map<std::string, AudioStreamRoute *>
 {
 public:
-    virtual void reset()
+    ~StreamRouteCollection()
     {
-        mElements.clear();
+        reset();
+    }
+
+    void reset()
+    {
+        for (auto it : *this) {
+            delete it.second;
+        }
+        (*this).clear();
+    }
+
+    /**
+     * Reset the availability of stream route collection.
+     */
+    void resetAvailability()
+    {
+        for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
+            mRoutes[i].reset();
+        }
+        for (auto it : *this) {
+            it.second->resetAvailability();
+        }
+    }
+
+    /** Add a stream route.
+     *
+     * @param[in] element to be added.
+     *
+     * @return Newly created and added element, NULL otherwise..
+     */
+    bool add(AudioStreamRoute *element)
+    {
+        std::string key = element->getName() + (element->isOut() ? "_Playback" : "_Capture");
+        if ((*this).find(key) != (*this).end()) {
+            audio_comms::utilities::Log::Warning() << __FUNCTION__
+                                                   << ": element(" << key << ") already added";
+            return false;
+        }
+        (*this)[key] = element;
+        return true;
+    }
+
+    void prepareRouting()
+    {
+        for (auto it : *this) {
+            auto route = it.second;
+            // The stream route collection must not only ensure that the route is applicable
+            // but also that a stream matches the route.
+            if (route && (not route->isUsed()) && setStreamForRoute(*route)) {
+                route->setUsed();
+                mRoutes[route->isOut()].setEnabledRoute(route->getMask());
+                if (route->needReflow()) {
+                    mRoutes[route->isOut()].setNeedReflowRoute(route->getMask());
+                }
+                if (route->needRepath()) {
+                    mRoutes[route->isOut()].setNeedRepathRoute(route->getMask());
+                }
+            }
+        }
+    }
+
+    bool routingHasChanged() const
+    {
+        return mRoutes[Direction::Output].routingHasChanged()
+               || mRoutes[Direction::Input].routingHasChanged();
+    }
+
+    /**
+     * Get the need repath routes mask.
+     *
+     * @return repath routes mask in the requested direction.
+     */
+    inline uint32_t needRepathRouteMask(Direction::Values dir) const
+    {
+        return mRoutes[dir].needRepathRoutes();
+    }
+
+    /**
+     * Get the need repath routes mask.
+     *
+     * @return repath routes mask in the requested direction.
+     */
+    inline uint32_t needReflowRouteMask(Direction::Values dir) const
+    {
+        return mRoutes[dir].needReflowRoutes();
     }
 
     void addStream(IoStream &stream)
@@ -61,10 +148,12 @@ public:
     bool setStreamForRoute(AudioStreamRoute &route)
     {
         for (auto stream : mOrderedStreamList[route.isOut()]) {
-
             if (stream->isStarted() && stream->isRoutedByPolicy() &&
-                    !stream->isNewRouteAvailable()) {
+                !stream->isNewRouteAvailable()) {
                 if (route.isMatchingWithStream(*stream)) {
+                    audio_comms::utilities::Log::Verbose() << __FUNCTION__ << ": route "
+                                                           << route.getName()
+                                                           << " is maching with the stream";
                     return route.setStream(*stream);
                 }
             }
@@ -83,38 +172,6 @@ public:
         return *it;
     }
 
-    void updateStreamRouteConfig(const std::string &name, const StreamRouteConfig &config)
-    {
-        AudioStreamRoute *route = getElement(name);
-        if (!route) {
-            audio_comms::utilities::Log::Error() << __FUNCTION__ << ": invalid route " << name;
-            return;
-        }
-        route->updateStreamRouteConfig(config);
-    }
-
-    void addRouteSupportedEffect(const std::string &name, const std::string &effect)
-    {
-        AudioStreamRoute *route = getElement(name);
-        if (!route) {
-            audio_comms::utilities::Log::Error() << __FUNCTION__ << ": invalid route " << name;
-            return;
-        }
-        route->addEffectSupported(effect);
-    }
-
-    void prepareRouting()
-    {
-        for (auto it : Base::mElements) {
-            auto route = it.second;
-            // The stream route collection must not only ensure that the route is applicable
-            // but also that a stream matches the route.
-            if (route && route->isApplicable() && setStreamForRoute(*route)) {
-                route->setUsed();
-            }
-        }
-    }
-
     /**
      * Performs the disabling of the route.
      * It only concerns the action that needs to be done on routes themselves, ie detaching
@@ -126,7 +183,7 @@ public:
      */
     void disableRoutes(bool isPostDisable = false)
     {
-        for (auto it : Base::mElements) {
+        for (auto it : *this) {
             auto route = it.second;
 
             if (route && ((route->previouslyUsed() && !route->isUsed()) || route->needRepath())) {
@@ -150,7 +207,7 @@ public:
      */
     void enableRoutes(bool isPreEnable = false)
     {
-        for (auto it : Base::mElements) {
+        for (auto it : *this) {
             auto route = it.second;
 
             if (route && ((!route->previouslyUsed() && route->isUsed()) || route->needRepath())) {
@@ -175,7 +232,7 @@ public:
      */
     const AudioStreamRoute *findMatchingRouteForStream(const IoStream &stream) const
     {
-        for (auto it : Base::mElements) {
+        for (const auto it : *this) {
             const auto streamRoute = it.second;
             if (streamRoute->isMatchingWithStream(stream)) {
                 return streamRoute;
@@ -192,7 +249,7 @@ public:
      */
     void handleDeviceConnectionState(audio_devices_t device, bool isConnected)
     {
-        for (auto it : Base::mElements) {
+        for (auto it : *this) {
             auto route = it.second;
             if ((route->getSupportedDeviceMask() & device) == device) {
                 if (isConnected) {
@@ -231,6 +288,170 @@ public:
      * array of list of streams opened.
      */
     std::list<IoStream *> mOrderedStreamList[Direction::gNbDirections];
+
+    /**
+     * Get the enabled routes mask.
+     *
+     * @return enabled routes mask in the requested direction.
+     */
+    inline uint32_t enabledRouteMask(Direction::Values dir) const
+    {
+        return mRoutes[dir].enabledRoutes();
+    }
+
+    /**
+     * Get the prevously enabled routes mask.
+     *
+     * @return previously enabled routes mask in the requested direction.
+     */
+    inline uint32_t prevEnabledRouteMask(Direction::Values dir) const
+    {
+        return mRoutes[dir].prevEnabledRoutes();
+    }
+
+    inline uint32_t unmutedRoutes(Direction::Values dir) const
+    {
+        return mRoutes[dir].unmutedRoutes();
+    }
+
+    inline uint32_t routesToMute(Direction::Values dir) const
+    {
+        return mRoutes[dir].routesToMute();
+    }
+
+    inline uint32_t openedRoutes(Direction::Values dir) const
+    {
+        return mRoutes[dir].openedRoutes();
+    }
+
+    inline uint32_t routesToDisable(Direction::Values dir) const
+    {
+        return mRoutes[dir].routesToDisable();
+    }
+
+private:
+    class RouteMasks
+    {
+    private:
+        uint32_t needReflow;  /**< Bitfield of routes that needs to be mute / unmutes. */
+        uint32_t needRepath;  /**< Bitfield of routes that needs to be disabled / enabled. */
+        uint32_t enabled;     /**< Bitfield of enabled routes. */
+        uint32_t prevEnabled; /**< Bitfield of previously enabled routes. */
+
+    public:
+        RouteMasks()
+            : needReflow(0), needRepath(0), enabled(0), prevEnabled(0)
+        {}
+
+        inline void setEnabledRoute(uint32_t index)
+        {
+            setBit(index, enabled);
+        }
+
+        /**
+         * Sets a bit referred by an index within a mask.
+         *
+         * @param[in] index bit index to set.
+         * @param[in,out] mask in which the bit must be set.
+         */
+        inline void setBit(uint32_t index, uint32_t &mask)
+        {
+            mask |= index;
+        }
+
+        /**
+         * Get the need reflow routes mask.
+         *
+         * @return reflow routes mask in the requested direction.
+         */
+        inline uint32_t needReflowRoutes() const
+        {
+            return needReflow;
+        }
+
+        inline void setNeedReflowRoute(uint32_t index)
+        {
+            setBit(index, needReflow);
+        }
+
+        /**
+         * Get the enabled routes mask.
+         *
+         * @return enabled routes mask in the requested direction.
+         */
+        inline uint32_t enabledRoutes() const
+        {
+            return enabled;
+        }
+
+        inline void setNeedRepathRoute(uint32_t index)
+        {
+            setBit(index, needRepath);
+        }
+
+        /**
+         * Get the need repath routes mask.
+         *
+         * @return repath routes mask in the requested direction.
+         */
+        inline uint32_t needRepathRoutes() const
+        {
+            return needRepath;
+        }
+
+        /**
+         * Get the prevously enabled routes mask.
+         *
+         * @return previously enabled routes mask in the requested direction.
+         */
+        inline uint32_t prevEnabledRoutes() const
+        {
+            return prevEnabled;
+        }
+
+        /**
+         * Checks if the routing conditions changed in a given direction.
+         *
+         * @tparam isOut direction of the route to consider.
+         *
+         * @return  true if previously enabled routes is different from currently enabled routes
+         *               or if any route needs to be reconfigured.
+         */
+        bool routingHasChanged() const
+        {
+            return prevEnabledRoutes() != enabledRoutes()
+                   || needReflowRoutes() != 0
+                   || needRepathRoutes() != 0;
+        }
+
+        void reset()
+        {
+            prevEnabled = enabled;
+            enabled = 0;
+            needReflow = 0;
+            needRepath = 0;
+        }
+
+        uint32_t unmutedRoutes() const
+        {
+            return prevEnabledRoutes() & enabledRoutes() & ~needReflowRoutes();
+        }
+
+        uint32_t routesToMute() const
+        {
+            return (prevEnabledRoutes() & ~enabledRoutes()) | needReflowRoutes();
+        }
+
+        uint32_t openedRoutes() const
+        {
+            return prevEnabledRoutes() & enabledRoutes() & ~needRepathRoutes();
+        }
+
+        uint32_t routesToDisable() const
+        {
+            return (prevEnabledRoutes() & ~enabledRoutes()) | needRepathRoutes();
+        }
+    } mRoutes[Direction::gNbDirections];
 };
 
 } // namespace intel_audio

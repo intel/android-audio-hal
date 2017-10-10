@@ -25,14 +25,12 @@ include $(OPTIONAL_QUALITY_ENV_SETUP)
 # Common variables
 
 component_src_files :=  \
-    RoutingElement.cpp \
-    AudioPort.cpp \
-    AudioPortGroup.cpp \
-    AudioRoute.cpp \
     AudioStreamRoute.cpp \
     AudioRouteManager.cpp \
     AudioRouteManagerObserver.cpp \
-    RouteManagerInstance.cpp
+    StreamRouteConfig.cpp \
+    AudioCapabilities.cpp \
+    Serializer.cpp
 
 component_export_includes := \
     $(LOCAL_PATH)/includes \
@@ -42,7 +40,9 @@ component_includes_common := \
     $(component_export_includes) \
     $(call include-path-for, frameworks-av) \
     external/tinyalsa/include \
-    $(call include-path-for, audio-utils)
+    $(call include-path-for, audio-utils) \
+    external/libxml2/include \
+    external/icu/icu4c/source/common
 
 component_includes_dir := \
     hw \
@@ -78,29 +78,37 @@ component_static_lib_host := \
     libtinyalsa \
     libcutils \
     libutils \
-    libaudioutils
+    libaudioutils \
+    libxml2
 
 component_static_lib_target := \
-    $(component_static_lib)
+    $(component_static_lib) \
+    libxml2
 
 component_shared_lib_common := \
+    libtypeconverter \
     libparameter \
-    liblog \
-    libasound
+    liblog
+
+ifeq ($(USE_ALSA_LIB), 1)
+component_shared_lib_common += libasound
+endif
+
 
 component_shared_lib_target := \
     $(component_shared_lib_common) \
     libtinyalsa \
     libcutils \
     libutils \
-    libaudioutils
+    libaudioutils \
+    libicuuc
 
 component_shared_lib_host := \
     libicuuc-host \
     libparameter_host \
     liblog
 
-component_cflags := -Wall -Werror -Wextra
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Component Target Build
@@ -125,6 +133,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
 
 LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
+
+LOCAL_REQUIRED_MODULES := route_manager_configuration.xml
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 
@@ -183,5 +193,57 @@ include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_HOST_STATIC_LIBRARY)
 endif
 #######################################################################
+# Build for configuration file
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := route_manager_configuration.xml
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
+LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
+LOCAL_ADDITIONAL_DEPENDENCIES := \
+    audio_criteria.xml \
+    audio_criterion_types.xml \
+    audio_rogue_parameters.xml
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := audio_criteria.xml
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
+LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := audio_criterion_types.xml
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
+LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
+include $(BUILD_PREBUILT)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := audio_rogue_parameters.xml
+LOCAL_MODULE_OWNER := intel
+LOCAL_MODULE_TAGS := optional
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH := $(TARGET_OUT_ETC)
+LOCAL_SRC_FILES := config/$(LOCAL_MODULE)
+include $(BUILD_PREBUILT)
+
+#######################################################################
+# Tools for audio pfw settings generation
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := buildCriterionTypes.py
+LOCAL_MODULE_OWNER := intel
+LOCAL_SRC_FILES := tools/$(LOCAL_MODULE)
+LOCAL_MODULE_CLASS := EXECUTABLES
+LOCAL_IS_HOST_MODULE := true
+include $(BUILD_PREBUILT)
 
 include $(OPTIONAL_QUALITY_ENV_TEARDOWN)

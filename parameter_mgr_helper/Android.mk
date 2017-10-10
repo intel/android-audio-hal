@@ -30,7 +30,9 @@ component_export_include_dir := \
 component_src_files := \
     ParameterMgrHelper.cpp \
     Criterion.cpp \
-    CriterionType.cpp
+    CriterionType.cpp \
+    CriterionParameter.cpp \
+    Parameter.cpp
 
 component_common_includes_dir := \
     $(component_export_include_dir)
@@ -50,8 +52,12 @@ component_includes_dir_target := \
 component_static_lib := \
     libaudio_comms_utilities \
     libaudio_comms_convert \
-    libpfw_utility \
-    libboost
+    libpfw_utility
+
+ifeq ($(HAVE_BOOST), 1)
+component_static_lib += libboost
+endif
+
 
 component_static_lib_host := \
     $(foreach lib, $(component_static_lib), $(lib)_host)
@@ -62,7 +68,7 @@ component_shared_lib := \
 component_shared_lib_host := \
     $(foreach lib, $(component_shared_lib), $(lib)_host)
 
-component_cflags := -Wall -Werror -Wextra
+component_cflags := $(HAL_COMMON_CFLAGS)
 
 #######################################################################
 # Component Host Build

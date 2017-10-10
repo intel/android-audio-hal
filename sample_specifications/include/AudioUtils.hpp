@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 
 #include "SampleSpec.hpp"
 #include <tinyalsa/asoundlib.h>
-#include <alsa/asoundlib.h>
 #include <stdint.h>
 #include <sys/types.h>
 
@@ -92,26 +91,6 @@ public:
      *         It returns PCM_FORMAT_S16_LE format in case of unrecognized tiny alsa format.
      */
     static pcm_format convertHalToTinyFormat(audio_format_t format);
-
-    /**
-     * Converts a format from alsa to HAL domains.
-     *
-     * @param[in] format in alsa domain.
-     *
-     * @return format in HAL (aka Android) domain.
-     *         It returns AUDIO_FORMAT_INVALID in case of unsupported alsa format.
-     */
-    static audio_format_t convertAlsaToHalFormat(snd_pcm_format_t format);
-
-    /**
-     * Converts a format from HAL to alsa domains.
-     *
-     * @param[in] format in HAL domain.
-     *
-     * @return format in tiny alsa domain.
-     *         It returns SND_PCM_FORMAT_S16_LE format in case of unrecognized alsa format.
-     */
-    static snd_pcm_format_t convertHalToAlsaFormat(audio_format_t format);
 
     /**
      * Converts a card name into its index.

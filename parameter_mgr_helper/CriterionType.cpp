@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2017 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@
 #include <convert.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
+#if defined (HAVE_BOOST)
 #include <boost/tokenizer.hpp>
+#endif
 
 using std::string;
 using audio_comms::utilities::Log;
@@ -58,11 +60,19 @@ bool CriterionType::hasValuePairByName(const std::string &name)
 
 bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int &numerical) const
 {
-    boost::char_separator<char> sep("|");
-    boost::tokenizer<boost::char_separator<char>> tokenizeLiteral(literalValue, sep);
-
     numerical = 0;
+#if defined (HAVE_BOOST)
+    boost::char_separator<char> sep("|");
+    boost::tokenizer < boost::char_separator < char >> tokenizeLiteral(literalValue, sep);
+
     for (const auto &value : tokenizeLiteral) {
+#else
+    char *ctx;
+    char *literalValueDup = strndup(literalValue.c_str(), strlen(literalValue.c_str()));
+    for (char *value = strtok_r(literalValueDup, "|", &ctx);
+         value != NULL;
+         value = strtok_r(NULL, ",", &ctx)) {
+#endif
         int numericalValue = 0;
 
         // First check if the literal value is a known value from the criterion type
@@ -75,18 +85,26 @@ bool CriterionType::getNumericalFromLiteral(const std::string &literalValue, int
         bool isValueProvidedAsHexa = !literalValue.compare(0, 2, "0x");
         if (isValueProvidedAsHexa) {
             uint32_t numericalUValue = 0;
-            if (!audio_comms::utilities::convertTo(value, numericalUValue)) {
+            if (!audio_comms::utilities::convertTo(std::string(value), numericalUValue)) {
+#if (not defined (HAVE_BOOST))
+                free(literalValueDup);
+#endif
                 return false;
             }
             numerical += numericalUValue;
         } else {
-            if (!audio_comms::utilities::convertTo(value, numericalValue)) {
+            if (!audio_comms::utilities::convertTo(std::string(value), numericalValue)) {
+#if (not defined (HAVE_BOOST))
+                free(literalValueDup);
+#endif
                 return false;
             }
             numerical += numericalValue;
         }
     }
-
+#if (not defined (HAVE_BOOST))
+    free(literalValueDup);
+#endif
     // We succeeded to convert the literal value as an numerical, checking now that this numerical
     // value is a valid value for this criterion type (test limited to exclusive criterion)
     return mCriterionTypeInterface->isTypeInclusive() ? true : isNumericValueValid(numerical);
