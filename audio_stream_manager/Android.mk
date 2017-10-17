@@ -91,7 +91,6 @@ component_shared_lib_target := \
     libutils \
     libhardware \
     libaudioutils \
-    libicuuc \
 
 component_shared_lib_host := \
     $(foreach lib, $(component_shared_lib_common), $(lib)_host) \
