@@ -61,6 +61,7 @@ struct AudioCriterionTraits
         static const char defaultVal[];
         static const char parameter[];
         static const char mapping[];
+        static const char route[];
     };
 
     typedef Criterion Element;

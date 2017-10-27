@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Intel Corporation
+ * Copyright (C) 2014-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ public:
               const std::string &defaultValue)
         : mDefaultLiteralValue(defaultValue),
           mAndroidParameterKey(key),
-          mAndroidParameter(name)
+          mAndroidParameter(name),
+          mRoute("")
     {
     }
 
@@ -66,6 +67,8 @@ public:
      */
     const std::string &getName() const { return mAndroidParameter; }
 
+    virtual const std::string &getRoute() const { return mRoute; }
+    virtual void setRoute(std::string route)  { mRoute = route; }
     /**
      * Returns the default literal value of the parameter (in the PFW domain, not in android).
      *
@@ -146,6 +149,7 @@ private:
     const std::string mAndroidParameterKey; /**< key name of the parameter. */
 
     const std::string mAndroidParameter; /**< Name of the parameter. */
+    std::string mRoute; // the route enabled/disabled by setting the parameter
 };
 
 

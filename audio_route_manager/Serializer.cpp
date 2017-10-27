@@ -258,6 +258,7 @@ const char AudioCriterionTraits::Attributes::type[] = "type";
 const char AudioCriterionTraits::Attributes::parameter[] = "parameter";
 const char AudioCriterionTraits::Attributes::defaultVal[] = "default";
 const char AudioCriterionTraits::Attributes::mapping[] = "mapping";
+const char AudioCriterionTraits::Attributes::route[] = "route";
 
 status_t AudioCriterionTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *child,
                                            PtrElement &criterion,
@@ -303,11 +304,14 @@ status_t AudioCriterionTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *chi
         valuePairs = parseMappingTable(mapping.c_str());
     }
 
+    string route = getXmlAttribute(child, Attributes::route);
+
     criterion =
         new Criterion(name, criterionType, serializingContext->getConnector(), defaultValue);
 
     if (not paramKey.empty()) {
         CriterionParameter *cp = new CriterionParameter(paramKey, name, *criterion, defaultValue);
+        cp->setRoute(route);
         for_each(valuePairs.begin(), valuePairs.end(), SetAndroidParamMappingPairHelper(cp));
         serializingContext->addParameter(cp);
     }
