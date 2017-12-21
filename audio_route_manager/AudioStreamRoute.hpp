@@ -16,7 +16,7 @@
 #pragma once
 
 #include "IStreamRoute.hpp"
-#include "StreamRouteConfig.hpp"
+#include "MixPortConfig.hpp"
 #include "AudioCapabilities.hpp"
 #include <AudioUtils.hpp>
 #include <SampleSpec.hpp>
@@ -42,7 +42,6 @@ public:
     virtual bool isOut() const { return mIsOut; }
     bool isMixRoute() { return true; }
     std::string getName() const { return AudioRoute::getName(); }
-
     /**
      * Upon connection of device managed by this route, it loads the capabilities from the device
      * (example: for an HDMI screen, the driver will read EDID to retrieve the screen audio
@@ -195,7 +194,7 @@ public:
      *
      * @return pcm configuration of the route (from Route Parameter Manager settings).
      */
-    const StreamRouteConfig &getRouteConfig() const { return mConfig; }
+    const MixPortConfig &getRouteConfig() const { return mConfig; }
 
     uint32_t getSupportedDeviceMask() const { return mConfig.supportedDeviceMask; }
 
@@ -258,7 +257,7 @@ protected:
 
     std::list<std::string> mEffectSupported; /**< list of name of supported effects. */
     uint32_t mEffectSupportedMask; /**< Mask of supported effects. */
-    StreamRouteConfig mConfig; /**< Configuration of the audio stream route. */
+    MixPortConfig mConfig; /**< Configuration of the audio stream route. */
 
 private:
     bool supportDeviceAddress(const std::string &streamDeviceAddress, audio_devices_t device) const;

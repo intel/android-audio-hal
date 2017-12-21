@@ -15,7 +15,7 @@
  */
 
 #pragma once
-#include "StreamRouteConfig.hpp"
+#include "MixPortConfig.hpp"
 #include <utils/Log.h>
 using namespace std;
 namespace intel_audio
@@ -78,8 +78,8 @@ public:
      * @param[in] config parsed from the profile attribute of
      * mixPort element of audio_policy_configuration.xml.
      */
-    void setConfig(const StreamRouteConfig &config) { mConfig = config; }
-    StreamRouteConfig &getConfig() { return mConfig; }
+    void setConfig(const MixPortConfig &config) { mConfig = config; }
+    MixPortConfig &getConfig() { return mConfig; }
 
     /**
      * Return the direction of MixPort
@@ -98,7 +98,7 @@ public:
 
 private:
     bool mIsOut;
-    StreamRouteConfig mConfig;
+    MixPortConfig mConfig;
     IAudioDevice *mAudioDevice;
     vector<string> mEffects;
 };

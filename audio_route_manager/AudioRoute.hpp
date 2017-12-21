@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include "StreamRouteConfig.hpp"
+#include "MixPortConfig.hpp"
 #include "AudioPort.hpp"
 #include "AudioCapabilities.hpp"
 #include <AudioUtils.hpp>

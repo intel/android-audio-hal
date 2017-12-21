@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Intel Corporation
+ * Copyright (C) 2016-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace intel_audio
 {
 
 android::status_t AlsaAudioDevice::open(const char *deviceName, uint32_t /*deviceId*/,
-                                        const StreamRouteConfig &routeConfig,  bool isOut)
+                                        const MixPortConfig &routeConfig,  bool isOut)
 {
     AUDIOCOMMS_ASSERT(mPcmDevice == NULL, "alsa device already opened");
     AUDIOCOMMS_ASSERT(deviceName != NULL, "Null card name");
@@ -67,7 +67,7 @@ close_device:
     return android::BAD_VALUE;
 }
 
-int AlsaAudioDevice::setPcmParams(snd_pcm_stream_t stream, const StreamRouteConfig &config,
+int AlsaAudioDevice::setPcmParams(snd_pcm_stream_t stream, const MixPortConfig &config,
                                   snd_pcm_access_t access, int soft_resample)
 {
     snd_pcm_hw_params_t *params;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#define LOG_TAG "RouteManager/StreamRouteConfig"
+#define LOG_TAG "RouteManager/MixPortConfig"
 // #define LOG_NDEBUG 0
 
-#include "StreamRouteConfig.hpp"
+#include "MixPortConfig.hpp"
 #include <AudioConversion.hpp>
 #include <tinyalsa/asoundlib.h>
 #include <AudioUtils.hpp>
@@ -31,7 +31,7 @@ using audio_comms::utilities::convertTo;
 namespace intel_audio
 {
 
-bool StreamRouteConfig::supportSampleSpec(const SampleSpec &spec) const
+bool MixPortConfig::supportSampleSpec(const SampleSpec &spec) const
 {
     for (const auto &capabilities : mAudioCapabilities) {
         if (capabilities.supportFormat(spec.getFormat())) {
@@ -44,7 +44,7 @@ bool StreamRouteConfig::supportSampleSpec(const SampleSpec &spec) const
     return false;
 }
 
-bool StreamRouteConfig::supportSampleSpecNear(const SampleSpec &spec) const
+bool MixPortConfig::supportSampleSpecNear(const SampleSpec &spec) const
 {
     // Try with conversion...
     for (const auto &capabilities : mAudioCapabilities) {
@@ -62,7 +62,7 @@ bool StreamRouteConfig::supportSampleSpecNear(const SampleSpec &spec) const
     return false;
 }
 
-bool StreamRouteConfig::setCurrentSampleSpec(const SampleSpec &streamSpec)
+bool MixPortConfig::setCurrentSampleSpec(const SampleSpec &streamSpec)
 {
     // Beeing optimistic, try without conversion first
     if (supportSampleSpec(streamSpec)) {
@@ -89,41 +89,41 @@ bool StreamRouteConfig::setCurrentSampleSpec(const SampleSpec &streamSpec)
     return false;
 }
 
-uint32_t StreamRouteConfig::getRate() const
+uint32_t MixPortConfig::getRate() const
 {
     return (mCurrentRate !=
             0) ? mCurrentRate : mAudioCapabilities.empty() ? 0 : mAudioCapabilities[0].
            getDefaultRate();
 }
 
-audio_format_t StreamRouteConfig::getFormat() const
+audio_format_t MixPortConfig::getFormat() const
 {
     return (mCurrentFormat != AUDIO_FORMAT_DEFAULT) ?
            mCurrentFormat : mAudioCapabilities.empty() ? AUDIO_FORMAT_DEFAULT : mAudioCapabilities[0
            ].getFormat();
 }
 
-audio_channel_mask_t StreamRouteConfig::getChannelMask() const
+audio_channel_mask_t MixPortConfig::getChannelMask() const
 {
     return (mCurrentChannelMask != AUDIO_CHANNEL_NONE) ?
            mCurrentChannelMask : mAudioCapabilities.empty() ? AUDIO_CHANNEL_NONE :
            mAudioCapabilities[0].getDefaultChannelMask();
 }
 
-uint32_t StreamRouteConfig::getChannelCount() const
+uint32_t MixPortConfig::getChannelCount() const
 {
     return isOut ? audio_channel_count_from_out_mask(getChannelMask()) :
            audio_channel_count_from_in_mask(getChannelMask());
 }
 
-void StreamRouteConfig::resetCapabilities()
+void MixPortConfig::resetCapabilities()
 {
     for (auto &capabilities : mAudioCapabilities) {
         capabilities.reset();
     }
 }
 
-void StreamRouteConfig::loadCapabilities()
+void MixPortConfig::loadCapabilities()
 {
     resetCapabilities();
 
@@ -145,7 +145,7 @@ void StreamRouteConfig::loadCapabilities()
  * supported channel mask (stereo, 5.1, 7.1, ...)
  * @return OK is channel masks supported has been set correctly, error code otherwise.
  */
-android::status_t StreamRouteConfig::loadChannelMaskCapabilities(AudioCapability &capability)
+android::status_t MixPortConfig::loadChannelMaskCapabilities(AudioCapability &capability)
 {
     // Discover supported channel maps from control parameter
     Log::Debug() << __FUNCTION__ << ": Control for channels: " << dynamicChannelMapsControl;
@@ -204,7 +204,7 @@ android::status_t StreamRouteConfig::loadChannelMaskCapabilities(AudioCapability
     return android::OK;
 }
 
-android::status_t StreamRouteConfig::dump(const int fd, int spaces) const
+android::status_t MixPortConfig::dump(const int fd, int spaces) const
 {
     for (auto &capabilities : mAudioCapabilities) {
         capabilities.dump(fd, spaces, isOut);

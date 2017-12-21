@@ -22,7 +22,7 @@
 #include <AlsaAudioDevice.hpp>
 #endif
 #include <TinyAlsaAudioDevice.hpp>
-#include "StreamRouteConfig.hpp"
+#include "MixPortConfig.hpp"
 #include <convert.hpp>
 #include <typeconverter/TypeConverter.hpp>
 #include <libxml/parser.h>
@@ -625,7 +625,7 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
     Log::Verbose() << __FUNCTION__ << ": Role= " << role.c_str();
     mixPort = new Element(name, role == "source");
 
-    StreamRouteConfig mixPortConfig;
+    MixPortConfig mixPortConfig;
     mixPortConfig.isOut = (role == "source");
     string card = getXmlAttribute(child, Attributes::card);
     if (card.empty()) {

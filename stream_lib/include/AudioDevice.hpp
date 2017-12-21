@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2016 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 #pragma once
 
-#include <StreamRouteConfig.hpp>
+#include <MixPortConfig.hpp>
 #include <stdint.h>
 #include <utils/Errors.h>
 
@@ -27,7 +27,7 @@ class IAudioDevice
 public:
 
     virtual android::status_t open(const char *cardName, uint32_t deviceId,
-                                   const StreamRouteConfig &config, bool isOut) = 0;
+                                   const MixPortConfig &config, bool isOut) = 0;
 
     virtual android::status_t close() = 0;
 

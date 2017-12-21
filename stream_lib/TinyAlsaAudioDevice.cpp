@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ namespace intel_audio
 
 android::status_t TinyAlsaAudioDevice::open(const char *cardName,
                                             uint32_t deviceId,
-                                            const StreamRouteConfig &routeConfig,
+                                            const MixPortConfig &routeConfig,
                                             bool isOut)
 {
     AUDIOCOMMS_ASSERT(mPcmDevice == NULL, "Tiny alsa device already opened");

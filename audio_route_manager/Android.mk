@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ component_src_files :=  \
     AudioStreamRoute.cpp \
     AudioRouteManager.cpp \
     AudioRouteManagerObserver.cpp \
-    StreamRouteConfig.cpp \
+    MixPortConfig.cpp \
     AudioCapabilities.cpp \
     Serializer.cpp
 

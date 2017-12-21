@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Intel Corporation
+ * Copyright (C) 2016-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 namespace intel_audio
 {
 
-struct StreamRouteConfig;
+struct MixPortConfig;
 
 class AlsaAudioDevice : public IAudioDevice
 {
@@ -29,7 +29,7 @@ public:
     AlsaAudioDevice() : mPcmDevice(NULL) {}
 
     virtual android::status_t open(const char *cardName, uint32_t deviceId,
-                                   const StreamRouteConfig &config, bool isOut);
+                                   const MixPortConfig &config, bool isOut);
 
     virtual bool isOpened();
 
@@ -51,7 +51,7 @@ public:
     virtual android::status_t pcmStop() const;
 
 private:
-    int setPcmParams(snd_pcm_stream_t stream, const StreamRouteConfig &config,
+    int setPcmParams(snd_pcm_stream_t stream, const MixPortConfig &config,
                      snd_pcm_access_t access, int soft_resample);
 
     snd_pcm_t *mPcmDevice; /**< Handle on alsa PCM device. */
