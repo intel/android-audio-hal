@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -699,15 +699,16 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
             // (of device port type) to the list of devicePorts reachable from this sink
             if (route->mSink == name) {
                 for (const auto &source : route->mSources) {
-                    const auto port = ctx->mDevicePorts.findByName(source);
+                    DevicePort *port = (DevicePort *)ctx->mDevicePorts.findByName(source);
                     if (port != nullptr) {
-                        Log::Verbose() << __FUNCTION__ << ": adding " << port->mName <<
+                        Log::Verbose() << __FUNCTION__ << ": adding " << port->getName() <<
                             " to mix port" << name;
-                        mixPortConfig.supportedDeviceMask |= port->mType;
+                        mixPortConfig.supportedDeviceMask |= port->getDevice();
 
-                        if (not port->mAddress.empty()) {
-                            mixPortConfig.deviceAddress = port->mAddress;
-                            Log::Verbose() << __FUNCTION__ << ": adding @" << port->mAddress <<
+                        if (not port->getDeviceAddress().empty()) {
+                            mixPortConfig.deviceAddress = port->getDeviceAddress();
+                            Log::Verbose() << __FUNCTION__ << ": adding @" <<
+                                port->getDeviceAddress() <<
                                 " to mix port" << name;
                         }
                     }
@@ -717,14 +718,17 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
             // find all route involving this mixPort as a source and add the sink device port
             // involved in this route to the list of devicePorts reachable from this source
             if (route->involveSource(name)) {
-                const auto port = ctx->mDevicePorts.findByName(route->mSink);
+                DevicePort *port = (DevicePort *)ctx->mDevicePorts.findByName(route->mSink);
                 if (port != nullptr) {
-                    mixPortConfig.supportedDeviceMask |= port->mType;
-                    Log::Verbose() << __FUNCTION__ << ": adding " << port->mName <<
+                    mixPortConfig.supportedDeviceMask |=
+                        port->getDevice();
+                    Log::Verbose() << __FUNCTION__ << ": adding " << port->getName() <<
                         " to mix port " << name;
-                    if (not port->mAddress.empty()) {
-                        mixPortConfig.deviceAddress = port->mAddress;
-                        Log::Verbose() << __FUNCTION__ << ": adding @" << port->mAddress <<
+                    if (not port->getDeviceAddress().empty()) {
+                        mixPortConfig.deviceAddress =
+                            port->getDeviceAddress();
+                        Log::Verbose() << __FUNCTION__ << ": adding @" <<
+                            port->getDeviceAddress() <<
                             " to mix port " << name;
                     }
                 }

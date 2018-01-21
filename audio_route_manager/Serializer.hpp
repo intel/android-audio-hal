@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 #pragma once
 
 #include "RouteManagerConfig.hpp"
+#include "AudioPort.hpp"
 #include <stdint.h>
 #include <string>
 #include <utils/Errors.h>
@@ -129,30 +130,9 @@ struct DevicePortTraits
         static const char address[];
     };
 
-    struct DevicePort
-    {
-        DevicePort(audio_devices_t type, const std::string &name, const std::string &address)
-            : mType(type), mName(name), mAddress(address) {}
-
-        audio_devices_t mType;
-        std::string mName;
-        std::string mAddress;
-    };
-    struct DevicePorts : public std::vector<DevicePort *>
-    {
-        DevicePort *findByName(const std::string &name) const
-        {
-            for (auto port : *this) {
-                if (port->mName == name) {
-                    return port;
-                }
-            }
-            return nullptr;
-        }
-    };
     typedef DevicePort Element;
     typedef DevicePort *PtrElement;
-    typedef DevicePorts Collection;
+    typedef AudioPorts Collection;
     typedef void *PtrSerializingCtx;
 
     static android::status_t deserialize(_xmlDoc *doc, const _xmlNode *root, PtrElement &element,
