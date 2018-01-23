@@ -480,7 +480,7 @@ const char *const RouteTraits::collectionTag = "routes";
 
 const char RouteTraits::Attributes::sink[] = "sink";
 const char RouteTraits::Attributes::sources[] = "sources";
-
+const char RouteTraits::Attributes::name[] = "name";
 
 status_t RouteTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrElement &element,
                                   PtrSerializingCtx /*ctx*/)
@@ -491,6 +491,13 @@ status_t RouteTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrEle
         return BAD_VALUE;
     }
     Log::Verbose() << __FUNCTION__ << ": Route: attribute " << Attributes::sink << "=" << sinkAttr;
+
+    string name = getXmlAttribute(root, Attributes::name);
+    if (name.empty()) {
+        Log::Error() << __FUNCTION__ << ": No attribute " << Attributes::name << " found.";
+        return BAD_VALUE;
+    }
+    Log::Verbose() << __FUNCTION__ << ": Route: attribute " << Attributes::name << "=" << name;
 
     string sourcesAttr = getXmlAttribute(root, Attributes::sources);
     if (sourcesAttr.empty()) {

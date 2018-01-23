@@ -148,6 +148,8 @@ struct RouteTraits
     {
         static const char sink[];
         static const char sources[];
+        static const char name[]; // name of the route
+
     };
 
     struct Route
