@@ -549,6 +549,7 @@ const char MixPortTraits::Attributes::dynamicChannelMapsControl[] = "dynamicChan
 const char MixPortTraits::Attributes::dynamicSampleRatesControl[] = "dynamicSampleRateControl";
 const char MixPortTraits::Attributes::dynamicFormatsControl[] = "dynamicFormatControl";
 const char MixPortTraits::Attributes::supportedUseCases[] = "supportedUseCases";
+const char MixPortTraits::Attributes::supportedDevices[] = "supportedDevices";
 const char MixPortTraits::Attributes::devicePorts[] = "devicePorts";
 const char MixPortTraits::Attributes::effects[] = "effectsSupported";
 
@@ -700,48 +701,27 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
     mixPortConfig.useCaseMask = (role == "source") ?
                                 0 : InputSourceConverter::maskFromString(supportedUseCases, ",");
     mixPortConfig.supportedDeviceMask = 0;
-    for (const auto route : ctx->mRoutes) {
-        if (role == "sink") {
-            // Find all route invoking this mixPort as sink and populate the sources
-            // (of device port type) to the list of devicePorts reachable from this sink
-            if (route->mSink == name) {
-                for (const auto &source : route->mSources) {
-                    DevicePort *port = (DevicePort *)ctx->mDevicePorts.findByName(source);
-                    if (port != nullptr) {
-                        Log::Verbose() << __FUNCTION__ << ": adding " << port->getName() <<
-                            " to mix port" << name;
-                        mixPortConfig.supportedDeviceMask |= port->getDevice();
-
-                        if (not port->getDeviceAddress().empty()) {
-                            mixPortConfig.deviceAddress = port->getDeviceAddress();
-                            Log::Verbose() << __FUNCTION__ << ": adding @" <<
-                                port->getDeviceAddress() <<
-                                " to mix port" << name;
-                        }
-                    }
-                }
-            }
-        } else {
-            // find all route involving this mixPort as a source and add the sink device port
-            // involved in this route to the list of devicePorts reachable from this source
-            if (route->involveSource(name)) {
-                DevicePort *port = (DevicePort *)ctx->mDevicePorts.findByName(route->mSink);
-                if (port != nullptr) {
-                    mixPortConfig.supportedDeviceMask |=
-                        port->getDevice();
-                    Log::Verbose() << __FUNCTION__ << ": adding " << port->getName() <<
-                        " to mix port " << name;
-                    if (not port->getDeviceAddress().empty()) {
-                        mixPortConfig.deviceAddress =
-                            port->getDeviceAddress();
-                        Log::Verbose() << __FUNCTION__ << ": adding @" <<
-                            port->getDeviceAddress() <<
-                            " to mix port " << name;
-                    }
+    string supportedDevices = getXmlAttribute(child, Attributes::supportedDevices);
+    char *devices = strndup(supportedDevices.c_str(), strlen(supportedDevices.c_str()));
+    char *dev = strtok(devices, ",");
+    while (dev != NULL) {
+        if (strlen(dev) != 0) {
+            string strDevice((const char *)dev);
+            DevicePort *port = (DevicePort *)ctx->mDevicePorts.findByName(strDevice);
+            if (port != NULL) {
+                mixPortConfig.supportedDeviceMask |= port->getDevice();
+                if (not port->getDeviceAddress().empty()) {
+                    mixPortConfig.deviceAddress = port->getDeviceAddress();
+                    Log::Verbose() << __FUNCTION__ << ": adding @" << port->getDeviceAddress() <<
+                        " to mix port" << name;
                 }
             }
         }
+
+        dev = strtok(NULL, ",");
     }
+
+    free(devices);
     string channelsPolicy = getXmlAttribute(child, Attributes::channelsPolicy);
     if (not channelsPolicy.empty()) {
         vector<string> channelsPolicyVector;

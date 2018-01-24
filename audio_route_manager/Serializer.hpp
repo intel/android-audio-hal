@@ -229,6 +229,7 @@ struct MixPortTraits
         static const char dynamicSampleRatesControl[];
         static const char dynamicFormatsControl[];
         static const char supportedUseCases[];
+        static const char supportedDevices[];
         static const char devicePorts[];
         static const char effects[];
     };
