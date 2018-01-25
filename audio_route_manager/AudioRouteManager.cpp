@@ -127,8 +127,7 @@ AudioRouteManager::AudioRouteManager()
     AUDIOCOMMS_ASSERT(status == NO_ERROR, "AudioRouteManager: could not parse any config file");
 
     mPlatformState->setConfig<Audio>(mCriteria, mCriterionTypes, mParameters);
-    for (const auto iter : *mStreamRoutes) {
-        const auto streamRoute = iter.second;
+    for (const auto streamRoute : *mStreamRoutes) {
         mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[streamRoute->
                                                                              getRouteType()],
                                                          streamRoute->getName(),

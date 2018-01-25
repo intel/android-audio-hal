@@ -31,7 +31,7 @@ namespace intel_audio
  * Save the pointer of base class AudioRoute
  * TODO: Rename the StreamRouteCollection to AudioRouteCollection
  */
-class StreamRouteCollection : public std::map<std::string, AudioRoute *>
+class StreamRouteCollection : public std::vector<AudioRoute *>
 {
 public:
     ~StreamRouteCollection()
@@ -42,7 +42,7 @@ public:
     void reset()
     {
         for (auto it : *this) {
-            delete it.second;
+            delete it;
         }
         (*this).clear();
     }
@@ -56,31 +56,13 @@ public:
             mRoutes[i].reset();
         }
         for (auto it : *this) {
-            it.second->resetAvailability();
+            it->resetAvailability();
         }
-    }
-
-    /** Add a stream route.
-     *
-     * @param[in] element to be added.
-     *
-     * @return Newly created and added element, NULL otherwise..
-     */
-    void push_back(AudioRoute *element)
-    {
-        std::string key = element->getName() + (element->getRouteType() ? "_Playback" : "_Capture");
-        if ((*this).find(key) != (*this).end()) {
-            audio_comms::utilities::Log::Warning() << __FUNCTION__
-                                                   << ": element(" << key << ") already added";
-            return;
-        }
-        (*this)[key] = element;
     }
 
     void prepareRouting()
     {
-        for (auto it : *this) {
-            auto route = it.second;
+        for (auto route : *this) {
             // The stream route collection must not only ensure that the route is applicable
             // but also that a stream matches the route.
             if (route && (not route->isUsed()) && setStreamForRoute(*route)) {
@@ -188,8 +170,7 @@ public:
      */
     void disableRoutes(bool isPostDisable = false)
     {
-        for (auto it : *this) {
-            auto route = it.second;
+        for (auto route : *this) {
 
             if (route && ((route->previouslyUsed() && !route->isUsed()) || route->needRepath())) {
                 audio_comms::utilities::Log::Verbose() << __FUNCTION__
@@ -212,8 +193,7 @@ public:
      */
     void enableRoutes(bool isPreEnable = false)
     {
-        for (auto it : *this) {
-            auto route = it.second;
+        for (auto route : *this) {
 
             if (route && ((!route->previouslyUsed() && route->isUsed()) || route->needRepath())) {
                 audio_comms::utilities::Log::Verbose() << __FUNCTION__
@@ -238,8 +218,8 @@ public:
     const AudioStreamRoute *findMatchingRouteForStream(const IoStream &stream) const
     {
         for (const auto it : *this) {
-            if (it.second->isMixRoute()) {
-                AudioStreamRoute *streamRoute = (AudioStreamRoute *)it.second;
+            if (it->isMixRoute()) {
+                AudioStreamRoute *streamRoute = (AudioStreamRoute *)it;
                 if (streamRoute->isMatchingWithStream(stream)) {
                     return streamRoute;
                 }
@@ -256,8 +236,7 @@ public:
      */
     void handleDeviceConnectionState(audio_devices_t device, bool isConnected)
     {
-        for (auto it : *this) {
-            auto route = it.second;
+        for (auto route : *this) {
             if ((route->getSupportedDeviceMask() & device) == device) {
                 if (isConnected) {
                     route->loadCapabilities();
@@ -347,8 +326,7 @@ public:
 
         write(fd, result.string(), result.size());
 
-        for (const auto &it : *this) {
-            const auto &route = it.second;
+        for (const auto &route : *this) {
             route->dump(fd, spaces + 4);
         }
         return android::OK;
