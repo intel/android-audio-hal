@@ -31,10 +31,10 @@ namespace intel_audio
  * Save the pointer of base class AudioRoute
  * TODO: Rename the StreamRouteCollection to AudioRouteCollection
  */
-class StreamRouteCollection : public std::vector<AudioRoute *>
+class AudioRouteCollection : public std::vector<AudioRoute *>
 {
 public:
-    ~StreamRouteCollection()
+    ~AudioRouteCollection()
     {
         reset();
     }
@@ -148,6 +148,10 @@ public:
         return false;
     }
 
+    /**
+     * Get the active stream route of voice.
+     * @note it's not for back-end routes.
+     */
     IoStream *getVoiceStreamRoute()
     {
         // We take the first stream that corresponds to the primary output.

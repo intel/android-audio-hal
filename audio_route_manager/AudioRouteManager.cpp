@@ -20,7 +20,7 @@
 #include "AudioRouteManager.hpp"
 #include "AudioRouteManagerObserver.hpp"
 #include "RouteManagerConfig.hpp"
-#include "StreamRouteCollection.hpp"
+#include "AudioRouteCollection.hpp"
 #include "Serializer.hpp"
 #include "RoutingStage.hpp"
 
@@ -89,7 +89,7 @@ static const std::string gRouteCriterionType[Direction::gNbDirections] = {
 static const std::string gRoutingStageCriterion = "RoutageState";
 
 AudioRouteManager::AudioRouteManager()
-    : mStreamRoutes(new StreamRouteCollection()),
+    : mRoutes(new AudioRouteCollection()),
       mEventThread(new CEventThread(this)),
       mPlatformState(new AudioPlatformState())
 {
@@ -114,7 +114,7 @@ AudioRouteManager::AudioRouteManager()
     Criteria mCriteria;
     CriterionTypes mCriterionTypes;
     Parameters mParameters;
-    RouteManagerConfig config(*mStreamRoutes, mCriteria, mCriterionTypes, mParameters,
+    RouteManagerConfig config(*mRoutes, mCriteria, mCriterionTypes, mParameters,
                               mPlatformState->getConnector<Audio>());
     RouteSerializer serializer;
     status_t status;
@@ -127,11 +127,11 @@ AudioRouteManager::AudioRouteManager()
     AUDIOCOMMS_ASSERT(status == NO_ERROR, "AudioRouteManager: could not parse any config file");
 
     mPlatformState->setConfig<Audio>(mCriteria, mCriterionTypes, mParameters);
-    for (const auto streamRoute : *mStreamRoutes) {
-        mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[streamRoute->
+    for (const auto route : *mRoutes) {
+        mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[route->
                                                                              getRouteType()],
-                                                         streamRoute->getName(),
-                                                         streamRoute->getMask());
+                                                         route->getName(),
+                                                         route->getMask());
     }
 
     /// Construct the platform state component and start it
@@ -156,26 +156,26 @@ AudioRouteManager::~AudioRouteManager()
     }
     delete mEventThread;
     delete mPlatformState;
-    delete mStreamRoutes;
+    delete mRoutes;
 }
 
 
 void AudioRouteManager::addStream(IoStream &stream)
 {
     AutoW lock(mRoutingLock);
-    mStreamRoutes->addStream(stream);
+    mRoutes->addStream(stream);
 }
 
 void AudioRouteManager::removeStream(IoStream &stream)
 {
     AutoW lock(mRoutingLock);
-    mStreamRoutes->removeStream(stream);
+    mRoutes->removeStream(stream);
 }
 
 IoStream *AudioRouteManager::getVoiceOutputStream()
 {
     AutoR lock(mRoutingLock);
-    return mStreamRoutes->getVoiceStreamRoute();
+    return mRoutes->getVoiceStreamRoute();
 }
 
 template <Direction::Values dir>
@@ -238,28 +238,28 @@ void AudioRouteManager::doReconsiderRouting()
     }
     Log::Debug() << __FUNCTION__ << ": Route state:"
                  << "\n\t-Previously Enabled Route in Input = "
-                 << routeMaskToString<Direction::Input>(mStreamRoutes->prevEnabledRouteMask(
+                 << routeMaskToString<Direction::Input>(mRoutes->prevEnabledRouteMask(
                                                Direction::Input))
                  << "\n\t-Previously Enabled Route in Output = "
-                 << routeMaskToString<Direction::Output>(mStreamRoutes->prevEnabledRouteMask(
+                 << routeMaskToString<Direction::Output>(mRoutes->prevEnabledRouteMask(
                                                 Direction::Output))
                  << "\n\t-Selected Route in Input = "
-                 << routeMaskToString<Direction::Input>(mStreamRoutes->enabledRouteMask(Direction::
-                                                                           Input))
+                 << routeMaskToString<Direction::Input>(mRoutes->enabledRouteMask(Direction::
+                                                                     Input))
                  << "\n\t-Selected Route in Output = "
-                 << routeMaskToString<Direction::Output>(mStreamRoutes->enabledRouteMask(Direction::
-                                                                            Output))
+                 << routeMaskToString<Direction::Output>(mRoutes->enabledRouteMask(Direction::
+                                                                      Output))
                  << "\n\t-Route that need reconfiguration in Input = "
-                 << routeMaskToString<Direction::Input>(mStreamRoutes->needReflowRouteMask(Direction
-                                                                              ::Input))
+                 << routeMaskToString<Direction::Input>(mRoutes->needReflowRouteMask(Direction
+                                                                        ::Input))
                  << "\n\t-Route that need reconfiguration in Output = "
-                 << routeMaskToString<Direction::Output>(mStreamRoutes->needReflowRouteMask(
+                 << routeMaskToString<Direction::Output>(mRoutes->needReflowRouteMask(
                                                 Direction::Output))
                  << "\n\t-Route that need rerouting in Input = "
-                 << routeMaskToString<Direction::Input>(mStreamRoutes->needRepathRouteMask(Direction
-                                                                              ::Input))
+                 << routeMaskToString<Direction::Input>(mRoutes->needRepathRouteMask(Direction
+                                                                        ::Input))
                  << "\n\t-Route that need rerouting in Output = "
-                 << routeMaskToString<Direction::Output>(mStreamRoutes->needRepathRouteMask(
+                 << routeMaskToString<Direction::Output>(mRoutes->needRepathRouteMask(
                                                 Direction::Output));
     executeRouting();
     Log::Debug() << __FUNCTION__ << ": DONE";
@@ -271,8 +271,8 @@ void AudioRouteManager::executeRouting()
         /** If Audio Subsystem is down, disable all stream route until up and running again.
          * Do not invoque Audio PFW since Alsa plugin not aware of audio subsystem down
          */
-        mStreamRoutes->disableRoutes();
-        mStreamRoutes->postDisableRoutes();
+        mRoutes->disableRoutes();
+        mRoutes->postDisableRoutes();
         return;
     }
     executeMuteRoutingStage();
@@ -288,16 +288,16 @@ void AudioRouteManager::executeRouting()
 
 void AudioRouteManager::resetRouting()
 {
-    mStreamRoutes->resetAvailability();
+    mRoutes->resetAvailability();
 }
 
 bool AudioRouteManager::checkAndPrepareRouting()
 {
     resetRouting();
     if (mAudioSubsystemAvailable) {
-        mStreamRoutes->prepareRouting();
+        mRoutes->prepareRouting();
     }
-    return mStreamRoutes->routingHasChanged();
+    return mRoutes->routingHasChanged();
 }
 
 void AudioRouteManager::executeMuteRoutingStage()
@@ -309,7 +309,7 @@ void AudioRouteManager::executeMuteRoutingStage()
 
 void AudioRouteManager::executeDisableRoutingStage()
 {
-    mStreamRoutes->disableRoutes();
+    mRoutes->disableRoutes();
 
     setRouteCriteriaForDisable();
 
@@ -322,7 +322,7 @@ void AudioRouteManager::executeDisableRoutingStage()
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, PathMask);
     mPlatformState->applyConfiguration<Audio>();
 
-    mStreamRoutes->postDisableRoutes();
+    mRoutes->postDisableRoutes();
 
 }
 
@@ -337,7 +337,7 @@ void AudioRouteManager::executeEnableRoutingStage()
 {
     mPlatformState->setCriterion<Audio>(gRoutingStageCriterion, ConfigureMask | PathMask);
 
-    mStreamRoutes->preEnableRoutes();
+    mRoutes->preEnableRoutes();
 
     mPlatformState->applyConfiguration<Audio>();
 
@@ -349,7 +349,7 @@ void AudioRouteManager::executeEnableRoutingStage()
                                         ConfigureMask | PathMask | StreamPathMask | PostPathMask);
     mPlatformState->applyConfiguration<Audio>();
 
-    mStreamRoutes->enableRoutes();
+    mRoutes->enableRoutes();
 }
 
 void AudioRouteManager::executeUnmuteRoutingStage()
@@ -365,7 +365,7 @@ void AudioRouteManager::setRouteCriteriaForConfigure()
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         Direction::Values dir = static_cast<Direction::Values>(i);
         mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
-                                            mStreamRoutes->enabledRouteMask(dir));
+                                            mRoutes->enabledRouteMask(dir));
     }
 }
 
@@ -374,7 +374,7 @@ void AudioRouteManager::setRouteCriteriaForMute()
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         Direction::Values dir = static_cast<Direction::Values>(i);
         mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
-                                            mStreamRoutes->unmutedRoutes(dir));
+                                            mRoutes->unmutedRoutes(dir));
     }
 }
 
@@ -383,7 +383,7 @@ void AudioRouteManager::setRouteCriteriaForDisable()
     for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
         Direction::Values dir = static_cast<Direction::Values>(i);
         mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
-                                            mStreamRoutes->openedRoutes(dir));
+                                            mRoutes->openedRoutes(dir));
     }
 }
 
@@ -526,7 +526,7 @@ status_t AudioRouteManager::setVoiceVolume(float gain)
 uint32_t AudioRouteManager::getPeriodInUs(const IoStream &stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = mStreamRoutes->findMatchingRouteForStream(stream);
+    const AudioStreamRoute *route = mRoutes->findMatchingRouteForStream(stream);
     if (route == NULL) {
         Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
                      << stream.getFlagMask() << ", use case =" << stream.getUseCaseMask();
@@ -538,7 +538,7 @@ uint32_t AudioRouteManager::getPeriodInUs(const IoStream &stream) const
 uint32_t AudioRouteManager::getLatencyInUs(const IoStream &stream) const
 {
     AutoR lock(mRoutingLock);
-    const AudioStreamRoute *route = mStreamRoutes->findMatchingRouteForStream(stream);
+    const AudioStreamRoute *route = mRoutes->findMatchingRouteForStream(stream);
     if (route == NULL) {
         Log::Error() << __FUNCTION__ << ": no route found for stream with flags=0x" << std::hex
                      << stream.getFlagMask() << ", use case =" << stream.getUseCaseMask();
@@ -549,12 +549,12 @@ uint32_t AudioRouteManager::getLatencyInUs(const IoStream &stream) const
 
 bool AudioRouteManager::supportStreamConfig(const IoStream &stream) const
 {
-    return mStreamRoutes->findMatchingRouteForStream(stream) != nullptr;
+    return mRoutes->findMatchingRouteForStream(stream) != nullptr;
 }
 
 AudioCapabilities AudioRouteManager::getCapabilities(const IoStream &stream) const
 {
-    auto streamRoute = mStreamRoutes->findMatchingRouteForStream(stream);
+    auto streamRoute = mRoutes->findMatchingRouteForStream(stream);
     if (streamRoute != nullptr) {
         return streamRoute->getCapabilities();
     }
@@ -575,11 +575,11 @@ status_t AudioRouteManager::setParameters(const std::string &keyValuePair, bool 
     int device;
     status_t status = pairs.get<int>(AUDIO_PARAMETER_DEVICE_CONNECT, device);
     if (status == android::OK) {
-        mStreamRoutes->handleDeviceConnectionState(device, true);
+        mRoutes->handleDeviceConnectionState(device, true);
     }
     status = pairs.get<int>(AUDIO_PARAMETER_DEVICE_DISCONNECT, device);
     if (status == android::OK) {
-        mStreamRoutes->handleDeviceConnectionState(device, false);
+        mRoutes->handleDeviceConnectionState(device, false);
     }
     return ret;
 }
@@ -601,7 +601,7 @@ android::status_t AudioRouteManager::dump(const int fd, int spaces) const
     result.append(buffer);
 
     write(fd, result.string(), result.size());
-    mStreamRoutes->dump(fd, spaces + 4);
+    mRoutes->dump(fd, spaces + 4);
     return android::OK;
 }
 

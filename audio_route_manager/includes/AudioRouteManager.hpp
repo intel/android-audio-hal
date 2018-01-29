@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ namespace intel_audio
 class IoStream;
 struct pcm_config;
 class AudioPlatformState;
-class StreamRouteCollection;
+class AudioRouteCollection;
 
 class AudioRouteManager : private IEventListener,
                           private audio_comms::utilities::Observable,
@@ -266,8 +266,7 @@ private:
     virtual void onPollError();
     virtual bool onProcess(void *, uint32_t);
 
-    StreamRouteCollection *mStreamRoutes; /**< map of audio stream route. */
-
+    AudioRouteCollection *mRoutes;
 
     CEventThread *mEventThread; /**< worker thread in which routing is running. */
 

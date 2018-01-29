@@ -17,7 +17,7 @@
 #pragma once
 
 #include "AudioPort.hpp"
-#include "StreamRouteCollection.hpp"
+#include "AudioRouteCollection.hpp"
 #include <Criterion.hpp>
 #include <CriterionType.hpp>
 #include <Parameter.hpp>
@@ -30,7 +30,7 @@ namespace intel_audio
 class RouteManagerConfig
 {
 public:
-    RouteManagerConfig(StreamRouteCollection &routes,
+    RouteManagerConfig(AudioRouteCollection &routes,
                        Criteria &criteria,
                        CriterionTypes &criterionTypes,
                        Parameters &parameters,
@@ -61,7 +61,7 @@ public:
 
     AudioPorts mMixPorts;
     AudioPorts mDevicePorts;
-    StreamRouteCollection &mRoutes;
+    AudioRouteCollection &mRoutes;
     Criteria &mCriteria;
     CriterionTypes &mCriterionTypes;
     Parameters &mParameters;

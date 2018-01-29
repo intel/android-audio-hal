@@ -154,7 +154,7 @@ struct RouteTraits
 
     typedef AudioRoute Element;
     typedef AudioRoute *PtrElement;
-    typedef StreamRouteCollection Collection;
+    typedef AudioRouteCollection Collection;
     typedef RouteManagerConfig *PtrSerializingCtx;
 
     /**
