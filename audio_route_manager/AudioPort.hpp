@@ -15,10 +15,14 @@
  */
 
 #pragma once
+#include "StreamRouteConfig.hpp"
 #include <utils/Log.h>
 using namespace std;
 namespace intel_audio
 {
+
+class IAudioDevice;
+
 // base class of MixPort and DevicePort
 class AudioPort
 {
@@ -40,6 +44,63 @@ public:
 
 private:
     std::string mName;
+};
+
+/**
+ * Mix ports describe the possible config profiles
+ * for streams that can be opened at the audio HAL for
+ * playback and capture
+ * MixPort instance is parsed from mixPort element
+ * in audio_policy_configuration.xml
+ */
+class MixPort : public AudioPort
+{
+public:
+    MixPort(const std::string &name, const bool isOut)
+        : AudioPort(name), mIsOut(isOut)  {}
+
+    /**
+     * Set the device of MixPort
+     * @param[in] device is the pointer of AlsaAudioDevcie or
+     * TinyAlsaAudioDevice. The device instance is parsed from
+     * the card attribute of mixPort element.
+     */
+    void setAlsaDevice(IAudioDevice *device) { mAudioDevice = device; }
+
+    /**
+     * Get the device of MixPort
+     * @return the pointer of TinyAlsaAudioDevice or AlsaAudioDevice
+     */
+    IAudioDevice *getAlsaDevice() { return mAudioDevice; }
+
+    /**
+     * Set the stream route config
+     * @param[in] config parsed from the profile attribute of
+     * mixPort element of audio_policy_configuration.xml.
+     */
+    void setConfig(const StreamRouteConfig &config) { mConfig = config; }
+    StreamRouteConfig &getConfig() { return mConfig; }
+
+    /**
+     * Return the direction of MixPort
+     * @return true if role of MixPort is source, false if role is sink
+     */
+    bool isOut() { return mIsOut; }
+
+    /**
+     * Set the supported effects parsed from the mixPort
+     * element of audio_policy_configuration.
+     */
+    void setEffectSupported(vector<string> effects)
+    {
+        mEffects = effects;
+    }
+
+private:
+    bool mIsOut;
+    StreamRouteConfig mConfig;
+    IAudioDevice *mAudioDevice;
+    vector<string> mEffects;
 };
 
 class AudioPorts : public std::vector<AudioPort *>
