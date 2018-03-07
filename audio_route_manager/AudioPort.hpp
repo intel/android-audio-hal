@@ -103,6 +103,37 @@ private:
     vector<string> mEffects;
 };
 
+/**
+ * Device ports describe the devices that can
+ * be attached with their type (and optionally
+ * address and audio properties, if relevant).
+ * DevicePort instance is parsed from the devicePort
+ * element of audio_policy_configuration.xml.
+ */
+class DevicePort : public AudioPort
+{
+public:
+    DevicePort(audio_devices_t type, const std::string &name, const std::string &address)
+        : AudioPort(name), mType(type), mAddress(address) {}
+
+    /**
+     * Get the device ID of Android
+     * @return the device ID of Android
+     */
+    audio_devices_t getDevice() { return mType; }
+
+    /**
+     * Get the device address
+     * @return the device address
+     */
+    std::string getDeviceAddress() { return mAddress; }
+
+private:
+    audio_devices_t mType;
+    std::string mAddress;
+};
+
+
 class AudioPorts : public std::vector<AudioPort *>
 {
 public:
