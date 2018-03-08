@@ -18,6 +18,7 @@
 // #define LOG_NDEBUG 0
 
 #include "Serializer.hpp"
+#include "AudioBackendRoute.hpp"
 #if (defined (USE_ALSA_LIB))
 #include <AlsaAudioDevice.hpp>
 #endif
@@ -573,7 +574,7 @@ status_t RouteTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrEle
                                  (isOut ? ROUTE_TYPE_STREAM_PLAYBACK : ROUTE_TYPE_STREAM_CAPTURE));
     } else {
         if (hasSinkMixPort == false) {
-            // TODO: Create the AudioBackendRoute instance
+            element = new AudioBackendRoute(name, sinks, sources);
         } else {
             Log::Error() << __FUNCTION__ << "The route '" << name <<
                 "' is not supported. The sink and source can not include the mixport at the same time.";

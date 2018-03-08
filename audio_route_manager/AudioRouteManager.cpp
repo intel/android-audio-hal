@@ -117,7 +117,6 @@ AudioRouteManager::AudioRouteManager()
     // Load configuration file to populate Criterion types, criteria and rogues.
     Criteria mCriteria;
     CriterionTypes mCriterionTypes;
-    Parameters mParameters;
     RouteManagerConfig config(*mRoutes, mCriteria, mCriterionTypes, mParameters,
                               mPlatformState->getConnector<Audio>());
     RouteSerializer serializer;
@@ -567,12 +566,25 @@ status_t AudioRouteManager::setParameters(const std::string &keyValuePair, bool 
     AutoW lock(mRoutingLock);
     bool hasChanged = false;
     status_t ret = mPlatformState->setParameters(keyValuePair, hasChanged);
+    KeyValuePairs pairs(keyValuePair);
+    bool isSelect = false;
+    for (const auto param : mParameters) {
+        status_t st = pairs.get<bool>(param->getKey(), isSelect);
+        std::string name = param->getRoute();
+        if (st == android::OK && !name.empty()) {
+            AudioRoute *route = mRoutes->getRoute(name);
+            if (route != NULL) {
+                Log::Debug() << __FUNCTION__ << "route:" << route->getName() << "setSelcted:" <<
+                    isSelect;
+                route->setSelected(isSelect);
+            }
+        }
+    }
 
     // Inconditionnaly reconsider the routing as even if the parameters are the same, concurrent
     // streams with identical settings may have been stopped/started.
     reconsiderRoutingUnsafe(isSynchronous);
 
-    KeyValuePairs pairs(keyValuePair);
     int device;
     status_t status = pairs.get<int>(AUDIO_PARAMETER_DEVICE_CONNECT, device);
     if (status == android::OK) {

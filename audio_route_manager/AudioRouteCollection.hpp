@@ -79,14 +79,19 @@ public:
         for (auto route : *this) {
             // The stream route collection must not only ensure that the route is applicable
             // but also that a stream matches the route.
-            if (route && (not route->isUsed()) && setStreamForRoute(*route)) {
-                route->setUsed(true);
-                mRoutes[route->getRouteType()].setEnabledRoute(route->getMask());
-                if (route->needReflow()) {
-                    mRoutes[route->getRouteType()].setNeedReflowRoute(route->getMask());
-                }
-                if (route->needRepath()) {
-                    mRoutes[route->getRouteType()].setNeedRepathRoute(route->getMask());
+            // For backend route, it must be selected by the
+            // setParameters.
+            if (route && (!route->isUsed())) {
+                if ((route->isMixRoute() && setStreamForRoute(*route)) ||
+                    (!route->isMixRoute() && route->isSelected())) {
+                    route->setUsed(true);
+                    mRoutes[route->getRouteType()].setEnabledRoute(route->getMask());
+                    if (route->needReflow()) {
+                        mRoutes[route->getRouteType()].setNeedReflowRoute(route->getMask());
+                    }
+                    if (route->needRepath()) {
+                        mRoutes[route->getRouteType()].setNeedRepathRoute(route->getMask());
+                    }
                 }
             }
         }

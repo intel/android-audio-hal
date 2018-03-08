@@ -29,6 +29,7 @@ component_src_files :=  \
     AudioRouteManager.cpp \
     AudioRouteManagerObserver.cpp \
     MixPortConfig.cpp \
+    AudioBackendRoute.cpp \
     AudioCapabilities.cpp \
     Serializer.cpp
 

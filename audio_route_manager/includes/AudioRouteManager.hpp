@@ -17,6 +17,7 @@
 
 #include "AudioCapabilities.hpp"
 #include <AudioCommsAssert.hpp>
+#include <Parameter.hpp>
 #include <Observable.hpp>
 #include <EventListener.h>
 #include <AudioNonCopyable.hpp>
@@ -266,6 +267,7 @@ private:
     virtual bool onProcess(void *, uint32_t);
 
     AudioRouteCollection *mRoutes;
+    Parameters mParameters; // the parameters defined in the audio_criteria.xml
 
     CEventThread *mEventThread; /**< worker thread in which routing is running. */
 
