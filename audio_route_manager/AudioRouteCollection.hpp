@@ -80,8 +80,9 @@ public:
 
     bool routingHasChanged() const
     {
-        return mRoutes[Direction::Output].routingHasChanged()
-               || mRoutes[Direction::Input].routingHasChanged();
+        return mRoutes[ROUTE_TYPE_STREAM_PLAYBACK].routingHasChanged()
+               || mRoutes[ROUTE_TYPE_STREAM_CAPTURE].routingHasChanged()
+               || mRoutes[ROUTE_TYPE_BACKEND].routingHasChanged();
     }
 
     /**
@@ -89,9 +90,9 @@ public:
      *
      * @return repath routes mask in the requested direction.
      */
-    inline uint32_t needRepathRouteMask(Direction::Values dir) const
+    inline uint32_t needRepathRouteMask(uint32_t type) const
     {
-        return mRoutes[dir].needRepathRoutes();
+        return mRoutes[type].needRepathRoutes();
     }
 
     /**
@@ -99,9 +100,9 @@ public:
      *
      * @return repath routes mask in the requested direction.
      */
-    inline uint32_t needReflowRouteMask(Direction::Values dir) const
+    inline uint32_t needReflowRouteMask(uint32_t type) const
     {
-        return mRoutes[dir].needReflowRoutes();
+        return mRoutes[type].needReflowRoutes();
     }
 
     void addStream(IoStream &stream)
@@ -133,6 +134,13 @@ public:
      */
     bool setStreamForRoute(AudioRoute &route)
     {
+        if (route.getRouteType() >= ROUTE_TYPE_BACKEND) {
+            audio_comms::utilities::Log::Verbose() << __FUNCTION__
+                                                   << ": the function is only for stream route";
+
+            return false;
+        }
+
         for (auto stream : mOrderedStreamList[route.getRouteType()]) {
             if (stream->isStarted() && stream->isRoutedByPolicy() &&
                 !stream->isNewRouteAvailable()) {
@@ -155,7 +163,7 @@ public:
     IoStream *getVoiceStreamRoute()
     {
         // We take the first stream that corresponds to the primary output.
-        auto it = mOrderedStreamList[Direction::Output].begin();
+        auto it = mOrderedStreamList[ROUTE_TYPE_STREAM_PLAYBACK].begin();
         if (*it == NULL) {
             audio_comms::utilities::Log::Error() << __FUNCTION__
                                                  << ": current stream NOT FOUND for echo ref";
@@ -277,16 +285,16 @@ public:
     /**
      * array of list of streams opened.
      */
-    std::list<IoStream *> mOrderedStreamList[Direction::gNbDirections];
+    std::list<IoStream *> mOrderedStreamList[ROUTE_TYPE_STREAM_NUM];
 
     /**
      * Get the enabled routes mask.
      *
      * @return enabled routes mask in the requested direction.
      */
-    inline uint32_t enabledRouteMask(Direction::Values dir) const
+    inline uint32_t enabledRouteMask(uint32_t type) const
     {
-        return mRoutes[dir].enabledRoutes();
+        return mRoutes[type].enabledRoutes();
     }
 
     /**
@@ -294,29 +302,29 @@ public:
      *
      * @return previously enabled routes mask in the requested direction.
      */
-    inline uint32_t prevEnabledRouteMask(Direction::Values dir) const
+    inline uint32_t prevEnabledRouteMask(uint32_t type) const
     {
-        return mRoutes[dir].prevEnabledRoutes();
+        return mRoutes[type].prevEnabledRoutes();
     }
 
-    inline uint32_t unmutedRoutes(Direction::Values dir) const
+    inline uint32_t unmutedRoutes(uint32_t type) const
     {
-        return mRoutes[dir].unmutedRoutes();
+        return mRoutes[type].unmutedRoutes();
     }
 
-    inline uint32_t routesToMute(Direction::Values dir) const
+    inline uint32_t routesToMute(uint32_t type) const
     {
-        return mRoutes[dir].routesToMute();
+        return mRoutes[type].routesToMute();
     }
 
-    inline uint32_t openedRoutes(Direction::Values dir) const
+    inline uint32_t openedRoutes(uint32_t type) const
     {
-        return mRoutes[dir].openedRoutes();
+        return mRoutes[type].openedRoutes();
     }
 
-    inline uint32_t routesToDisable(Direction::Values dir) const
+    inline uint32_t routesToDisable(uint32_t type) const
     {
-        return mRoutes[dir].routesToDisable();
+        return mRoutes[type].routesToDisable();
     }
 
     android::status_t dump(const int fd, int spaces) const

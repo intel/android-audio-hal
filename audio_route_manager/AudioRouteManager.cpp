@@ -80,11 +80,15 @@ namespace intel_audio
 
 const int AudioRouteManager::gUEventMsgMaxLeng = 1024;
 const int AudioRouteManager::gSocketBufferDefaultSize = 64 * AudioRouteManager::gUEventMsgMaxLeng;
-static const std::string gOpenedRouteCriterion[Direction::gNbDirections] = {
-    "OpenedCaptureRoutes", "OpenedPlaybackRoutes"
+static const std::string gOpenedRouteCriterion[ROUTE_TYPE_NUM] = {
+    "OpenedCaptureRoutes",
+    "OpenedPlaybackRoutes",
+    "OpenedBackendRoutes"
 };
-static const std::string gRouteCriterionType[Direction::gNbDirections] = {
-    "RouteCaptureType", "RoutePlaybackType"
+static const std::string gRouteCriterionType[ROUTE_TYPE_NUM] = {
+    "RouteCaptureType",
+    "RoutePlaybackType",
+    "RouteBackendType"
 };
 static const std::string gRoutingStageCriterion = "RoutageState";
 
@@ -178,10 +182,10 @@ IoStream *AudioRouteManager::getVoiceOutputStream()
     return mRoutes->getVoiceStreamRoute();
 }
 
-template <Direction::Values dir>
+template <uint32_t type>
 inline const std::string AudioRouteManager::routeMaskToString(uint32_t mask) const
 {
-    return mPlatformState->getFormattedState<Audio>(gRouteCriterionType[dir], mask);
+    return mPlatformState->getFormattedState<Audio>(gRouteCriterionType[type], mask);
 }
 
 void AudioRouteManager::reconsiderRouting(bool isSynchronous)
@@ -238,29 +242,29 @@ void AudioRouteManager::doReconsiderRouting()
     }
     Log::Debug() << __FUNCTION__ << ": Route state:"
                  << "\n\t-Previously Enabled Route in Input = "
-                 << routeMaskToString<Direction::Input>(mRoutes->prevEnabledRouteMask(
-                                               Direction::Input))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_CAPTURE>(mRoutes->prevEnabledRouteMask(
+                                                        ROUTE_TYPE_STREAM_CAPTURE))
                  << "\n\t-Previously Enabled Route in Output = "
-                 << routeMaskToString<Direction::Output>(mRoutes->prevEnabledRouteMask(
-                                                Direction::Output))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_PLAYBACK>(mRoutes->prevEnabledRouteMask(
+                                                         ROUTE_TYPE_STREAM_PLAYBACK))
                  << "\n\t-Selected Route in Input = "
-                 << routeMaskToString<Direction::Input>(mRoutes->enabledRouteMask(Direction::
-                                                                     Input))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_CAPTURE>(mRoutes->enabledRouteMask(
+                                                        ROUTE_TYPE_STREAM_CAPTURE))
                  << "\n\t-Selected Route in Output = "
-                 << routeMaskToString<Direction::Output>(mRoutes->enabledRouteMask(Direction::
-                                                                      Output))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_PLAYBACK>(mRoutes->enabledRouteMask(
+                                                         ROUTE_TYPE_STREAM_PLAYBACK))
                  << "\n\t-Route that need reconfiguration in Input = "
-                 << routeMaskToString<Direction::Input>(mRoutes->needReflowRouteMask(Direction
-                                                                        ::Input))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_CAPTURE>(mRoutes->needReflowRouteMask(
+                                                        ROUTE_TYPE_STREAM_CAPTURE))
                  << "\n\t-Route that need reconfiguration in Output = "
-                 << routeMaskToString<Direction::Output>(mRoutes->needReflowRouteMask(
-                                                Direction::Output))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_PLAYBACK>(mRoutes->needReflowRouteMask(
+                                                         ROUTE_TYPE_STREAM_PLAYBACK))
                  << "\n\t-Route that need rerouting in Input = "
-                 << routeMaskToString<Direction::Input>(mRoutes->needRepathRouteMask(Direction
-                                                                        ::Input))
+                 << routeMaskToString<ROUTE_TYPE_STREAM_CAPTURE>(mRoutes->needRepathRouteMask(
+                                                        ROUTE_TYPE_STREAM_CAPTURE))
                  << "\n\t-Route that need rerouting in Output = "
-                 << routeMaskToString<Direction::Output>(mRoutes->needRepathRouteMask(
-                                                Direction::Output));
+                 << routeMaskToString<ROUTE_TYPE_STREAM_PLAYBACK>(mRoutes->needRepathRouteMask(
+                                                         ROUTE_TYPE_STREAM_PLAYBACK));
     executeRouting();
     Log::Debug() << __FUNCTION__ << ": DONE";
 }
@@ -362,28 +366,25 @@ void AudioRouteManager::executeUnmuteRoutingStage()
 
 void AudioRouteManager::setRouteCriteriaForConfigure()
 {
-    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-        Direction::Values dir = static_cast<Direction::Values>(i);
+    for (uint32_t i = 0; i < ROUTE_TYPE_NUM; i++) {
         mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
-                                            mRoutes->enabledRouteMask(dir));
+                                            mRoutes->enabledRouteMask(i));
     }
 }
 
 void AudioRouteManager::setRouteCriteriaForMute()
 {
-    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-        Direction::Values dir = static_cast<Direction::Values>(i);
+    for (uint32_t i = 0; i < ROUTE_TYPE_NUM; i++) {
         mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
-                                            mRoutes->unmutedRoutes(dir));
+                                            mRoutes->unmutedRoutes(i));
     }
 }
 
 void AudioRouteManager::setRouteCriteriaForDisable()
 {
-    for (uint32_t i = 0; i < Direction::gNbDirections; i++) {
-        Direction::Values dir = static_cast<Direction::Values>(i);
+    for (uint32_t i = 0; i < ROUTE_TYPE_NUM; i++) {
         mPlatformState->setCriterion<Audio>(gOpenedRouteCriterion[i],
-                                            mRoutes->openedRoutes(dir));
+                                            mRoutes->openedRoutes(i));
     }
 }
 

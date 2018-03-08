@@ -17,7 +17,6 @@
 
 #include "AudioCapabilities.hpp"
 #include <AudioCommsAssert.hpp>
-#include <Direction.hpp>
 #include <Observable.hpp>
 #include <EventListener.h>
 #include <AudioNonCopyable.hpp>
@@ -243,12 +242,12 @@ private:
     /**
      * Returns the formatted state of the route criterion according to the mask.
      *
-     * @tparam dir Direction of the route for which the translation is requested
+     * @tparam type of the route for which the translation is requested
      * @param[in] mask of the route(s) to convert into a formatted state.
      *
      * @return litteral values of the route separated by a "|".
      */
-    template <Direction::Values dir>
+    template <uint32_t type>
     inline const std::string routeMaskToString(uint32_t mask) const;
 
     /**

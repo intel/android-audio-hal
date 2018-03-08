@@ -32,21 +32,24 @@ namespace intel_audio
  * enum route type
  * ROUTE_TYPE_STREAM_CAPTURE:  the type of stream routes for capture
  * ROUTE_TYPE_STREAM_PLAYBACK: the type of stream routes for playback
- * TODO: will define the ROUTE_TYPE_BACKEND when applying the
- * AudioBackendRoute class
+ * ROUTE_TYPE_BACKEND: the type of backend routes
+ * ROUTE_TYPE_NUM: the number of route type
+ * ROUTE_TYPE_STREAM_NUM: the number of stream route type
  */
 enum RouteType
 {
     ROUTE_TYPE_STREAM_CAPTURE,
     ROUTE_TYPE_STREAM_PLAYBACK,
-    ROUTE_TYPE_NUM
+    ROUTE_TYPE_BACKEND,
+    ROUTE_TYPE_NUM,
+    ROUTE_TYPE_STREAM_NUM = ROUTE_TYPE_BACKEND
 };
 
 /**
  * The count of routes of different types.
  */
 static uint32_t count[ROUTE_TYPE_NUM] = {
-    0, 0
+    0, 0, 0
 };
 
 /**
