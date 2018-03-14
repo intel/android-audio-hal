@@ -48,6 +48,20 @@ public:
     }
 
     /**
+     * get the AudioRoute by name
+     */
+    AudioRoute *getRoute(std::string name)
+    {
+        for (auto it : *this) {
+            if (it->getName() == name) {
+                return it;
+            }
+        }
+
+        return NULL;
+    }
+
+    /**
      * Reset the availability of stream route collection.
      */
     void resetAvailability()
