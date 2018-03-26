@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2017 Intel Corporation
+ * Copyright (C) 2015-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 #pragma once
 
+#include "AudioRoute.hpp"
 #include "AudioStreamRoute.hpp"
 #include <Direction.hpp>
 #include <IoStream.hpp>
@@ -26,8 +27,11 @@
 
 namespace intel_audio
 {
-
-class StreamRouteCollection : public std::map<std::string, AudioStreamRoute *>
+/**
+ * Save the pointer of base class AudioRoute
+ * TODO: Rename the StreamRouteCollection to AudioRouteCollection
+ */
+class StreamRouteCollection : public std::map<std::string, AudioRoute *>
 {
 public:
     ~StreamRouteCollection()
@@ -62,9 +66,9 @@ public:
      *
      * @return Newly created and added element, NULL otherwise..
      */
-    void push_back(AudioStreamRoute *element)
+    void push_back(AudioRoute *element)
     {
-        std::string key = element->getName() + (element->isOut() ? "_Playback" : "_Capture");
+        std::string key = element->getName() + (element->getRouteType() ? "_Playback" : "_Capture");
         if ((*this).find(key) != (*this).end()) {
             audio_comms::utilities::Log::Warning() << __FUNCTION__
                                                    << ": element(" << key << ") already added";
@@ -80,13 +84,13 @@ public:
             // The stream route collection must not only ensure that the route is applicable
             // but also that a stream matches the route.
             if (route && (not route->isUsed()) && setStreamForRoute(*route)) {
-                route->setUsed();
-                mRoutes[route->isOut()].setEnabledRoute(route->getMask());
+                route->setUsed(true);
+                mRoutes[route->getRouteType()].setEnabledRoute(route->getMask());
                 if (route->needReflow()) {
-                    mRoutes[route->isOut()].setNeedReflowRoute(route->getMask());
+                    mRoutes[route->getRouteType()].setNeedReflowRoute(route->getMask());
                 }
                 if (route->needRepath()) {
-                    mRoutes[route->isOut()].setNeedRepathRoute(route->getMask());
+                    mRoutes[route->getRouteType()].setNeedRepathRoute(route->getMask());
                 }
             }
         }
@@ -145,16 +149,17 @@ public:
      *
      * @return true if a stream was found and attached to the route, false otherwise.
      */
-    bool setStreamForRoute(AudioStreamRoute &route)
+    bool setStreamForRoute(AudioRoute &route)
     {
-        for (auto stream : mOrderedStreamList[route.isOut()]) {
+        for (auto stream : mOrderedStreamList[route.getRouteType()]) {
             if (stream->isStarted() && stream->isRoutedByPolicy() &&
                 !stream->isNewRouteAvailable()) {
-                if (route.isMatchingWithStream(*stream)) {
+                AudioStreamRoute *streamRoute = (AudioStreamRoute *)&route;
+                if (streamRoute->isMatchingWithStream(*stream)) {
                     audio_comms::utilities::Log::Verbose() << __FUNCTION__ << ": route "
-                                                           << route.getName()
+                                                           << streamRoute->getName()
                                                            << " is maching with the stream";
-                    return route.setStream(*stream);
+                    return streamRoute->setStream(*stream);
                 }
             }
         }
@@ -233,9 +238,11 @@ public:
     const AudioStreamRoute *findMatchingRouteForStream(const IoStream &stream) const
     {
         for (const auto it : *this) {
-            const auto streamRoute = it.second;
-            if (streamRoute->isMatchingWithStream(stream)) {
-                return streamRoute;
+            if (it.second->isMixRoute()) {
+                AudioStreamRoute *streamRoute = (AudioStreamRoute *)it.second;
+                if (streamRoute->isMatchingWithStream(stream)) {
+                    return streamRoute;
+                }
             }
         }
         return NULL;

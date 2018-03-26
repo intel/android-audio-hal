@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,35 +23,25 @@
 #include <IoStream.hpp>
 #include <list>
 #include <utils/Errors.h>
+#include "AudioPort.hpp"
+#include "AudioRoute.hpp"
 
 namespace intel_audio
 {
 
 class IAudioDevice;
 
-class AudioStreamRoute;
 
-/**
- * Create a route from a given type, with a given name and direction.
- *
- * @tparam T type of audio stream route, default is stream routebase class.
- * @param[in] name of the route to create
- * @param[in] isOut direction indicator: true for playback route, false for capture
- *
- * @return stream route object
- */
-template <typename T = AudioStreamRoute>
-AudioStreamRoute *createT(const std::string &name, bool isOut)
-{
-    return new T(name, isOut);
-}
 
-class AudioStreamRoute : public IStreamRoute
+class AudioStreamRoute : public AudioRoute, public IStreamRoute
 {
 public:
-    AudioStreamRoute(const std::string &name, bool isOut);
+    AudioStreamRoute(std::string name, AudioPorts &sinks, AudioPorts &sources, uint32_t dir);
 
     virtual ~AudioStreamRoute();
+    virtual bool isOut() const { return mIsOut; }
+    bool isMixRoute() { return true; }
+    std::string getName() const { return AudioRoute::getName(); }
 
     /**
      * Upon connection of device managed by this route, it loads the capabilities from the device
@@ -109,21 +99,6 @@ public:
      */
     void setEffectSupported(const std::vector<std::string> &effects);
 
-    /**
-     * Update the stream route configuration.
-     * This API is intended to be called by the Route Parameter Manager to set the configuration
-     * of this route according to the platform settings (XML configuration).
-     *
-     * @param[in] config Stream Route configuration.
-     */
-    void setConfig(const StreamRouteConfig &config) { mConfig = config; }
-
-    /**
-     * Set the audio device managed by this stream route
-     *
-     * @param[in] device audio to be associated to this stream route.
-     */
-    void setDevice(IAudioDevice *device) { mAudioDevice = device; }
 
     /**
      * Assign a new stream to this route.
@@ -198,35 +173,6 @@ public:
         return mConfig.useCaseMask;
     }
 
-    /**
-     * Sets the route as in use.
-     *
-     * Calling this API will propagate the in use attribute to the ports belonging to this route.
-     *
-     */
-    void setUsed() { mIsUsed = true; }
-
-    bool isUsed() const
-    {
-        return mIsUsed;
-    }
-
-    /**
-     * Checks if the route was previously used.
-     *
-     * Previously used means if the route was in use before the routing
-     * reconsideration of the route manager.
-     *
-     * @return true if the route was in use, false otherwise.
-     */
-    bool previouslyUsed() const
-    {
-        return mPreviouslyUsed;
-    }
-
-    inline bool stillUsed() const { return previouslyUsed() && isUsed(); }
-
-    uint32_t getMask() const { return mMask; }
 
     /**
      * Check if the route requires pre enabling.
@@ -380,12 +326,8 @@ private:
      */
     android::status_t detachCurrentStream();
 
-    uint32_t mMask; /**< A route is identified with a mask, it helps for criteria representation. */
-
-    bool mIsUsed; /**< Route will be used after reconsidering the routing. */
-    bool mPreviouslyUsed; /**< Route was used before reconsidering the routing. */
-
     IAudioDevice *mAudioDevice; /**< Platform dependant audio device. */
+    bool mIsOut;
 };
 
 } // namespace intel_audio

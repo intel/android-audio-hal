@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,6 @@ class IAudioDevice;
 class IStreamRoute
 {
 public:
-    IStreamRoute(const std::string &name, bool isOut) : mName(name), mIsOut(isOut) {}
-
     /**
      * Get the sample specifications of the stream route.
      *
@@ -55,22 +53,15 @@ public:
      *
      * @return true if the route an output route, false if input route.
      */
-    bool isOut() const
-    {
-        return mIsOut;
-    }
+    virtual bool isOut() const = 0;
 
     /**
      * Returns identifier of current routing element
      *
      * @returns string representing the name of the routing element
      */
-    const std::string &getName() const { return mName; }
+    virtual std::string getName() const = 0;
 
-private:
-    std::string mName;
-
-    bool mIsOut; /**< Tells whether the route is an output or not. */
 };
 
 } // namespace intel_audio

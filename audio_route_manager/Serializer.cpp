@@ -18,7 +18,6 @@
 // #define LOG_NDEBUG 0
 
 #include "Serializer.hpp"
-#include "StreamRouteFactory.hpp"
 #if (defined (USE_ALSA_LIB))
 #include <AlsaAudioDevice.hpp>
 #endif
@@ -482,8 +481,46 @@ const char RouteTraits::Attributes::sink[] = "sink";
 const char RouteTraits::Attributes::sources[] = "sources";
 const char RouteTraits::Attributes::name[] = "name";
 
+status_t RouteTraits::parsePorts(AudioPorts &ports,
+                                 std::string strPorts,
+                                 bool &hasMixPort,
+                                 PtrSerializingCtx ctx)
+{
+    hasMixPort = false;
+    char *cPorts = strndup(strPorts.c_str(), strlen(strPorts.c_str()));
+    char *iter = strtok(cPorts, ",");
+    while (iter != NULL) {
+        if (strlen(iter) != 0) {
+            string portName((const char *)iter);
+            AudioPort *port = ctx->mDevicePorts.findByName(portName);
+            if (port == NULL) {
+                port = ctx->mMixPorts.findByName(portName);
+                if (port != NULL) {
+                    hasMixPort = true;
+                }
+            }
+
+            if (port != NULL) {
+                ports.push_back(port);
+            } else {
+                Log::Error() << __FUNCTION__ << ": No port " << portName << " found.";
+                free(cPorts);
+                return BAD_VALUE;
+            }
+        }
+        iter = strtok(NULL, ",");
+        if (iter && hasMixPort == true) {
+            Log::Error() << __FUNCTION__ << ": the route must include only one mixport";
+            return NO_ERROR;
+        }
+    }
+
+    free(cPorts);
+    return NO_ERROR;
+}
+
 status_t RouteTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrElement &element,
-                                  PtrSerializingCtx /*ctx*/)
+                                  PtrSerializingCtx ctx)
 {
     string sinkAttr = getXmlAttribute(root, Attributes::sink);
     if (sinkAttr.empty()) {
@@ -507,19 +544,37 @@ status_t RouteTraits::deserialize(_xmlDoc */*doc*/, const _xmlNode *root, PtrEle
     Log::Verbose() << __FUNCTION__ << ": Route: attribute " << Attributes::sources << "=" <<
         sourcesAttr;
 
-    // Tokenize and Convert Sources name to port pointer
-    std::vector<std::string> sources;
-    char *sourcesLiteral = strndup(sourcesAttr.c_str(), strlen(sourcesAttr.c_str()));
-    char *devTag = strtok(sourcesLiteral, ",");
-    while (devTag != NULL) {
-        if (strlen(devTag) != 0) {
-            sources.push_back(devTag);
-        }
-        devTag = strtok(NULL, ",");
+    AudioPorts sinks;
+    AudioPorts sources;
+    bool hasSinkMixPort = false;
+    bool hasSourceMixPort = false;
+    bool isOut = true;
+    parsePorts(sinks,
+               sinkAttr,
+               hasSinkMixPort,
+               ctx);
+    if (hasSinkMixPort) {
+        isOut = false;
     }
-    free(sourcesLiteral);
+    parsePorts(sources,
+               sourcesAttr,
+               hasSourceMixPort,
+               ctx);
 
-    element = new Element(sinkAttr, sources);
+    if (hasSinkMixPort != hasSourceMixPort) {
+        element =
+            new AudioStreamRoute(name,
+                                 sinks,
+                                 sources,
+                                 (isOut ? ROUTE_TYPE_STREAM_PLAYBACK : ROUTE_TYPE_STREAM_CAPTURE));
+    } else {
+        if (hasSinkMixPort == false) {
+            // TODO: Create the AudioBackendRoute instance
+        } else {
+            Log::Error() << __FUNCTION__ << "The route '" << name <<
+                "' is not supported. The sink and source can not include the mixport at the same time.";
+        }
+    }
     return NO_ERROR;
 }
 
@@ -568,7 +623,7 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
         return BAD_VALUE;
     }
     Log::Verbose() << __FUNCTION__ << ": Role= " << role.c_str();
-    mixPort = StreamRouteFactory::createStreamRoute(name, role == "source");
+    mixPort = new Element(name, role == "source");
 
     StreamRouteConfig mixPortConfig;
     mixPortConfig.isOut = (role == "source");
@@ -587,7 +642,7 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
     // Valid device name -> use tiny alsa audio device
     if (device.empty()) {
 #if (defined (USE_ALSA_LIB))
-        mixPort->setDevice(new AlsaAudioDevice());
+        mixPort->setAlsaDevice(new AlsaAudioDevice());
 #else
         Log::Error() << __FUNCTION__ << ": No attribute " << Attributes::device << " found.";
         delete mixPort;
@@ -600,7 +655,7 @@ status_t MixPortTraits::deserialize(_xmlDoc *doc, const _xmlNode *child, PtrElem
             delete mixPort;
             return BAD_VALUE;
         }
-        mixPort->setDevice(new TinyAlsaAudioDevice());
+        mixPort->setAlsaDevice(new TinyAlsaAudioDevice());
     }
 
     mixPortConfig.flagMask = 0;
@@ -771,11 +826,18 @@ status_t ModuleTraits::deserialize(xmlDocPtr doc, const xmlNode *root, PtrElemen
             " outside primary outside HAL Scope";
         return BAD_VALUE;
     }
-    // Deserialize childrens: mixPorts, devicePorts and routes
-    Context context;
-    deserializeCollection<DevicePortTraits>(doc, root, context.mDevicePorts, nullptr);
-    deserializeCollection<RouteTraits>(doc, root, context.mRoutes, nullptr);
-    deserializeCollection<MixPortTraits>(doc, root, ctx->mMixPorts, &context);
+
+    /**
+     * Deserialize childrens: devicePorts, mixPorts and routes
+     * The ctx is the RouteManagerConfig. It saves the MixPorts
+     * DevciePorts and AudioRoutes.
+     * @see RouteManagerConfig::mDevicePorts
+     * @see RouteManagerConfig::mMixPorts
+     * @see RouteManagerConfig::mRoutes
+     */
+    deserializeCollection<DevicePortTraits>(doc, root, ctx->mDevicePorts, nullptr);
+    deserializeCollection<MixPortTraits>(doc, root, ctx->mMixPorts, ctx);
+    deserializeCollection<RouteTraits>(doc, root, ctx->mRoutes, ctx);
     return NO_ERROR;
 }
 

@@ -30,12 +30,12 @@ namespace intel_audio
 class RouteManagerConfig
 {
 public:
-    RouteManagerConfig(StreamRouteCollection &mixPorts,
+    RouteManagerConfig(StreamRouteCollection &routes,
                        Criteria &criteria,
                        CriterionTypes &criterionTypes,
                        Parameters &parameters,
                        CParameterMgrPlatformConnector *connector)
-        : mMixPorts(mixPorts),
+        : mRoutes(routes),
           mCriteria(criteria),
           mCriterionTypes(criterionTypes),
           mParameters(parameters),
@@ -59,7 +59,9 @@ public:
 
     CParameterMgrPlatformConnector *getConnector() { return mConnector; }
 
-    StreamRouteCollection &mMixPorts;
+    AudioPorts mMixPorts;
+    AudioPorts mDevicePorts;
+    StreamRouteCollection &mRoutes;
     Criteria &mCriteria;
     CriterionTypes &mCriterionTypes;
     Parameters &mParameters;

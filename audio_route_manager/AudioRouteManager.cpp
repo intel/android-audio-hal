@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,8 @@ AudioRouteManager::AudioRouteManager()
     mPlatformState->setConfig<Audio>(mCriteria, mCriterionTypes, mParameters);
     for (const auto iter : *mStreamRoutes) {
         const auto streamRoute = iter.second;
-        mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[streamRoute->isOut()],
+        mPlatformState->addCriterionTypeValuePair<Audio>(gRouteCriterionType[streamRoute->
+                                                                             getRouteType()],
                                                          streamRoute->getName(),
                                                          streamRoute->getMask());
     }

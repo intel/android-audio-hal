@@ -152,28 +152,25 @@ struct RouteTraits
 
     };
 
-    struct Route
-    {
-        Route(const std::string &sinkName, const std::vector<std::string> &sources)
-            : mSink(sinkName), mSources(sources) {}
+    typedef AudioRoute Element;
+    typedef AudioRoute *PtrElement;
+    typedef StreamRouteCollection Collection;
+    typedef RouteManagerConfig *PtrSerializingCtx;
 
-        bool involveSource(const std::string &name)
-        {
-            for (const auto &source : mSources) {
-                if (source == name) {
-                    return true;
-                }
-            }
-            return false;
-        }
+    /**
+     * Parse the AudioPorts from the strPorts string and check
+     * whether it includes a MixPort
+     * @param[out] ports parsed from the strPorts string.
+     * @param[in]  strPorts string includes the source or sink ports.
+     * @param[out] hasMixPort true if the strPorts includes a MixPort
+     * false otherwise
+     * @param[in]  ctx the runtime context
+     */
 
-        std::string mSink;
-        std::vector<std::string> mSources;
-    };
-    typedef Route Element;
-    typedef Route *PtrElement;
-    typedef std::vector<Route *> Collection;
-    typedef void *PtrSerializingCtx;
+    static android::status_t parsePorts(AudioPorts &ports,
+                                        std::string strPorts,
+                                        bool &hasMixPort,
+                                        PtrSerializingCtx ctx);
 
     static android::status_t deserialize(_xmlDoc *doc, const _xmlNode *root, PtrElement &element,
                                          PtrSerializingCtx serializingContext);
@@ -185,11 +182,6 @@ struct ModuleTraits
     static const char *const collectionTag;
 
     struct Module {};
-    struct Context
-    {
-        DevicePortTraits::Collection mDevicePorts;
-        RouteTraits::Collection mRoutes;
-    };
     typedef Module Element;
     typedef Module *PtrElement;
     typedef std::vector<Module *> Collection;
@@ -234,10 +226,11 @@ struct MixPortTraits
         static const char effects[];
     };
 
-    typedef AudioStreamRoute Element;
-    typedef AudioStreamRoute *PtrElement;
-    typedef StreamRouteCollection Collection;
-    typedef ModuleTraits::Context *PtrSerializingCtx;
+
+    typedef MixPort Element;
+    typedef MixPort *PtrElement;
+    typedef AudioPorts Collection;
+    typedef RouteManagerConfig *PtrSerializingCtx;
 
     static android::status_t deserialize(_xmlDoc *doc, const _xmlNode *root, PtrElement &element,
                                          PtrSerializingCtx serializingContext);

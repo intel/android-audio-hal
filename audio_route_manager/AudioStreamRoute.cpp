@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2017 Intel Corporation
+ * Copyright (C) 2013-2018 Intel Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,32 +21,35 @@
 #include <typeconverter/TypeConverter.hpp>
 #include <AudioUtils.hpp>
 #include <Direction.hpp>
+#include <IStreamRoute.hpp>
 #include <EffectHelper.hpp>
 #include <AudioCommsAssert.hpp>
 #include <utilities/Log.hpp>
 #include <policy.h>
 #include <utils/String8.h>
-
+#include "AudioPort.hpp"
 using namespace std;
 using audio_comms::utilities::Log;
 
 namespace intel_audio
 {
 
-static uint32_t count[Direction::gNbDirections] = {
-    0, 0
-};
-
-AudioStreamRoute::AudioStreamRoute(const string &name, bool isOut)
-    : IStreamRoute(name, isOut),
+AudioStreamRoute::AudioStreamRoute(string name, AudioPorts &sinks, AudioPorts &sources,
+                                   uint32_t type)
+    : AudioRoute(name, sinks, sources, type),
       mCurrentStream(NULL),
       mNewStream(NULL),
-      mEffectSupported(0),
-      mMask(1 << count[isOut]++),
-      mIsUsed(false),
-      mPreviouslyUsed(false),
-      mAudioDevice(nullptr)
+      mEffectSupported(0)
 {
+    mIsOut = (type == ROUTE_TYPE_STREAM_PLAYBACK);
+    MixPort *port = NULL;
+    if (mIsOut) {
+        port = (MixPort *)sources[0];
+    } else {
+        port = (MixPort *)sinks[0];
+    }
+    mConfig = port->getConfig();
+    mAudioDevice = port->getAlsaDevice();
 }
 
 AudioStreamRoute::~AudioStreamRoute()
@@ -147,8 +150,16 @@ void AudioStreamRoute::resetAvailability()
         mNewStream->resetNewStreamRoute();
         mNewStream = NULL;
     }
-    mPreviouslyUsed = mIsUsed;
-    mIsUsed = false;
+
+    /**
+     * Reset route as available
+     * Use Base class fucntions.
+     * @see AudioRoute::setPreUsed
+     * @see AudioRoute::isUsed
+     * @see AudioRoute::setUsed
+     */
+    setPreUsed(isUsed());
+    setUsed(false);
 }
 
 bool AudioStreamRoute::setStream(IoStream &stream)
@@ -292,10 +303,10 @@ android::status_t AudioStreamRoute::dump(const int fd, int spaces) const
     result.append(buffer);
     snprintf(buffer, SIZE, "%*sRuntime information:\n", spaces + 2, "");
     result.append(buffer);
-    snprintf(buffer, SIZE, "%*s- isUsed: %s", spaces + 4, "", (mIsUsed ? "Yes" : "No"));
+    snprintf(buffer, SIZE, "%*s- isUsed: %s", spaces + 4, "", (isUsed() ? "Yes" : "No"));
     result.append(buffer);
 
-    if (mIsUsed && (mCurrentStream != nullptr)) {
+    if (isUsed() && (mCurrentStream != nullptr)) {
         snprintf(buffer, SIZE, " by stream %p", mCurrentStream);
         result.append(buffer);
     }
