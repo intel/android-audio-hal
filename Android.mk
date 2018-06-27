@@ -16,7 +16,7 @@
 # limitations under the License.
 #
 
-ifneq ($(INTEL_AUDIO_HAL),imc)
+ifeq ($(INTEL_AUDIO_HAL),new_hal)
 
 LOCAL_PATH := $(call my-dir)
 include $(OPTIONAL_QUALITY_ENV_SETUP)
