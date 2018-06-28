@@ -24,6 +24,7 @@
 #include <list>
 #include <map>
 #include <utils/String8.h>
+#include <unistd.h>
 
 namespace intel_audio
 {

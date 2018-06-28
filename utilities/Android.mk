@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2015-2017
+# Copyright (C) Intel 2015-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_MODULE := libaudio_hal_utilities
 
 LOCAL_PROPRIETARY_MODULE := true
+LOCAL_HEADER_LIBRARIES += libutils_headers
 
 include $(BUILD_STATIC_LIBRARY)
 

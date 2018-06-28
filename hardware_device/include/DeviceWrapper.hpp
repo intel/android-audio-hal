@@ -21,7 +21,7 @@
 #include <AudioCommsAssert.hpp>
 #include <AudioNonCopyable.hpp>
 #include <string.h> /* for strdup */
-#include <mutex.h>
+#include <mutex>
 #include <utilities/Log.hpp>
 
 using audio_comms::utilities::Log;

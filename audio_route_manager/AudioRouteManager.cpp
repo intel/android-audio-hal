@@ -32,6 +32,7 @@
 #include <BitField.hpp>
 #include <cutils/bitops.h>
 #include <string>
+#include <unistd.h>
 
 #include <utilities/Log.hpp>
 

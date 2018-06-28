@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -86,6 +86,7 @@ LOCAL_STATIC_LIBRARIES := \
 LOCAL_SHARED_LIBRARIES := \
     $(effect_pre_proc_shared_lib_target)
 LOCAL_MODULE_RELATIVE_PATH := soundfx
+LOCAL_HEADER_LIBRARIES += libhardware_headers
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_SHARED_LIBRARY)
@@ -105,6 +106,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := liblpepreprocessinghelper
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
+LOCAL_HEADER_LIBRARIES += libhardware_headers
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 include $(BUILD_STATIC_LIBRARY)

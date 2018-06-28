@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -134,6 +134,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
 LOCAL_WHOLE_STATIC_LIBRARIES := $(component_whole_static_lib)
 LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
+LOCAL_HEADER_LIBRARIES += libaudioclient_headers
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 

@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -54,7 +54,8 @@ component_static_lib_host += \
     $(foreach lib, $(component_static_lib), $(lib)_host)
 
 
-component_dynamic_lib := libtypeconverter
+component_dynamic_lib := libtypeconverter \
+                         libhardware
 
 ifeq ($(USE_ALSA_LIB), 1)
 component_dynamic_lib += libasound
@@ -105,6 +106,7 @@ LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_STATIC_LIBRARIES := $(component_static_lib)
 LOCAL_SHARED_LIBRARIES := $(component_dynamic_lib)
 LOCAL_CFLAGS := $(component_cflags)
+LOCAL_HEADER_LIBRARIES += libhardware_headers libutils_headers
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -162,6 +164,7 @@ LOCAL_CFLAGS := $(component_functional_test_defines)
 LOCAL_STATIC_LIBRARIES := $(component_functional_test_static_lib_target)
 LOCAL_SHARED_LIBRARIES := $(component_functional_test_shared_lib_target)
 LOCAL_MODULE_TAGS := optional
+LOCAL_HEADER_LIBRARIES += libhardware_headers
 
 # GMock and GTest requires C++ Technical Report 1 (TR1) tuple library, which is not available
 # on target (stlport). GTest provides its own implementation of TR1 (and substiture to standard

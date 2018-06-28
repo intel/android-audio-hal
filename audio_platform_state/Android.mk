@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ LOCAL_C_INCLUDES := $(component_includes_dir_target)
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_STATIC_LIBRARIES := $(component_static_lib)
 LOCAL_CFLAGS := $(component_cflags)
+LOCAL_HEADER_LIBRARIES += libutils_headers libaudio_system_headers libhardware_headers
 
 LOCAL_SHARED_LIBRARIES := \
     libparameter

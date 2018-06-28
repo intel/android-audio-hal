@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2014-2017
+# Copyright (C) Intel 2014-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,6 +56,7 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudioparameters
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
+LOCAL_HEADER_LIBRARIES += libutils_headers
 
 include $(BUILD_STATIC_LIBRARY)
 

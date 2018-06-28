@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -99,6 +99,7 @@ LOCAL_MODULE_OWNER := intel
 LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_include_dir)
 
 LOCAL_C_INCLUDES := $(component_includes_dir_target)
+LOCAL_HEADER_LIBRARIES += libutils_headers
 
 LOCAL_STATIC_LIBRARIES := $(component_static_lib)
 LOCAL_SHARED_LIBRARIES := $(component_dynamic_lib)

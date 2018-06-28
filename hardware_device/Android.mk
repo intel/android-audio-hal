@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2014-2017
+# Copyright (C) Intel 2014-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(LOCAL_PATH)/include
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libaudiohw_intel
 LOCAL_PROPRIETARY_MODULE := true
+LOCAL_HEADER_LIBRARIES += libutils_headers libaudio_system_headers libhardware_headers
 LOCAL_MODULE_OWNER := intel
 
 include $(BUILD_STATIC_LIBRARY)

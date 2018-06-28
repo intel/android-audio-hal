@@ -101,8 +101,7 @@ component_shared_lib_target := \
     libtinyalsa \
     libcutils \
     libutils \
-    libaudioutils \
-    libicuuc
+    libaudioutils
 
 component_shared_lib_host := \
     libicuuc-host \
@@ -136,6 +135,7 @@ LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
 LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
 
 LOCAL_REQUIRED_MODULES := route_manager_configuration.xml
+LOCAL_HEADER_LIBRARIES += libhardware_headers libaudioclient_headers libaudio_system_headers libutils_headers
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 

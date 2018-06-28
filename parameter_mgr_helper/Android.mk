@@ -1,6 +1,6 @@
 #
 #
-# Copyright (C) Intel 2013-2017
+# Copyright (C) Intel 2013-2018
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -107,6 +107,8 @@ LOCAL_MODULE := libparametermgr_static
 LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
+LOCAL_HEADER_LIBRARIES += libutils_headers
+
 
 include $(OPTIONAL_QUALITY_COVERAGE_JUMPER)
 

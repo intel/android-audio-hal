@@ -28,6 +28,8 @@
 #include <policy.h>
 #include <utils/String8.h>
 #include "AudioPort.hpp"
+#include <unistd.h>
+
 using namespace std;
 using audio_comms::utilities::Log;
 

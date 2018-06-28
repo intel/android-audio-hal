@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013-2017 Intel Corporation
+# Copyright (c) 2013-2018 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -44,8 +44,7 @@ component_includes_dir_target := \
 
 component_static_lib := \
     libaudio_comms_utilities \
-    libaudio_comms_convert \
-    liblog
+    libaudio_comms_convert
 
 component_static_lib_target := \
     $(component_static_lib) \
@@ -75,9 +74,11 @@ LOCAL_EXPORT_C_INCLUDE_DIRS := $(component_export_includes_dir)
 LOCAL_C_INCLUDES := $(component_includes_dir_target)
 LOCAL_SRC_FILES := $(component_src_files)
 LOCAL_CFLAGS := $(component_cflags)
+LOCAL_PROPRIETARY_MODULE := true
 LOCAL_MODULE := libtypeconverter
 LOCAL_MODULE_OWNER := intel
 LOCAL_MODULE_TAGS := optional
+LOCAL_HEADER_LIBRARIES += libaudio_system_headers
 LOCAL_STATIC_LIBRARIES := $(component_static_lib_target)
 LOCAL_SHARED_LIBRARIES := $(component_shared_lib_target)
 
